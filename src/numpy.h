@@ -1,0 +1,70 @@
+/* Copyright 2021 NVIDIA Corporation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
+
+#pragma once
+
+#include <memory>
+
+#include "legate.h"
+
+namespace legate {
+
+using LogicalStore = void;
+
+namespace numpy {
+
+// TODO: The following functions and classes will later be reorganized into separate header files
+
+void initialize(int32_t argc, char** argv);
+
+class NumPyArray;
+
+class NumPyRuntime {
+ private:
+  NumPyRuntime(Runtime* legate_runtime, LibraryContext* context);
+
+ public:
+  std::shared_ptr<NumPyArray> create_array(std::vector<int64_t> shape, LegateTypeCode type);
+
+ public:
+  static NumPyRuntime* get_runtime();
+  static void initialize(Runtime* legate_runtime, LibraryContext* context);
+
+ private:
+  static NumPyRuntime* runtime_;
+
+ private:
+  Runtime* legate_runtime_;
+  LibraryContext* context_;
+};
+
+class NumPyArray {
+  friend class NumPyRuntime;
+
+ private:
+  NumPyArray(NumPyRuntime* runtime, std::shared_ptr<LogicalStore> store);
+
+ private:
+  NumPyRuntime* runtime_;
+  std::shared_ptr<LogicalStore> store_;
+};
+
+std::shared_ptr<NumPyArray> array(std::vector<int64_t> shape, LegateTypeCode type);
+
+std::shared_ptr<NumPyArray> arange(int64_t stop);
+
+}  // namespace numpy
+}  // namespace legate

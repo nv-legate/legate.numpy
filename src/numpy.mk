@@ -39,6 +39,7 @@ GEN_CPU_SRC += ternary/where.cc               \
 							 stat/bincount.cc               \
 							 arg.cc                         \
 							 mapper.cc                      \
+							 runtime.cc                     \
 							 numpy.cc # This must always be the last file!
                         # It guarantees we do our registration callback
                         # only after all task variants are recorded
@@ -88,3 +89,5 @@ GEN_GPU_SRC += ternary/where.cu               \
 							 search/nonzero.cu              \
 							 stat/bincount.cu               \
 							 numpy.cu
+
+INSTALL_HEADERS = numpy.h
