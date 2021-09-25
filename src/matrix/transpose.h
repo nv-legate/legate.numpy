@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "numpy.h"
+#include "numpy_task.h"
 
 namespace legate {
 namespace numpy {

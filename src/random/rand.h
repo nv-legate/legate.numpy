@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "numpy.h"
+#include "numpy_task.h"
 #include "random/rand_util.h"
 
 namespace legate {

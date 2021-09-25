@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "numpy.h"
+#include "numpy_task.h"
 #include "binary/binary_op_util.h"
 
 namespace legate {

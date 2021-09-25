@@ -47,7 +47,7 @@ DECLARE_IDENTITIES(uint32_t)
 DECLARE_IDENTITIES(uint64_t)
 DECLARE_IDENTITIES(complex<float>)
 
-#define _REGISTER_REDOP(ID, TYPE) Runtime::register_reduction_op<TYPE>(ID);
+#define _REGISTER_REDOP(ID, TYPE) Legion::Runtime::register_reduction_op<TYPE>(ID);
 
 #define REGISTER_REDOPS(OP)                                                                        \
   {                                                                                                \

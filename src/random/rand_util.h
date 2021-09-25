@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "numpy.h"
+#include "numpy_task.h"
 #include "random/philox.h"
 
 #define HI_BITS(x) ((unsigned)((x) >> 32))

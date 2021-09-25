@@ -14,7 +14,7 @@
  *
  */
 
-#include "numpy.h"
+#include "numpy_task.h"
 #include "mapper.h"
 #include "unary/unary_red_util.h"
 
@@ -38,7 +38,7 @@ extern void register_cpu_reduction_operators(LibraryContext& context);
 #endif
 
 void registration_callback(Machine machine,
-                           Runtime* runtime,
+                           Legion::Runtime* runtime,
                            const std::set<Processor>& local_procs)
 {
   ResourceConfig config;
@@ -73,6 +73,7 @@ void legate_numpy_perform_registration(void)
   // Tell the runtime about our registration callback so we hook it
   // in before the runtime starts and make it global so that we know
   // that this call back is invoked everywhere across all nodes
-  Runtime::perform_registration_callback(legate::numpy::registration_callback, true /*global*/);
+  Legion::Runtime::perform_registration_callback(legate::numpy::registration_callback,
+                                                 true /*global*/);
 }
 }

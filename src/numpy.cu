@@ -14,7 +14,7 @@
  *
  */
 
-#include "numpy.h"
+#include "numpy_task.h"
 #include "arg.h"
 
 namespace legate {
@@ -41,7 +41,7 @@ class CUDAReductionOpWrapper : public T {
 };
 
 #define _REGISTER_REDOP(ID, TYPE)                                                   \
-  Runtime::register_reduction_op(                                                   \
+  Legion::Runtime::register_reduction_op(                                           \
     ID,                                                                             \
     Realm::ReductionOpUntyped::create_reduction_op<CUDAReductionOpWrapper<TYPE>>(), \
     NULL,                                                                           \
