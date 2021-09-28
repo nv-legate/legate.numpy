@@ -22,8 +22,6 @@
 
 namespace legate {
 
-using LogicalStore = void;
-
 namespace numpy {
 
 // TODO: The following functions and classes will later be reorganized into separate header files
@@ -40,6 +38,9 @@ class NumPyRuntime {
   std::shared_ptr<NumPyArray> create_array(std::vector<int64_t> shape, LegateTypeCode type);
 
  public:
+  uint32_t get_next_random_epoch();
+
+ public:
   static NumPyRuntime* get_runtime();
   static void initialize(Runtime* legate_runtime, LibraryContext* context);
 
@@ -49,22 +50,29 @@ class NumPyRuntime {
  private:
   Runtime* legate_runtime_;
   LibraryContext* context_;
+  uint32_t next_epoch_{0};
 };
 
 class NumPyArray {
   friend class NumPyRuntime;
 
  private:
-  NumPyArray(NumPyRuntime* runtime, std::shared_ptr<LogicalStore> store);
+  NumPyArray(NumPyRuntime* runtime,
+             std::vector<int64_t> shape,
+             std::shared_ptr<LogicalStore> store);
+
+ public:
+  void random(int32_t gen_code);
 
  private:
   NumPyRuntime* runtime_;
+  std::vector<int64_t> shape_;
   std::shared_ptr<LogicalStore> store_;
 };
 
 std::shared_ptr<NumPyArray> array(std::vector<int64_t> shape, LegateTypeCode type);
 
-std::shared_ptr<NumPyArray> arange(int64_t stop);
+std::shared_ptr<NumPyArray> random(std::vector<int64_t> shape);
 
 }  // namespace numpy
 }  // namespace legate
