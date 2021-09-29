@@ -34,7 +34,8 @@ NumPyMapper::NumPyMapper(MapperRuntime* rt, Machine m, const LibraryContext& ctx
 {
 }
 
-TaskTarget NumPyMapper::task_target(const Task& task, const std::vector<TaskTarget>& options)
+TaskTarget NumPyMapper::task_target(const mapping::Task& task,
+                                    const std::vector<TaskTarget>& options)
 {
   return *options.begin();
 }
