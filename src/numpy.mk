@@ -90,4 +90,5 @@ GEN_GPU_SRC += ternary/where.cu               \
 							 stat/bincount.cu               \
 							 numpy.cu
 
-INSTALL_HEADERS = numpy.h
+INSTALL_HEADERS = legate_numpy_c.h \
+									numpy.h

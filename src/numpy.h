@@ -20,6 +20,8 @@
 
 #include "legate.h"
 
+#include "legate_numpy_c.h"
+
 namespace legate {
 
 namespace numpy {
@@ -36,6 +38,10 @@ class NumPyRuntime {
 
  public:
   std::shared_ptr<NumPyArray> create_array(std::vector<int64_t> shape, LegateTypeCode type);
+
+ public:
+  std::unique_ptr<Task> create_task(NumPyOpCode op_code);
+  void submit(std::unique_ptr<Task> task);
 
  public:
   uint32_t get_next_random_epoch();
