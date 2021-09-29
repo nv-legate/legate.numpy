@@ -20,7 +20,7 @@
 
 #include "legate.h"
 
-#include "legate_numpy_c.h"
+#include "numpy/legate_numpy_c.h"
 
 namespace legate {
 
