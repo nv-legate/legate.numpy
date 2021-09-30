@@ -22,8 +22,8 @@ namespace legate {
 namespace numpy {
 
 struct TransposeArgs {
-  const Array& out;
-  const Array& in;
+  const Store& out;
+  const Store& in;
 };
 
 class TransposeTask : public NumPyTask<TransposeTask> {

@@ -22,8 +22,8 @@ namespace legate {
 namespace numpy {
 
 struct FillArgs {
-  const Array& out;
-  const Array& fill_value;
+  const Store& out;
+  const Store& fill_value;
   bool is_argval;
 };
 

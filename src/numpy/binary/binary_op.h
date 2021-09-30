@@ -23,9 +23,9 @@ namespace legate {
 namespace numpy {
 
 struct BinaryOpArgs {
-  const Array& in1;
-  const Array& in2;
-  const Array& out;
+  const Store& in1;
+  const Store& in2;
+  const Store& out;
   BinaryOpCode op_code;
   std::vector<Store> args;
 };

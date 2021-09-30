@@ -23,9 +23,9 @@ namespace numpy {
 
 struct MatVecMulArgs {
   bool left_matrix;
-  const Array& lhs;
-  const Array& rhs1;
-  const Array& rhs2;
+  const Store& lhs;
+  const Store& rhs1;
+  const Store& rhs2;
 };
 
 class MatVecMulTask : public NumPyTask<MatVecMulTask> {

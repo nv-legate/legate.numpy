@@ -23,8 +23,8 @@ namespace legate {
 namespace numpy {
 
 struct UnaryRedArgs {
-  const Array& lhs;
-  const Array& rhs;
+  const Store& lhs;
+  const Store& rhs;
   int32_t collapsed_dim;
   UnaryRedCode op_code;
 };

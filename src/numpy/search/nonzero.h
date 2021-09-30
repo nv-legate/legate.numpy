@@ -22,8 +22,8 @@ namespace legate {
 namespace numpy {
 
 struct NonzeroArgs {
-  const Array& input;
-  std::vector<Array>& results;
+  const Store& input;
+  std::vector<Store>& results;
 };
 
 class NonzeroTask : public NumPyTask<NonzeroTask> {

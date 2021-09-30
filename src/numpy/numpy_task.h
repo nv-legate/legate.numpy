@@ -22,8 +22,6 @@
 namespace legate {
 namespace numpy {
 
-using Array = Store;
-
 enum class VariantKind : int {
   CPU = 0,
   OMP = 1,

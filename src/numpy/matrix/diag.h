@@ -23,8 +23,8 @@ namespace numpy {
 
 struct DiagArgs {
   bool extract;
-  const Array& matrix;
-  const Array& diag;
+  const Store& matrix;
+  const Store& diag;
 };
 
 class DiagTask : public NumPyTask<DiagTask> {

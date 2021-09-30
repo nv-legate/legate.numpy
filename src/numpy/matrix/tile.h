@@ -22,8 +22,8 @@ namespace legate {
 namespace numpy {
 
 struct TileArgs {
-  const Array& in;
-  const Array& out;
+  const Store& in;
+  const Store& out;
 };
 
 class TileTask : public NumPyTask<TileTask> {

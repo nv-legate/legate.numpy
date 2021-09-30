@@ -22,7 +22,7 @@ namespace legate {
 namespace numpy {
 
 struct EyeArgs {
-  const Array& out;
+  const Store& out;
   int32_t k;
 };
 

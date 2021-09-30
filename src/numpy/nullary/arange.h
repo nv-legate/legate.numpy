@@ -22,10 +22,10 @@ namespace legate {
 namespace numpy {
 
 struct ArangeArgs {
-  const Array& out;
-  const Array& start;
-  const Array& stop;
-  const Array& step;
+  const Store& out;
+  const Store& start;
+  const Store& stop;
+  const Store& step;
 };
 
 class ArangeTask : public NumPyTask<ArangeTask> {

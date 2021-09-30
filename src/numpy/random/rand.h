@@ -23,7 +23,7 @@ namespace legate {
 namespace numpy {
 
 struct RandArgs {
-  const Array& out;
+  const Store& out;
   RandGenCode gen_code;
   uint32_t epoch;
   Legion::DomainPoint strides;

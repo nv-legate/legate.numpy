@@ -22,8 +22,8 @@ namespace legate {
 namespace numpy {
 
 struct ConvertArgs {
-  const Array& out;
-  const Array& in;
+  const Store& out;
+  const Store& in;
 };
 
 class ConvertTask : public NumPyTask<ConvertTask> {

@@ -23,8 +23,8 @@ namespace legate {
 namespace numpy {
 
 struct ScalarUnaryRedArgs {
-  const Array& out;
-  const Array& in;
+  const Store& out;
+  const Store& in;
   UnaryRedCode op_code;
   std::vector<Store> args;
 };

@@ -22,9 +22,9 @@ namespace legate {
 namespace numpy {
 
 struct MatMulArgs {
-  const Array& lhs;
-  const Array& rhs1;
-  const Array& rhs2;
+  const Store& lhs;
+  const Store& rhs1;
+  const Store& rhs2;
 };
 
 class MatMulTask : public NumPyTask<MatMulTask> {

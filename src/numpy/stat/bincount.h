@@ -22,9 +22,9 @@ namespace legate {
 namespace numpy {
 
 struct BincountArgs {
-  const Array& lhs;
-  const Array& rhs;
-  const Array& weights;
+  const Store& lhs;
+  const Store& rhs;
+  const Store& weights;
 };
 
 class BincountTask : public NumPyTask<BincountTask> {

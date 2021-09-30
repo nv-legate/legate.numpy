@@ -22,10 +22,10 @@ namespace legate {
 namespace numpy {
 
 struct WhereArgs {
-  const Array& out;
-  const Array& mask;
-  const Array& in1;
-  const Array& in2;
+  const Store& out;
+  const Store& mask;
+  const Store& in1;
+  const Store& in2;
 };
 
 class WhereTask : public NumPyTask<WhereTask> {

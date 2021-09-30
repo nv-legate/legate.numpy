@@ -25,7 +25,7 @@ struct WriteImplBody;
 template <VariantKind KIND>
 struct WriteImpl {
   template <LegateTypeCode CODE>
-  void operator()(Array& out_arr, Array& in_arr) const
+  void operator()(Store& out_arr, Store& in_arr) const
   {
     using VAL = legate_type_of<CODE>;
     auto out  = out_arr.write_accessor<VAL, 1>();
