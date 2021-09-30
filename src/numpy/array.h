@@ -14,6 +14,33 @@
  *
  */
 
-#include "numpy/array.h"
-#include "numpy/runtime.h"
-#include "numpy/operators.h"
+#pragma once
+
+#include <memory>
+
+#include "legate.h"
+
+namespace legate {
+namespace numpy {
+
+class NumPyRuntime;
+
+class NumPyArray {
+  friend class NumPyRuntime;
+
+ private:
+  NumPyArray(NumPyRuntime* runtime,
+             std::vector<int64_t> shape,
+             std::shared_ptr<LogicalStore> store);
+
+ public:
+  void random(int32_t gen_code);
+
+ private:
+  NumPyRuntime* runtime_;
+  std::vector<int64_t> shape_;
+  std::shared_ptr<LogicalStore> store_;
+};
+
+}  // namespace numpy
+}  // namespace legate

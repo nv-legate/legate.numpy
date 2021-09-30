@@ -38,7 +38,9 @@ GEN_CPU_SRC += numpy/ternary/where.cc               \
 							 numpy/search/nonzero.cc              \
 							 numpy/stat/bincount.cc               \
 							 numpy/arg.cc                         \
+							 numpy/array.cc                       \
 							 numpy/mapper.cc                      \
+							 numpy/operators.cc                   \
 							 numpy/runtime.cc                     \
 							 numpy/numpy.cc # This must always be the last file!
                               # It guarantees we do our registration callback
@@ -93,4 +95,7 @@ GEN_GPU_SRC += numpy/ternary/where.cu               \
 INSTALL_PATHS = numpy
 
 INSTALL_HEADERS = numpy/legate_numpy_c.h \
+									numpy/array.h          \
+									numpy/operators.h      \
+									numpy/runtime.h        \
 									numpy.h

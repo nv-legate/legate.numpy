@@ -14,6 +14,20 @@
  *
  */
 
-#include "numpy/array.h"
-#include "numpy/runtime.h"
-#include "numpy/operators.h"
+#pragma once
+
+#include <memory>
+
+#include "legate.h"
+
+namespace legate {
+namespace numpy {
+
+class NumPyArray;
+
+std::shared_ptr<NumPyArray> array(std::vector<int64_t> shape, LegateTypeCode type);
+
+std::shared_ptr<NumPyArray> random(std::vector<int64_t> shape);
+
+}  // namespace numpy
+}  // namespace legate

@@ -14,6 +14,26 @@
  *
  */
 
+#include "numpy/operators.h"
 #include "numpy/array.h"
 #include "numpy/runtime.h"
-#include "numpy/operators.h"
+#include "numpy/random/rand_util.h"
+
+namespace legate {
+namespace numpy {
+
+std::shared_ptr<NumPyArray> array(std::vector<int64_t> shape, LegateTypeCode type)
+{
+  return NumPyRuntime::get_runtime()->create_array(std::move(shape), type);
+}
+
+std::shared_ptr<NumPyArray> random(std::vector<int64_t> shape)
+{
+  auto runtime = NumPyRuntime::get_runtime();
+  auto out     = runtime->create_array(std::move(shape), LegateTypeCode::DOUBLE_LT);
+  out->random(static_cast<int32_t>(RandGenCode::UNIFORM));
+  return out;
+}
+
+}  // namespace numpy
+}  // namespace legate
