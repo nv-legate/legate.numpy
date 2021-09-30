@@ -17,17 +17,49 @@
 #include "numpy/operators.h"
 #include "numpy/array.h"
 #include "numpy/runtime.h"
+#include "numpy/binary/binary_op_util.h"
+#include "numpy/unary/unary_op_util.h"
 #include "numpy/random/rand_util.h"
 
 namespace legate {
 namespace numpy {
 
-std::shared_ptr<Array> array(std::vector<int64_t> shape, LegateTypeCode type)
+using ArrayP = std::shared_ptr<Array>;
+
+ArrayP array(std::vector<int64_t> shape, LegateTypeCode type)
 {
   return NumPyRuntime::get_runtime()->create_array(std::move(shape), type);
 }
 
-std::shared_ptr<Array> random(std::vector<int64_t> shape)
+ArrayP unary_op(UnaryOpCode op_code, ArrayP input)
+{
+  auto runtime = NumPyRuntime::get_runtime();
+  auto out     = runtime->create_array(input->shape(), input->code());
+  out->unary_op(static_cast<int32_t>(op_code), std::move(input));
+  return std::move(out);
+}
+
+ArrayP binary_op(BinaryOpCode op_code, ArrayP rhs1, ArrayP rhs2)
+{
+  assert(rhs1->shape() == rhs2->shape());
+  assert(rhs1->code() == rhs2->code());
+
+  auto runtime = NumPyRuntime::get_runtime();
+  auto out     = runtime->create_array(rhs1->shape(), rhs1->code());
+  out->binary_op(static_cast<int32_t>(op_code), std::move(rhs1), std::move(rhs2));
+  return std::move(out);
+}
+
+ArrayP abs(ArrayP input) { return unary_op(UnaryOpCode::ABSOLUTE, std::move(input)); }
+
+ArrayP add(ArrayP rhs1, ArrayP rhs2)
+{
+  return binary_op(BinaryOpCode::ADD, std::move(rhs1), std::move(rhs2));
+}
+
+ArrayP negative(ArrayP input) { return unary_op(UnaryOpCode::NEGATIVE, std::move(input)); }
+
+ArrayP random(std::vector<int64_t> shape)
 {
   auto runtime = NumPyRuntime::get_runtime();
   auto out     = runtime->create_array(std::move(shape), LegateTypeCode::DOUBLE_LT);

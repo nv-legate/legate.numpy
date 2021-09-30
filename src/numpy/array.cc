@@ -29,6 +29,12 @@ Array::Array(NumPyRuntime* runtime,
 {
 }
 
+int32_t Array::dim() const { return static_cast<int32_t>(shape_.size()); }
+
+const std::vector<int64_t>& Array::shape() const { return shape_; }
+
+LegateTypeCode Array::code() const { return store_->code(); }
+
 static std::vector<int64_t> compute_strides(const std::vector<int64_t>& shape)
 {
   std::vector<int64_t> strides(shape.size());
@@ -56,6 +62,29 @@ void Array::random(int32_t gen_code)
          strides.data(),
          strides.size() * sizeof(int64_t));
   task->add_scalar_arg(Scalar(true, LegateTypeCode::INT64_LT, buffer));
+
+  runtime_->submit(std::move(task));
+}
+
+void Array::binary_op(int32_t op_code, std::shared_ptr<Array> rhs1, std::shared_ptr<Array> rhs2)
+{
+  auto task = runtime_->create_task(NumPyOpCode::NUMPY_BINARY_OP);
+
+  task->add_output(store_);
+  task->add_input(rhs1->store_);
+  task->add_input(rhs2->store_);
+  task->add_scalar_arg(Scalar(op_code));
+
+  runtime_->submit(std::move(task));
+}
+
+void Array::unary_op(int32_t op_code, std::shared_ptr<Array> input)
+{
+  auto task = runtime_->create_task(NumPyOpCode::NUMPY_UNARY_OP);
+
+  task->add_output(store_);
+  task->add_input(input->store_);
+  task->add_scalar_arg(Scalar(op_code));
 
   runtime_->submit(std::move(task));
 }

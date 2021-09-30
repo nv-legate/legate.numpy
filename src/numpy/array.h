@@ -35,11 +35,18 @@ class Array {
         std::shared_ptr<LogicalStore> store);
 
  public:
+  int32_t dim() const;
+  const std::vector<int64_t>& shape() const;
+  LegateTypeCode code() const;
+
+ public:
   template <typename T, int32_t DIM>
   AccessorRW<T, DIM> get_accessor();
 
  public:
   void random(int32_t gen_code);
+  void binary_op(int32_t op_code, std::shared_ptr<Array> rhs1, std::shared_ptr<Array> rhs2);
+  void unary_op(int32_t op_code, std::shared_ptr<Array> input);
 
  private:
   NumPyRuntime* runtime_;
