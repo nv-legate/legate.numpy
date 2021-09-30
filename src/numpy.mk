@@ -96,5 +96,6 @@ INSTALL_PATHS = numpy
 
 INSTALL_HEADERS = numpy/legate_numpy_c.h \
 									numpy/array.h          \
+									numpy/array.inl        \
 									numpy/operators.h      \
 									numpy.h

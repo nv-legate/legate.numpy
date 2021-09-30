@@ -25,6 +25,8 @@ namespace numpy {
 
 class Array;
 
+void initialize(int32_t argc, char** argv);
+
 std::shared_ptr<Array> array(std::vector<int64_t> shape, LegateTypeCode type);
 
 std::shared_ptr<Array> random(std::vector<int64_t> shape);

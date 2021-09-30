@@ -25,8 +25,6 @@
 namespace legate {
 namespace numpy {
 
-void initialize(int32_t argc, char** argv);
-
 class Array;
 
 class NumPyRuntime {

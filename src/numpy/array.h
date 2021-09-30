@@ -29,16 +29,26 @@ class Array {
   friend class NumPyRuntime;
 
  private:
-  Array(NumPyRuntime* runtime, std::vector<int64_t> shape, std::shared_ptr<LogicalStore> store);
+  Array(NumPyRuntime* runtime,
+        LibraryContext* context,
+        std::vector<int64_t> shape,
+        std::shared_ptr<LogicalStore> store);
+
+ public:
+  template <typename T, int32_t DIM>
+  AccessorRW<T, DIM> get_accessor();
 
  public:
   void random(int32_t gen_code);
 
  private:
   NumPyRuntime* runtime_;
+  LibraryContext* context_;
   std::vector<int64_t> shape_;
   std::shared_ptr<LogicalStore> store_;
 };
 
 }  // namespace numpy
 }  // namespace legate
+
+#include "numpy/array.inl"

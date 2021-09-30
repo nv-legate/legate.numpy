@@ -21,8 +21,11 @@
 namespace legate {
 namespace numpy {
 
-Array::Array(NumPyRuntime* runtime, std::vector<int64_t> shape, std::shared_ptr<LogicalStore> store)
-  : runtime_(runtime), shape_(std::move(shape)), store_(store)
+Array::Array(NumPyRuntime* runtime,
+             LibraryContext* context,
+             std::vector<int64_t> shape,
+             std::shared_ptr<LogicalStore> store)
+  : runtime_(runtime), context_(context), shape_(std::move(shape)), store_(store)
 {
 }
 
