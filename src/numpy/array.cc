@@ -21,9 +21,7 @@
 namespace legate {
 namespace numpy {
 
-NumPyArray::NumPyArray(NumPyRuntime* runtime,
-                       std::vector<int64_t> shape,
-                       std::shared_ptr<LogicalStore> store)
+Array::Array(NumPyRuntime* runtime, std::vector<int64_t> shape, std::shared_ptr<LogicalStore> store)
   : runtime_(runtime), shape_(std::move(shape)), store_(store)
 {
 }
@@ -41,7 +39,7 @@ static std::vector<int64_t> compute_strides(const std::vector<int64_t>& shape)
   return std::move(strides);
 }
 
-void NumPyArray::random(int32_t gen_code)
+void Array::random(int32_t gen_code)
 {
   auto task = runtime_->create_task(NumPyOpCode::NUMPY_RAND);
 

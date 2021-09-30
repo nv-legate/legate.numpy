@@ -14,7 +14,7 @@
  *
  */
 
-#include "numpy.h"
+#include "numpy/runtime.h"
 #include "numpy/numpy_task.h"
 #include "numpy/mapper.h"
 #include "numpy/unary/unary_red_util.h"

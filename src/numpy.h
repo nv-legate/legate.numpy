@@ -15,5 +15,4 @@
  */
 
 #include "numpy/array.h"
-#include "numpy/runtime.h"
 #include "numpy/operators.h"

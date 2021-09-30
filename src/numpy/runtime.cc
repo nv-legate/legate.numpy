@@ -14,7 +14,8 @@
  *
  */
 
-#include "numpy.h"
+#include "numpy/runtime.h"
+#include "numpy/array.h"
 
 namespace legate {
 namespace numpy {
@@ -35,13 +36,12 @@ NumPyRuntime::NumPyRuntime(Runtime* legate_runtime, LibraryContext* context)
 {
 }
 
-std::shared_ptr<NumPyArray> NumPyRuntime::create_array(std::vector<int64_t> shape,
-                                                       LegateTypeCode type)
+std::shared_ptr<Array> NumPyRuntime::create_array(std::vector<int64_t> shape, LegateTypeCode type)
 {
   // TODO: We need a type system for NumPy and should not use the core types
   auto store = legate_runtime_->create_store(shape, type);
-  auto array = new NumPyArray(this, std::move(shape), std::move(store));
-  return std::shared_ptr<NumPyArray>(array);
+  auto array = new Array(this, std::move(shape), std::move(store));
+  return std::shared_ptr<Array>(array);
 }
 
 std::unique_ptr<Task> NumPyRuntime::create_task(NumPyOpCode op_code)

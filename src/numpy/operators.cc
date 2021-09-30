@@ -22,12 +22,12 @@
 namespace legate {
 namespace numpy {
 
-std::shared_ptr<NumPyArray> array(std::vector<int64_t> shape, LegateTypeCode type)
+std::shared_ptr<Array> array(std::vector<int64_t> shape, LegateTypeCode type)
 {
   return NumPyRuntime::get_runtime()->create_array(std::move(shape), type);
 }
 
-std::shared_ptr<NumPyArray> random(std::vector<int64_t> shape)
+std::shared_ptr<Array> random(std::vector<int64_t> shape)
 {
   auto runtime = NumPyRuntime::get_runtime();
   auto out     = runtime->create_array(std::move(shape), LegateTypeCode::DOUBLE_LT);

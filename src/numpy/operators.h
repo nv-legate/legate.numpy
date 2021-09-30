@@ -23,11 +23,11 @@
 namespace legate {
 namespace numpy {
 
-class NumPyArray;
+class Array;
 
-std::shared_ptr<NumPyArray> array(std::vector<int64_t> shape, LegateTypeCode type);
+std::shared_ptr<Array> array(std::vector<int64_t> shape, LegateTypeCode type);
 
-std::shared_ptr<NumPyArray> random(std::vector<int64_t> shape);
+std::shared_ptr<Array> random(std::vector<int64_t> shape);
 
 }  // namespace numpy
 }  // namespace legate

@@ -25,13 +25,11 @@ namespace numpy {
 
 class NumPyRuntime;
 
-class NumPyArray {
+class Array {
   friend class NumPyRuntime;
 
  private:
-  NumPyArray(NumPyRuntime* runtime,
-             std::vector<int64_t> shape,
-             std::shared_ptr<LogicalStore> store);
+  Array(NumPyRuntime* runtime, std::vector<int64_t> shape, std::shared_ptr<LogicalStore> store);
 
  public:
   void random(int32_t gen_code);
