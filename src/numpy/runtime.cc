@@ -36,11 +36,11 @@ NumPyRuntime::NumPyRuntime(Runtime* legate_runtime, LibraryContext* context)
 {
 }
 
-std::shared_ptr<Array> NumPyRuntime::create_array(std::vector<int64_t> shape, LegateTypeCode type)
+std::shared_ptr<Array> NumPyRuntime::create_array(std::vector<size_t> shape, LegateTypeCode type)
 {
   // TODO: We need a type system for NumPy and should not use the core types
   auto store = legate_runtime_->create_store(shape, type);
-  auto array = new Array(this, context_, std::move(shape), std::move(store));
+  auto array = new Array(this, context_, std::move(store));
   return std::shared_ptr<Array>(array);
 }
 

@@ -29,14 +29,11 @@ class Array {
   friend class NumPyRuntime;
 
  private:
-  Array(NumPyRuntime* runtime,
-        LibraryContext* context,
-        std::vector<int64_t> shape,
-        std::shared_ptr<LogicalStore> store);
+  Array(NumPyRuntime* runtime, LibraryContext* context, std::shared_ptr<LogicalStore> store);
 
  public:
   int32_t dim() const;
-  const std::vector<int64_t>& shape() const;
+  const std::vector<size_t>& shape() const;
   LegateTypeCode code() const;
 
  public:
@@ -51,7 +48,6 @@ class Array {
  private:
   NumPyRuntime* runtime_;
   LibraryContext* context_;
-  std::vector<int64_t> shape_;
   std::shared_ptr<LogicalStore> store_;
 };
 

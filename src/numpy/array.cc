@@ -21,21 +21,18 @@
 namespace legate {
 namespace numpy {
 
-Array::Array(NumPyRuntime* runtime,
-             LibraryContext* context,
-             std::vector<int64_t> shape,
-             std::shared_ptr<LogicalStore> store)
-  : runtime_(runtime), context_(context), shape_(std::move(shape)), store_(store)
+Array::Array(NumPyRuntime* runtime, LibraryContext* context, std::shared_ptr<LogicalStore> store)
+  : runtime_(runtime), context_(context), store_(store)
 {
 }
 
-int32_t Array::dim() const { return static_cast<int32_t>(shape_.size()); }
+int32_t Array::dim() const { return store_->dim(); }
 
-const std::vector<int64_t>& Array::shape() const { return shape_; }
+const std::vector<size_t>& Array::shape() const { return store_->extents(); }
 
 LegateTypeCode Array::code() const { return store_->code(); }
 
-static std::vector<int64_t> compute_strides(const std::vector<int64_t>& shape)
+static std::vector<int64_t> compute_strides(const std::vector<size_t>& shape)
 {
   std::vector<int64_t> strides(shape.size());
   if (shape.size() > 0) {
@@ -55,7 +52,7 @@ void Array::random(int32_t gen_code)
   task->add_output(store_);
   task->add_scalar_arg(Scalar(static_cast<int32_t>(RandGenCode::UNIFORM)));
   task->add_scalar_arg(Scalar(runtime_->get_next_random_epoch()));
-  auto strides                    = compute_strides(shape_);
+  auto strides                    = compute_strides(shape());
   void* buffer                    = malloc(strides.size() * sizeof(int64_t) + sizeof(uint32_t));
   *static_cast<uint32_t*>(buffer) = strides.size();
   memcpy(static_cast<int8_t*>(buffer) + sizeof(uint32_t),

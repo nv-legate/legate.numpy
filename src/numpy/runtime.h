@@ -32,7 +32,7 @@ class NumPyRuntime {
   NumPyRuntime(Runtime* legate_runtime, LibraryContext* context);
 
  public:
-  std::shared_ptr<Array> create_array(std::vector<int64_t> shape, LegateTypeCode type);
+  std::shared_ptr<Array> create_array(std::vector<size_t> shape, LegateTypeCode type);
 
  public:
   std::unique_ptr<Task> create_task(NumPyOpCode op_code);

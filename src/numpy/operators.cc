@@ -26,7 +26,7 @@ namespace numpy {
 
 using ArrayP = std::shared_ptr<Array>;
 
-ArrayP array(std::vector<int64_t> shape, LegateTypeCode type)
+ArrayP array(std::vector<size_t> shape, LegateTypeCode type)
 {
   return NumPyRuntime::get_runtime()->create_array(std::move(shape), type);
 }
@@ -59,7 +59,7 @@ ArrayP add(ArrayP rhs1, ArrayP rhs2)
 
 ArrayP negative(ArrayP input) { return unary_op(UnaryOpCode::NEGATIVE, std::move(input)); }
 
-ArrayP random(std::vector<int64_t> shape)
+ArrayP random(std::vector<size_t> shape)
 {
   auto runtime = NumPyRuntime::get_runtime();
   auto out     = runtime->create_array(std::move(shape), LegateTypeCode::DOUBLE_LT);
