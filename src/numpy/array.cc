@@ -49,7 +49,9 @@ void Array::random(int32_t gen_code)
 {
   auto task = runtime_->create_task(NumPyOpCode::NUMPY_RAND);
 
-  task->add_output(store_);
+  auto p_lhs = task->declare_partition(store_);
+
+  task->add_output(store_, p_lhs);
   task->add_scalar_arg(Scalar(static_cast<int32_t>(RandGenCode::UNIFORM)));
   task->add_scalar_arg(Scalar(runtime_->get_next_random_epoch()));
   auto strides                    = compute_strides(shape());
@@ -67,10 +69,17 @@ void Array::binary_op(int32_t op_code, std::shared_ptr<Array> rhs1, std::shared_
 {
   auto task = runtime_->create_task(NumPyOpCode::NUMPY_BINARY_OP);
 
-  task->add_output(store_);
-  task->add_input(rhs1->store_);
-  task->add_input(rhs2->store_);
+  auto p_lhs  = task->declare_partition(store_);
+  auto p_rhs1 = task->declare_partition(rhs1->store_);
+  auto p_rhs2 = task->declare_partition(rhs2->store_);
+
+  task->add_output(store_, p_lhs);
+  task->add_input(rhs1->store_, p_rhs1);
+  task->add_input(rhs2->store_, p_rhs2);
   task->add_scalar_arg(Scalar(op_code));
+
+  task->add_constraint(align(p_lhs, p_rhs1));
+  task->add_constraint(align(p_rhs1, p_rhs2));
 
   runtime_->submit(std::move(task));
 }
@@ -79,9 +88,14 @@ void Array::unary_op(int32_t op_code, std::shared_ptr<Array> input)
 {
   auto task = runtime_->create_task(NumPyOpCode::NUMPY_UNARY_OP);
 
-  task->add_output(store_);
-  task->add_input(input->store_);
+  auto p_out = task->declare_partition(store_);
+  auto p_in  = task->declare_partition(input->store_);
+
+  task->add_output(store_, p_out);
+  task->add_input(input->store_, p_in);
   task->add_scalar_arg(Scalar(op_code));
+
+  task->add_constraint(align(p_out, p_in));
 
   runtime_->submit(std::move(task));
 }
