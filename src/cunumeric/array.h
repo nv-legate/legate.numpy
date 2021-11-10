@@ -28,9 +28,7 @@ class Array {
   friend class CuNumericRuntime;
 
  private:
-  Array(CuNumericRuntime* runtime,
-        legate::LibraryContext* context,
-        std::shared_ptr<legate::LogicalStore> store);
+  Array(CuNumericRuntime* runtime, legate::LibraryContext* context, legate::LogicalStore store);
 
  public:
   int32_t dim() const;
@@ -49,7 +47,7 @@ class Array {
  private:
   CuNumericRuntime* runtime_;
   legate::LibraryContext* context_;
-  std::shared_ptr<legate::LogicalStore> store_;
+  legate::LogicalStore store_;
 };
 
 }  // namespace cunumeric

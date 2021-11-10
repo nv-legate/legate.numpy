@@ -20,18 +20,16 @@
 
 namespace cunumeric {
 
-Array::Array(CuNumericRuntime* runtime,
-             legate::LibraryContext* context,
-             std::shared_ptr<legate::LogicalStore> store)
+Array::Array(CuNumericRuntime* runtime, legate::LibraryContext* context, legate::LogicalStore store)
   : runtime_(runtime), context_(context), store_(store)
 {
 }
 
-int32_t Array::dim() const { return store_->dim(); }
+int32_t Array::dim() const { return store_.dim(); }
 
-const std::vector<size_t>& Array::shape() const { return store_->extents(); }
+const std::vector<size_t>& Array::shape() const { return store_.extents(); }
 
-legate::LegateTypeCode Array::code() const { return store_->code(); }
+legate::LegateTypeCode Array::code() const { return store_.code(); }
 
 static std::vector<int64_t> compute_strides(const std::vector<size_t>& shape)
 {

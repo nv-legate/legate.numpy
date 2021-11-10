@@ -19,7 +19,7 @@ namespace cunumeric {
 template <typename T, int32_t DIM>
 legate::AccessorRW<T, DIM> Array::get_accessor()
 {
-  auto mapped = store_->get_physical_store(context_);
+  auto mapped = store_.get_physical_store(context_);
   auto shape  = mapped->shape<DIM>();
   return mapped->read_write_accessor<T, DIM>(shape);
 }
