@@ -104,4 +104,5 @@ INSTALL_HEADERS = cunumeric/cunumeric_c.h \
 									cunumeric/array.h       \
 									cunumeric/array.inl     \
 									cunumeric/operators.h   \
+									cunumeric/typedefs.h    \
 									cunumeric.h

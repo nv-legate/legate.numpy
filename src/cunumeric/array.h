@@ -19,6 +19,7 @@
 #include <memory>
 
 #include "legate.h"
+#include "cunumeric/typedefs.h"
 
 namespace cunumeric {
 
@@ -41,6 +42,7 @@ class Array {
 
  public:
   void random(int32_t gen_code);
+  void fill(const Scalar& value, bool argval);
   void binary_op(int32_t op_code, std::shared_ptr<Array> rhs1, std::shared_ptr<Array> rhs2);
   void unary_op(int32_t op_code, std::shared_ptr<Array> input);
 

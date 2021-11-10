@@ -16,3 +16,4 @@
 
 #include "cunumeric/array.h"
 #include "cunumeric/operators.h"
+#include "cunumeric/typedefs.h"

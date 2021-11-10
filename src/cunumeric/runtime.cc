@@ -44,6 +44,11 @@ std::shared_ptr<Array> CuNumericRuntime::create_array(std::vector<size_t> shape,
   return std::shared_ptr<Array>(array);
 }
 
+legate::LogicalStore CuNumericRuntime::create_scalar_store(const Scalar& value)
+{
+  return legate_runtime_->create_store(value);
+}
+
 std::unique_ptr<legate::Task> CuNumericRuntime::create_task(CuNumericOpCode op_code)
 {
   return legate_runtime_->create_task(context_, op_code);

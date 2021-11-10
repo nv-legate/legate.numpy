@@ -63,7 +63,15 @@ ArrayP random(std::vector<size_t> shape)
   auto runtime = CuNumericRuntime::get_runtime();
   auto out     = runtime->create_array(std::move(shape), legate::LegateTypeCode::DOUBLE_LT);
   out->random(static_cast<int32_t>(RandGenCode::UNIFORM));
-  return out;
+  return std::move(out);
+}
+
+ArrayP full(std::vector<size_t> shape, const Scalar& value)
+{
+  auto runtime = CuNumericRuntime::get_runtime();
+  auto out     = runtime->create_array(std::move(shape), value.code());
+  out->fill(value, false);
+  return std::move(out);
 }
 
 }  // namespace cunumeric

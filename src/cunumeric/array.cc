@@ -64,6 +64,21 @@ void Array::random(int32_t gen_code)
   runtime_->submit(std::move(task));
 }
 
+void Array::fill(const Scalar& value, bool argval)
+{
+  auto fill_value = runtime_->create_scalar_store(value);
+
+  auto task         = runtime_->create_task(CuNumericOpCode::CUNUMERIC_FILL);
+  auto p_lhs        = task->declare_partition(store_);
+  auto p_fill_value = task->declare_partition(fill_value);
+
+  task->add_output(store_, p_lhs);
+  task->add_input(fill_value, p_fill_value);
+  task->add_scalar_arg(legate::Scalar(argval));
+
+  runtime_->submit(std::move(task));
+}
+
 void Array::binary_op(int32_t op_code, std::shared_ptr<Array> rhs1, std::shared_ptr<Array> rhs2)
 {
   auto task = runtime_->create_task(CuNumericOpCode::CUNUMERIC_BINARY_OP);

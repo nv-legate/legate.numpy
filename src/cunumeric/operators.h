@@ -19,6 +19,7 @@
 #include <memory>
 
 #include "legate.h"
+#include "cunumeric/typedefs.h"
 
 namespace cunumeric {
 
@@ -35,5 +36,7 @@ std::shared_ptr<Array> add(std::shared_ptr<Array> rhs1, std::shared_ptr<Array> r
 std::shared_ptr<Array> negative(std::shared_ptr<Array> input);
 
 std::shared_ptr<Array> random(std::vector<size_t> shape);
+
+std::shared_ptr<Array> full(std::vector<size_t> shape, const Scalar& value);
 
 }  // namespace cunumeric
