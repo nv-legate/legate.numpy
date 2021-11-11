@@ -22,6 +22,7 @@
 
 #include "cunumeric/cunumeric_c.h"
 #include "cunumeric/typedefs.h"
+#include "cunumeric/unary/unary_red_util.h"
 
 namespace cunumeric {
 
@@ -34,6 +35,9 @@ class CuNumericRuntime {
  public:
   std::shared_ptr<Array> create_array(std::vector<size_t> shape, legate::LegateTypeCode type);
   legate::LogicalStore create_scalar_store(const Scalar& value);
+
+ public:
+  Scalar get_reduction_identity(UnaryRedCode op, legate::LegateTypeCode type);
 
  public:
   std::unique_ptr<legate::Task> create_task(CuNumericOpCode op_code);

@@ -21,6 +21,8 @@ namespace cunumeric {
 
 /*static*/ CuNumericRuntime* CuNumericRuntime::runtime_;
 
+static std::map<std::pair<UnaryRedCode, legate::LegateTypeCode>, Scalar> identities;
+
 extern void bootstrapping_callback(Legion::Machine machine,
                                    Legion::Runtime* runtime,
                                    const std::set<Legion::Processor>& local_procs);
@@ -47,6 +49,43 @@ std::shared_ptr<Array> CuNumericRuntime::create_array(std::vector<size_t> shape,
 legate::LogicalStore CuNumericRuntime::create_scalar_store(const Scalar& value)
 {
   return legate_runtime_->create_store(value);
+}
+
+struct generate_identity_fn {
+  template <UnaryRedCode OP>
+  struct generator {
+    template <legate::LegateTypeCode TYPE, std::enable_if_t<UnaryRedOp<OP, TYPE>::valid>* = nullptr>
+    Scalar operator()()
+    {
+      auto value = UnaryRedOp<OP, TYPE>::OP::identity;
+      return Scalar(value);
+    }
+
+    template <legate::LegateTypeCode TYPE,
+              std::enable_if_t<!UnaryRedOp<OP, TYPE>::valid>* = nullptr>
+    Scalar operator()()
+    {
+      assert(false);
+      return Scalar();
+    }
+  };
+
+  template <UnaryRedCode OP>
+  Scalar operator()(legate::LegateTypeCode type)
+  {
+    return legate::type_dispatch(type, generator<OP>{});
+  }
+};
+
+Scalar CuNumericRuntime::get_reduction_identity(UnaryRedCode op, legate::LegateTypeCode type)
+{
+  auto key    = std::make_pair(op, type);
+  auto finder = identities.find(key);
+  if (identities.end() != finder) return finder->second;
+
+  auto identity   = op_dispatch(op, generate_identity_fn{}, type);
+  identities[key] = identity;
+  return identity;
 }
 
 std::unique_ptr<legate::Task> CuNumericRuntime::create_task(CuNumericOpCode op_code)

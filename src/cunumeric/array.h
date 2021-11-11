@@ -45,6 +45,8 @@ class Array {
   void fill(const Scalar& value, bool argval);
   void binary_op(int32_t op_code, std::shared_ptr<Array> rhs1, std::shared_ptr<Array> rhs2);
   void unary_op(int32_t op_code, std::shared_ptr<Array> input);
+  void fill(std::shared_ptr<Array> fill_value);
+  void dot(std::shared_ptr<Array> rhs1, std::shared_ptr<Array> rhs2);
 
  private:
   CuNumericRuntime* runtime_;

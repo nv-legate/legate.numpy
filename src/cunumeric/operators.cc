@@ -74,4 +74,34 @@ ArrayP full(std::vector<size_t> shape, const Scalar& value)
   return std::move(out);
 }
 
+std::shared_ptr<Array> dot(std::shared_ptr<Array> rhs1, std::shared_ptr<Array> rhs2)
+{
+  if (rhs1->dim() != 2 || rhs2->dim() != 2) {
+    fprintf(stderr, "cunumeric::dot only supports matrices now");
+    LEGATE_ABORT
+  }
+
+  auto& rhs1_shape = rhs1->shape();
+  auto& rhs2_shape = rhs2->shape();
+
+  if (rhs1_shape[1] != rhs2_shape[0]) {
+    fprintf(stderr,
+            "Incompatible matrices: (%zd, %zd) x (%zd, %zd)\n",
+            rhs1_shape[0],
+            rhs1_shape[1],
+            rhs2_shape[0],
+            rhs2_shape[1]);
+    LEGATE_ABORT
+  }
+
+  auto runtime = CuNumericRuntime::get_runtime();
+  std::vector<size_t> shape;
+  shape.push_back(rhs1_shape[0]);
+  shape.push_back(rhs2_shape[1]);
+
+  auto out = runtime->create_array(std::move(shape), rhs1->code());
+  out->dot(std::move(rhs1), std::move(rhs2));
+  return std::move(out);
+}
+
 }  // namespace cunumeric

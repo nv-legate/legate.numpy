@@ -33,6 +33,8 @@ std::shared_ptr<Array> abs(std::shared_ptr<Array> input);
 
 std::shared_ptr<Array> add(std::shared_ptr<Array> rhs1, std::shared_ptr<Array> rhs2);
 
+std::shared_ptr<Array> dot(std::shared_ptr<Array> rhs1, std::shared_ptr<Array> rhs2);
+
 std::shared_ptr<Array> negative(std::shared_ptr<Array> input);
 
 std::shared_ptr<Array> random(std::vector<size_t> shape);

@@ -17,6 +17,7 @@
 #include "cunumeric/array.h"
 #include "cunumeric/runtime.h"
 #include "cunumeric/random/rand_util.h"
+#include "cunumeric/unary/unary_red_util.h"
 
 namespace cunumeric {
 
@@ -110,6 +111,39 @@ void Array::unary_op(int32_t op_code, std::shared_ptr<Array> input)
   task->add_scalar_arg(legate::Scalar(op_code));
 
   task->add_constraint(align(p_out, p_in));
+
+  runtime_->submit(std::move(task));
+}
+
+void Array::dot(std::shared_ptr<Array> rhs1, std::shared_ptr<Array> rhs2)
+{
+  auto identity = runtime_->get_reduction_identity(UnaryRedCode::SUM, code());
+  fill(identity, false);
+
+  assert(dim() == 2 && rhs1->dim() == 2 && rhs2->dim() == 2);
+
+  auto m = rhs1->shape()[0];
+  auto n = rhs2->shape()[1];
+  auto k = rhs1->shape()[1];
+
+  auto lhs_s  = store_.promote(1, k);
+  auto rhs1_s = rhs1->store_.promote(2, n);
+  auto rhs2_s = rhs2->store_.promote(0, m);
+
+  auto task = runtime_->create_task(CuNumericOpCode::CUNUMERIC_MATMUL);
+
+  auto p_lhs  = task->declare_partition(lhs_s);
+  auto p_rhs1 = task->declare_partition(rhs1_s);
+  auto p_rhs2 = task->declare_partition(rhs2_s);
+
+  auto redop = LEGION_REDOP_BASE + LEGION_TYPE_TOTAL * LEGION_REDOP_KIND_SUM + code();
+
+  task->add_reduction(lhs_s, redop, p_lhs);
+  task->add_input(rhs1_s, p_rhs1);
+  task->add_input(rhs2_s, p_rhs2);
+
+  task->add_constraint(align(p_lhs, p_rhs1));
+  task->add_constraint(align(p_rhs1, p_rhs2));
 
   runtime_->submit(std::move(task));
 }
