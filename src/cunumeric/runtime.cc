@@ -77,6 +77,31 @@ struct generate_identity_fn {
   }
 };
 
+struct generate_redop_fn {
+  template <UnaryRedCode OP>
+  struct generator {
+    template <legate::LegateTypeCode TYPE, std::enable_if_t<UnaryRedOp<OP, TYPE>::valid>* = nullptr>
+    int32_t operator()()
+    {
+      return UnaryRedOp<OP, TYPE>::OP::REDOP_ID;
+    }
+
+    template <legate::LegateTypeCode TYPE,
+              std::enable_if_t<!UnaryRedOp<OP, TYPE>::valid>* = nullptr>
+    int32_t operator()()
+    {
+      assert(false);
+      return 0;
+    }
+  };
+
+  template <UnaryRedCode OP>
+  int32_t operator()(legate::LegateTypeCode type)
+  {
+    return legate::type_dispatch(type, generator<OP>{});
+  }
+};
+
 Scalar CuNumericRuntime::get_reduction_identity(UnaryRedCode op, legate::LegateTypeCode type)
 {
   auto key    = std::make_pair(op, type);
@@ -86,6 +111,12 @@ Scalar CuNumericRuntime::get_reduction_identity(UnaryRedCode op, legate::LegateT
   auto identity   = op_dispatch(op, generate_identity_fn{}, type);
   identities[key] = identity;
   return identity;
+}
+
+Legion::ReductionOpID CuNumericRuntime::get_reduction_op(UnaryRedCode op,
+                                                         legate::LegateTypeCode type)
+{
+  return op_dispatch(op, generate_redop_fn{}, type);
 }
 
 std::unique_ptr<legate::Task> CuNumericRuntime::create_task(CuNumericOpCode op_code)

@@ -38,6 +38,14 @@ ArrayP unary_op(UnaryOpCode op_code, ArrayP input)
   return std::move(out);
 }
 
+ArrayP unary_reduction(UnaryRedCode op_code, ArrayP input)
+{
+  auto runtime = CuNumericRuntime::get_runtime();
+  auto out     = runtime->create_array({1}, input->code());
+  out->unary_reduction(static_cast<int32_t>(op_code), std::move(input));
+  return std::move(out);
+}
+
 ArrayP binary_op(BinaryOpCode op_code, ArrayP rhs1, ArrayP rhs2)
 {
   assert(rhs1->shape() == rhs2->shape());
@@ -74,7 +82,7 @@ ArrayP full(std::vector<size_t> shape, const Scalar& value)
   return std::move(out);
 }
 
-std::shared_ptr<Array> dot(std::shared_ptr<Array> rhs1, std::shared_ptr<Array> rhs2)
+ArrayP dot(ArrayP rhs1, ArrayP rhs2)
 {
   if (rhs1->dim() != 2 || rhs2->dim() != 2) {
     fprintf(stderr, "cunumeric::dot only supports matrices now");
@@ -103,5 +111,7 @@ std::shared_ptr<Array> dot(std::shared_ptr<Array> rhs1, std::shared_ptr<Array> r
   out->dot(std::move(rhs1), std::move(rhs2));
   return std::move(out);
 }
+
+ArrayP sum(ArrayP input) { return unary_reduction(UnaryRedCode::SUM, std::move(input)); }
 
 }  // namespace cunumeric

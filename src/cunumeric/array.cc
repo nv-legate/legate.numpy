@@ -115,6 +115,27 @@ void Array::unary_op(int32_t op_code, std::shared_ptr<Array> input)
   runtime_->submit(std::move(task));
 }
 
+void Array::unary_reduction(int32_t op_code_, std::shared_ptr<Array> input)
+{
+  auto op_code = static_cast<UnaryRedCode>(op_code_);
+
+  auto identity = runtime_->get_reduction_identity(op_code, code());
+  fill(identity, false);
+
+  auto task = runtime_->create_task(CuNumericOpCode::CUNUMERIC_SCALAR_UNARY_RED);
+
+  auto p_out = task->declare_partition(store_);
+  auto p_in  = task->declare_partition(input->store_);
+
+  auto redop = runtime_->get_reduction_op(op_code, code());
+
+  task->add_reduction(store_, redop, p_out);
+  task->add_input(input->store_, p_in);
+  task->add_scalar_arg(legate::Scalar(op_code_));
+
+  runtime_->submit(std::move(task));
+}
+
 void Array::dot(std::shared_ptr<Array> rhs1, std::shared_ptr<Array> rhs2)
 {
   auto identity = runtime_->get_reduction_identity(UnaryRedCode::SUM, code());

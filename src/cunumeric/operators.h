@@ -41,4 +41,6 @@ std::shared_ptr<Array> random(std::vector<size_t> shape);
 
 std::shared_ptr<Array> full(std::vector<size_t> shape, const Scalar& value);
 
+std::shared_ptr<Array> sum(std::shared_ptr<Array> input);
+
 }  // namespace cunumeric

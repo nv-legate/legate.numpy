@@ -38,6 +38,7 @@ class CuNumericRuntime {
 
  public:
   Scalar get_reduction_identity(UnaryRedCode op, legate::LegateTypeCode type);
+  Legion::ReductionOpID get_reduction_op(UnaryRedCode op, legate::LegateTypeCode type);
 
  public:
   std::unique_ptr<legate::Task> create_task(CuNumericOpCode op_code);
