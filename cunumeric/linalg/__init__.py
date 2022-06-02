@@ -1,4 +1,4 @@
-# Copyright 2021 NVIDIA Corporation
+# Copyright 2021-2022 NVIDIA Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,17 +13,13 @@
 # limitations under the License.
 #
 
-import sys as _sys
 
 import numpy.linalg as _nplinalg
+
 from cunumeric.linalg.linalg import *
-from cunumeric.utils import (
-    add_missing_attributes as _add_missing_attributes,
-)
+from cunumeric.coverage import clone_module
 
-_thismodule = _sys.modules[__name__]
+clone_module(_nplinalg, globals())
 
-# map any undefined attributes to numpy
-_add_missing_attributes(_nplinalg, _thismodule)
-
-del _add_missing_attributes
+del clone_module
+del _nplinalg

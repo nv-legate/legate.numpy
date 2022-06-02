@@ -1,4 +1,4 @@
-/* Copyright 2021 NVIDIA Corporation
+/* Copyright 2021-2022 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 #include "cunumeric/item/write.h"
 #include "cunumeric/item/write_template.inl"
+#include "cunumeric/cuda_help.h"
 
 namespace cunumeric {
 
@@ -32,7 +33,9 @@ template <typename VAL>
 struct WriteImplBody<VariantKind::GPU, VAL> {
   void operator()(const AccessorWO<VAL, 1>& out, const AccessorRO<VAL, 1>& value) const
   {
-    write_value<VAL><<<1, 1>>>(out, value);
+    auto stream = get_cached_stream();
+    write_value<VAL><<<1, 1, 0, stream>>>(out, value);
+    CHECK_CUDA_STREAM(stream);
   }
 };
 

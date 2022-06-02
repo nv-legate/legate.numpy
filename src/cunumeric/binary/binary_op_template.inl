@@ -1,4 +1,4 @@
-/* Copyright 2021 NVIDIA Corporation
+/* Copyright 2021-2022 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,9 +32,10 @@ struct BinaryOpImpl {
             std::enable_if_t<BinaryOp<OP_CODE, CODE>::valid>* = nullptr>
   void operator()(BinaryOpArgs& args) const
   {
-    using OP  = BinaryOp<OP_CODE, CODE>;
-    using ARG = legate_type_of<CODE>;
-    using RES = std::result_of_t<OP(ARG, ARG)>;
+    using OP   = BinaryOp<OP_CODE, CODE>;
+    using RHS1 = legate_type_of<CODE>;
+    using RHS2 = rhs2_of_binary_op<OP_CODE, CODE>;
+    using LHS  = std::result_of_t<OP(RHS1, RHS2)>;
 
     auto rect = args.out.shape<DIM>();
 
@@ -43,9 +44,9 @@ struct BinaryOpImpl {
 
     if (volume == 0) return;
 
-    auto out = args.out.write_accessor<RES, DIM>(rect);
-    auto in1 = args.in1.read_accessor<ARG, DIM>(rect);
-    auto in2 = args.in2.read_accessor<ARG, DIM>(rect);
+    auto out = args.out.write_accessor<LHS, DIM>(rect);
+    auto in1 = args.in1.read_accessor<RHS1, DIM>(rect);
+    auto in2 = args.in2.read_accessor<RHS2, DIM>(rect);
 
 #ifndef LEGION_BOUNDS_CHECKS
     // Check to see if this is dense or not

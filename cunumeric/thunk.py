@@ -1,4 +1,4 @@
-# Copyright 2021 NVIDIA Corporation
+# Copyright 2021-2022 NVIDIA Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,15 +13,10 @@
 # limitations under the License.
 #
 
-from __future__ import absolute_import, division, print_function
-
-import numpy
-import pyarrow
-
-from legate.core import Future, Region
+from abc import ABC, abstractmethod, abstractproperty
 
 
-class NumPyThunk(object):
+class NumPyThunk(ABC):
     """This is the base class for NumPy computations. It has methods
     for all the kinds of computations and operations that can be done
     on cuNumeric ndarrays.
@@ -32,26 +27,7 @@ class NumPyThunk(object):
     def __init__(self, runtime, dtype):
         self.runtime = runtime
         self.context = runtime.legate_context
-        self.legate_runtime = runtime.legate_runtime
         self.dtype = dtype
-
-    # From Legate Store class
-    @property
-    def type(self):
-        return pyarrow.from_numpy_dtype(self.dtype)
-
-    # From Legate Store class
-    @property
-    def kind(self):
-        if self.ndim == 0:
-            return Future
-        else:
-            return (Region, int)
-
-    @property
-    def storage(self):
-        """Return the Legion storage primitive for this NumPy thunk"""
-        raise NotImplementedError("Implement in derived classes")
 
     @property
     def ndim(self):
@@ -66,236 +42,189 @@ class NumPyThunk(object):
             s *= p
         return s
 
-    def __numpy_array__(self, stacklevel):
-        """Return a NumPy array that shares storage for this thunk
+    # Abstract methods
 
-        :meta private:
-        """
-        raise NotImplementedError("Implement in derived classes")
+    @abstractproperty
+    def storage(self):
+        """Return the Legion storage primitive for this NumPy thunk"""
+        ...
 
-    def wrap(self, ndarray):
-        """Record that this thunk is wrapped by an ndarray
+    @abstractmethod
+    def __numpy_array__(self):
+        ...
 
-        :meta private:
-        """
-        pass
+    @abstractmethod
+    def imag(self):
+        ...
 
-    def imag(self, stacklevel):
-        """Return a thunk for the imaginary part of this complex array
+    @abstractmethod
+    def real(self):
+        ...
 
-        :meta private:
-        """
-        raise NotImplementedError("Implement in derived classes")
+    @abstractmethod
+    def conj(self):
+        ...
 
-    def real(self, stacklevel):
-        """Return a thunk for the real part of this complex array
+    @abstractmethod
+    def convolve(self, v, out, mode):
+        ...
 
-        :meta private:
-        """
-        raise NotImplementedError("Implement in derived classes")
+    @abstractmethod
+    def fft(self, out, axes, kind, direction):
+        ...
 
-    def copy(self, rhs, deep, stacklevel):
-        """Make a copy of the thunk
+    @abstractmethod
+    def copy(self, rhs, deep):
+        ...
 
-        :meta private:
-        """
-        raise NotImplementedError("Implement in derived classes")
+    @abstractmethod
+    def repeat(self, repeats, axis, scalar_repeats):
+        ...
 
     @property
+    @abstractmethod
     def scalar(self):
-        """If true then this thunk is convertible to a  ()-shape array
+        ...
 
-        :meta private:
-        """
-        raise NotImplementedError("Implement in derived classes")
+    @abstractmethod
+    def get_scalar_array(self):
+        ...
 
-    def get_scalar_array(self, stacklevel):
-        """Get the actual value out of a scalar thunk, as a ()-shape array
+    @abstractmethod
+    def get_item(self, key, view=None, dim_map=None):
+        ...
 
-        :meta private:
-        """
-        raise NotImplementedError("Implement in derived classes")
+    @abstractmethod
+    def set_item(self, key, value):
+        ...
 
-    def get_item(self, key, stacklevel, view=None, dim_map=None):
-        """Get an item from the thunk
+    @abstractmethod
+    def reshape(self, newshape, order):
+        ...
 
-        :meta private:
-        """
-        raise NotImplementedError("Implement in derived classes")
+    @abstractmethod
+    def squeeze(self, axis):
+        ...
 
-    def set_item(self, key, value, stacklevel):
-        """Set an item in the thunk
+    @abstractmethod
+    def swapaxes(self, axis1, axis2):
+        ...
 
-        :meta private:
-        """
-        raise NotImplementedError("Implement in derived classes")
+    @abstractmethod
+    def convert(self, rhs, warn=True):
+        ...
 
-    def reshape(self, newshape, order, stacklevel):
-        """Reshape the array using the same backing storage if possible
+    @abstractmethod
+    def fill(self, value):
+        ...
 
-        :meta private:
-        """
-        raise NotImplementedError("Implement in derived classes")
+    @abstractmethod
+    def transpose(self, axes):
+        ...
 
-    def squeeze(self, axis, stacklevel):
-        """Remove dimensions of size 1 from the shape of the array
+    @abstractmethod
+    def flip(self, rhs, axes):
+        ...
 
-        :meta private:
-        """
-        raise NotImplementedError("Implement in derived classes")
-
-    def swapaxes(self, axis1, axis2, stacklevel):
-        """Swap two axes in the representation of the array
-
-        :meta private:
-        """
-        raise NotImplementedError("Implement in derived classes")
-
-    def convert(self, rhs, stacklevel, warn=True):
-        """Convert the data in our thunk to the type in the target array
-
-        :meta private:
-        """
-        raise NotImplementedError("Implement in derived classes")
-
-    def fill(self, value, stacklevel):
-        """Fill this thunk with the given value
-
-        :meta private:
-        """
-        raise NotImplementedError("Implement in derived classes")
-
-    def dot(self, rhs1, rhs2, stacklevel):
-        """Perform a dot operation on our thunk
-
-        :meta private:
-        """
-        raise NotImplementedError("Implement in derived classes")
-
-    def transpose(self, rhs, axes, stacklevel):
-        """Perform a transpose operation on our thunk
-
-        :meta private:
-        """
-        raise NotImplementedError("Implement in derived classes")
-
-    def diag(self, rhs, extract, k, stacklevel):
-        """Fill in or extract a diagonal from a matrix
-
-        :meta private:
-        """
-        raise NotImplementedError("Implement in derived classes")
-
-    def eye(self, k, stacklevel):
-        """Fill in our thunk with an identity pattern
-
-        :meta private:
-        """
-        raise NotImplementedError("Implement in derived classes")
-
-    def tile(self, rhs, reps, stacklevel):
-        """Tile our thunk onto the target
-
-        :meta private:
-        """
-        raise NotImplementedError("Implement in derived classes")
-
-    def bincount(self, rhs, stacklevel, weights=None):
-        """Compute the bincount for the array
-
-        :meta private:
-        """
-        raise NotImplementedError("Implement in derived classes")
-
-    def nonzero(self, stacklevel):
-        """Return a tuple of thunks for the non-zero indices in each "
-        "dimension
-
-        :meta private:
-        """
-        raise NotImplementedError("Implement in derived classes")
-
-    def sort(self, rhs, stacklevel):
-        """Sort the array
-
-        :meta private:
-        """
-        raise NotImplementedError("Implement in derived classes")
-
-    def random_uniform(self, stacklevel):
-        """Fill this array with a random uniform distribution
-
-        :meta private:
-        """
-        raise NotImplementedError("Implement in derived classes")
-
-    def random_normal(self, stacklevel):
-        """Fill this array with a random normal distribution
-
-        :meta private:
-        """
-        raise NotImplementedError("Implement in derived classes")
-
-    def random_integer(self, low, high, stacklevel):
-        """Fill this array with a random integer distribution
-
-        :meta private:
-        """
-        raise NotImplementedError("Implement in derived classes")
-
-    def unary_op(self, op, op_type, rhs, where, args, stacklevel):
-        """Perform a unary operation and put the result in the dst
-        array
-
-        :meta private:
-        """
-        raise NotImplementedError("Implement in derived classes")
-
-    def unary_reduction(
-        self, op, redop, rhs, where, axes, keepdims, args, initial, stacklevel
+    @abstractmethod
+    def contract(
+        self,
+        lhs_modes,
+        rhs1_thunk,
+        rhs1_modes,
+        rhs2_thunk,
+        rhs2_modes,
+        mode2extent,
     ):
-        """Perform a unary reduction and put the result in the dst
-        array
+        ...
 
-        :meta private:
-        """
-        raise NotImplementedError("Implement in derived classes")
+    @abstractmethod
+    def choose(self, *args, rhs):
+        ...
 
-    def binary_op(self, op, rhs1, rhs2, where, args, stacklevel):
-        """Perform a binary operation with src and put the result in the
-        dst array
+    @abstractmethod
+    def _diag_helper(self, rhs, offset, naxes, extract, trace):
+        ...
 
-        :meta private:
-        """
-        raise NotImplementedError("Implement in derived classes")
+    @abstractmethod
+    def eye(self, k):
+        ...
 
-    def binary_reduction(self, op, rhs1, rhs2, broadcast, args, stacklevel):
-        """Perform a binary reduction with src and put the result in the
-        dst array
+    @abstractmethod
+    def arange(self, start, stop, step):
+        ...
 
-        :meta private:
-        """
-        raise NotImplementedError("Implement in derived classes")
+    @abstractmethod
+    def tile(self, rhs, reps):
+        ...
 
-    def ternary_op(self, op, rhs1, rhs2, rhs3, where, args, stacklevel):
-        """Perform a ternary op with one and two and put the result in
-        the dst array
+    @abstractmethod
+    def trilu(self, start, stop, step):
+        ...
 
-        :meta private:
-        """
-        raise NotImplementedError("Implement in derived classes")
+    @abstractmethod
+    def bincount(self, rhs, weights=None):
+        ...
 
-    def _is_advanced_indexing(self, key, first=True):
-        if key is Ellipsis or key is None:  # np.newdim case
-            return False
-        if numpy.isscalar(key):
-            return False
-        if isinstance(key, slice):
-            return False
-        if isinstance(key, tuple):
-            for k in key:
-                if self._is_advanced_indexing(k, first=False):
-                    return True
-            return False
-        # Any other kind of thing leads to advanced indexing
-        return True
+    @abstractmethod
+    def nonzero(self):
+        ...
+
+    @abstractmethod
+    def random_uniform(self):
+        ...
+
+    @abstractmethod
+    def random_normal(self):
+        ...
+
+    @abstractmethod
+    def random_integer(self, low, high):
+        ...
+
+    @abstractmethod
+    def unary_op(self, op, rhs, where, args, multiout=None):
+        ...
+
+    @abstractmethod
+    def unary_reduction(
+        self,
+        op,
+        redop,
+        rhs,
+        where,
+        orig_axis,
+        axes,
+        keepdims,
+        args,
+        initial,
+    ):
+        ...
+
+    @abstractmethod
+    def isclose(self, rhs1, rhs2, rtol, atol, equal_nan):
+        ...
+
+    @abstractmethod
+    def binary_op(self, op, rhs1, rhs2, where, args):
+        ...
+
+    @abstractmethod
+    def binary_reduction(self, op, rhs1, rhs2, broadcast, args):
+        ...
+
+    @abstractmethod
+    def where(self, op, rhs1, rhs2, rhs3):
+        ...
+
+    @abstractmethod
+    def cholesky(self, src, no_tril):
+        ...
+
+    @abstractmethod
+    def unique(self):
+        ...
+
+    @abstractmethod
+    def create_window(self, op_code, *args):
+        ...

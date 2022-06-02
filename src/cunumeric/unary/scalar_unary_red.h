@@ -1,4 +1,4 @@
-/* Copyright 2021 NVIDIA Corporation
+/* Copyright 2021-2022 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ struct ScalarUnaryRedArgs {
   const legate::Store& out;
   const legate::Store& in;
   UnaryRedCode op_code;
+  Legion::DomainPoint shape;
   std::vector<legate::Store> args;
 };
 

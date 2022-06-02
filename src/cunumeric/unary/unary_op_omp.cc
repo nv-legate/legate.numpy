@@ -1,4 +1,4 @@
-/* Copyright 2021 NVIDIA Corporation
+/* Copyright 2021-2022 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,6 +46,62 @@ struct UnaryOpImplBody<VariantKind::OMP, OP_CODE, CODE, DIM> {
       for (size_t idx = 0; idx < volume; ++idx) {
         auto p = pitches.unflatten(idx, rect.lo);
         out[p] = func(in[p]);
+      }
+    }
+  }
+};
+
+template <typename VAL, int DIM>
+struct PointCopyImplBody<VariantKind::OMP, VAL, DIM> {
+  void operator()(AccessorWO<VAL, DIM> out,
+                  AccessorRO<VAL, DIM> in,
+                  const Pitches<DIM - 1>& pitches,
+                  const Rect<DIM>& rect,
+                  bool dense) const
+  {
+    const size_t volume = rect.volume();
+    if (dense) {
+      auto outptr = out.ptr(rect);
+      auto inptr  = in.ptr(rect);
+#pragma omp parallel for schedule(static)
+      for (size_t idx = 0; idx < volume; ++idx) outptr[idx] = inptr[idx];
+    } else {
+#pragma omp parallel for schedule(static)
+      for (size_t idx = 0; idx < volume; ++idx) {
+        auto p = pitches.unflatten(idx, rect.lo);
+        out[p] = in[p];
+      }
+    }
+  }
+};
+
+template <UnaryOpCode OP_CODE, LegateTypeCode CODE, int DIM>
+struct MultiOutUnaryOpImplBody<VariantKind::OMP, OP_CODE, CODE, DIM> {
+  using OP   = MultiOutUnaryOp<OP_CODE, CODE>;
+  using RHS1 = typename OP::RHS1;
+  using RHS2 = typename OP::RHS2;
+  using LHS  = std::result_of_t<OP(RHS1, RHS2*)>;
+
+  void operator()(OP func,
+                  AccessorWO<LHS, DIM> lhs,
+                  AccessorRO<RHS1, DIM> rhs1,
+                  AccessorWO<RHS2, DIM> rhs2,
+                  const Pitches<DIM - 1>& pitches,
+                  const Rect<DIM>& rect,
+                  bool dense) const
+  {
+    const size_t volume = rect.volume();
+    if (dense) {
+      auto lhsptr  = lhs.ptr(rect);
+      auto rhs1ptr = rhs1.ptr(rect);
+      auto rhs2ptr = rhs2.ptr(rect);
+#pragma omp parallel for schedule(static)
+      for (size_t idx = 0; idx < volume; ++idx) lhsptr[idx] = func(rhs1ptr[idx], &rhs2ptr[idx]);
+    } else {
+#pragma omp parallel for schedule(static)
+      for (size_t idx = 0; idx < volume; ++idx) {
+        auto p = pitches.unflatten(idx, rect.lo);
+        lhs[p] = func(rhs1[p], rhs2.ptr(p));
       }
     }
   }

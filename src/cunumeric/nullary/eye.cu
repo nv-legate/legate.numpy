@@ -1,4 +1,4 @@
-/* Copyright 2021 NVIDIA Corporation
+/* Copyright 2021-2022 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,9 @@ struct EyeImplBody<VariantKind::GPU, VAL> {
                   const coord_t distance) const
   {
     const size_t blocks = (distance + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
-    eye_kernel<VAL><<<blocks, THREADS_PER_BLOCK>>>(out, start, distance);
+    auto stream         = get_cached_stream();
+    eye_kernel<VAL><<<blocks, THREADS_PER_BLOCK, 0, stream>>>(out, start, distance);
+    CHECK_CUDA_STREAM(stream);
   }
 };
 

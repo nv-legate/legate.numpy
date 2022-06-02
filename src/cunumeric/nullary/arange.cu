@@ -1,4 +1,4 @@
-/* Copyright 2021 NVIDIA Corporation
+/* Copyright 2021-2022 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,10 @@ struct ArangeImplBody<VariantKind::GPU, VAL> {
   {
     const auto distance = rect.hi[0] - rect.lo[0] + 1;
     const size_t blocks = (distance + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
-    arange_kernel<VAL><<<blocks, THREADS_PER_BLOCK>>>(out, rect.lo[0], start, step, distance);
+    auto stream         = get_cached_stream();
+    arange_kernel<VAL>
+      <<<blocks, THREADS_PER_BLOCK, 0, stream>>>(out, rect.lo[0], start, step, distance);
+    CHECK_CUDA_STREAM(stream);
   }
 };
 

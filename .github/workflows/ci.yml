@@ -8,7 +8,7 @@ on:
       - gh-pages  # deployment target branch (this workflow should not exist on that branch anyway)
 env:
   COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
-  PROJECT: github-numpy-ci
+  PROJECT: github-cunumeric-ci
   REF: ${{ github.event.pull_request.head.ref || github.ref }}
   BASE_REF: ${{ github.event.pull_request.base.ref || github.ref }}
   EVENT_NAME: ${{ github.event_name }}
@@ -20,6 +20,30 @@ jobs:
     if: ${{ github.repository == 'nv-legate/cunumeric' }}
     runs-on: self-hosted
     steps:
+      - name: Dump GitHub context
+        env:
+          GITHUB_CONTEXT: ${{ toJSON(github) }}
+        run: echo "$GITHUB_CONTEXT"
+      - name: Dump job context
+        env:
+          JOB_CONTEXT: ${{ toJSON(job) }}
+        run: echo "$JOB_CONTEXT"
+      - name: Dump steps context
+        env:
+          STEPS_CONTEXT: ${{ toJSON(steps) }}
+        run: echo "$STEPS_CONTEXT"
+      - name: Dump runner context
+        env:
+          RUNNER_CONTEXT: ${{ toJSON(runner) }}
+        run: echo "$RUNNER_CONTEXT"
+      - name: Dump strategy context
+        env:
+          STRATEGY_CONTEXT: ${{ toJSON(strategy) }}
+        run: echo "$STRATEGY_CONTEXT"
+      - name: Dump matrix context
+        env:
+          MATRIX_CONTEXT: ${{ toJSON(matrix) }}
+        run: echo "$MATRIX_CONTEXT"
       - name: Run CI build
         run: |
           /data/github-runner/legate-bin/setup.sh
@@ -45,14 +69,39 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - {name: 1 CPU test, options: --cpus 1, log: cpu}
+          - {name: 1 CPU test, options: --cpus 1 --unit, log: cpu}
           - {name: 2 CPUs test, options: --cpus 2, log: cpus}
           - {name: GPU test, options: --use cuda --gpus 1, log: gpu}
           - {name: 2 GPUs test, options: --use cuda --gpus 2, log: gpus}
           - {name: OpenMP test, options: --use openmp --omps 1 --ompthreads 2, log: omp}
           - {name: 2 OpenMPs test, options: --use openmp --omps 2 --ompthreads 2, log: omps}
+          - {name: Eager execution test, options: --use eager, log: eager}
     name: ${{ matrix.name }}
     steps:
+      - name: Dump GitHub context
+        env:
+          GITHUB_CONTEXT: ${{ toJSON(github) }}
+        run: echo "$GITHUB_CONTEXT"
+      - name: Dump job context
+        env:
+          JOB_CONTEXT: ${{ toJSON(job) }}
+        run: echo "$JOB_CONTEXT"
+      - name: Dump steps context
+        env:
+          STEPS_CONTEXT: ${{ toJSON(steps) }}
+        run: echo "$STEPS_CONTEXT"
+      - name: Dump runner context
+        env:
+          RUNNER_CONTEXT: ${{ toJSON(runner) }}
+        run: echo "$RUNNER_CONTEXT"
+      - name: Dump strategy context
+        env:
+          STRATEGY_CONTEXT: ${{ toJSON(strategy) }}
+        run: echo "$STRATEGY_CONTEXT"
+      - name: Dump matrix context
+        env:
+          MATRIX_CONTEXT: ${{ toJSON(matrix) }}
+        run: echo "$MATRIX_CONTEXT"
       - name: Prepare
         run: |
           /data/github-runner/legate-bin/setup.sh

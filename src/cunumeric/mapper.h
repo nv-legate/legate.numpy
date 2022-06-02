@@ -1,4 +1,4 @@
-/* Copyright 2021 NVIDIA Corporation
+/* Copyright 2021-2022 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,13 +24,13 @@ namespace cunumeric {
 
 class CuNumericMapper : public legate::mapping::BaseMapper {
  public:
-  CuNumericMapper(Legion::Mapping::MapperRuntime* rt,
+  CuNumericMapper(Legion::Runtime* rt,
                   Legion::Machine machine,
                   const legate::LibraryContext& context);
   virtual ~CuNumericMapper(void) {}
 
  private:
-  CuNumericMapper(const CuNumericMapper& rhs) = delete;
+  CuNumericMapper(const CuNumericMapper& rhs)            = delete;
   CuNumericMapper& operator=(const CuNumericMapper& rhs) = delete;
 
   // Legate mapping functions

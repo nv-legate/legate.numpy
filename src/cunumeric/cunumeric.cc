@@ -1,4 +1,4 @@
-/* Copyright 2021 NVIDIA Corporation
+/* Copyright 2021-2022 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,9 @@ using namespace legate;
 namespace cunumeric {
 
 static const char* const cunumeric_library_name = "cunumeric";
+
+/*static*/ bool CuNumeric::has_numamem   = false;
+/*static*/ MapperID CuNumeric::mapper_id = -1;
 
 /*static*/ LegateTaskRegistrar& CuNumeric::get_registrar()
 {
@@ -89,5 +92,11 @@ void cunumeric_perform_registration(void)
   // in before the runtime starts and make it global so that we know
   // that this call back is invoked everywhere across all nodes
   Legion::Runtime::perform_registration_callback(cunumeric::registration_callback, true /*global*/);
+
+  Runtime* runtime = Runtime::get_runtime();
+  Context ctx      = Runtime::get_context();
+  Future fut       = runtime->select_tunable_value(
+    ctx, CUNUMERIC_TUNABLE_HAS_NUMAMEM, cunumeric::CuNumeric::mapper_id);
+  if (fut.get_result<int32_t>() != 0) cunumeric::CuNumeric::has_numamem = true;
 }
 }

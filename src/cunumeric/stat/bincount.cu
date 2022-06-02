@@ -1,4 +1,4 @@
-/* Copyright 2021 NVIDIA Corporation
+/* Copyright 2021-2022 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@ static __device__ inline void _bincount(int32_t* bins,
     const auto x   = origin[0] + offset;
     const auto bin = rhs[x];
     assert(bin < num_bins);
-    atomicAdd(bins + bin, 1);
+    SumReduction<int32_t>::fold<false>(bins[bin], 1);
     // Now get the next offset
     offset += stride;
   }
@@ -72,7 +72,7 @@ static __device__ inline void _weighted_bincount(double* bins,
     const auto x   = origin[0] + offset;
     const auto bin = rhs[x];
     assert(bin < num_bins);
-    atomicAdd(bins + bin, weights[x]);
+    SumReduction<double>::fold<false>(bins[bin], weights[x]);
     // Now get the next offset
     offset += stride;
   }
@@ -172,8 +172,10 @@ struct BincountImplBody<VariantKind::GPU, CODE> {
       &num_ctas, bincount_kernel_rd<VAL>, THREADS_PER_BLOCK, bin_size);
     assert(num_ctas > 0);
     // Launch a kernel with this number of CTAs
+    auto stream = get_cached_stream();
     bincount_kernel_rd<VAL>
-      <<<num_ctas, THREADS_PER_BLOCK, bin_size>>>(lhs, rhs, volume, num_bins, rect.lo);
+      <<<num_ctas, THREADS_PER_BLOCK, bin_size, stream>>>(lhs, rhs, volume, num_bins, rect.lo);
+    CHECK_CUDA_STREAM(stream);
   }
 
   void operator()(const AccessorRW<int64_t, 1>& lhs,
@@ -190,8 +192,10 @@ struct BincountImplBody<VariantKind::GPU, CODE> {
       &num_ctas, bincount_kernel_rw<VAL>, THREADS_PER_BLOCK, bin_size);
     assert(num_ctas > 0);
     // Launch a kernel with this number of CTAs
+    auto stream = get_cached_stream();
     bincount_kernel_rw<VAL>
-      <<<num_ctas, THREADS_PER_BLOCK, bin_size>>>(lhs, rhs, volume, num_bins, rect.lo);
+      <<<num_ctas, THREADS_PER_BLOCK, bin_size, stream>>>(lhs, rhs, volume, num_bins, rect.lo);
+    CHECK_CUDA_STREAM(stream);
   }
 
   void operator()(AccessorRD<SumReduction<double>, false, 1> lhs,
@@ -209,8 +213,10 @@ struct BincountImplBody<VariantKind::GPU, CODE> {
       &num_ctas, weighted_bincount_kernel_rd<VAL>, THREADS_PER_BLOCK, bin_size);
     assert(num_ctas > 0);
     // Launch a kernel with this number of CTAs
-    weighted_bincount_kernel_rd<VAL>
-      <<<num_ctas, THREADS_PER_BLOCK, bin_size>>>(lhs, rhs, weights, volume, num_bins, rect.lo);
+    auto stream = get_cached_stream();
+    weighted_bincount_kernel_rd<VAL><<<num_ctas, THREADS_PER_BLOCK, bin_size, stream>>>(
+      lhs, rhs, weights, volume, num_bins, rect.lo);
+    CHECK_CUDA_STREAM(stream);
   }
 
   void operator()(const AccessorRW<double, 1>& lhs,
@@ -228,8 +234,10 @@ struct BincountImplBody<VariantKind::GPU, CODE> {
       &num_ctas, weighted_bincount_kernel_rw<VAL>, THREADS_PER_BLOCK, bin_size);
     assert(num_ctas > 0);
     // Launch a kernel with this number of CTAs
-    weighted_bincount_kernel_rw<VAL>
-      <<<num_ctas, THREADS_PER_BLOCK, bin_size>>>(lhs, rhs, weights, volume, num_bins, rect.lo);
+    auto stream = get_cached_stream();
+    weighted_bincount_kernel_rw<VAL><<<num_ctas, THREADS_PER_BLOCK, bin_size, stream>>>(
+      lhs, rhs, weights, volume, num_bins, rect.lo);
+    CHECK_CUDA_STREAM(stream);
   }
 };
 

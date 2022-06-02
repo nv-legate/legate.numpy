@@ -1,4 +1,4 @@
-/* Copyright 2021 NVIDIA Corporation
+/* Copyright 2021-2022 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -209,9 +209,15 @@ static unsigned roundup_tile(Point<DIM>& tile,
     }
     return (tile[0] + padding[0]) * sizeof(VAL);
   } else {
+    // Compute the initial size
+    // Shrink the tile to the bounds if necessary
+    unsigned result = sizeof(VAL);
+    for (int d = 0; d < DIM; d++) {
+      if (bounds[d] < tile[d]) tile[d] = bounds[d];
+      result *= (tile[d] + padding[d]);
+    }
     // Find the two smallest dimensions and increase one of them
     // until we hit the second smallest one or exceed max_smem_size
-    unsigned result   = 0;
     unsigned skipdims = 0;
     bool all_same     = true;
     while (true) {

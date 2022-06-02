@@ -1,5 +1,5 @@
 <!--
-Copyright 2021 NVIDIA Corporation
+Copyright 2021-2022 NVIDIA Corporation
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -43,18 +43,21 @@ If you have questions, please contact us at legate(at)nvidia.com.
 1. [Supported Types and Dimensions](#supported-types-and-dimensions)
 1. [Documentation](#documentation)
 1. [Future Directions](#future-directions)
+1. [Contributing](#contributing)
 1. [Known Bugs](#known-bugs)
 
 ## Installation
 
-cuNumeric is available on conda:
+cuNumeric is available [on conda](https://anaconda.org/legate/cunumeric):
 
 ```
 conda install -c nvidia -c conda-forge -c legate cunumeric
 ```
+The conda package is compatible with CUDA >= 11.4 (CUDA driver version >= r470),
+and Volta or later GPU architectures.
 
-Pre-built docker images containing all Legate libraries, as well as specialized
-install scripts for supported clusters are available on the
+Docker image build scripts, as well as specialized install scripts for
+supported clusters are available on the
 [quickstart](https://github.com/nv-legate/quickstart) repo.
 
 Read on for general instructions on building cuNumeric from source.
@@ -65,13 +68,26 @@ Users must have a working installation of the
 [Legate Core](https://github.com/nv-legate/legate.core)
 library prior to installing cuNumeric.
 
-cuNumeric requires Python >= 3.6. We provide a
-[conda environment file](conda/cunumeric_dev.yml) that
-installs all needed dependencies in one step. Use the following command to
-create a conda environment with it:
-```
-conda env create -n legate -f conda/cunumeric_dev.yml
-```
+cuNumeric requires the following:
+
+  - Python >= 3.8
+  - [CUDA](https://developer.nvidia.com/cuda-downloads) >= 10.2
+  - GNU Make
+  - C++17 compatible compiler (g++, clang, or nvc++)
+  - Fortran compiler (for building OpenBLAS; not necessary if you provide a pre-built version of OpenBLAS)
+  - the Python packages listed in any one of the conda environment files:
+    - `conda/environment-test-3.8.yml`
+    - `conda/environment-test-3.9.yml`
+    - `conda/environment-test-3.10.yml`
+
+See the [corresponding section](https://github.com/nv-legate/legate.core#dependencies)
+on the Legate Core instructions for help on installing the required Python packages
+using conda.
+
+cuNumeric is tested and guaranteed to be compatible with Volta and later GPU
+architectures. You can use cuNumeric with Pascal GPUs as well, but there could
+be issues due to lack of independent thread scheduling. Please report any such
+issues on GitHub.
 
 ## Building from Source
 
@@ -84,27 +100,31 @@ python setup.py --with-core <path-to-legate-core-installation>
 ```
 
 This will build cuNumeric against the Legate Core installation and then
-install cuNumeric into the same location. Users can also install cuNumeric
-into an alternative location with the canonical `--prefix` flag as well.
+install cuNumeric into the same location.
+
+If Legate Core has been installed with CUDA support, a working cuTENSOR
+installation must also be provided to the installation command with the
+`--with-cutensor` option:
+```
+python setup.py --with-core <path-to-legate-core-installation> --with-cutensor <path-to-cutensor-installation>
+```
+
+You can also specify an installation of [OpenBLAS](https://www.openblas.net/)
+to use for the build. If you already have an installation of OpenBLAS on your
+machine, you can inform the installation script using the `--with-openblas`
+option:
 
 ```
-python setup.py --prefix <install-dir> --with-core <path-to-legate-core-installation>
+python setup.py --with-openblas <path-to-OpenBLAS>
 ```
-
-Note that after the first invocation of `setup.py` this repository will remember
-which Legate Core installation to use and the `--with-core` option can be
-omitted unless the user wants to change it.
 
 Advanced users can also invoke `install.py --help` to see options for
 configuring cuNumeric by invoking the `install.py` script directly.
 
-Of particular interest to cuNumeric users will likely be the option for
-specifying an installation of [OpenBLAS](https://www.openblas.net/) to use.
-If you already have an installation of OpenBLAS on your machine you can
-inform the `install.py` script about its location using the `--with-openblas` flag:
-```
-python setup.py --with-openblas /path/to/open/blas/
-```
+Note that after the first invocation of `setup.py` or `install.py` this
+repository will remember the paths you provided with the installation options
+and they can be omitted in subsequent invocations unless you want to change
+them.
 
 ## Usage and Execution
 
@@ -129,7 +149,7 @@ legate cunumeric_program.py
 ```
 
 For execution with multiple nodes (assuming Legate Core is installed with GASNet support)
-users can supply the `--nodes` flag. For execution with GPUs, users can use the
+users can supply the `--nodes` option. For execution with GPUs, users can use the
 `--gpus` flags to specify the number of GPUs to use per node. We encourage all users
 to familiarize themselves with these resource flags as described in the Legate Core
 documentation or simply by passing `--help` to the `legate` driver script.
@@ -146,16 +166,17 @@ to your code if possible too so we can see how you are using the feature in cont
 
 ## Supported Types and Dimensions
 
-cuNumeric currently supports the following NumPy types: `float16`, `float32`, `float64`,
-`int16`, `int32`, `int64`, `uint16`, `uint32`, `uint64`, `bool`, `complex64`, and `complex128`.
-Legate currently also only works on up to 3D arrays at the moment. We're currently working
-on support for N-D arrays. If you have a need for arrays with more than three
-dimensions please let us know about it.
+cuNumeric currently supports the following NumPy types: `float16`, `float32`,
+`float64`, `int16`, `int32`, `int64`, `uint16`, `uint32`, `uint64`, `bool`,
+`complex64`, and `complex128`.
+
+cuNumeric supports up to 4D arrays by default, you can adjust this setting by
+installing legate.core with a larger `--max-dim`.
 
 ## Documentation
 
 A complete list of available features can is provided in the [API
-reference](https://nv-legate.github.io/cunumeric/api.html).
+reference](https://nv-legate.github.io/cunumeric/api/index.html).
 
 ## Future Directions
 
@@ -178,8 +199,26 @@ with cuNumeric going forward:
 
 We are open to comments, suggestions, and ideas.
 
-## Known Bugs
+## Contributing
 
+See the discussion of contributing in [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## Known Issues
+
+ * When using certain operations with high scratch space requirements (e.g.
+   `einsum` or `convolve`) you might run into the following error:
+   ```
+   LEGION ERROR: Failed to allocate DeferredBuffer/Value/Reduction in task [some task] because [some memory] is full. This is an eager allocation ...
+   ```
+   Currently, Legion splits its memory reservations between two pools: the
+   "deferred" pool, used for allocating cuNumeric `ndarray`s, and the "eager"
+   pool, used for allocating scratch memory for operations. The above error
+   message signifies that not enough memory was available for an operation's
+   scratch space requirements. You can work around this by allocating more
+   memory overall to cuNumeric (e.g. adjusting `--sysmem`, `--numamem` or
+   `--fbmem`), and/or by adjusting the split between the two pools (e.g. by
+   passing `-lg:eager_alloc_percentage 60` on the command line to allocate 60%
+   of memory to the eager pool, up from the default of 50%).
  * cuNumeric can exercise a bug in OpenBLAS when it is run with
    [multiple OpenMP processors](https://github.com/xianyi/OpenBLAS/issues/2146)
  * On Mac OSX, cuNumeric can trigger a bug in Apple's implementation of libc++.

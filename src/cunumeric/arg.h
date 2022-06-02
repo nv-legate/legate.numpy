@@ -1,4 +1,4 @@
-/* Copyright 2021 NVIDIA Corporation
+/* Copyright 2021-2022 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,8 +25,10 @@ namespace cunumeric {
 template <typename T>
 class Argval {
  public:
+  // Calling this constructor manually is unsafe, as the members are left uninitialized.
+  // This constructor exists only to make nvcc happy when we use a shared memory of Argval<T>.
   __CUDA_HD__
-  Argval();
+  Argval() {}
   __CUDA_HD__
   Argval(T value);
   __CUDA_HD__

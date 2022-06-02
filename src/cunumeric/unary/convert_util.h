@@ -1,4 +1,4 @@
-/* Copyright 2021 NVIDIA Corporation
+/* Copyright 2021-2022 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,13 +25,17 @@ struct ConvertOp {
   using SRC = legate::legate_type_of<SRC_TYPE>;
   using DST = legate::legate_type_of<DST_TYPE>;
 
-  template <typename _SRC = SRC, std::enable_if_t<!legate::is_complex<_SRC>::value>* = nullptr>
+  template <
+    typename _SRC                                                                         = SRC,
+    std::enable_if_t<!legate::is_complex<_SRC>::value or legate::is_complex<DST>::value>* = nullptr>
   constexpr DST operator()(const _SRC& src) const
   {
     return static_cast<DST>(src);
   }
 
-  template <typename _SRC = SRC, std::enable_if_t<legate::is_complex<_SRC>::value>* = nullptr>
+  template <typename _SRC = SRC,
+            std::enable_if_t<legate::is_complex<_SRC>::value and !legate::is_complex<DST>::value>* =
+              nullptr>
   constexpr DST operator()(const _SRC& src) const
   {
     return static_cast<DST>(src.real());

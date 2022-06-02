@@ -1,4 +1,4 @@
-# Copyright 2021 NVIDIA Corporation
+# Copyright 2021-2022 NVIDIA Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,21 +23,17 @@ with GPU acceleration.
 :meta private:
 """
 
-import sys as _sys
-
 import numpy as _np
-from cunumeric import linalg, random
+
+from cunumeric import linalg, random, fft
 from cunumeric.array import ndarray
 from cunumeric.module import *
-from cunumeric.ufunc import *
-from cunumeric.utils import (
-    add_missing_attributes as _add_missing_attributes,
-)
+from cunumeric._ufunc import *
+from cunumeric.logic import *
+from cunumeric.window import bartlett, blackman, hamming, hanning, kaiser
+from cunumeric.coverage import clone_module
 
-_thismodule = _sys.modules[__name__]
+clone_module(_np, globals())
 
-# map any undefined attributes to numpy
-_add_missing_attributes(_np, _thismodule)
-
-# Remote this method from the scope
-del _add_missing_attributes
+del clone_module
+del _np

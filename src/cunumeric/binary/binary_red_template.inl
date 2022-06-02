@@ -1,4 +1,4 @@
-/* Copyright 2021 NVIDIA Corporation
+/* Copyright 2021-2022 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +39,8 @@ struct BinaryRedImpl {
 
     Pitches<DIM - 1> pitches;
     size_t volume = pitches.flatten(rect);
+
+    if (0 == volume) return;
 
     auto out = args.out.reduce_accessor<ProdReduction<bool>, true, 1>();
     auto in1 = args.in1.read_accessor<ARG, DIM>(rect);

@@ -1,4 +1,4 @@
-/* Copyright 2021 NVIDIA Corporation
+/* Copyright 2021-2022 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 #include "cunumeric/item/read.h"
 #include "cunumeric/item/read_template.inl"
+#include "cunumeric/cuda_help.h"
 
 namespace cunumeric {
 
@@ -32,10 +33,9 @@ template <typename VAL>
 struct ReadImplBody<VariantKind::GPU, VAL> {
   void operator()(AccessorWO<VAL, 1> out, AccessorRO<VAL, 1> in) const
   {
-    cudaStream_t stream;
-    cudaStreamCreate(&stream);
-
+    auto stream = get_cached_stream();
     read_value<VAL><<<1, 1, 0, stream>>>(out, in);
+    CHECK_CUDA_STREAM(stream);
   }
 };
 

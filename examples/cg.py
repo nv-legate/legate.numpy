@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# Copyright 2021 NVIDIA Corporation
+# Copyright 2021-2022 NVIDIA Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,14 +15,17 @@
 # limitations under the License.
 #
 
-from __future__ import print_function
-
 import argparse
-import datetime
 
 from benchmark import run_benchmark
 
-import cunumeric as np
+try:
+    from legate.timing import time
+except ImportError:
+    from time import perf_counter_ns
+
+    def time():
+        return perf_counter_ns() / 1000.0
 
 
 # This is technically dead code right now, but we'll keep it around in
@@ -43,17 +46,17 @@ def generate_2D(N, corners):
     if corners:
         print(
             "Generating %dx%d 2-D adjacency system with corners..."
-            % (N ** 2, N ** 2)
+            % (N**2, N**2)
         )
-        A = np.zeros((N ** 2, N ** 2)) + 8 * np.eye(N ** 2)
+        A = np.zeros((N**2, N**2)) + 8 * np.eye(N**2)
     else:
         print(
             "Generating %dx%d 2-D adjacency system without corners..."
-            % (N ** 2, N ** 2)
+            % (N**2, N**2)
         )
-        A = np.zeros((N ** 2, N ** 2)) + 4 * np.eye(N ** 2)
+        A = np.zeros((N**2, N**2)) + 4 * np.eye(N**2)
     # These are the same for both cases
-    off_one = np.full(N ** 2 - 1, -1, dtype=np.float64)
+    off_one = np.full(N**2 - 1, -1, dtype=np.float64)
     A += np.diag(off_one, k=1)
     A += np.diag(off_one, k=-1)
     off_N = np.full(N * (N - 1), -1, dtype=np.float64)
@@ -68,11 +71,11 @@ def generate_2D(N, corners):
         A += np.diag(off_N_minus, k=N - 1)
         A += np.diag(off_N_minus, k=-(N - 1))
     # Then we can generate a random b matrix
-    b = np.random.rand(N ** 2)
+    b = np.random.rand(N**2)
     return A, b
 
 
-def solve(A, b, conv_iters, max_iters, verbose):
+def solve(A, b, conv_iters, max_iters, conv_threshold, verbose):
     print("Solving system...")
     x = np.zeros(A.shape[1])
     r = b - A.dot(x)
@@ -93,7 +96,7 @@ def solve(A, b, conv_iters, max_iters, verbose):
         # iteration
         if (i % conv_iters == 0 or i == (max_iters - 1)) and np.sqrt(
             rsnew
-        ) < 1e-10:
+        ) < conv_threshold:
             converged = i
             break
         if verbose:
@@ -110,14 +113,16 @@ def solve(A, b, conv_iters, max_iters, verbose):
 
 def precondition(A, N, corners):
     if corners:
-        d = 8 * (N ** 2)
+        d = 8 * (N**2)
     else:
-        d = 4 * (N ** 2)
-    M = np.diag(np.full(N ** 2, 1.0 / d))
+        d = 4 * (N**2)
+    M = np.diag(np.full(N**2, 1.0 / d))
     return M
 
 
-def preconditioned_solve(A, M, b, conv_iters, max_iters, verbose):
+def preconditioned_solve(
+    A, M, b, conv_iters, max_iters, conv_threshold, verbose
+):
     print("Solving system with preconditioner...")
     x = np.zeros(A.shape[1])
     r = b - A.dot(x)
@@ -139,7 +144,7 @@ def preconditioned_solve(A, M, b, conv_iters, max_iters, verbose):
         # last iteration
         if (i % conv_iters == 0 or i == (max_iters - 1)) and np.sqrt(
             rznew
-        ) < 1e-10:
+        ) < conv_threshold:
             converged = i
             break
         if verbose:
@@ -170,32 +175,33 @@ def run_cg(
     preconditioner,
     conv_iters,
     max_iters,
+    conv_threshold,
     perform_check,
     timing,
     verbose,
 ):
-    start = datetime.datetime.now()
     # A, b = generate_random(N)
     A, b = generate_2D(N, corners)
+    start = time()
     if preconditioner:
         M = precondition(A, N, corners)
-        x = preconditioned_solve(A, M, b, conv_iters, max_iters, verbose)
+        x = preconditioned_solve(
+            A, M, b, conv_iters, max_iters, conv_threshold, verbose
+        )
     else:
-        x = solve(A, b, conv_iters, max_iters, verbose)
+        x = solve(A, b, conv_iters, max_iters, conv_threshold, verbose)
     if perform_check:
         check(A, x, b)
-    stop = datetime.datetime.now()
-    delta = stop - start
-    total = delta.total_seconds() * 1000.0
+    stop = time()
+    total = (stop - start) / 1000.0
     if timing:
-        print("Elapsed Time: " + str(total) + " ms")
+        print(f"Elapsed Time: {total} ms")
     return total
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "-c",
         "--check",
         dest="check",
         action="store_true",
@@ -262,8 +268,48 @@ if __name__ == "__main__":
         help="number of times to benchmark this application (default 1 - "
         "normal execution)",
     )
+    parser.add_argument(
+        "--threshold",
+        type=float,
+        default=1e-10,
+        dest="conv_threshold",
+        help="convergence check threshold",
+    )
+    parser.add_argument(
+        "--package",
+        dest="package",
+        choices=["legate", "numpy", "cupy"],
+        type=str,
+        default="legate",
+        help="NumPy package to use (legate, numpy, or cupy)",
+    )
+    parser.add_argument(
+        "--cupy-allocator",
+        dest="cupy_allocator",
+        choices=["default", "off", "managed"],
+        type=str,
+        default="default",
+        help="cupy allocator to use (default, off, or managed)",
+    )
 
-    args = parser.parse_args()
+    args, _ = parser.parse_known_args()
+
+    if args.package == "legate":
+        import cunumeric as np
+    elif args.package == "cupy":
+        import cupy as np
+
+        if args.cupy_allocator == "off":
+            np.cuda.set_allocator(None)
+            print("Turning off memory pool")
+        elif args.cupy_allocator == "managed":
+            np.cuda.set_allocator(
+                np.cuda.MemoryPool(np.cuda.malloc_managed).malloc
+            )
+            print("Using managed memory pool")
+    elif args.package == "numpy":
+        import numpy as np
+
     run_benchmark(
         run_cg,
         args.benchmark,
@@ -274,6 +320,7 @@ if __name__ == "__main__":
             args.precondition,
             args.conv_iters,
             args.max_iters,
+            args.conv_threshold,
             args.check,
             args.timing,
             args.verbose,

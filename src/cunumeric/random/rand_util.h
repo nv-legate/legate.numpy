@@ -1,4 +1,4 @@
-/* Copyright 2021 NVIDIA Corporation
+/* Copyright 2021-2022 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,11 +19,12 @@
 #include "cunumeric/cunumeric_task.h"
 #include "cunumeric/random/philox.h"
 
-#define HI_BITS(x) ((unsigned)((x) >> 32))
-#define LO_BITS(x) ((unsigned)((x)&0x00000000FFFFFFFF))
+#define HI_BITS(x) (static_cast<unsigned>((x) >> 32))
+#define LO_BITS(x) (static_cast<unsigned>((x)&0x00000000FFFFFFFF))
 
 namespace cunumeric {
 
+// Match these to RandGenCode in config.py
 enum class RandGenCode : int32_t {
   UNIFORM = 1,
   NORMAL  = 2,

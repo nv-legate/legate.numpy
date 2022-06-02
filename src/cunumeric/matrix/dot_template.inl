@@ -1,4 +1,4 @@
-/* Copyright 2021 NVIDIA Corporation
+/* Copyright 2021-2022 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,6 +50,8 @@ struct DotImpl {
     auto lhs  = args.lhs.reduce_accessor<SumReduction<ACC>, true, 1>();
     auto rhs1 = args.rhs1.read_accessor<VAL, 1>(rect);
     auto rhs2 = args.rhs2.read_accessor<VAL, 1>(rect);
+
+    if (rect.empty()) return;
 
 #ifndef LEGION_BOUNDS_CHECKS
     // Check to see if this is dense or not

@@ -1,4 +1,4 @@
-/* Copyright 2021 NVIDIA Corporation
+/* Copyright 2021-2022 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,8 @@
 #pragma once
 
 /// Optionally enable GCC's built-in type
-#if defined(__x86_64) && !defined(__CUDA_ARCH__)
-#if defined(__GNUC__)
+#if !defined(__CUDA_ARCH__) && defined(__GNUC__) && defined(__SIZEOF_INT128__)
 #define UINT128_NATIVE
-#endif
 #endif
 
 #ifndef __CUDA_HD__
@@ -289,7 +287,7 @@ struct FastDivmod {
     // Use IMUL.HI if div != 1, else simply copy the source.
     quo = (div != 1) ? __umulhi(src, mul) >> shr : src;
 #else
-    quo = int((div != 1) ? int(((int64_t)src * mul) >> 32) >> shr : src);
+    quo = (div != 1) ? static_cast<int>((int64_t{src} * mul) >> 32) >> shr : src;
 #endif
     // The remainder.
     rem = src - (quo * div);
