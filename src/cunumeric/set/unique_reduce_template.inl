@@ -27,7 +27,7 @@ struct UniqueReduceImplBody;
 template <VariantKind KIND>
 struct UniqueReduceImpl {
   template <LegateTypeCode CODE>
-  void operator()(Array& output, std::vector<Array>& input_arrs)
+  void operator()(legate::Store& output, std::vector<legate::Store>& input_arrs)
   {
     using VAL = legate_type_of<CODE>;
 

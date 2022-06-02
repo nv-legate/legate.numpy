@@ -16,15 +16,15 @@
 
 #pragma once
 
-#include "cunumeric/cunumeric.h"
+#include "cunumeric/cunumeric_task.h"
 
 namespace cunumeric {
 
 struct TriluArgs {
   bool lower;
   int32_t k;
-  const Array& output;
-  const Array& input;
+  const legate::Store& output;
+  const legate::Store& input;
 };
 
 class TriluTask : public CuNumericTask<TriluTask> {

@@ -98,10 +98,10 @@ struct DiagImpl {
 template <VariantKind KIND>
 static void diag_template(TaskContext& context)
 {
-  int naxes     = context.scalars()[0].value<int>();
-  bool extract  = context.scalars()[1].value<bool>();
-  Array& matrix = extract ? context.inputs()[0] : context.outputs()[0];
-  Array& diag   = extract ? context.reductions()[0] : context.inputs()[0];
+  int naxes             = context.scalars()[0].value<int>();
+  bool extract          = context.scalars()[1].value<bool>();
+  legate::Store& matrix = extract ? context.inputs()[0] : context.outputs()[0];
+  legate::Store& diag   = extract ? context.reductions()[0] : context.inputs()[0];
   DiagArgs args{naxes, extract, matrix, diag};
   double_dispatch(matrix.dim(), matrix.code(), DiagImpl<KIND>{}, args);
 }

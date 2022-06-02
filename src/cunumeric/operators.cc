@@ -86,7 +86,7 @@ ArrayP dot(ArrayP rhs1, ArrayP rhs2)
 {
   if (rhs1->dim() != 2 || rhs2->dim() != 2) {
     fprintf(stderr, "cunumeric::dot only supports matrices now");
-    LEGATE_ABORT
+    LEGATE_ABORT;
   }
 
   auto& rhs1_shape = rhs1->shape();
@@ -99,7 +99,7 @@ ArrayP dot(ArrayP rhs1, ArrayP rhs2)
             rhs1_shape[1],
             rhs2_shape[0],
             rhs2_shape[1]);
-    LEGATE_ABORT
+    LEGATE_ABORT;
   }
 
   auto runtime = CuNumericRuntime::get_runtime();

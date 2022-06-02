@@ -41,7 +41,9 @@ struct support_gemm<LegateTypeCode::COMPLEX128_LT> : std::true_type {
 template <VariantKind KIND>
 struct GemmImpl {
   template <LegateTypeCode CODE, std::enable_if_t<support_gemm<CODE>::value>* = nullptr>
-  void operator()(Array& lhs_array, Array& rhs1_array, Array& rhs2_array) const
+  void operator()(legate::Store& lhs_array,
+                  legate::Store& rhs1_array,
+                  legate::Store& rhs2_array) const
   {
     using VAL = legate_type_of<CODE>;
 
@@ -69,7 +71,9 @@ struct GemmImpl {
   }
 
   template <LegateTypeCode CODE, std::enable_if_t<!support_gemm<CODE>::value>* = nullptr>
-  void operator()(Array& lhs_array, Array& rhs1_array, Array& rhs2_array) const
+  void operator()(legate::Store& lhs_array,
+                  legate::Store& rhs1_array,
+                  legate::Store& rhs2_array) const
   {
     assert(false);
   }

@@ -41,7 +41,7 @@ struct support_syrk<LegateTypeCode::COMPLEX128_LT> : std::true_type {
 template <VariantKind KIND>
 struct SyrkImpl {
   template <LegateTypeCode CODE, std::enable_if_t<support_syrk<CODE>::value>* = nullptr>
-  void operator()(Array& lhs_array, Array& rhs_array) const
+  void operator()(legate::Store& lhs_array, legate::Store& rhs_array) const
   {
     using VAL = legate_type_of<CODE>;
 
@@ -64,7 +64,7 @@ struct SyrkImpl {
   }
 
   template <LegateTypeCode CODE, std::enable_if_t<!support_syrk<CODE>::value>* = nullptr>
-  void operator()(Array& lhs_array, Array& rhs_array) const
+  void operator()(legate::Store& lhs_array, legate::Store& rhs_array) const
   {
     assert(false);
   }

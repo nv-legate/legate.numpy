@@ -60,8 +60,8 @@ struct SortImplBody<VariantKind::CPU, CODE, DIM> {
     }
   }
 
-  void operator()(const Array& input_array,
-                  Array& output_array,
+  void operator()(const legate::Store& input_array,
+                  legate::Store& output_array,
                   const Pitches<DIM - 1>& pitches,
                   const Rect<DIM>& rect,
                   const size_t volume,

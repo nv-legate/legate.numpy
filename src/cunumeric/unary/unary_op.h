@@ -29,9 +29,9 @@ struct UnaryOpArgs {
 };
 
 struct MultiOutUnaryOpArgs {
-  const Array& in;
-  const Array& out1;
-  const Array& out2;
+  const legate::Store& in;
+  const legate::Store& out1;
+  const legate::Store& out2;
   UnaryOpCode op_code;
 };
 

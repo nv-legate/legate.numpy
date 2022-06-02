@@ -27,8 +27,8 @@ struct UniqueImplBody;
 template <VariantKind KIND>
 struct UniqueImpl {
   template <LegateTypeCode CODE, int32_t DIM>
-  void operator()(Array& output,
-                  Array& input,
+  void operator()(legate::Store& output,
+                  legate::Store& input,
                   std::vector<comm::Communicator>& comms,
                   const DomainPoint& point,
                   const Domain& launch_domain) const

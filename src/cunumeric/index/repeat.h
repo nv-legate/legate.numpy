@@ -16,14 +16,14 @@
 
 #pragma once
 
-#include "cunumeric/cunumeric.h"
+#include "cunumeric/cunumeric_task.h"
 
 namespace cunumeric {
 
 struct RepeatArgs {
-  Array& output;
-  const Array& input;
-  const Array& repeats_arr;
+  legate::Store& output;
+  const legate::Store& input;
+  const legate::Store& repeats_arr;
   int64_t repeats;
   int32_t axis;
   const bool scalar_repeats;

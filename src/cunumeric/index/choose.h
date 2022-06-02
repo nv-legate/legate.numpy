@@ -16,13 +16,13 @@
 
 #pragma once
 
-#include "cunumeric/cunumeric.h"
+#include "cunumeric/cunumeric_task.h"
 
 namespace cunumeric {
 
 struct ChooseArgs {
-  const Array& out;
-  const std::vector<Array>& inputs;
+  const legate::Store& out;
+  const std::vector<legate::Store>& inputs;
 };
 
 class ChooseTask : public CuNumericTask<ChooseTask> {

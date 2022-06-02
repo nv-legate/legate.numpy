@@ -16,13 +16,13 @@
 
 #pragma once
 
-#include "cunumeric/cunumeric.h"
+#include "cunumeric/cunumeric_task.h"
 
 namespace cunumeric {
 
 struct SortArgs {
-  const Array& input;
-  Array& output;
+  const legate::Store& input;
+  legate::Store& output;
   bool argsort;
   bool stable;
   size_t segment_size_g;

@@ -16,14 +16,14 @@
 
 #pragma once
 
-#include "cunumeric/cunumeric.h"
+#include "cunumeric/cunumeric_task.h"
 
 namespace cunumeric {
 
 struct AdvancedIndexingArgs {
-  Array& output;
-  const Array& input_array;
-  const Array& indexing_array;
+  legate::Store& output;
+  const legate::Store& input_array;
+  const legate::Store& indexing_array;
   const bool is_set;
 };
 

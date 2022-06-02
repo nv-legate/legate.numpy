@@ -14,7 +14,7 @@
  *
  */
 
-#include "cunumeric.h"
+#include "cunumeric/cunumeric_task.h"
 
 #include "cudalibs.h"
 

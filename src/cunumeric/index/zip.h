@@ -16,13 +16,13 @@
 
 #pragma once
 
-#include "cunumeric/cunumeric.h"
+#include "cunumeric/cunumeric_task.h"
 
 namespace cunumeric {
 
 struct ZipArgs {
-  const Array& out;
-  const std::vector<Array>& inputs;
+  const legate::Store& out;
+  const std::vector<legate::Store>& inputs;
   const int64_t N;
   const int64_t key_dim;
   const int64_t start_index;

@@ -26,7 +26,7 @@ template <LegateTypeCode CODE, int DIM>
 struct RepeatImplBody<VariantKind::CPU, CODE, DIM> {
   using VAL = legate_type_of<CODE>;
 
-  void operator()(Array& out_array,
+  void operator()(legate::Store& out_array,
                   const AccessorRO<VAL, DIM>& in,
                   const int64_t repeats,
                   const int32_t axis,
@@ -50,7 +50,7 @@ struct RepeatImplBody<VariantKind::CPU, CODE, DIM> {
     }
   }
 
-  void operator()(Array& out_array,
+  void operator()(legate::Store& out_array,
                   const AccessorRO<VAL, 1>& in,
                   const AccessorRO<int64_t, 1>& repeats,
                   const int32_t axis,
@@ -74,7 +74,7 @@ struct RepeatImplBody<VariantKind::CPU, CODE, DIM> {
   }
 
   template <int32_t _DIM = DIM, std::enable_if_t<(_DIM > 1)>* = nullptr>
-  void operator()(Array& out_array,
+  void operator()(legate::Store& out_array,
                   const AccessorRO<VAL, _DIM>& in,
                   const AccessorRO<int64_t, _DIM>& repeats,
                   const int32_t axis,

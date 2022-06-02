@@ -58,7 +58,7 @@ static void repeat_template(TaskContext& context)
   if (scalar_repeats) {
     auto repeats = context.scalars()[2].value<int64_t>();
     RepeatArgs args{
-      context.outputs()[0], context.inputs()[0], Array(), repeats, axis, scalar_repeats};
+      context.outputs()[0], context.inputs()[0], legate::Store(), repeats, axis, scalar_repeats};
     double_dispatch(args.input.dim(), args.input.code(), RepeatImpl<KIND>{}, args);
   } else {
     auto& repeats = context.inputs()[1];

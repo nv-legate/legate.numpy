@@ -41,7 +41,7 @@ struct support_potrf<LegateTypeCode::COMPLEX128_LT> : std::true_type {
 template <VariantKind KIND>
 struct PotrfImpl {
   template <LegateTypeCode CODE, std::enable_if_t<support_potrf<CODE>::value>* = nullptr>
-  void operator()(Array& array) const
+  void operator()(legate::Store& array) const
   {
     using VAL = legate_type_of<CODE>;
 
@@ -60,7 +60,7 @@ struct PotrfImpl {
   }
 
   template <LegateTypeCode CODE, std::enable_if_t<!support_potrf<CODE>::value>* = nullptr>
-  void operator()(Array& array) const
+  void operator()(legate::Store& array) const
   {
     assert(false);
   }
