@@ -18,6 +18,7 @@
 
 #include "cunumeric/cunumeric_task.h"
 #include "cunumeric/arg.h"
+#include "cunumeric/arg.inl"
 
 namespace cunumeric {
 
