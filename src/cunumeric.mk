@@ -56,8 +56,7 @@ GEN_CPU_SRC += cunumeric/ternary/where.cc               \
 							 cunumeric/array.cc                       \
 							 cunumeric/mapper.cc                      \
 							 cunumeric/operators.cc                   \
-							 cunumeric/runtime.cc                     \
-							 cunumeric/mapper.cc
+							 cunumeric/runtime.cc
 
 GEN_CPU_SRC += cunumeric/cephes/chbevl.cc \
 							 cunumeric/cephes/i0.cc
