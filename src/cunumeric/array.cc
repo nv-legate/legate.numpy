@@ -54,13 +54,8 @@ void Array::random(int32_t gen_code)
   task->add_output(store_, p_lhs);
   task->add_scalar_arg(legate::Scalar(static_cast<int32_t>(RandGenCode::UNIFORM)));
   task->add_scalar_arg(legate::Scalar(runtime_->get_next_random_epoch()));
-  auto strides                    = compute_strides(shape());
-  void* buffer                    = malloc(strides.size() * sizeof(int64_t) + sizeof(uint32_t));
-  *static_cast<uint32_t*>(buffer) = strides.size();
-  memcpy(static_cast<int8_t*>(buffer) + sizeof(uint32_t),
-         strides.data(),
-         strides.size() * sizeof(int64_t));
-  task->add_scalar_arg(legate::Scalar(true, legate::LegateTypeCode::INT64_LT, buffer));
+  auto strides = compute_strides(shape());
+  task->add_scalar_arg(legate::Scalar(strides));
 
   runtime_->submit(std::move(task));
 }
@@ -132,6 +127,7 @@ void Array::unary_reduction(int32_t op_code_, std::shared_ptr<Array> input)
   task->add_reduction(store_, redop, p_out);
   task->add_input(input->store_, p_in);
   task->add_scalar_arg(legate::Scalar(op_code_));
+  task->add_scalar_arg(legate::Scalar(input->shape()));
 
   runtime_->submit(std::move(task));
 }
