@@ -31,7 +31,7 @@ struct UnpackbitsImplBody;
 template <VariantKind KIND, Bitorder BITORDER>
 struct UnpackbitsImpl {
   template <int32_t DIM>
-  void operator()(Array& output, Array& input, uint32_t axis) const
+  void operator()(Store& output, Store& input, uint32_t axis) const
   {
     auto out_rect = output.shape<DIM>();
 
@@ -51,7 +51,7 @@ struct UnpackbitsImpl {
   template <LegateTypeCode CODE,
             int32_t DIM,
             std::enable_if_t<!is_integral<CODE>::value>* = nullptr>
-  void operator()(Array& output, Array& input, uint32_t axis) const
+  void operator()(Store& output, Store& input, uint32_t axis) const
   {
     // Unreachable
     assert(false);

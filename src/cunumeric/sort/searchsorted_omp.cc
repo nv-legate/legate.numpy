@@ -28,9 +28,9 @@ template <LegateTypeCode CODE, int32_t DIM>
 struct SearchSortedImplBody<VariantKind::OMP, CODE, DIM> {
   using VAL = legate_type_of<CODE>;
 
-  void operator()(const Array& input_array,
-                  const Array& input_values,
-                  const Array& output_positions,
+  void operator()(const Store& input_array,
+                  const Store& input_values,
+                  const Store& output_positions,
                   const Rect<1>& rect_base,
                   const Rect<DIM>& rect_values,
                   const Pitches<DIM - 1> pitches,

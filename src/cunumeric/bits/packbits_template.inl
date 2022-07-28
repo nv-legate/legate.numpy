@@ -31,7 +31,7 @@ struct PackbitsImplBody;
 template <VariantKind KIND, Bitorder BITORDER>
 struct PackbitsImpl {
   template <LegateTypeCode CODE, int32_t DIM, std::enable_if_t<is_integral<CODE>::value>* = nullptr>
-  void operator()(Array& output, Array& input, uint32_t axis) const
+  void operator()(Store& output, Store& input, uint32_t axis) const
   {
     using VAL = legate_type_of<CODE>;
 
@@ -78,7 +78,7 @@ struct PackbitsImpl {
   template <LegateTypeCode CODE,
             int32_t DIM,
             std::enable_if_t<!is_integral<CODE>::value>* = nullptr>
-  void operator()(Array& output, Array& input, uint32_t axis) const
+  void operator()(Store& output, Store& input, uint32_t axis) const
   {
     // Unreachable
     assert(false);

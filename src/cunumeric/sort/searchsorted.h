@@ -16,14 +16,14 @@
 
 #pragma once
 
-#include "cunumeric/cunumeric.h"
+#include "cunumeric/cunumeric_task.h"
 
 namespace cunumeric {
 
 struct SearchSortedArgs {
-  const Array& input_base;
-  const Array& input_values;
-  const Array& output_reduction;
+  const legate::Store& input_base;
+  const legate::Store& input_values;
+  const legate::Store& output_reduction;
   bool left;
   int64_t global_volume;
   bool is_index_space;

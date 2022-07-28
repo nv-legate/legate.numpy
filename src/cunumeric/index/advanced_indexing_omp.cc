@@ -83,7 +83,7 @@ struct AdvancedIndexingImplBody<VariantKind::OMP, CODE, DIM, OUT_TYPE> {
     return size;
   }
 
-  void operator()(Array& out_arr,
+  void operator()(Store& out_arr,
                   const AccessorRO<VAL, DIM>& input,
                   const AccessorRO<bool, DIM>& index,
                   const Pitches<DIM - 1>& pitches,
