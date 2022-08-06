@@ -46,8 +46,7 @@ if TYPE_CHECKING:
     import numpy.typing as npt
 
     from legate.core._legion.future import Future
-
-    from .types import NdShapeLike
+    from legate.core.operation import AutoTask, ManualTask
 
 _supported_dtypes = {
     np.bool_: ty.bool_,
@@ -135,7 +134,7 @@ class Runtime(object):
         self.legate_runtime = get_legate_runtime()
         self.current_random_epoch = 0
         self.current_random_bitgenid = 0
-        self.current_random_bitgen_zombies = ()
+        self.current_random_bitgen_zombies: tuple[Any, ...] = ()
         self.destroyed = False
         self.api_calls: list[tuple[str, str, bool]] = []
 
@@ -161,6 +160,8 @@ class Runtime(object):
         # Make sure that our CuNumericLib object knows about us so it can
         # destroy us
         cunumeric_lib.set_runtime(self)
+        assert cunumeric_lib.shared_object is not None
+        self.has_curand = cunumeric_lib.shared_object.cunumeric_has_curand()
         self._register_dtypes()
 
         self.args = parse_command_args("cunumeric", ARGS)
@@ -284,8 +285,14 @@ class Runtime(object):
         return DeferredArray(self, store, dtype=dtype)
 
     def bitgenerator_populate_task(
-        self, task, taskop, generatorID, generatorType=0, seed=0, flags=0
-    ):
+        self,
+        task: Union[AutoTask, ManualTask],
+        taskop: int,
+        generatorID: int,
+        generatorType: int = 0,
+        seed: Union[int, None] = 0,
+        flags: int = 0,
+    ) -> None:
         task.add_scalar_arg(taskop, ty.int32)
         task.add_scalar_arg(generatorID, ty.int32)
         task.add_scalar_arg(generatorType, ty.uint32)
@@ -293,8 +300,12 @@ class Runtime(object):
         task.add_scalar_arg(flags, ty.uint32)
 
     def bitgenerator_create(
-        self, generatorType, seed, flags, forceCreate=False
-    ):
+        self,
+        generatorType: int,
+        seed: Union[int, None],
+        flags: int,
+        forceCreate: bool = False,
+    ) -> int:
         self.current_random_bitgenid = self.current_random_bitgenid + 1
         if forceCreate:
             task = self.legate_context.create_task(
@@ -318,7 +329,9 @@ class Runtime(object):
             self.legate_runtime.issue_execution_fence()
         return self.current_random_bitgenid
 
-    def bitgenerator_destroy(self, handle, disposing=True):
+    def bitgenerator_destroy(
+        self, handle: Any, disposing: bool = True
+    ) -> None:
         if disposing:
             # when called from within destructor, do not schedule a task
             self.current_random_bitgen_zombies += (handle,)
@@ -344,7 +357,7 @@ class Runtime(object):
 
     def get_next_random_epoch(self) -> int:
         result = self.current_random_epoch
-        # self.current_random_epoch += 1
+        self.current_random_epoch += 1
         return result
 
     def is_point_type(self, dtype: Union[str, np.dtype[Any]]) -> bool:
@@ -554,17 +567,15 @@ class Runtime(object):
 
     def create_empty_thunk(
         self,
-        shape: NdShapeLike,
+        shape: NdShape,
         dtype: np.dtype[Any],
         inputs: Optional[Sequence[NumPyThunk]] = None,
     ) -> NumPyThunk:
-        computed_shape = (shape,) if isinstance(shape, int) else shape
         if self.is_supported_type(dtype) and not (
-            self.is_eager_shape(computed_shape)
-            and self.are_all_eager_inputs(inputs)
+            self.is_eager_shape(shape) and self.are_all_eager_inputs(inputs)
         ):
             store = self.legate_context.create_store(
-                dtype, shape=computed_shape, optimize_scalar=True
+                dtype, shape=shape, optimize_scalar=True
             )
             return DeferredArray(self, store, dtype=dtype)
         else:
