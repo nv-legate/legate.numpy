@@ -49,7 +49,7 @@ void Array::random(int32_t gen_code)
 {
   auto task = runtime_->create_task(CuNumericOpCode::CUNUMERIC_RAND);
 
-  auto p_lhs = task->declare_partition(store_);
+  auto p_lhs = task->declare_partition();
 
   task->add_output(store_, p_lhs);
   task->add_scalar_arg(legate::Scalar(static_cast<int32_t>(RandGenCode::UNIFORM)));
@@ -65,8 +65,8 @@ void Array::fill(const Scalar& value, bool argval)
   auto fill_value = runtime_->create_scalar_store(value);
 
   auto task         = runtime_->create_task(CuNumericOpCode::CUNUMERIC_FILL);
-  auto p_lhs        = task->declare_partition(store_);
-  auto p_fill_value = task->declare_partition(fill_value);
+  auto p_lhs        = task->declare_partition();
+  auto p_fill_value = task->declare_partition();
 
   task->add_output(store_, p_lhs);
   task->add_input(fill_value, p_fill_value);
@@ -79,9 +79,9 @@ void Array::binary_op(int32_t op_code, std::shared_ptr<Array> rhs1, std::shared_
 {
   auto task = runtime_->create_task(CuNumericOpCode::CUNUMERIC_BINARY_OP);
 
-  auto p_lhs  = task->declare_partition(store_);
-  auto p_rhs1 = task->declare_partition(rhs1->store_);
-  auto p_rhs2 = task->declare_partition(rhs2->store_);
+  auto p_lhs  = task->declare_partition();
+  auto p_rhs1 = task->declare_partition();
+  auto p_rhs2 = task->declare_partition();
 
   task->add_output(store_, p_lhs);
   task->add_input(rhs1->store_, p_rhs1);
@@ -98,8 +98,8 @@ void Array::unary_op(int32_t op_code, std::shared_ptr<Array> input)
 {
   auto task = runtime_->create_task(CuNumericOpCode::CUNUMERIC_UNARY_OP);
 
-  auto p_out = task->declare_partition(store_);
-  auto p_in  = task->declare_partition(input->store_);
+  auto p_out = task->declare_partition();
+  auto p_in  = task->declare_partition();
 
   task->add_output(store_, p_out);
   task->add_input(input->store_, p_in);
@@ -119,8 +119,8 @@ void Array::unary_reduction(int32_t op_code_, std::shared_ptr<Array> input)
 
   auto task = runtime_->create_task(CuNumericOpCode::CUNUMERIC_SCALAR_UNARY_RED);
 
-  auto p_out = task->declare_partition(store_);
-  auto p_in  = task->declare_partition(input->store_);
+  auto p_out = task->declare_partition();
+  auto p_in  = task->declare_partition();
 
   auto redop = runtime_->get_reduction_op(op_code, code());
 
@@ -149,9 +149,9 @@ void Array::dot(std::shared_ptr<Array> rhs1, std::shared_ptr<Array> rhs2)
 
   auto task = runtime_->create_task(CuNumericOpCode::CUNUMERIC_MATMUL);
 
-  auto p_lhs  = task->declare_partition(lhs_s);
-  auto p_rhs1 = task->declare_partition(rhs1_s);
-  auto p_rhs2 = task->declare_partition(rhs2_s);
+  auto p_lhs  = task->declare_partition();
+  auto p_rhs1 = task->declare_partition();
+  auto p_rhs2 = task->declare_partition();
 
   auto redop = LEGION_REDOP_BASE + LEGION_TYPE_TOTAL * LEGION_REDOP_KIND_SUM + code();
 
