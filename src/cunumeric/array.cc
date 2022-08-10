@@ -28,7 +28,7 @@ Array::Array(CuNumericRuntime* runtime, legate::LibraryContext* context, legate:
 
 int32_t Array::dim() const { return store_.dim(); }
 
-const std::vector<size_t>& Array::shape() const { return store_.extents(); }
+const std::vector<size_t>& Array::shape() const { return store_.extents().data(); }
 
 legate::LegateTypeCode Array::code() const { return store_.code(); }
 
