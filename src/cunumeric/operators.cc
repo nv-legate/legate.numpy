@@ -23,6 +23,35 @@
 
 namespace cunumeric {
 
+namespace {
+
+std::vector<size_t> broadcast_shapes(std::vector<NDArray> arrays)
+{
+#ifdef DEBUG_CUNUMERIC
+  assert(!arrays.empty());
+#endif
+  int32_t dim = 0;
+  for (auto& array : arrays) dim = std::max(dim, array.dim());
+
+  std::vector<size_t> result(dim, 1);
+
+  for (auto& array : arrays) {
+    auto& shape = array.shape();
+
+    auto in_it  = shape.rbegin();
+    auto out_it = result.rbegin();
+    for (; in_it != shape.rend() && out_it != result.rend(); ++in_it, ++out_it) {
+      if (1 == *out_it)
+        *out_it = *in_it;
+      else if (*in_it != 1 && *out_it != *in_it)
+        throw std::exception();
+    }
+  }
+  return result;
+}
+
+}  // namespace
+
 NDArray array(std::vector<size_t> shape, legate::LegateTypeCode type)
 {
   return CuNumericRuntime::get_runtime()->create_array(std::move(shape), type);
@@ -46,11 +75,11 @@ NDArray unary_reduction(UnaryRedCode op_code, NDArray input)
 
 NDArray binary_op(BinaryOpCode op_code, NDArray rhs1, NDArray rhs2)
 {
-  assert(rhs1.shape() == rhs2.shape());
   assert(rhs1.code() == rhs2.code());
 
-  auto runtime = CuNumericRuntime::get_runtime();
-  auto out     = runtime->create_array(rhs1.shape(), rhs1.code());
+  auto runtime   = CuNumericRuntime::get_runtime();
+  auto out_shape = broadcast_shapes({rhs1, rhs2});
+  auto out       = runtime->create_array(out_shape, rhs1.code());
   out.binary_op(static_cast<int32_t>(op_code), std::move(rhs1), std::move(rhs2));
   return std::move(out);
 }

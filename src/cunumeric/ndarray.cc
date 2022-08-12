@@ -88,9 +88,13 @@ void NDArray::binary_op(int32_t op_code, NDArray rhs1, NDArray rhs2)
   auto p_rhs1 = task->declare_partition();
   auto p_rhs2 = task->declare_partition();
 
+  auto& out_shape = shape();
+  auto rhs1_store = broadcast(out_shape, rhs1.store_);
+  auto rhs2_store = broadcast(out_shape, rhs2.store_);
+
   task->add_output(store_, p_lhs);
-  task->add_input(rhs1.store_, p_rhs1);
-  task->add_input(rhs2.store_, p_rhs2);
+  task->add_input(rhs1_store, p_rhs1);
+  task->add_input(rhs2_store, p_rhs2);
   task->add_scalar_arg(legate::Scalar(op_code));
 
   task->add_constraint(align(p_lhs, p_rhs1));
@@ -174,6 +178,34 @@ void NDArray::dot(NDArray rhs1, NDArray rhs2)
   task->add_constraint(align(p_rhs1, p_rhs2));
 
   runtime->submit(std::move(task));
+}
+
+legate::LogicalStore NDArray::broadcast(const std::vector<size_t>& shape,
+                                        legate::LogicalStore& store)
+{
+  int32_t diff = static_cast<int32_t>(shape.size()) - store.dim();
+
+#ifdef DEBUG_CUNUMERIC
+  assert(diff >= 0);
+#endif
+
+  auto result = store;
+  for (int32_t dim = 0; dim < diff; ++dim) result = result.promote(dim, shape[dim]);
+
+  std::vector<size_t> orig_shape = result.extents().data();
+  for (uint32_t dim = 0; dim < shape.size(); ++dim)
+    if (orig_shape[dim] != shape[dim]) {
+#ifdef DEBUG_CUNUMERIC
+      assert(orig_shape[dim] == 1);
+#endif
+      result = result.project(dim, 0).promote(dim, shape[dim]);
+    }
+
+#ifdef DEBUG_CUNUMERIC
+  assert(result.dim() == shape.size());
+#endif
+
+  return std::move(result);
 }
 
 /*static*/ legate::LibraryContext* NDArray::get_context()
