@@ -17,13 +17,13 @@
 #pragma once
 
 #include <memory>
+#include <optional>
 
 #include "legate.h"
+#include "cunumeric/ndarray.h"
 #include "cunumeric/typedefs.h"
 
 namespace cunumeric {
-
-class NDArray;
 
 void initialize(int32_t argc, char** argv);
 
@@ -31,7 +31,7 @@ NDArray array(std::vector<size_t> shape, legate::LegateTypeCode type);
 
 NDArray abs(NDArray input);
 
-NDArray add(NDArray rhs1, NDArray rhs2);
+NDArray add(NDArray rhs1, NDArray rhs2, std::optional<NDArray> out = std::nullopt);
 
 NDArray dot(NDArray rhs1, NDArray rhs2);
 

@@ -15,7 +15,7 @@
  */
 
 #include "cunumeric/operators.h"
-#include "cunumeric/ndarray.h"
+
 #include "cunumeric/runtime.h"
 #include "cunumeric/binary/binary_op_util.h"
 #include "cunumeric/unary/unary_op_util.h"
@@ -73,22 +73,24 @@ NDArray unary_reduction(UnaryRedCode op_code, NDArray input)
   return std::move(out);
 }
 
-NDArray binary_op(BinaryOpCode op_code, NDArray rhs1, NDArray rhs2)
+NDArray binary_op(BinaryOpCode op_code, NDArray rhs1, NDArray rhs2, std::optional<NDArray> out)
 {
   assert(rhs1.code() == rhs2.code());
 
-  auto runtime   = CuNumericRuntime::get_runtime();
-  auto out_shape = broadcast_shapes({rhs1, rhs2});
-  auto out       = runtime->create_array(out_shape, rhs1.code());
-  out.binary_op(static_cast<int32_t>(op_code), std::move(rhs1), std::move(rhs2));
-  return std::move(out);
+  auto runtime = CuNumericRuntime::get_runtime();
+  if (!out.has_value()) {
+    auto out_shape = broadcast_shapes({rhs1, rhs2});
+    out            = runtime->create_array(out_shape, rhs1.code());
+  }
+  out->binary_op(static_cast<int32_t>(op_code), std::move(rhs1), std::move(rhs2));
+  return std::move(out.value());
 }
 
 NDArray abs(NDArray input) { return unary_op(UnaryOpCode::ABSOLUTE, std::move(input)); }
 
-NDArray add(NDArray rhs1, NDArray rhs2)
+NDArray add(NDArray rhs1, NDArray rhs2, std::optional<NDArray> out)
 {
-  return binary_op(BinaryOpCode::ADD, std::move(rhs1), std::move(rhs2));
+  return binary_op(BinaryOpCode::ADD, std::move(rhs1), std::move(rhs2), std::move(out));
 }
 
 NDArray negative(NDArray input) { return unary_op(UnaryOpCode::NEGATIVE, std::move(input)); }
