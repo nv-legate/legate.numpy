@@ -33,7 +33,7 @@ class CuNumericRuntime {
   CuNumericRuntime(legate::Runtime* legate_runtime, legate::LibraryContext* context);
 
  public:
-  std::shared_ptr<Array> create_array(std::vector<size_t> shape, legate::LegateTypeCode type);
+  Array create_array(std::vector<size_t> shape, legate::LegateTypeCode type);
   legate::LogicalStore create_scalar_store(const Scalar& value);
 
  public:
@@ -46,6 +46,9 @@ class CuNumericRuntime {
 
  public:
   uint32_t get_next_random_epoch();
+
+ public:
+  legate::LibraryContext* get_context() const { return context_; }
 
  public:
   static CuNumericRuntime* get_runtime();

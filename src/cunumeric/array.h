@@ -23,13 +23,19 @@
 
 namespace cunumeric {
 
-class CuNumericRuntime;
-
 class Array {
   friend class CuNumericRuntime;
 
  private:
-  Array(CuNumericRuntime* runtime, legate::LibraryContext* context, legate::LogicalStore store);
+  Array(legate::LogicalStore&& store);
+
+ public:
+  Array(const Array&)            = default;
+  Array& operator=(const Array&) = default;
+
+ public:
+  Array(Array&&)            = default;
+  Array& operator=(Array&&) = default;
 
  public:
   int32_t dim() const;
@@ -43,15 +49,16 @@ class Array {
  public:
   void random(int32_t gen_code);
   void fill(const Scalar& value, bool argval);
-  void binary_op(int32_t op_code, std::shared_ptr<Array> rhs1, std::shared_ptr<Array> rhs2);
-  void unary_op(int32_t op_code, std::shared_ptr<Array> input);
-  void unary_reduction(int32_t op_code, std::shared_ptr<Array> input);
-  void fill(std::shared_ptr<Array> fill_value);
-  void dot(std::shared_ptr<Array> rhs1, std::shared_ptr<Array> rhs2);
+  void binary_op(int32_t op_code, Array rhs1, Array rhs2);
+  void unary_op(int32_t op_code, Array input);
+  void unary_reduction(int32_t op_code, Array input);
+  void fill(Array fill_value);
+  void dot(Array rhs1, Array rhs2);
+
+ public:
+  static legate::LibraryContext* get_context();
 
  private:
-  CuNumericRuntime* runtime_;
-  legate::LibraryContext* context_;
   legate::LogicalStore store_;
 };
 

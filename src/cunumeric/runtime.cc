@@ -37,13 +37,11 @@ CuNumericRuntime::CuNumericRuntime(legate::Runtime* legate_runtime, legate::Libr
 {
 }
 
-std::shared_ptr<Array> CuNumericRuntime::create_array(std::vector<size_t> shape,
-                                                      legate::LegateTypeCode type)
+Array CuNumericRuntime::create_array(std::vector<size_t> shape, legate::LegateTypeCode type)
 {
   // TODO: We need a type system for cuNumeric and should not use the core types
   auto store = legate_runtime_->create_store(shape, type);
-  auto array = new Array(this, context_, std::move(store));
-  return std::shared_ptr<Array>(array);
+  return Array(std::move(store));
 }
 
 legate::LogicalStore CuNumericRuntime::create_scalar_store(const Scalar& value)

@@ -23,74 +23,72 @@
 
 namespace cunumeric {
 
-using ArrayP = std::shared_ptr<Array>;
-
-ArrayP array(std::vector<size_t> shape, legate::LegateTypeCode type)
+Array array(std::vector<size_t> shape, legate::LegateTypeCode type)
 {
   return CuNumericRuntime::get_runtime()->create_array(std::move(shape), type);
 }
 
-ArrayP unary_op(UnaryOpCode op_code, ArrayP input)
+Array unary_op(UnaryOpCode op_code, Array input)
 {
   auto runtime = CuNumericRuntime::get_runtime();
-  auto out     = runtime->create_array(input->shape(), input->code());
-  out->unary_op(static_cast<int32_t>(op_code), std::move(input));
+  auto out     = runtime->create_array(input.shape(), input.code());
+  out.unary_op(static_cast<int32_t>(op_code), std::move(input));
   return std::move(out);
 }
 
-ArrayP unary_reduction(UnaryRedCode op_code, ArrayP input)
+Array unary_reduction(UnaryRedCode op_code, Array input)
 {
   auto runtime = CuNumericRuntime::get_runtime();
-  auto out     = runtime->create_array({1}, input->code());
-  out->unary_reduction(static_cast<int32_t>(op_code), std::move(input));
+  auto out     = runtime->create_array({1}, input.code());
+  out.unary_reduction(static_cast<int32_t>(op_code), std::move(input));
   return std::move(out);
 }
 
-ArrayP binary_op(BinaryOpCode op_code, ArrayP rhs1, ArrayP rhs2)
+Array binary_op(BinaryOpCode op_code, Array rhs1, Array rhs2)
 {
-  assert(rhs1->shape() == rhs2->shape());
-  assert(rhs1->code() == rhs2->code());
+  assert(rhs1.shape() == rhs2.shape());
+  assert(rhs1.code() == rhs2.code());
 
   auto runtime = CuNumericRuntime::get_runtime();
-  auto out     = runtime->create_array(rhs1->shape(), rhs1->code());
-  out->binary_op(static_cast<int32_t>(op_code), std::move(rhs1), std::move(rhs2));
+  auto out     = runtime->create_array(rhs1.shape(), rhs1.code());
+  out.binary_op(static_cast<int32_t>(op_code), std::move(rhs1), std::move(rhs2));
   return std::move(out);
 }
 
-ArrayP abs(ArrayP input) { return unary_op(UnaryOpCode::ABSOLUTE, std::move(input)); }
+Array abs(Array input) { return unary_op(UnaryOpCode::ABSOLUTE, std::move(input)); }
 
-ArrayP add(ArrayP rhs1, ArrayP rhs2)
+Array add(Array rhs1, Array rhs2)
 {
   return binary_op(BinaryOpCode::ADD, std::move(rhs1), std::move(rhs2));
 }
 
-ArrayP negative(ArrayP input) { return unary_op(UnaryOpCode::NEGATIVE, std::move(input)); }
+Array negative(Array input) { return unary_op(UnaryOpCode::NEGATIVE, std::move(input)); }
 
-ArrayP random(std::vector<size_t> shape)
+Array random(std::vector<size_t> shape)
 {
   auto runtime = CuNumericRuntime::get_runtime();
   auto out     = runtime->create_array(std::move(shape), legate::LegateTypeCode::DOUBLE_LT);
-  out->random(static_cast<int32_t>(RandGenCode::UNIFORM));
+  out.random(static_cast<int32_t>(RandGenCode::UNIFORM));
   return std::move(out);
 }
 
-ArrayP full(std::vector<size_t> shape, const Scalar& value)
+Array full(std::vector<size_t> shape, const Scalar& value)
 {
   auto runtime = CuNumericRuntime::get_runtime();
   auto out     = runtime->create_array(std::move(shape), value.code());
-  out->fill(value, false);
+  out.fill(value, false);
   return std::move(out);
 }
 
-ArrayP dot(ArrayP rhs1, ArrayP rhs2)
+Array dot(Array rhs1, Array rhs2)
 {
-  if (rhs1->dim() != 2 || rhs2->dim() != 2) {
+  if (rhs1.dim() != 2 || rhs2.dim() != 2) {
     fprintf(stderr, "cunumeric::dot only supports matrices now");
     LEGATE_ABORT;
   }
 
-  auto& rhs1_shape = rhs1->shape();
-  auto& rhs2_shape = rhs2->shape();
+  auto& rhs1_shape = rhs1.shape();
+  auto& rhs2_shape = rhs2.shape();
 
   if (rhs1_shape[1] != rhs2_shape[0]) {
     fprintf(stderr,
@@ -107,11 +105,11 @@ ArrayP dot(ArrayP rhs1, ArrayP rhs2)
   shape.push_back(rhs1_shape[0]);
   shape.push_back(rhs2_shape[1]);
 
-  auto out = runtime->create_array(std::move(shape), rhs1->code());
-  out->dot(std::move(rhs1), std::move(rhs2));
+  auto out = runtime->create_array(std::move(shape), rhs1.code());
+  out.dot(std::move(rhs1), std::move(rhs2));
   return std::move(out);
 }
 
-ArrayP sum(ArrayP input) { return unary_reduction(UnaryRedCode::SUM, std::move(input)); }
+Array sum(Array input) { return unary_reduction(UnaryRedCode::SUM, std::move(input)); }
 
 }  // namespace cunumeric

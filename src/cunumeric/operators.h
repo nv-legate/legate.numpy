@@ -27,20 +27,20 @@ class Array;
 
 void initialize(int32_t argc, char** argv);
 
-std::shared_ptr<Array> array(std::vector<size_t> shape, legate::LegateTypeCode type);
+Array array(std::vector<size_t> shape, legate::LegateTypeCode type);
 
-std::shared_ptr<Array> abs(std::shared_ptr<Array> input);
+Array abs(Array input);
 
-std::shared_ptr<Array> add(std::shared_ptr<Array> rhs1, std::shared_ptr<Array> rhs2);
+Array add(Array rhs1, Array rhs2);
 
-std::shared_ptr<Array> dot(std::shared_ptr<Array> rhs1, std::shared_ptr<Array> rhs2);
+Array dot(Array rhs1, Array rhs2);
 
-std::shared_ptr<Array> negative(std::shared_ptr<Array> input);
+Array negative(Array input);
 
-std::shared_ptr<Array> random(std::vector<size_t> shape);
+Array random(std::vector<size_t> shape);
 
-std::shared_ptr<Array> full(std::vector<size_t> shape, const Scalar& value);
+Array full(std::vector<size_t> shape, const Scalar& value);
 
-std::shared_ptr<Array> sum(std::shared_ptr<Array> input);
+Array sum(Array input);
 
 }  // namespace cunumeric
