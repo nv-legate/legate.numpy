@@ -14,20 +14,22 @@
  *
  */
 
-#include "cunumeric/array.h"
+#include "cunumeric/ndarray.h"
 #include "cunumeric/runtime.h"
 #include "cunumeric/random/rand_util.h"
 #include "cunumeric/unary/unary_red_util.h"
 
 namespace cunumeric {
 
-Array::Array(legate::LogicalStore&& store) : store_(std::forward<legate::LogicalStore>(store)) {}
+NDArray::NDArray(legate::LogicalStore&& store) : store_(std::forward<legate::LogicalStore>(store))
+{
+}
 
-int32_t Array::dim() const { return store_.dim(); }
+int32_t NDArray::dim() const { return store_.dim(); }
 
-const std::vector<size_t>& Array::shape() const { return store_.extents().data(); }
+const std::vector<size_t>& NDArray::shape() const { return store_.extents().data(); }
 
-legate::LegateTypeCode Array::code() const { return store_.code(); }
+legate::LegateTypeCode NDArray::code() const { return store_.code(); }
 
 static std::vector<int64_t> compute_strides(const std::vector<size_t>& shape)
 {
@@ -42,7 +44,7 @@ static std::vector<int64_t> compute_strides(const std::vector<size_t>& shape)
   return std::move(strides);
 }
 
-void Array::random(int32_t gen_code)
+void NDArray::random(int32_t gen_code)
 {
   auto runtime = CuNumericRuntime::get_runtime();
 
@@ -59,7 +61,7 @@ void Array::random(int32_t gen_code)
   runtime->submit(std::move(task));
 }
 
-void Array::fill(const Scalar& value, bool argval)
+void NDArray::fill(const Scalar& value, bool argval)
 {
   auto runtime = CuNumericRuntime::get_runtime();
 
@@ -76,7 +78,7 @@ void Array::fill(const Scalar& value, bool argval)
   runtime->submit(std::move(task));
 }
 
-void Array::binary_op(int32_t op_code, Array rhs1, Array rhs2)
+void NDArray::binary_op(int32_t op_code, NDArray rhs1, NDArray rhs2)
 {
   auto runtime = CuNumericRuntime::get_runtime();
 
@@ -97,7 +99,7 @@ void Array::binary_op(int32_t op_code, Array rhs1, Array rhs2)
   runtime->submit(std::move(task));
 }
 
-void Array::unary_op(int32_t op_code, Array input)
+void NDArray::unary_op(int32_t op_code, NDArray input)
 {
   auto runtime = CuNumericRuntime::get_runtime();
 
@@ -115,7 +117,7 @@ void Array::unary_op(int32_t op_code, Array input)
   runtime->submit(std::move(task));
 }
 
-void Array::unary_reduction(int32_t op_code_, Array input)
+void NDArray::unary_reduction(int32_t op_code_, NDArray input)
 {
   auto runtime = CuNumericRuntime::get_runtime();
 
@@ -139,7 +141,7 @@ void Array::unary_reduction(int32_t op_code_, Array input)
   runtime->submit(std::move(task));
 }
 
-void Array::dot(Array rhs1, Array rhs2)
+void NDArray::dot(NDArray rhs1, NDArray rhs2)
 {
   auto runtime = CuNumericRuntime::get_runtime();
 
@@ -174,7 +176,7 @@ void Array::dot(Array rhs1, Array rhs2)
   runtime->submit(std::move(task));
 }
 
-/*static*/ legate::LibraryContext* Array::get_context()
+/*static*/ legate::LibraryContext* NDArray::get_context()
 {
   return CuNumericRuntime::get_runtime()->get_context();
 }

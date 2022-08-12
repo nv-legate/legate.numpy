@@ -23,24 +23,24 @@
 
 namespace cunumeric {
 
-class Array;
+class NDArray;
 
 void initialize(int32_t argc, char** argv);
 
-Array array(std::vector<size_t> shape, legate::LegateTypeCode type);
+NDArray array(std::vector<size_t> shape, legate::LegateTypeCode type);
 
-Array abs(Array input);
+NDArray abs(NDArray input);
 
-Array add(Array rhs1, Array rhs2);
+NDArray add(NDArray rhs1, NDArray rhs2);
 
-Array dot(Array rhs1, Array rhs2);
+NDArray dot(NDArray rhs1, NDArray rhs2);
 
-Array negative(Array input);
+NDArray negative(NDArray input);
 
-Array random(std::vector<size_t> shape);
+NDArray random(std::vector<size_t> shape);
 
-Array full(std::vector<size_t> shape, const Scalar& value);
+NDArray full(std::vector<size_t> shape, const Scalar& value);
 
-Array sum(Array input);
+NDArray sum(NDArray input);
 
 }  // namespace cunumeric

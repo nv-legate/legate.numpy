@@ -23,19 +23,19 @@
 
 namespace cunumeric {
 
-class Array {
+class NDArray {
   friend class CuNumericRuntime;
 
  private:
-  Array(legate::LogicalStore&& store);
+  NDArray(legate::LogicalStore&& store);
 
  public:
-  Array(const Array&)            = default;
-  Array& operator=(const Array&) = default;
+  NDArray(const NDArray&)            = default;
+  NDArray& operator=(const NDArray&) = default;
 
  public:
-  Array(Array&&)            = default;
-  Array& operator=(Array&&) = default;
+  NDArray(NDArray&&)            = default;
+  NDArray& operator=(NDArray&&) = default;
 
  public:
   int32_t dim() const;
@@ -49,11 +49,11 @@ class Array {
  public:
   void random(int32_t gen_code);
   void fill(const Scalar& value, bool argval);
-  void binary_op(int32_t op_code, Array rhs1, Array rhs2);
-  void unary_op(int32_t op_code, Array input);
-  void unary_reduction(int32_t op_code, Array input);
-  void fill(Array fill_value);
-  void dot(Array rhs1, Array rhs2);
+  void binary_op(int32_t op_code, NDArray rhs1, NDArray rhs2);
+  void unary_op(int32_t op_code, NDArray input);
+  void unary_reduction(int32_t op_code, NDArray input);
+  void fill(NDArray fill_value);
+  void dot(NDArray rhs1, NDArray rhs2);
 
  public:
   static legate::LibraryContext* get_context();
@@ -64,4 +64,4 @@ class Array {
 
 }  // namespace cunumeric
 
-#include "cunumeric/array.inl"
+#include "cunumeric/ndarray.inl"

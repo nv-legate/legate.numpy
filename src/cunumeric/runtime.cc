@@ -15,7 +15,8 @@
  */
 
 #include "cunumeric/runtime.h"
-#include "cunumeric/array.h"
+
+#include "cunumeric/ndarray.h"
 
 namespace cunumeric {
 
@@ -37,11 +38,11 @@ CuNumericRuntime::CuNumericRuntime(legate::Runtime* legate_runtime, legate::Libr
 {
 }
 
-Array CuNumericRuntime::create_array(std::vector<size_t> shape, legate::LegateTypeCode type)
+NDArray CuNumericRuntime::create_array(std::vector<size_t> shape, legate::LegateTypeCode type)
 {
   // TODO: We need a type system for cuNumeric and should not use the core types
   auto store = legate_runtime_->create_store(shape, type);
-  return Array(std::move(store));
+  return NDArray(std::move(store));
 }
 
 legate::LogicalStore CuNumericRuntime::create_scalar_store(const Scalar& value)

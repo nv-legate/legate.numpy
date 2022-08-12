@@ -17,7 +17,7 @@
 namespace cunumeric {
 
 template <typename T, int32_t DIM>
-legate::AccessorRW<T, DIM> Array::get_accessor()
+legate::AccessorRW<T, DIM> NDArray::get_accessor()
 {
   auto context = get_context();
   auto mapped  = store_.get_physical_store(context);

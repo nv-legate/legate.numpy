@@ -26,14 +26,14 @@
 
 namespace cunumeric {
 
-class Array;
+class NDArray;
 
 class CuNumericRuntime {
  private:
   CuNumericRuntime(legate::Runtime* legate_runtime, legate::LibraryContext* context);
 
  public:
-  Array create_array(std::vector<size_t> shape, legate::LegateTypeCode type);
+  NDArray create_array(std::vector<size_t> shape, legate::LegateTypeCode type);
   legate::LogicalStore create_scalar_store(const Scalar& value);
 
  public:

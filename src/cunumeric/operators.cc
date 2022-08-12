@@ -15,7 +15,7 @@
  */
 
 #include "cunumeric/operators.h"
-#include "cunumeric/array.h"
+#include "cunumeric/ndarray.h"
 #include "cunumeric/runtime.h"
 #include "cunumeric/binary/binary_op_util.h"
 #include "cunumeric/unary/unary_op_util.h"
@@ -23,12 +23,12 @@
 
 namespace cunumeric {
 
-Array array(std::vector<size_t> shape, legate::LegateTypeCode type)
+NDArray array(std::vector<size_t> shape, legate::LegateTypeCode type)
 {
   return CuNumericRuntime::get_runtime()->create_array(std::move(shape), type);
 }
 
-Array unary_op(UnaryOpCode op_code, Array input)
+NDArray unary_op(UnaryOpCode op_code, NDArray input)
 {
   auto runtime = CuNumericRuntime::get_runtime();
   auto out     = runtime->create_array(input.shape(), input.code());
@@ -36,7 +36,7 @@ Array unary_op(UnaryOpCode op_code, Array input)
   return std::move(out);
 }
 
-Array unary_reduction(UnaryRedCode op_code, Array input)
+NDArray unary_reduction(UnaryRedCode op_code, NDArray input)
 {
   auto runtime = CuNumericRuntime::get_runtime();
   auto out     = runtime->create_array({1}, input.code());
@@ -44,7 +44,7 @@ Array unary_reduction(UnaryRedCode op_code, Array input)
   return std::move(out);
 }
 
-Array binary_op(BinaryOpCode op_code, Array rhs1, Array rhs2)
+NDArray binary_op(BinaryOpCode op_code, NDArray rhs1, NDArray rhs2)
 {
   assert(rhs1.shape() == rhs2.shape());
   assert(rhs1.code() == rhs2.code());
@@ -55,16 +55,16 @@ Array binary_op(BinaryOpCode op_code, Array rhs1, Array rhs2)
   return std::move(out);
 }
 
-Array abs(Array input) { return unary_op(UnaryOpCode::ABSOLUTE, std::move(input)); }
+NDArray abs(NDArray input) { return unary_op(UnaryOpCode::ABSOLUTE, std::move(input)); }
 
-Array add(Array rhs1, Array rhs2)
+NDArray add(NDArray rhs1, NDArray rhs2)
 {
   return binary_op(BinaryOpCode::ADD, std::move(rhs1), std::move(rhs2));
 }
 
-Array negative(Array input) { return unary_op(UnaryOpCode::NEGATIVE, std::move(input)); }
+NDArray negative(NDArray input) { return unary_op(UnaryOpCode::NEGATIVE, std::move(input)); }
 
-Array random(std::vector<size_t> shape)
+NDArray random(std::vector<size_t> shape)
 {
   auto runtime = CuNumericRuntime::get_runtime();
   auto out     = runtime->create_array(std::move(shape), legate::LegateTypeCode::DOUBLE_LT);
@@ -72,7 +72,7 @@ Array random(std::vector<size_t> shape)
   return std::move(out);
 }
 
-Array full(std::vector<size_t> shape, const Scalar& value)
+NDArray full(std::vector<size_t> shape, const Scalar& value)
 {
   auto runtime = CuNumericRuntime::get_runtime();
   auto out     = runtime->create_array(std::move(shape), value.code());
@@ -80,7 +80,7 @@ Array full(std::vector<size_t> shape, const Scalar& value)
   return std::move(out);
 }
 
-Array dot(Array rhs1, Array rhs2)
+NDArray dot(NDArray rhs1, NDArray rhs2)
 {
   if (rhs1.dim() != 2 || rhs2.dim() != 2) {
     fprintf(stderr, "cunumeric::dot only supports matrices now");
@@ -110,6 +110,6 @@ Array dot(Array rhs1, Array rhs2)
   return std::move(out);
 }
 
-Array sum(Array input) { return unary_reduction(UnaryRedCode::SUM, std::move(input)); }
+NDArray sum(NDArray input) { return unary_reduction(UnaryRedCode::SUM, std::move(input)); }
 
 }  // namespace cunumeric

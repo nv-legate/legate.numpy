@@ -57,8 +57,8 @@ GEN_CPU_SRC += cunumeric/ternary/where.cc               \
 							 cunumeric/convolution/convolve.cc        \
 							 cunumeric/transform/flip.cc              \
 							 cunumeric/arg.cc                         \
-							 cunumeric/array.cc                       \
 							 cunumeric/mapper.cc                      \
+							 cunumeric/ndarray.cc                     \
 							 cunumeric/operators.cc                   \
 							 cunumeric/runtime.cc
 
@@ -162,8 +162,8 @@ GEN_CPU_SRC += cunumeric/cunumeric.cc # This must always be the last file!
 INSTALL_PATHS = cunumeric
 
 INSTALL_HEADERS = cunumeric/cunumeric_c.h \
-									cunumeric/array.h       \
-									cunumeric/array.inl     \
+									cunumeric/ndarray.h     \
+									cunumeric/ndarray.inl   \
 									cunumeric/operators.h   \
 									cunumeric/typedefs.h    \
 									cunumeric.h
