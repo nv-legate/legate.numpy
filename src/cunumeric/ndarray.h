@@ -47,6 +47,10 @@ class NDArray {
   legate::AccessorRW<T, DIM> get_accessor();
 
  public:
+  NDArray operator+(const NDArray& other) const;
+  NDArray& operator+=(const NDArray& other);
+
+ public:
   void random(int32_t gen_code);
   void fill(const Scalar& value, bool argval);
   void binary_op(int32_t op_code, NDArray rhs1, NDArray rhs2);

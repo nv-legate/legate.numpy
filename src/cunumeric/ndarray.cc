@@ -15,6 +15,8 @@
  */
 
 #include "cunumeric/ndarray.h"
+
+#include "cunumeric/operators.h"
 #include "cunumeric/runtime.h"
 #include "cunumeric/random/rand_util.h"
 #include "cunumeric/unary/unary_red_util.h"
@@ -42,6 +44,14 @@ static std::vector<int64_t> compute_strides(const std::vector<size_t>& shape)
     }
   }
   return std::move(strides);
+}
+
+NDArray NDArray::operator+(const NDArray& other) const { return add(*this, other); }
+
+NDArray& NDArray::operator+=(const NDArray& other)
+{
+  add(*this, other, *this);
+  return *this;
 }
 
 void NDArray::random(int32_t gen_code)
