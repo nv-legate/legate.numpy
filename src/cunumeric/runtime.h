@@ -33,6 +33,7 @@ class CuNumericRuntime {
   CuNumericRuntime(legate::Runtime* legate_runtime, legate::LibraryContext* context);
 
  public:
+  NDArray create_array(legate::LegateTypeCode type);
   NDArray create_array(std::vector<size_t> shape, legate::LegateTypeCode type);
   legate::LogicalStore create_scalar_store(const Scalar& value);
 

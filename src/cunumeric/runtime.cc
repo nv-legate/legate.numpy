@@ -38,6 +38,12 @@ CuNumericRuntime::CuNumericRuntime(legate::Runtime* legate_runtime, legate::Libr
 {
 }
 
+NDArray CuNumericRuntime::create_array(legate::LegateTypeCode type)
+{
+  auto store = legate_runtime_->create_store(type);
+  return NDArray(std::move(store));
+}
+
 NDArray CuNumericRuntime::create_array(std::vector<size_t> shape, legate::LegateTypeCode type)
 {
   // TODO: We need a type system for cuNumeric and should not use the core types

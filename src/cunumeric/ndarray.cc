@@ -190,6 +190,33 @@ void NDArray::dot(NDArray rhs1, NDArray rhs2)
   runtime->submit(std::move(task));
 }
 
+std::vector<NDArray> NDArray::nonzero()
+{
+  auto runtime = CuNumericRuntime::get_runtime();
+
+  std::vector<NDArray> outputs;
+  auto ndim = dim();
+  for (int32_t i = 0; i < ndim; ++i)
+    outputs.emplace_back(runtime->create_array(legate::LegateTypeCode::INT64_LT));
+
+  auto task = runtime->create_task(CuNumericOpCode::CUNUMERIC_NONZERO);
+
+  auto p_rhs = task->declare_partition();
+
+  for (auto& output : outputs) {
+    auto p_lhs = task->declare_partition();
+    task->add_output(output.store_, p_lhs);
+  }
+  task->add_input(store_, p_rhs);
+
+  // auto broadcast_dims = legate::from_range<int32_t>(1, ndim);
+  // task->add_constraints(broadcast(p_rhs, broadcast_dims));
+
+  runtime->submit(std::move(task));
+
+  return std::move(outputs);
+}
+
 legate::LogicalStore NDArray::broadcast(const std::vector<size_t>& shape,
                                         legate::LogicalStore& store)
 {

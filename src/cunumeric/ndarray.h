@@ -58,6 +58,7 @@ class NDArray {
   void unary_reduction(int32_t op_code, NDArray input);
   void fill(NDArray fill_value);
   void dot(NDArray rhs1, NDArray rhs2);
+  std::vector<NDArray> nonzero();
 
  private:
   legate::LogicalStore broadcast(const std::vector<size_t>& shape, legate::LogicalStore& store);
