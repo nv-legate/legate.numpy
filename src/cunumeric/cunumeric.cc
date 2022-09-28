@@ -65,9 +65,7 @@ void registration_callback(Legion::Machine machine,
 
   // Now we can register our mapper with the runtime
   CuNumeric::mapper_id = context->get_mapper_id(0);
-  auto mapper          = new CuNumericMapper(legion_runtime, machine, *context);
-  // This will register it with all the processors on the node
-  legion_runtime->add_mapper(CuNumeric::mapper_id, mapper);
+  context.register_mapper(new CuNumericMapper(runtime, machine, context), 0);
 }
 
 void bootstrapping_callback(Legion::Machine machine,

@@ -17,12 +17,14 @@
 #pragma once
 
 #include "cunumeric/cunumeric_task.h"
+#include "cunumeric/unary/convert_util.h"
 
 namespace cunumeric {
 
 struct ConvertArgs {
   const legate::Store& out;
   const legate::Store& in;
+  ConvertCode nan_op;
 };
 
 class ConvertTask : public CuNumericTask<ConvertTask> {
