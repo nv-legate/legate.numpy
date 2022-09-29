@@ -18,7 +18,7 @@
 
 // Useful for IDEs
 #include <core/utilities/typedefs.h>
-#include "cunumeric/cunumeric.h"
+#include "cunumeric/cunumeric_task.h"
 #include "cunumeric/unary/scalar_unary_red.h"
 #include "cunumeric/unary/unary_red_util.h"
 #include "cunumeric/pitches.h"

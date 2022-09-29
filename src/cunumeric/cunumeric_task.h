@@ -17,6 +17,7 @@
 #pragma once
 
 #include "legate.h"
+#include "cunumeric.h"
 #include "cunumeric/cunumeric_c.h"
 
 namespace cunumeric {

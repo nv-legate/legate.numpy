@@ -157,6 +157,9 @@ list(APPEND cunumeric_SOURCES
   src/cunumeric/transform/flip.cc
   src/cunumeric/arg.cc
   src/cunumeric/mapper.cc
+  src/cunumeric/ndarray.cc
+  src/cunumeric/operators.cc
+  src/cunumeric/runtime.cc
   src/cunumeric/cephes/chbevl.cc
   src/cunumeric/cephes/i0.cc
 )
@@ -426,8 +429,17 @@ install(TARGETS cunumeric
         EXPORT cunumeric-exports)
 
 install(
-  FILES ${CMAKE_CURRENT_BINARY_DIR}/include/cunumeric/version_config.hpp
+  FILES src/cunumeric.h
+        ${CMAKE_CURRENT_BINARY_DIR}/include/cunumeric/version_config.hpp
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/cunumeric)
+
+install(
+  FILES src/cunumeric/cunumeric_c.h
+        src/cunumeric/ndarray.h
+        src/cunumeric/ndarray.inl
+        src/cunumeric/operators.h
+        src/cunumeric/typedefs.h
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/cunumeric/cunumeric)
 
 if(cunumeric_INSTALL_TBLIS)
   install(DIRECTORY ${tblis_BINARY_DIR}/lib/ DESTINATION ${lib_dir})
