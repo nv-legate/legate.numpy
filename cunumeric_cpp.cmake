@@ -442,8 +442,7 @@ install(
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/cunumeric)
 
 install(
-  FILES src/cunumeric.h
-        src/cunumeric/cunumeric_c.h
+  FILES src/cunumeric/cunumeric_c.h
         src/cunumeric/ndarray.h
         src/cunumeric/ndarray.inl
         src/cunumeric/operators.h
