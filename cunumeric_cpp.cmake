@@ -405,10 +405,10 @@ target_compile_definitions(cunumeric
           "$<$<COMPILE_LANGUAGE:CUDA>:${cunumeric_CUDA_DEFS}>")
 
 target_include_directories(cunumeric
-  PRIVATE
+  PUBLIC
     $<BUILD_INTERFACE:${cunumeric_SOURCE_DIR}/src>
   INTERFACE
-    $<INSTALL_INTERFACE:include>
+    $<INSTALL_INTERFACE:include/cunumeric>
 )
 
 if(Legion_USE_CUDA)
