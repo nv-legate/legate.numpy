@@ -88,8 +88,8 @@ static __global__ void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM)
                      const size_t num_bins,
                      Point<1> origin)
 {
-  extern __shared__ char array[];
-  auto bins = reinterpret_cast<int32_t*>(array);
+  extern __shared__ char __bins[];
+  auto bins = reinterpret_cast<int32_t*>(__bins);
   _bincount(bins, rhs, volume, num_bins, origin);
   // Now do the atomics out to global memory
   for (int32_t bin = threadIdx.x; bin < num_bins; bin += blockDim.x) {
@@ -120,8 +120,8 @@ static __global__ void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM)
                               const size_t num_bins,
                               Point<1> origin)
 {
-  extern __shared__ char array[];
-  auto bins = reinterpret_cast<double*>(array);
+  extern __shared__ char __bins[];
+  auto bins = reinterpret_cast<double*>(__bins);
   _weighted_bincount(bins, rhs, weights, volume, num_bins, origin);
   // Now do the atomics out to global memory
   for (int32_t bin = threadIdx.x; bin < num_bins; bin += blockDim.x) {
