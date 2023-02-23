@@ -25,9 +25,6 @@ namespace cunumeric {
 
 static const char* const cunumeric_library_name = "cunumeric";
 
-/*static*/ bool CuNumeric::has_numamem           = false;
-/*static*/ Legion::MapperID CuNumeric::mapper_id = -1;
-
 /*static*/ LegateTaskRegistrar& CuNumeric::get_registrar()
 {
   static LegateTaskRegistrar registrar;
@@ -64,7 +61,6 @@ void registration_callback(Legion::Machine machine,
 #endif
 
   // Now we can register our mapper with the runtime
-  CuNumeric::mapper_id = context->get_mapper_id(0);
   context->register_mapper(new CuNumericMapper(legion_runtime, machine, *context), 0);
 }
 
@@ -90,12 +86,6 @@ void cunumeric_perform_registration(void)
   // in before the runtime starts and make it global so that we know
   // that this call back is invoked everywhere across all nodes
   Legion::Runtime::perform_registration_callback(cunumeric::registration_callback, true /*global*/);
-
-  Legion::Runtime* runtime = Legion::Runtime::get_runtime();
-  Legion::Context ctx      = Legion::Runtime::get_context();
-  Legion::Future fut       = runtime->select_tunable_value(
-    ctx, CUNUMERIC_TUNABLE_HAS_NUMAMEM, cunumeric::CuNumeric::mapper_id);
-  if (fut.get_result<int32_t>() != 0) cunumeric::CuNumeric::has_numamem = true;
 }
 
 bool cunumeric_has_curand()

@@ -15,9 +15,9 @@
  */
 
 #include <thrust/scan.h>
-#include <thrust/execution_policy.h>
 
 #include "cunumeric/cuda_help.h"
+#include "cunumeric/utilities/thrust_util.h"
 
 namespace cunumeric {
 
@@ -49,7 +49,7 @@ static __global__ void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM)
 
 static void exclusive_sum(int64_t* offsets, size_t volume, cudaStream_t stream)
 {
-  thrust::exclusive_scan(thrust::cuda::par.on(stream), offsets, offsets + volume, offsets);
+  thrust::exclusive_scan(DEFAULT_POLICY.on(stream), offsets, offsets + volume, offsets);
 }
 
 template <typename VAL, int32_t DIM>
@@ -63,7 +63,7 @@ int64_t compute_offsets(const AccessorRO<VAL, DIM>& in,
   DeviceScalarReductionBuffer<SumReduction<uint64_t>> size(stream);
 
   const size_t blocks = (volume + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
-  size_t shmem_size   = THREADS_PER_BLOCK / 32 * sizeof(int64_t);
+  size_t shmem_size   = THREADS_PER_BLOCK / 32 * sizeof(uint64_t);
 
   if (blocks >= MAX_REDUCTION_CTAS) {
     const size_t iters = (blocks + MAX_REDUCTION_CTAS - 1) / MAX_REDUCTION_CTAS;

@@ -33,23 +33,17 @@ template <VariantKind KIND, LegateTypeCode CODE>
 struct ContractImplBody;
 
 template <LegateTypeCode CODE>
-struct support_contract : std::false_type {
-};
+struct support_contract : std::false_type {};
 template <>
-struct support_contract<LegateTypeCode::HALF_LT> : std::true_type {
-};
+struct support_contract<LegateTypeCode::HALF_LT> : std::true_type {};
 template <>
-struct support_contract<LegateTypeCode::FLOAT_LT> : std::true_type {
-};
+struct support_contract<LegateTypeCode::FLOAT_LT> : std::true_type {};
 template <>
-struct support_contract<LegateTypeCode::DOUBLE_LT> : std::true_type {
-};
+struct support_contract<LegateTypeCode::DOUBLE_LT> : std::true_type {};
 template <>
-struct support_contract<LegateTypeCode::COMPLEX64_LT> : std::true_type {
-};
+struct support_contract<LegateTypeCode::COMPLEX64_LT> : std::true_type {};
 template <>
-struct support_contract<LegateTypeCode::COMPLEX128_LT> : std::true_type {
-};
+struct support_contract<LegateTypeCode::COMPLEX128_LT> : std::true_type {};
 
 #if 0  // debugging output
 
@@ -189,7 +183,8 @@ struct ContractImpl {
                                    rhs2_shape.size(),
                                    rhs2_shape.data(),
                                    rhs2_strides.data(),
-                                   rhs2_modes.data());
+                                   rhs2_modes.data(),
+                                   args.lhs.is_readable());
 
 #if 0  // debugging output
     std::cout << "end contract kernel:" << std::endl;

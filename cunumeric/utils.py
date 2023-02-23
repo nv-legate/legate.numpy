@@ -18,27 +18,32 @@ import traceback
 from functools import reduce
 from string import ascii_lowercase, ascii_uppercase
 from types import FrameType
-from typing import Any, List, Sequence, Tuple, Union, cast
+from typing import Any, Callable, List, Sequence, Tuple, Union, cast
 
+import legate.core.types as ty
 import numpy as np
 
 from .types import NdShape
 
-_SUPPORTED_DTYPES = [
-    np.float16,
-    np.float32,
-    np.float64,
-    float,
-    np.int16,
-    np.int32,
-    np.int64,
-    int,
-    np.uint16,
-    np.uint32,
-    np.uint64,
-    np.bool_,
-    bool,
-]
+SUPPORTED_DTYPES = {
+    bool: ty.bool_,
+    np.bool_: ty.bool_,
+    np.int8: ty.int8,
+    np.int16: ty.int16,
+    np.int32: ty.int32,
+    int: ty.int64,  # np.int is int
+    np.int64: ty.int64,
+    np.uint8: ty.uint8,
+    np.uint16: ty.uint16,
+    np.uint32: ty.uint32,
+    np.uint64: ty.uint64,  # np.uint is np.uint64
+    np.float16: ty.float16,
+    np.float32: ty.float32,
+    float: ty.float64,
+    np.float64: ty.float64,
+    np.complex64: ty.complex64,
+    np.complex128: ty.complex128,
+}
 
 
 def is_advanced_indexing(key: Any) -> bool:
@@ -56,7 +61,7 @@ def is_advanced_indexing(key: Any) -> bool:
 
 def find_last_user_stacklevel() -> int:
     stacklevel = 1
-    for (frame, _) in traceback.walk_stack(None):
+    for frame, _ in traceback.walk_stack(None):
         if not frame.f_globals["__name__"].startswith("cunumeric"):
             break
         stacklevel += 1
@@ -68,7 +73,7 @@ def get_line_number_from_frame(frame: FrameType) -> str:
 
 
 def find_last_user_frames(top_only: bool = True) -> str:
-    for (last, _) in traceback.walk_stack(None):
+    for last, _ in traceback.walk_stack(None):
         if "__name__" not in last.f_globals:
             continue
         name = last.f_globals["__name__"]
@@ -91,7 +96,7 @@ def find_last_user_frames(top_only: bool = True) -> str:
 def is_supported_dtype(dtype: Any) -> bool:
     if not isinstance(dtype, np.dtype):
         raise TypeError("expected a NumPy dtype")
-    return dtype.type in _SUPPORTED_DTYPES
+    return dtype.type in SUPPORTED_DTYPES
 
 
 def calculate_volume(shape: NdShape) -> int:
@@ -109,7 +114,7 @@ def get_arg_dtype(dtype: np.dtype[Any]) -> np.dtype[Any]:
 
 def get_arg_value_dtype(dtype: np.dtype[Any]) -> np.dtype[Any]:
     dt = dtype.fields["arg_value"][0].type  # type: ignore [index]
-    return cast(Any, dt)
+    return cast(np.dtype[Any], dt)
 
 
 Modes = Tuple[List[str], List[str], List[str]]
@@ -214,9 +219,29 @@ def tensordot_modes(a_ndim: int, b_ndim: int, axes: AxesPairLike) -> Modes:
 
     a_modes = list(ascii_lowercase[:a_ndim])
     b_modes = list(ascii_uppercase[:b_ndim])
-    for (a_i, b_i) in zip(a_axes, b_axes):
+    for a_i, b_i in zip(a_axes, b_axes):
         b_modes[b_i] = a_modes[a_i]
     a_out = [a_modes[a_i] for a_i in sorted(set(range(a_ndim)) - set(a_axes))]
     b_out = [b_modes[b_i] for b_i in sorted(set(range(b_ndim)) - set(b_axes))]
 
     return (a_modes, b_modes, a_out + b_out)
+
+
+def deep_apply(obj: Any, func: Callable[[Any], Any]) -> Any:
+    """
+    Apply the provided function to objects contained at any depth within a data
+    structure.
+
+    This function will recurse over arbitrary nestings of lists, tuples and
+    dicts. This recursion logic is rather limited, but this function is
+    primarily meant to be used for arguments of NumPy API calls, which
+    shouldn't nest their arrays very deep.
+    """
+    if type(obj) == list:
+        return [deep_apply(x, func) for x in obj]
+    elif type(obj) == tuple:
+        return tuple(deep_apply(x, func) for x in obj)
+    elif type(obj) == dict:
+        return {k: deep_apply(v, func) for k, v in obj.items()}
+    else:
+        return func(obj)

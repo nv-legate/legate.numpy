@@ -131,6 +131,7 @@ list(APPEND cunumeric_SOURCES
   src/cunumeric/index/repeat.cc
   src/cunumeric/index/wrap.cc
   src/cunumeric/index/zip.cc
+  src/cunumeric/index/putmask.cc
   src/cunumeric/item/read.cc
   src/cunumeric/item/write.cc
   src/cunumeric/matrix/contract.cc
@@ -183,6 +184,7 @@ if(Legion_USE_OpenMP)
     src/cunumeric/nullary/window_omp.cc
     src/cunumeric/index/advanced_indexing_omp.cc
     src/cunumeric/index/choose_omp.cc
+    src/cunumeric/index/putmask_omp.cc
     src/cunumeric/index/repeat_omp.cc
     src/cunumeric/index/wrap_omp.cc
     src/cunumeric/index/zip_omp.cc
@@ -199,7 +201,6 @@ if(Legion_USE_OpenMP)
     src/cunumeric/matrix/transpose_omp.cc
     src/cunumeric/matrix/trilu_omp.cc
     src/cunumeric/matrix/trsm_omp.cc
-    src/cunumeric/matrix/util_omp.cc
     src/cunumeric/random/rand_omp.cc
     src/cunumeric/search/argwhere_omp.cc
     src/cunumeric/search/nonzero_omp.cc
@@ -232,6 +233,7 @@ if(Legion_USE_CUDA)
     src/cunumeric/index/repeat.cu
     src/cunumeric/index/wrap.cu
     src/cunumeric/index/zip.cu
+    src/cunumeric/index/putmask.cu
     src/cunumeric/item/read.cu
     src/cunumeric/item/write.cu
     src/cunumeric/matrix/contract.cu
@@ -331,7 +333,7 @@ list(APPEND cunumeric_SOURCES
   src/cunumeric/cunumeric.cc
 )
 
-if(NOT CMAKE_BUILD_TYPE STREQUAL "Release")
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
   list(APPEND cunumeric_CXX_DEFS DEBUG_CUNUMERIC)
   list(APPEND cunumeric_CUDA_DEFS DEBUG_CUNUMERIC)
 endif()
@@ -350,9 +352,15 @@ list(APPEND cunumeric_CUDA_OPTIONS -Wno-deprecated-declarations)
 add_library(cunumeric ${cunumeric_SOURCES})
 add_library(cunumeric::cunumeric ALIAS cunumeric)
 
+if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
+  set(platform_rpath_origin "\$ORIGIN")
+elseif (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+  set(platform_rpath_origin "@loader_path")
+endif ()
+
 set_target_properties(cunumeric
-           PROPERTIES BUILD_RPATH                         "\$ORIGIN"
-                      INSTALL_RPATH                       "\$ORIGIN"
+           PROPERTIES BUILD_RPATH                         "${platform_rpath_origin}"
+                      INSTALL_RPATH                       "${platform_rpath_origin}"
                       CXX_STANDARD                        17
                       CXX_STANDARD_REQUIRED               ON
                       POSITION_INDEPENDENT_CODE           ON

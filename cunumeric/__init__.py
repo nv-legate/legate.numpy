@@ -24,10 +24,12 @@ with GPU acceleration.
 """
 from __future__ import annotations
 
+import os
+
 import numpy as _np
 
 from cunumeric import linalg, random, fft
-from cunumeric.array import ndarray
+from cunumeric.array import maybe_convert_to_np_ndarray, ndarray
 from cunumeric.bits import packbits, unpackbits
 from cunumeric.module import *
 from cunumeric._ufunc import *
@@ -35,11 +37,12 @@ from cunumeric.logic import *
 from cunumeric.window import bartlett, blackman, hamming, hanning, kaiser
 from cunumeric.coverage import clone_module
 
-clone_module(_np, globals())
+clone_module(_np, globals(), maybe_convert_to_np_ndarray)
 
+del maybe_convert_to_np_ndarray
 del clone_module
 del _np
 
 from . import _version
 
-__version__ = _version.get_versions()["version"]  # type: ignore
+__version__ = _version.get_versions()["version"]  # type: ignore [no-untyped-call]

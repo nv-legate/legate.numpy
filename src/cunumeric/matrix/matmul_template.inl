@@ -29,8 +29,7 @@ template <VariantKind KIND, LegateTypeCode CODE>
 struct MatMulImplBody;
 
 template <LegateTypeCode CODE>
-struct support_matmul : std::false_type {
-};
+struct support_matmul : std::false_type {};
 template <>
 struct support_matmul<LegateTypeCode::DOUBLE_LT> : std::true_type {
   using ACC_TYPE = double;
@@ -103,7 +102,8 @@ struct MatMulImpl {
                                  rhs1_stride,
                                  rhs2_stride,
                                  rhs1_transposed,
-                                 rhs2_transposed);
+                                 rhs2_transposed,
+                                 args.lhs.is_readable());
   }
 
   template <LegateTypeCode CODE, std::enable_if_t<!support_matmul<CODE>::value>* = nullptr>

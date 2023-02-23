@@ -29,8 +29,7 @@ template <VariantKind KIND, LegateTypeCode CODE>
 struct MatVecMulImplBody;
 
 template <LegateTypeCode CODE>
-struct support_matvecmul : std::false_type {
-};
+struct support_matvecmul : std::false_type {};
 template <>
 struct support_matvecmul<LegateTypeCode::DOUBLE_LT> : std::true_type {
   using ACC_TYPE = double;
@@ -84,7 +83,8 @@ struct MatVecMulImpl {
     assert(lhs_strides[0] == 1 && lhs_strides[1] == 0);
 #endif
 
-    MatVecMulImplBody<KIND, CODE>()(m, n, lhs, mat, vec, mat_stride, transpose_mat);
+    MatVecMulImplBody<KIND, CODE>()(
+      m, n, lhs, mat, vec, mat_stride, transpose_mat, args.lhs.is_readable());
   }
 
   template <LegateTypeCode CODE, std::enable_if_t<!support_matvecmul<CODE>::value>* = nullptr>

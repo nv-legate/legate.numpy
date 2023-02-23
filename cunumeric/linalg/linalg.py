@@ -17,8 +17,12 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Sequence, Union
 
 import numpy as np
-from numpy.core.multiarray import normalize_axis_index  # type: ignore
-from numpy.core.numeric import normalize_axis_tuple  # type: ignore
+from numpy.core.multiarray import (  # type: ignore [attr-defined]
+    normalize_axis_index,
+)
+from numpy.core.numeric import (  # type: ignore [attr-defined]
+    normalize_axis_tuple,
+)
 
 from cunumeric._ufunc.math import add, sqrt as _sqrt
 from cunumeric.array import add_boilerplate, convert_to_cunumeric_ndarray
@@ -192,9 +196,9 @@ def matrix_power(a: ndarray, n: int) -> ndarray:
     """
     # Process inputs
     if a.ndim < 2:
-        raise ValueError(f"Expected at least 2d array, but got {a.ndim}d")
+        raise LinAlgError(f"Expected at least 2d array, but got {a.ndim}d")
     if a.shape[-2] != a.shape[-1]:
-        raise ValueError("Last 2 dimensions of the array must be square")
+        raise LinAlgError("Last 2 dimensions of the array must be square")
     if not isinstance(n, int):
         raise TypeError("exponent must be an integer")
 
@@ -488,7 +492,6 @@ def norm(
             or (ord in ("f", "fro") and ndim == 2)
             or (ord == 2 and ndim == 1)
         ):
-
             x = x.ravel()
             if x.dtype.kind == "c":
                 x_real = x.real
@@ -521,7 +524,7 @@ def norm(
             # Zero norm
             return (
                 (x != 0)
-                .astype(np.int64)
+                .astype(x.dtype)
                 .sum(axis=computed_axis, keepdims=keepdims)
             )
         elif ord == 1:

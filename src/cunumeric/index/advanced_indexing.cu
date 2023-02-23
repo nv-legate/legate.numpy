@@ -16,10 +16,10 @@
 
 #include "cunumeric/index/advanced_indexing.h"
 #include "cunumeric/index/advanced_indexing_template.inl"
+#include "cunumeric/utilities/thrust_util.h"
 #include "cunumeric/cuda_help.h"
 
 #include <thrust/scan.h>
-#include <thrust/execution_policy.h>
 
 namespace cunumeric {
 
@@ -94,7 +94,7 @@ struct AdvancedIndexingImplBody<VariantKind::GPU, CODE, DIM, OUT_TYPE> {
 
     const size_t blocks = (volume + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
 
-    size_t shmem_size = THREADS_PER_BLOCK / 32 * sizeof(int64_t);
+    size_t shmem_size = THREADS_PER_BLOCK / 32 * sizeof(uint64_t);
 
     if (blocks >= MAX_REDUCTION_CTAS) {
       const size_t iters = (blocks + MAX_REDUCTION_CTAS - 1) / MAX_REDUCTION_CTAS;
@@ -107,7 +107,7 @@ struct AdvancedIndexingImplBody<VariantKind::GPU, CODE, DIM, OUT_TYPE> {
     CHECK_CUDA_STREAM(stream);
 
     auto off_ptr = offsets.ptr(0);
-    thrust::exclusive_scan(thrust::cuda::par.on(stream), off_ptr, off_ptr + volume, off_ptr);
+    thrust::exclusive_scan(DEFAULT_POLICY.on(stream), off_ptr, off_ptr + volume, off_ptr);
 
     return size.read(stream);
   }

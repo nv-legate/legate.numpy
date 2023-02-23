@@ -19,6 +19,7 @@
 #include "cunumeric/sort/cub_sort.h"
 #include "cunumeric/sort/thrust_sort.h"
 #include "cunumeric/utilities/thrust_allocator.h"
+#include "cunumeric/utilities/thrust_util.h"
 
 #include <thrust/scan.h>
 #include <thrust/sort.h>
@@ -42,14 +43,11 @@
 namespace cunumeric {
 
 template <LegateTypeCode CODE>
-struct support_cub : std::true_type {
-};
+struct support_cub : std::true_type {};
 template <>
-struct support_cub<LegateTypeCode::COMPLEX64_LT> : std::false_type {
-};
+struct support_cub<LegateTypeCode::COMPLEX64_LT> : std::false_type {};
 template <>
-struct support_cub<LegateTypeCode::COMPLEX128_LT> : std::false_type {
-};
+struct support_cub<LegateTypeCode::COMPLEX128_LT> : std::false_type {};
 
 template <LegateTypeCode CODE, std::enable_if_t<support_cub<CODE>::value>* = nullptr>
 void local_sort(const legate_type_of<CODE>* values_in,
@@ -646,7 +644,7 @@ SegmentMergePiece<legate_type_of<CODE>> merge_all_buffers(
     return result;
   } else {
     // maybe k-way merge is more efficient here...
-    auto exec_policy      = thrust::cuda::par(alloc).on(stream);
+    auto exec_policy      = DEFAULT_POLICY(alloc).on(stream);
     size_t num_sort_ranks = merge_buffers.size();
     std::vector<SegmentMergePiece<VAL>> destroy_queue;
     for (size_t stride = 1; stride < num_sort_ranks; stride *= 2) {
@@ -777,7 +775,7 @@ void rebalance_data(SegmentMergePiece<VAL>& merge_buffer,
     output_values = static_cast<VAL*>(output_ptr);
   }
 
-  auto exec_policy = thrust::cuda::par(alloc).on(stream);
+  auto exec_policy = DEFAULT_POLICY(alloc).on(stream);
 
   {
     // compute diff for each segment
@@ -1338,7 +1336,7 @@ void sample_sort_nccl_nd(
 
   // sort samples on device
   auto alloc       = ThrustAllocator(Memory::GPU_FB_MEM);
-  auto exec_policy = thrust::cuda::par(alloc).on(stream);
+  auto exec_policy = DEFAULT_POLICY(alloc).on(stream);
   thrust::stable_sort(
     exec_policy, samples.ptr(0), samples.ptr(0) + num_samples_g, SegmentSampleComparator<VAL>());
 
@@ -1427,7 +1425,6 @@ void sample_sort_nccl_nd(
   CHECK_NCCL(ncclGroupEnd());
 
   // we need the amount of data to transfer on the host --> get it
-  // FIXME auto kind = CuNumeric::has_numamem ? Memory::Kind::SOCKET_MEM : Memory::Kind::SYSTEM_MEM;
   Buffer<size_t> size_send_total = create_buffer<size_t>(num_sort_ranks, Memory::Z_COPY_MEM);
   Buffer<size_t> size_recv_total = create_buffer<size_t>(num_sort_ranks, Memory::Z_COPY_MEM);
   {
@@ -1562,32 +1559,36 @@ void sample_sort_nccl_nd(
   // communicate all2all (in sort dimension)
   CHECK_NCCL(ncclGroupStart());
   for (size_t r = 0; r < num_sort_ranks; r++) {
-    CHECK_NCCL(ncclSend(val_send_buffers[r].ptr(0),
-                        size_send_total[r] * sizeof(VAL),
-                        ncclInt8,
-                        sort_ranks[r],
-                        *comm,
-                        stream));
-    CHECK_NCCL(ncclRecv(merge_buffers[r].values.ptr(0),
-                        merge_buffers[r].size * sizeof(VAL),
-                        ncclInt8,
-                        sort_ranks[r],
-                        *comm,
-                        stream));
+    if (size_send_total[r] > 0)
+      CHECK_NCCL(ncclSend(val_send_buffers[r].ptr(0),
+                          size_send_total[r] * sizeof(VAL),
+                          ncclInt8,
+                          sort_ranks[r],
+                          *comm,
+                          stream));
+    if (merge_buffers[r].size > 0)
+      CHECK_NCCL(ncclRecv(merge_buffers[r].values.ptr(0),
+                          merge_buffers[r].size * sizeof(VAL),
+                          ncclInt8,
+                          sort_ranks[r],
+                          *comm,
+                          stream));
   }
   CHECK_NCCL(ncclGroupEnd());
 
   if (argsort) {
     CHECK_NCCL(ncclGroupStart());
     for (size_t r = 0; r < num_sort_ranks; r++) {
-      CHECK_NCCL(ncclSend(
-        idc_send_buffers[r].ptr(0), size_send_total[r], ncclInt64, sort_ranks[r], *comm, stream));
-      CHECK_NCCL(ncclRecv(merge_buffers[r].indices.ptr(0),
-                          merge_buffers[r].size,
-                          ncclInt64,
-                          sort_ranks[r],
-                          *comm,
-                          stream));
+      if (size_send_total[r] > 0)
+        CHECK_NCCL(ncclSend(
+          idc_send_buffers[r].ptr(0), size_send_total[r], ncclInt64, sort_ranks[r], *comm, stream));
+      if (merge_buffers[r].size > 0)
+        CHECK_NCCL(ncclRecv(merge_buffers[r].indices.ptr(0),
+                            merge_buffers[r].size,
+                            ncclInt64,
+                            sort_ranks[r],
+                            *comm,
+                            stream));
     }
     CHECK_NCCL(ncclGroupEnd());
   }
@@ -1707,9 +1708,9 @@ struct SortImplBody<VariantKind::GPU, CODE, DIM> {
       size_t offset = rect.lo[DIM - 1];
       if (volume > 0) {
         if (DIM == 1) {
-          thrust::sequence(thrust::cuda::par.on(stream), indices_ptr, indices_ptr + volume, offset);
+          thrust::sequence(DEFAULT_POLICY.on(stream), indices_ptr, indices_ptr + volume, offset);
         } else {
-          thrust::transform(thrust::cuda::par.on(stream),
+          thrust::transform(DEFAULT_POLICY.on(stream),
                             thrust::make_counting_iterator<int64_t>(0),
                             thrust::make_counting_iterator<int64_t>(volume),
                             thrust::make_constant_iterator<int64_t>(segment_size_l),
