@@ -25,7 +25,7 @@ struct ScanGlobalArgs {
   const legate::Store& sum_vals;
   const legate::Store& out;
   ScanCode op_code;
-  const Legion::DomainPoint& partition_index;
+  const legate::DomainPoint& partition_index;
 };
 
 class ScanGlobalTask : public CuNumericTask<ScanGlobalTask> {

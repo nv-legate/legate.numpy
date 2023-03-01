@@ -25,7 +25,7 @@ struct ScalarUnaryRedArgs {
   const legate::Store& out;
   const legate::Store& in;
   UnaryRedCode op_code;
-  Legion::DomainPoint shape;
+  legate::DomainPoint shape;
   std::vector<legate::Store> args;
 };
 

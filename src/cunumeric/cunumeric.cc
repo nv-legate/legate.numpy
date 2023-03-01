@@ -25,21 +25,15 @@ namespace cunumeric {
 
 static const char* const cunumeric_library_name = "cunumeric";
 
-/*static*/ LegateTaskRegistrar& CuNumeric::get_registrar()
+/*static*/ TaskRegistrar& CuNumeric::get_registrar()
 {
-  static LegateTaskRegistrar registrar;
+  static TaskRegistrar registrar;
   return registrar;
 }
 
-#ifdef LEGATE_USE_CUDA
-extern void register_gpu_reduction_operators(LibraryContext& context);
-#else
-extern void register_cpu_reduction_operators(LibraryContext& context);
-#endif
+extern void register_reduction_operators(LibraryContext& context);
 
-void registration_callback(Legion::Machine machine,
-                           Legion::Runtime* legion_runtime,
-                           const std::set<Legion::Processor>& local_procs)
+void registration_callback()
 {
   ResourceConfig config;
 
@@ -51,24 +45,20 @@ void registration_callback(Legion::Machine machine,
 
   auto context = runtime->create_library(cunumeric_library_name, config);
 
-  CuNumeric::get_registrar().register_all_tasks(legion_runtime, *context);
+  CuNumeric::get_registrar().register_all_tasks(*context);
 
   // Register our special reduction functions
-#ifdef LEGATE_USE_CUDA
-  register_gpu_reduction_operators(*context);
-#else
-  register_cpu_reduction_operators(*context);
-#endif
+  register_reduction_operators(*context);
 
   // Now we can register our mapper with the runtime
-  context->register_mapper(new CuNumericMapper(legion_runtime, machine, *context), 0);
+  context->register_mapper(std::make_unique<CuNumericMapper>(), 0);
 }
 
 void bootstrapping_callback(Legion::Machine machine,
                             Legion::Runtime* legion_runtime,
                             const std::set<Legion::Processor>& local_procs)
 {
-  registration_callback(machine, legion_runtime, local_procs);
+  registration_callback();
 
   auto runtime = legate::Runtime::get_runtime();
   auto context = runtime->find_library(cunumeric_library_name);
@@ -82,10 +72,7 @@ extern "C" {
 
 void cunumeric_perform_registration(void)
 {
-  // Tell the runtime about our registration callback so we hook it
-  // in before the runtime starts and make it global so that we know
-  // that this call back is invoked everywhere across all nodes
-  Legion::Runtime::perform_registration_callback(cunumeric::registration_callback, true /*global*/);
+  legate::Core::perform_registration(cunumeric::registration_callback);
 }
 
 bool cunumeric_has_curand()
