@@ -101,7 +101,7 @@ std::vector<StoreMapping> CuNumericMapper::store_mappings(
         std::vector<StoreMapping> mappings;
         auto& outputs = task.outputs();
         mappings.push_back(StoreMapping::default_mapping(outputs[0], options.front()));
-        mappings.back().policy.ordering.fortran_order();
+        mappings.back().policy.ordering.set_fortran_order();
         mappings.back().policy.exact = true;
         return std::move(mappings);
       } else
@@ -134,12 +134,12 @@ std::vector<StoreMapping> CuNumericMapper::store_mappings(
       auto& outputs = task.outputs();
       for (auto& input : inputs) {
         mappings.push_back(StoreMapping::default_mapping(input, options.front()));
-        mappings.back().policy.ordering.fortran_order();
+        mappings.back().policy.ordering.set_fortran_order();
         mappings.back().policy.exact = true;
       }
       for (auto& output : outputs) {
         mappings.push_back(StoreMapping::default_mapping(output, options.front()));
-        mappings.back().policy.ordering.fortran_order();
+        mappings.back().policy.ordering.set_fortran_order();
         mappings.back().policy.exact = true;
       }
       return std::move(mappings);
@@ -151,7 +151,7 @@ std::vector<StoreMapping> CuNumericMapper::store_mappings(
       std::vector<StoreMapping> mappings;
       auto& input = task.inputs().front();
       mappings.push_back(StoreMapping::default_mapping(input, options.front()));
-      mappings.back().policy.ordering.fortran_order();
+      mappings.back().policy.ordering.set_fortran_order();
       mappings.back().policy.exact = true;
       return std::move(mappings);
     }
@@ -168,12 +168,12 @@ std::vector<StoreMapping> CuNumericMapper::store_mappings(
       auto& outputs = task.outputs();
       for (auto& input : inputs) {
         mappings.push_back(StoreMapping::default_mapping(input, options.front()));
-        mappings.back().policy.ordering.c_order();
+        mappings.back().policy.ordering.set_c_order();
         mappings.back().policy.exact = true;
       }
       for (auto& output : outputs) {
         mappings.push_back(StoreMapping::default_mapping(output, options.front()));
-        mappings.back().policy.ordering.c_order();
+        mappings.back().policy.ordering.set_c_order();
         mappings.back().policy.exact = true;
       }
       return std::move(mappings);
@@ -184,12 +184,12 @@ std::vector<StoreMapping> CuNumericMapper::store_mappings(
       auto& outputs = task.outputs();
       for (auto& input : inputs) {
         mappings.push_back(StoreMapping::default_mapping(input, options.front()));
-        mappings.back().policy.ordering.c_order();
+        mappings.back().policy.ordering.set_c_order();
         mappings.back().policy.exact = true;
       }
       for (auto& output : outputs) {
         mappings.push_back(StoreMapping::default_mapping(output, options.front()));
-        mappings.back().policy.ordering.c_order();
+        mappings.back().policy.ordering.set_c_order();
         mappings.back().policy.exact = true;
       }
       return std::move(mappings);
@@ -200,12 +200,12 @@ std::vector<StoreMapping> CuNumericMapper::store_mappings(
       auto& outputs = task.outputs();
       for (auto& input : inputs) {
         mappings.push_back(StoreMapping::default_mapping(input, options.front()));
-        mappings.back().policy.ordering.c_order();
+        mappings.back().policy.ordering.set_c_order();
         mappings.back().policy.exact = true;
       }
       for (auto& output : outputs) {
         mappings.push_back(StoreMapping::default_mapping(output, options.front()));
-        mappings.back().policy.ordering.c_order();
+        mappings.back().policy.ordering.set_c_order();
         mappings.back().policy.exact = true;
       }
       return std::move(mappings);
