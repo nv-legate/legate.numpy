@@ -44,7 +44,7 @@ class NDArray {
 
  public:
   template <typename T, int32_t DIM>
-  legate::AccessorRW<T, DIM> get_accessor();
+  legate::AccessorRO<T, DIM> get_read_accessor();
 
  public:
   NDArray operator+(const NDArray& other) const;

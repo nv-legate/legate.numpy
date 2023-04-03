@@ -47,7 +47,7 @@ NDArray CuNumericRuntime::create_array(legate::LegateTypeCode type)
 NDArray CuNumericRuntime::create_array(std::vector<size_t> shape, legate::LegateTypeCode type)
 {
   // TODO: We need a type system for cuNumeric and should not use the core types
-  auto store = legate_runtime_->create_store(shape, type);
+  auto store = legate_runtime_->create_store(shape, type, true /*optimize_scalar*/);
   return NDArray(std::move(store));
 }
 
@@ -124,7 +124,7 @@ Legion::ReductionOpID CuNumericRuntime::get_reduction_op(UnaryRedCode op,
   return op_dispatch(op, generate_redop_fn{}, type);
 }
 
-std::unique_ptr<legate::Task> CuNumericRuntime::create_task(CuNumericOpCode op_code)
+std::unique_ptr<legate::AutoTask> CuNumericRuntime::create_task(CuNumericOpCode op_code)
 {
   return legate_runtime_->create_task(context_, op_code);
 }

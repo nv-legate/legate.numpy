@@ -17,12 +17,12 @@
 namespace cunumeric {
 
 template <typename T, int32_t DIM>
-legate::AccessorRW<T, DIM> NDArray::get_accessor()
+legate::AccessorRO<T, DIM> NDArray::get_read_accessor()
 {
   auto context = get_context();
   auto mapped  = store_.get_physical_store(context);
   auto shape   = mapped->shape<DIM>();
-  return mapped->read_write_accessor<T, DIM>(shape);
+  return mapped->read_accessor<T, DIM>(shape);
 }
 
 }  // namespace cunumeric
