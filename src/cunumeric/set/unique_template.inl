@@ -24,14 +24,14 @@ namespace cunumeric {
 
 using namespace legate;
 
-template <VariantKind KIND, LegateTypeCode CODE, int32_t DIM>
+template <VariantKind KIND, Type::Code CODE, int32_t DIM>
 struct UniqueImplBody;
 
 template <VariantKind KIND>
 struct UniqueImpl {
-  template <LegateTypeCode CODE, int32_t DIM>
-  void operator()(legate::Store& output,
-                  legate::Store& input,
+  template <Type::Code CODE, int32_t DIM>
+  void operator()(Array& output,
+                  Array& input,
                   std::vector<comm::Communicator>& comms,
                   const DomainPoint& point,
                   const Domain& launch_domain) const

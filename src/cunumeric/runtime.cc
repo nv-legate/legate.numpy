@@ -22,7 +22,7 @@ namespace cunumeric {
 
 /*static*/ CuNumericRuntime* CuNumericRuntime::runtime_;
 
-static std::map<std::pair<UnaryRedCode, legate::LegateTypeCode>, Scalar> identities;
+static std::map<std::pair<UnaryRedCode, legate::Type::Code>, Scalar> identities;
 
 extern void bootstrapping_callback(Legion::Machine machine,
                                    Legion::Runtime* runtime,
@@ -38,17 +38,27 @@ CuNumericRuntime::CuNumericRuntime(legate::Runtime* legate_runtime, legate::Libr
 {
 }
 
-NDArray CuNumericRuntime::create_array(legate::LegateTypeCode type)
+NDArray CuNumericRuntime::create_array(std::unique_ptr<legate::Type> type)
 {
-  auto store = legate_runtime_->create_store(type);
+  auto store = legate_runtime_->create_store(std::move(type));
   return NDArray(std::move(store));
 }
 
-NDArray CuNumericRuntime::create_array(std::vector<size_t> shape, legate::LegateTypeCode type)
+NDArray CuNumericRuntime::create_array(const legate::Type& type)
 {
-  // TODO: We need a type system for cuNumeric and should not use the core types
-  auto store = legate_runtime_->create_store(shape, type, true /*optimize_scalar*/);
+  return create_array(type.clone());
+}
+
+NDArray CuNumericRuntime::create_array(std::vector<size_t> shape,
+                                       std::unique_ptr<legate::Type> type)
+{
+  auto store = legate_runtime_->create_store(shape, std::move(type), true /*optimize_scalar*/);
   return NDArray(std::move(store));
+}
+
+NDArray CuNumericRuntime::create_array(std::vector<size_t> shape, const legate::Type& type)
+{
+  return create_array(std::move(shape), type.clone());
 }
 
 legate::LogicalStore CuNumericRuntime::create_scalar_store(const Scalar& value)
@@ -59,15 +69,14 @@ legate::LogicalStore CuNumericRuntime::create_scalar_store(const Scalar& value)
 struct generate_identity_fn {
   template <UnaryRedCode OP>
   struct generator {
-    template <legate::LegateTypeCode TYPE, std::enable_if_t<UnaryRedOp<OP, TYPE>::valid>* = nullptr>
+    template <legate::Type::Code CODE, std::enable_if_t<UnaryRedOp<OP, CODE>::valid>* = nullptr>
     Scalar operator()()
     {
-      auto value = UnaryRedOp<OP, TYPE>::OP::identity;
+      auto value = UnaryRedOp<OP, CODE>::OP::identity;
       return Scalar(value);
     }
 
-    template <legate::LegateTypeCode TYPE,
-              std::enable_if_t<!UnaryRedOp<OP, TYPE>::valid>* = nullptr>
+    template <legate::Type::Code CODE, std::enable_if_t<!UnaryRedOp<OP, CODE>::valid>* = nullptr>
     Scalar operator()()
     {
       assert(false);
@@ -76,52 +85,43 @@ struct generate_identity_fn {
   };
 
   template <UnaryRedCode OP>
-  Scalar operator()(legate::LegateTypeCode type)
+  Scalar operator()(legate::Type::Code code)
   {
-    return legate::type_dispatch(type, generator<OP>{});
+    return legate::type_dispatch(code, generator<OP>{});
   }
 };
 
-struct generate_redop_fn {
-  template <UnaryRedCode OP>
-  struct generator {
-    template <legate::LegateTypeCode TYPE, std::enable_if_t<UnaryRedOp<OP, TYPE>::valid>* = nullptr>
-    int32_t operator()()
-    {
-      return UnaryRedOp<OP, TYPE>::OP::REDOP_ID;
-    }
-
-    template <legate::LegateTypeCode TYPE,
-              std::enable_if_t<!UnaryRedOp<OP, TYPE>::valid>* = nullptr>
-    int32_t operator()()
-    {
-      assert(false);
-      return 0;
-    }
-  };
-
-  template <UnaryRedCode OP>
-  int32_t operator()(legate::LegateTypeCode type)
-  {
-    return legate::type_dispatch(type, generator<OP>{});
-  }
-};
-
-Scalar CuNumericRuntime::get_reduction_identity(UnaryRedCode op, legate::LegateTypeCode type)
+Scalar CuNumericRuntime::get_reduction_identity(UnaryRedCode op, const legate::Type& type)
 {
-  auto key    = std::make_pair(op, type);
+  auto key    = std::make_pair(op, type.code);
   auto finder = identities.find(key);
   if (identities.end() != finder) return finder->second;
 
-  auto identity   = op_dispatch(op, generate_identity_fn{}, type);
+  auto identity   = op_dispatch(op, generate_identity_fn{}, type.code);
   identities[key] = identity;
   return identity;
 }
 
-Legion::ReductionOpID CuNumericRuntime::get_reduction_op(UnaryRedCode op,
-                                                         legate::LegateTypeCode type)
+namespace {
+
+const std::unordered_map<UnaryRedCode, legate::ReductionOpKind> TO_CORE_REDOP = {
+  {UnaryRedCode::ALL, legate::ReductionOpKind::MUL},
+  {UnaryRedCode::ANY, legate::ReductionOpKind::ADD},
+  {UnaryRedCode::ARGMAX, legate::ReductionOpKind::MAX},
+  {UnaryRedCode::ARGMIN, legate::ReductionOpKind::MIN},
+  {UnaryRedCode::CONTAINS, legate::ReductionOpKind::ADD},
+  {UnaryRedCode::COUNT_NONZERO, legate::ReductionOpKind::ADD},
+  {UnaryRedCode::MAX, legate::ReductionOpKind::MAX},
+  {UnaryRedCode::MIN, legate::ReductionOpKind::MIN},
+  {UnaryRedCode::PROD, legate::ReductionOpKind::MUL},
+  {UnaryRedCode::SUM, legate::ReductionOpKind::ADD},
+};
+
+}  // namespace
+
+Legion::ReductionOpID CuNumericRuntime::get_reduction_op(UnaryRedCode op, const legate::Type& type)
 {
-  return op_dispatch(op, generate_redop_fn{}, type);
+  return type.find_reduction_operator(TO_CORE_REDOP.at(op));
 }
 
 std::unique_ptr<legate::AutoTask> CuNumericRuntime::create_task(CuNumericOpCode op_code)

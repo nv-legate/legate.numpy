@@ -24,13 +24,13 @@ namespace cunumeric {
 
 using namespace legate;
 
-template <VariantKind KIND, LegateTypeCode CODE>
+template <VariantKind KIND, Type::Code CODE>
 struct UniqueReduceImplBody;
 
 template <VariantKind KIND>
 struct UniqueReduceImpl {
-  template <LegateTypeCode CODE>
-  void operator()(legate::Store& output, std::vector<legate::Store>& input_arrs)
+  template <Type::Code CODE>
+  void operator()(Array& output, std::vector<Array>& input_arrs)
   {
     using VAL = legate_type_of<CODE>;
 

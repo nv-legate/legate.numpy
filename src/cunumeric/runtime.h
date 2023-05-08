@@ -33,13 +33,15 @@ class CuNumericRuntime {
   CuNumericRuntime(legate::Runtime* legate_runtime, legate::LibraryContext* context);
 
  public:
-  NDArray create_array(legate::LegateTypeCode type);
-  NDArray create_array(std::vector<size_t> shape, legate::LegateTypeCode type);
+  NDArray create_array(std::unique_ptr<legate::Type> type);
+  NDArray create_array(const legate::Type& type);
+  NDArray create_array(std::vector<size_t> shape, std::unique_ptr<legate::Type> type);
+  NDArray create_array(std::vector<size_t> shape, const legate::Type& type);
   legate::LogicalStore create_scalar_store(const Scalar& value);
 
  public:
-  Scalar get_reduction_identity(UnaryRedCode op, legate::LegateTypeCode type);
-  Legion::ReductionOpID get_reduction_op(UnaryRedCode op, legate::LegateTypeCode type);
+  Scalar get_reduction_identity(UnaryRedCode op, const legate::Type& type);
+  Legion::ReductionOpID get_reduction_op(UnaryRedCode op, const legate::Type& type);
 
  public:
   std::unique_ptr<legate::AutoTask> create_task(CuNumericOpCode op_code);

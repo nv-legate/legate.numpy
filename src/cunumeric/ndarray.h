@@ -40,7 +40,7 @@ class NDArray {
  public:
   int32_t dim() const;
   const std::vector<size_t>& shape() const;
-  legate::LegateTypeCode code() const;
+  const legate::Type& type() const;
 
  public:
   template <typename T, int32_t DIM>

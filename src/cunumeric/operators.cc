@@ -52,15 +52,15 @@ std::vector<size_t> broadcast_shapes(std::vector<NDArray> arrays)
 
 }  // namespace
 
-NDArray array(std::vector<size_t> shape, legate::LegateTypeCode type)
+NDArray array(std::vector<size_t> shape, std::unique_ptr<legate::Type> type)
 {
-  return CuNumericRuntime::get_runtime()->create_array(std::move(shape), type);
+  return CuNumericRuntime::get_runtime()->create_array(std::move(shape), std::move(type));
 }
 
 NDArray unary_op(UnaryOpCode op_code, NDArray input)
 {
   auto runtime = CuNumericRuntime::get_runtime();
-  auto out     = runtime->create_array(input.shape(), input.code());
+  auto out     = runtime->create_array(input.shape(), input.type());
   out.unary_op(static_cast<int32_t>(op_code), std::move(input));
   return std::move(out);
 }
@@ -68,19 +68,19 @@ NDArray unary_op(UnaryOpCode op_code, NDArray input)
 NDArray unary_reduction(UnaryRedCode op_code, NDArray input)
 {
   auto runtime = CuNumericRuntime::get_runtime();
-  auto out     = runtime->create_array({1}, input.code());
+  auto out     = runtime->create_array({1}, input.type());
   out.unary_reduction(static_cast<int32_t>(op_code), std::move(input));
   return std::move(out);
 }
 
 NDArray binary_op(BinaryOpCode op_code, NDArray rhs1, NDArray rhs2, std::optional<NDArray> out)
 {
-  assert(rhs1.code() == rhs2.code());
+  assert(rhs1.type() == rhs2.type());
 
   auto runtime = CuNumericRuntime::get_runtime();
   if (!out.has_value()) {
     auto out_shape = broadcast_shapes({rhs1, rhs2});
-    out            = runtime->create_array(out_shape, rhs1.code());
+    out            = runtime->create_array(out_shape, rhs1.type());
   }
   out->binary_op(static_cast<int32_t>(op_code), std::move(rhs1), std::move(rhs2));
   return std::move(out.value());
@@ -98,7 +98,7 @@ NDArray negative(NDArray input) { return unary_op(UnaryOpCode::NEGATIVE, std::mo
 NDArray random(std::vector<size_t> shape)
 {
   auto runtime = CuNumericRuntime::get_runtime();
-  auto out     = runtime->create_array(std::move(shape), legate::LegateTypeCode::DOUBLE_LT);
+  auto out     = runtime->create_array(std::move(shape), legate::float64());
   out.random(static_cast<int32_t>(RandGenCode::UNIFORM));
   return std::move(out);
 }
@@ -106,7 +106,7 @@ NDArray random(std::vector<size_t> shape)
 NDArray full(std::vector<size_t> shape, const Scalar& value)
 {
   auto runtime = CuNumericRuntime::get_runtime();
-  auto out     = runtime->create_array(std::move(shape), value.code());
+  auto out     = runtime->create_array(std::move(shape), value.type().clone());
   out.fill(value, false);
   return std::move(out);
 }
@@ -136,7 +136,7 @@ NDArray dot(NDArray rhs1, NDArray rhs2)
   shape.push_back(rhs1_shape[0]);
   shape.push_back(rhs2_shape[1]);
 
-  auto out = runtime->create_array(std::move(shape), rhs1.code());
+  auto out = runtime->create_array(std::move(shape), rhs1.type());
   out.dot(std::move(rhs1), std::move(rhs2));
   return std::move(out);
 }

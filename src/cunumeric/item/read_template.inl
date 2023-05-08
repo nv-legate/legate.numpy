@@ -28,8 +28,8 @@ struct ReadImplBody;
 
 template <VariantKind KIND>
 struct ReadImpl {
-  template <LegateTypeCode CODE>
-  void operator()(const Store& out_arr, const Store& in_arr) const
+  template <Type::Code CODE>
+  void operator()(const Array& out_arr, const Array& in_arr) const
   {
     using VAL = legate_type_of<CODE>;
     auto out  = out_arr.write_accessor<VAL, 1>();

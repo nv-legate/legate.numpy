@@ -27,7 +27,7 @@ namespace cunumeric {
 
 void initialize(int32_t argc, char** argv);
 
-NDArray array(std::vector<size_t> shape, legate::LegateTypeCode type);
+NDArray array(std::vector<size_t> shape, std::unique_ptr<legate::Type> type);
 
 NDArray abs(NDArray input);
 

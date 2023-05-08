@@ -24,13 +24,13 @@ namespace cunumeric {
 
 using namespace legate;
 
-template <VariantKind KIND, LegateTypeCode CODE, int32_t DIM, Bitorder BITORDER>
+template <VariantKind KIND, Type::Code CODE, int32_t DIM, Bitorder BITORDER>
 struct PackbitsImplBody;
 
 template <VariantKind KIND, Bitorder BITORDER>
 struct PackbitsImpl {
-  template <LegateTypeCode CODE, int32_t DIM, std::enable_if_t<is_integral<CODE>::value>* = nullptr>
-  void operator()(Store& output, Store& input, uint32_t axis) const
+  template <Type::Code CODE, int32_t DIM, std::enable_if_t<is_integral<CODE>::value>* = nullptr>
+  void operator()(Array& output, Array& input, uint32_t axis) const
   {
     using VAL = legate_type_of<CODE>;
 
@@ -74,10 +74,8 @@ struct PackbitsImpl {
                                                   axis);
   }
 
-  template <LegateTypeCode CODE,
-            int32_t DIM,
-            std::enable_if_t<!is_integral<CODE>::value>* = nullptr>
-  void operator()(Store& output, Store& input, uint32_t axis) const
+  template <Type::Code CODE, int32_t DIM, std::enable_if_t<!is_integral<CODE>::value>* = nullptr>
+  void operator()(Array& output, Array& input, uint32_t axis) const
   {
     // Unreachable
     assert(false);
@@ -93,7 +91,7 @@ static void packbits_template(TaskContext& context)
   auto axis     = scalars[0].value<uint32_t>();
   auto bitorder = scalars[1].value<Bitorder>();
 
-  auto code = input.code<LegateTypeCode>();
+  auto code = input.code();
   switch (bitorder) {
     case Bitorder::BIG: {
       double_dispatch(input.dim(), code, PackbitsImpl<KIND, Bitorder::BIG>{}, output, input, axis);

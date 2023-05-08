@@ -31,7 +31,7 @@ int32_t NDArray::dim() const { return store_.dim(); }
 
 const std::vector<size_t>& NDArray::shape() const { return store_.extents().data(); }
 
-legate::LegateTypeCode NDArray::code() const { return store_.code(); }
+const legate::Type& NDArray::type() const { return store_.type(); }
 
 static std::vector<int64_t> compute_strides(const std::vector<size_t>& shape)
 {
@@ -137,7 +137,7 @@ void NDArray::unary_reduction(int32_t op_code_, NDArray input)
 
   auto op_code = static_cast<UnaryRedCode>(op_code_);
 
-  auto identity = runtime->get_reduction_identity(op_code, code());
+  auto identity = runtime->get_reduction_identity(op_code, type());
   fill(identity, false);
 
   auto task = runtime->create_task(CuNumericOpCode::CUNUMERIC_SCALAR_UNARY_RED);
@@ -145,7 +145,7 @@ void NDArray::unary_reduction(int32_t op_code_, NDArray input)
   auto p_out = task->declare_partition();
   auto p_in  = task->declare_partition();
 
-  auto redop = runtime->get_reduction_op(op_code, code());
+  auto redop = runtime->get_reduction_op(op_code, type());
 
   task->add_reduction(store_, redop, p_out);
   task->add_input(input.store_, p_in);
@@ -159,7 +159,7 @@ void NDArray::dot(NDArray rhs1, NDArray rhs2)
 {
   auto runtime = CuNumericRuntime::get_runtime();
 
-  auto identity = runtime->get_reduction_identity(UnaryRedCode::SUM, code());
+  auto identity = runtime->get_reduction_identity(UnaryRedCode::SUM, type());
   fill(identity, false);
 
   assert(dim() == 2 && rhs1.dim() == 2 && rhs2.dim() == 2);
@@ -178,7 +178,7 @@ void NDArray::dot(NDArray rhs1, NDArray rhs2)
   auto p_rhs1 = task->declare_partition();
   auto p_rhs2 = task->declare_partition();
 
-  auto redop = LEGION_REDOP_BASE + LEGION_TYPE_TOTAL * LEGION_REDOP_KIND_SUM + code();
+  auto redop = runtime->get_reduction_op(UnaryRedCode::SUM, type());
 
   task->add_reduction(lhs_s, redop, p_lhs);
   task->add_input(rhs1_s, p_rhs1);
@@ -196,8 +196,7 @@ std::vector<NDArray> NDArray::nonzero()
 
   std::vector<NDArray> outputs;
   auto ndim = dim();
-  for (int32_t i = 0; i < ndim; ++i)
-    outputs.emplace_back(runtime->create_array(legate::LegateTypeCode::INT64_LT));
+  for (int32_t i = 0; i < ndim; ++i) outputs.emplace_back(runtime->create_array(legate::int64()));
 
   auto task = runtime->create_task(CuNumericOpCode::CUNUMERIC_NONZERO);
 

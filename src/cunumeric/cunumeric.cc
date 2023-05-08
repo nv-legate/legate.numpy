@@ -25,33 +25,22 @@ namespace cunumeric {
 
 static const char* const cunumeric_library_name = "cunumeric";
 
-/*static*/ TaskRegistrar& CuNumeric::get_registrar()
+/*static*/ TaskRegistrar& CuNumericRegistrar::get_registrar()
 {
   static TaskRegistrar registrar;
   return registrar;
 }
 
-extern void register_reduction_operators(LibraryContext& context);
-
 void registration_callback()
 {
   ResourceConfig config;
-
-  config.max_mappers       = CUNUMERIC_MAX_MAPPERS;
   config.max_tasks         = CUNUMERIC_MAX_TASKS;
   config.max_reduction_ops = CUNUMERIC_MAX_REDOPS;
 
-  auto runtime = legate::Runtime::get_runtime();
+  auto context = Runtime::get_runtime()->create_library(
+    cunumeric_library_name, config, std::make_unique<CuNumericMapper>());
 
-  auto context = runtime->create_library(cunumeric_library_name, config);
-
-  CuNumeric::get_registrar().register_all_tasks(*context);
-
-  // Register our special reduction functions
-  register_reduction_operators(*context);
-
-  // Now we can register our mapper with the runtime
-  context->register_mapper(std::make_unique<CuNumericMapper>(), 0);
+  CuNumericRegistrar::get_registrar().register_all_tasks(context);
 }
 
 void bootstrapping_callback(Legion::Machine machine,
