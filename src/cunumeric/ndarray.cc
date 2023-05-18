@@ -208,8 +208,7 @@ std::vector<NDArray> NDArray::nonzero()
   }
   task->add_input(store_, p_rhs);
 
-  // auto broadcast_dims = legate::from_range<int32_t>(1, ndim);
-  // task->add_constraints(broadcast(p_rhs, broadcast_dims));
+  task->add_constraint(legate::broadcast(p_rhs, legate::from_range<int32_t>(1, ndim)));
 
   runtime->submit(std::move(task));
 
