@@ -33,11 +33,15 @@ NDArray abs(NDArray input);
 
 NDArray add(NDArray rhs1, NDArray rhs2, std::optional<NDArray> out = std::nullopt);
 
+NDArray multiply(NDArray rhs1, NDArray rhs2, std::optional<NDArray> out = std::nullopt);
+
 NDArray dot(NDArray rhs1, NDArray rhs2);
 
 NDArray negative(NDArray input);
 
 NDArray random(std::vector<size_t> shape);
+
+NDArray zeros(std::vector<size_t> shape, std::unique_ptr<legate::Type> type = nullptr);
 
 NDArray full(std::vector<size_t> shape, const Scalar& value);
 

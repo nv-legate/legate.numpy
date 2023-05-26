@@ -1,4 +1,4 @@
-/* Copyright 2021-2022 NVIDIA Corporation
+/* Copyright 2023 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,25 +16,12 @@
 
 #pragma once
 
-#include "legate.h"
-#include "cunumeric/typedefs.h"
-#include "cunumeric/cunumeric_c.h"
+#include <optional>
 
 namespace cunumeric {
 
-enum class VariantKind : int {
-  CPU = 0,
-  OMP = 1,
-  GPU = 2,
-};
+using slice = legate::Slice;
 
-struct CuNumericRegistrar {
-  static legate::TaskRegistrar& get_registrar();
-};
-
-template <typename T>
-struct CuNumericTask : public legate::LegateTask<T> {
-  using Registrar = CuNumericRegistrar;
-};
+constexpr auto open = legate::Slice::OPEN;
 
 }  // namespace cunumeric

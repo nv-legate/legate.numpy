@@ -69,15 +69,25 @@ legate::LogicalStore CuNumericRuntime::create_scalar_store(const Scalar& value)
 struct generate_identity_fn {
   template <UnaryRedCode OP>
   struct generator {
-    template <legate::Type::Code CODE, std::enable_if_t<UnaryRedOp<OP, CODE>::valid>* = nullptr>
-    Scalar operator()()
+    template <legate::Type::Code CODE,
+              std::enable_if_t<UnaryRedOp<OP, CODE>::valid && !is_arg_reduce<OP>::value>* = nullptr>
+    Scalar operator()(const legate::Type&)
     {
       auto value = UnaryRedOp<OP, CODE>::OP::identity;
       return Scalar(value);
     }
 
+    template <legate::Type::Code CODE,
+              std::enable_if_t<UnaryRedOp<OP, CODE>::valid && is_arg_reduce<OP>::value>* = nullptr>
+    Scalar operator()(const legate::Type& type)
+    {
+      auto value        = UnaryRedOp<OP, CODE>::OP::identity;
+      auto& argred_type = CuNumericRuntime::get_runtime()->get_argred_type(type);
+      return Scalar(value, argred_type.clone());
+    }
+
     template <legate::Type::Code CODE, std::enable_if_t<!UnaryRedOp<OP, CODE>::valid>* = nullptr>
-    Scalar operator()()
+    Scalar operator()(const legate::Type&)
     {
       assert(false);
       return Scalar();
@@ -85,9 +95,9 @@ struct generate_identity_fn {
   };
 
   template <UnaryRedCode OP>
-  Scalar operator()(legate::Type::Code code)
+  Scalar operator()(const legate::Type& type)
   {
-    return legate::type_dispatch(code, generator<OP>{});
+    return legate::type_dispatch(type.code, generator<OP>{}, type);
   }
 };
 
@@ -97,9 +107,23 @@ Scalar CuNumericRuntime::get_reduction_identity(UnaryRedCode op, const legate::T
   auto finder = identities.find(key);
   if (identities.end() != finder) return finder->second;
 
-  auto identity   = op_dispatch(op, generate_identity_fn{}, type.code);
+  auto identity   = op_dispatch(op, generate_identity_fn{}, type);
   identities[key] = identity;
   return identity;
+}
+
+const legate::Type& CuNumericRuntime::get_argred_type(const legate::Type& value_type)
+{
+  auto finder = argred_types_.find(value_type.code);
+  if (finder != argred_types_.end()) return *finder->second;
+
+  std::vector<std::unique_ptr<legate::Type>> field_types{};
+  field_types.push_back(legate::int64());
+  field_types.push_back(value_type.clone());
+  auto argred_type   = legate::struct_type(std::move(field_types), true /*align*/);
+  const auto& result = *argred_type;
+  argred_types_.insert({value_type.code, std::move(argred_type)});
+  return result;
 }
 
 namespace {

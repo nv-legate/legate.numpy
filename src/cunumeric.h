@@ -16,4 +16,4 @@
 
 #include "cunumeric/ndarray.h"
 #include "cunumeric/operators.h"
-#include "cunumeric/typedefs.h"
+#include "cunumeric/slice.h"

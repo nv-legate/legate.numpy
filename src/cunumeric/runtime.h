@@ -44,6 +44,9 @@ class CuNumericRuntime {
   Legion::ReductionOpID get_reduction_op(UnaryRedCode op, const legate::Type& type);
 
  public:
+  const legate::Type& get_argred_type(const legate::Type& value_type);
+
+ public:
   std::unique_ptr<legate::AutoTask> create_task(CuNumericOpCode op_code);
   void submit(std::unique_ptr<legate::Task> task);
 
@@ -64,6 +67,7 @@ class CuNumericRuntime {
   legate::Runtime* legate_runtime_;
   legate::LibraryContext* context_;
   uint32_t next_epoch_{0};
+  std::unordered_map<legate::Type::Code, std::unique_ptr<legate::Type>> argred_types_;
 };
 
 }  // namespace cunumeric

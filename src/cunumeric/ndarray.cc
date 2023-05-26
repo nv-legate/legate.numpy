@@ -19,6 +19,7 @@
 #include "cunumeric/operators.h"
 #include "cunumeric/runtime.h"
 #include "cunumeric/random/rand_util.h"
+#include "cunumeric/unary/unary_op_util.h"
 #include "cunumeric/unary/unary_red_util.h"
 
 namespace cunumeric {
@@ -48,10 +49,62 @@ static std::vector<int64_t> compute_strides(const std::vector<size_t>& shape)
 
 NDArray NDArray::operator+(const NDArray& other) const { return add(*this, other); }
 
+NDArray NDArray::operator+(const legate::Scalar& other) const
+{
+  auto runtime = CuNumericRuntime::get_runtime();
+  auto scalar  = runtime->create_scalar_store(other);
+  return operator+(NDArray(std::move(scalar)));
+}
+
 NDArray& NDArray::operator+=(const NDArray& other)
 {
   add(*this, other, *this);
   return *this;
+}
+
+NDArray NDArray::operator*(const NDArray& other) const { return multiply(*this, other); }
+
+NDArray NDArray::operator*(const legate::Scalar& other) const
+{
+  auto runtime = CuNumericRuntime::get_runtime();
+  auto scalar  = runtime->create_scalar_store(other);
+  return operator*(NDArray(std::move(scalar)));
+}
+
+NDArray& NDArray::operator*=(const NDArray& other)
+{
+  multiply(*this, other, *this);
+  return *this;
+}
+
+NDArray NDArray::operator[](std::initializer_list<slice> slices) const
+{
+  if (slices.size() > static_cast<size_t>(dim())) {
+    std::string err_msg = "Can't slice a " + std::to_string(dim()) + "-D ndarray with " +
+                          std::to_string(slices.size()) + " slices";
+    throw std::invalid_argument(std::move(err_msg));
+  }
+
+  uint32_t dim = 0;
+  auto sliced  = store_;
+  for (const auto& sl : slices) {
+    sliced = sliced.slice(0, sl);
+    ++dim;
+  }
+
+  return NDArray(std::move(sliced));
+}
+
+void NDArray::assign(const NDArray& other)
+{
+  unary_op(static_cast<int32_t>(UnaryOpCode::COPY), other);
+}
+
+void NDArray::assign(const legate::Scalar& other)
+{
+  auto runtime = CuNumericRuntime::get_runtime();
+  auto scalar  = runtime->create_scalar_store(other);
+  assign(NDArray(std::move(scalar)));
 }
 
 void NDArray::random(int32_t gen_code)
@@ -90,6 +143,8 @@ void NDArray::fill(const Scalar& value, bool argval)
 
 void NDArray::binary_op(int32_t op_code, NDArray rhs1, NDArray rhs2)
 {
+  if (rhs1.type() != rhs2.type()) throw std::invalid_argument("Operands must have the same type");
+
   auto runtime = CuNumericRuntime::get_runtime();
 
   auto task = runtime->create_task(CuNumericOpCode::CUNUMERIC_BINARY_OP);
@@ -122,8 +177,10 @@ void NDArray::unary_op(int32_t op_code, NDArray input)
   auto p_out = task->declare_partition();
   auto p_in  = task->declare_partition();
 
+  auto rhs = broadcast(shape(), input.store_);
+
   task->add_output(store_, p_out);
-  task->add_input(input.store_, p_in);
+  task->add_input(rhs, p_in);
   task->add_scalar_arg(legate::Scalar(op_code));
 
   task->add_constraint(align(p_out, p_in));

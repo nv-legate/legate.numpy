@@ -17,8 +17,10 @@
 #pragma once
 
 #include <memory>
+#include <initializer_list>
 
 #include "legate.h"
+#include "cunumeric/slice.h"
 #include "cunumeric/typedefs.h"
 
 namespace cunumeric {
@@ -48,7 +50,17 @@ class NDArray {
 
  public:
   NDArray operator+(const NDArray& other) const;
+  NDArray operator+(const legate::Scalar& other) const;
   NDArray& operator+=(const NDArray& other);
+  NDArray operator*(const NDArray& other) const;
+  NDArray operator*(const legate::Scalar& other) const;
+  NDArray& operator*=(const NDArray& other);
+  NDArray operator[](std::initializer_list<slice> slices) const;
+
+ public:
+  // Copy the contents of the other ndarray to this one
+  void assign(const NDArray& other);
+  void assign(const legate::Scalar& other);
 
  public:
   void random(int32_t gen_code);
