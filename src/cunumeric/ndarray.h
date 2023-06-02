@@ -69,6 +69,8 @@ class NDArray {
   void unary_op(int32_t op_code, NDArray input);
   void unary_reduction(int32_t op_code, NDArray input);
   void fill(NDArray fill_value);
+  void eye(int32_t k);
+  void trilu(NDArray rhs, int32_t k, bool lower);
   void dot(NDArray rhs1, NDArray rhs2);
   std::vector<NDArray> nonzero();
   NDArray unique();

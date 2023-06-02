@@ -51,4 +51,10 @@ NDArray unique(NDArray input);
 
 std::vector<NDArray> nonzero(NDArray input);
 
+NDArray eye(size_t n, std::optional<size_t> m, int32_t k = 0, std::unique_ptr<legate::Type> type = legate::float64());
+
+NDArray tril(NDArray rhs, int32_t k = 0);
+
+NDArray triu(NDArray rhs, int32_t k = 0);
+
 }  // namespace cunumeric

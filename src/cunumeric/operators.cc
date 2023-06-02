@@ -136,6 +136,44 @@ NDArray full(std::vector<size_t> shape, const Scalar& value)
   return std::move(out);
 }
 
+NDArray eye(size_t n, std::optional<size_t> m, int32_t k, std::unique_ptr<legate::Type> type)
+{
+  if (static_cast<int32_t>(type->code) >= static_cast<int32_t>(legate::Type::Code::FIXED_ARRAY))
+    throw std::invalid_argument("Type must be a primitive type");
+
+  auto runtime = CuNumericRuntime::get_runtime();
+  auto out     = runtime->create_array({n, m.value_or(n)}, std::move(type));
+  out.eye(k);
+  return std::move(out);
+}
+
+NDArray trilu(NDArray rhs, int32_t k, bool lower)
+{
+  auto dim = rhs.dim();
+  auto& shape = rhs.shape();
+  std::vector<size_t> out_shape(shape);
+  if (dim == 0)
+      throw std::invalid_argument("Dim of input array must be > 0");
+  if (dim == 1)
+      out_shape.emplace_back(shape[0]);
+
+  auto runtime = CuNumericRuntime::get_runtime();
+  auto out     = runtime->create_array(std::move(out_shape), rhs.type());
+  out.trilu(std::move(rhs), k, lower);
+  return std::move(out);
+}
+
+
+NDArray tril(NDArray rhs, int32_t k)
+{
+  return trilu(rhs, k, true);
+}
+
+NDArray triu(NDArray rhs, int32_t k)
+{
+  return trilu(rhs, k, false);
+}
+
 NDArray dot(NDArray rhs1, NDArray rhs2)
 {
   if (rhs1.dim() != 2 || rhs2.dim() != 2) {

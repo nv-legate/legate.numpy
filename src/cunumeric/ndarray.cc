@@ -24,6 +24,19 @@
 
 namespace cunumeric {
 
+namespace {
+
+struct generate_zero_fn {
+  template <legate::Type::Code CODE>
+  legate::Scalar operator()()
+  {
+    using VAL = legate::legate_type_of<CODE>;
+    return legate::Scalar(VAL(0));
+  }
+};
+
+}  // namespace
+
 NDArray::NDArray(legate::LogicalStore&& store) : store_(std::forward<legate::LogicalStore>(store))
 {
 }
@@ -137,6 +150,47 @@ void NDArray::fill(const Scalar& value, bool argval)
   task->add_output(store_, p_lhs);
   task->add_input(fill_value, p_fill_value);
   task->add_scalar_arg(legate::Scalar(argval));
+
+  runtime->submit(std::move(task));
+}
+
+void NDArray::eye(int32_t k)
+{
+  assert(dim() == 2);
+
+  auto zero = legate::type_dispatch(type().code, generate_zero_fn{});
+  fill(zero, false);
+
+  auto runtime = CuNumericRuntime::get_runtime();
+
+  auto task         = runtime->create_task(CuNumericOpCode::CUNUMERIC_EYE);
+  auto p_lhs        = task->declare_partition();
+
+  task->add_input(store_, p_lhs);
+  task->add_output(store_, p_lhs);
+  task->add_scalar_arg(legate::Scalar(k));
+
+  runtime->submit(std::move(task));
+}
+
+void NDArray::trilu(NDArray rhs, int32_t k, bool lower)
+{
+  auto runtime = CuNumericRuntime::get_runtime();
+
+  auto task         = runtime->create_task(CuNumericOpCode::CUNUMERIC_TRILU);
+  auto p_lhs        = task->declare_partition();
+  auto p_rhs        = task->declare_partition();
+
+  auto& out_shape = shape();
+  rhs = rhs.broadcast(out_shape, rhs.store_);
+
+  task->add_scalar_arg(legate::Scalar(lower));
+  task->add_scalar_arg(legate::Scalar(k));
+
+  task->add_output(store_, p_lhs);
+  task->add_input(rhs.store_, p_rhs);
+
+  task->add_constraint(align(p_lhs, p_rhs));
 
   runtime->submit(std::move(task));
 }
