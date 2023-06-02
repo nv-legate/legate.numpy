@@ -71,6 +71,7 @@ class NDArray {
   void fill(NDArray fill_value);
   void dot(NDArray rhs1, NDArray rhs2);
   std::vector<NDArray> nonzero();
+  NDArray unique();
 
  private:
   legate::LogicalStore broadcast(const std::vector<size_t>& shape, legate::LogicalStore& store);

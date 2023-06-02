@@ -272,6 +272,26 @@ std::vector<NDArray> NDArray::nonzero()
   return std::move(outputs);
 }
 
+NDArray NDArray::unique()
+{
+  auto& machine = legate::Runtime::get_runtime()->get_machine();
+  bool has_gpus = machine.count(legate::mapping::TaskTarget::GPU) > 0;
+
+  auto runtime = CuNumericRuntime::get_runtime();
+  auto result  = runtime->create_array(type());
+
+  auto task     = runtime->create_task(CuNumericOpCode::CUNUMERIC_UNIQUE);
+  auto part_out = task->declare_partition();
+  auto part_in  = task->declare_partition();
+  task->add_output(result.store_, part_out);
+  task->add_input(store_, part_in);
+  task->add_communicator("nccl");
+  if (!has_gpus)
+    task->add_constraint(legate::broadcast(part_in, legate::from_range<int32_t>(0, dim())));
+  runtime->submit(std::move(task));
+  return result;
+}
+
 legate::LogicalStore NDArray::broadcast(const std::vector<size_t>& shape,
                                         legate::LogicalStore& store)
 {

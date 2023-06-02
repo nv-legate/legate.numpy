@@ -47,6 +47,8 @@ NDArray full(std::vector<size_t> shape, const Scalar& value);
 
 NDArray sum(NDArray input);
 
+NDArray unique(NDArray input);
+
 std::vector<NDArray> nonzero(NDArray input);
 
 }  // namespace cunumeric

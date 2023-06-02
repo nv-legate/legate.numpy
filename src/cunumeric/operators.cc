@@ -168,6 +168,8 @@ NDArray dot(NDArray rhs1, NDArray rhs2)
 
 NDArray sum(NDArray input) { return unary_reduction(UnaryRedCode::SUM, std::move(input)); }
 
+NDArray unique(NDArray input) { return input.unique(); }
+
 std::vector<NDArray> nonzero(NDArray input) { return input.nonzero(); }
 
 }  // namespace cunumeric
