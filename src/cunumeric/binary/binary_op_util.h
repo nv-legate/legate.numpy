@@ -17,6 +17,7 @@
 #pragma once
 
 #include "cunumeric/cunumeric_task.h"
+#include "cunumeric/ndarray.h"
 
 namespace cunumeric {
 
@@ -888,5 +889,7 @@ struct RHS2OfBinaryOp<BinaryOpCode::LDEXP, CODE> {
 
 template <BinaryOpCode OP_CODE, legate::Type::Code CODE>
 using rhs2_of_binary_op = typename RHS2OfBinaryOp<OP_CODE, CODE>::type;
+
+std::vector<size_t> broadcast_shapes(std::vector<NDArray> arrays);
 
 }  // namespace cunumeric

@@ -16,9 +16,11 @@
 
 #include "cunumeric/ndarray.h"
 
+#include "cunumeric/binary/binary_op_util.h"
 #include "cunumeric/operators.h"
-#include "cunumeric/runtime.h"
 #include "cunumeric/random/rand_util.h"
+#include "cunumeric/runtime.h"
+#include "cunumeric/unary/convert_util.h"
 #include "cunumeric/unary/unary_op_util.h"
 #include "cunumeric/unary/unary_red_util.h"
 
@@ -106,6 +108,11 @@ NDArray NDArray::operator[](std::initializer_list<slice> slices) const
   }
 
   return NDArray(std::move(sliced));
+}
+
+NDArray::operator bool() const
+{
+  return ((NDArray *)this)->get_read_accessor<bool, 1>()[0];
 }
 
 void NDArray::assign(const NDArray& other)
@@ -222,6 +229,37 @@ void NDArray::binary_op(int32_t op_code, NDArray rhs1, NDArray rhs2)
   runtime->submit(std::move(task));
 }
 
+void NDArray::binary_reduction(int32_t op_code, NDArray rhs1, NDArray rhs2)
+{
+  auto runtime = CuNumericRuntime::get_runtime();
+
+  auto rhs1_store = broadcast(rhs1, rhs2);
+  auto rhs2_store = broadcast(rhs2, rhs1);
+
+  Legion::ReductionOpID redop;
+  if (op_code == static_cast<int32_t>(BinaryOpCode::NOT_EQUAL)) {
+    redop = runtime->get_reduction_op(UnaryRedCode::SUM, type());
+    fill(legate::Scalar(false), false);
+  } else {
+    redop = runtime->get_reduction_op(UnaryRedCode::PROD, type());
+    fill(legate::Scalar(true), false);
+  }
+  auto task = runtime->create_task(CuNumericOpCode::CUNUMERIC_BINARY_RED);
+
+  auto p_lhs  = task->declare_partition();
+  auto p_rhs1 = task->declare_partition();
+  auto p_rhs2 = task->declare_partition();
+
+  task->add_reduction(store_, redop, p_lhs);
+  task->add_input(rhs1_store, p_rhs1);
+  task->add_input(rhs2_store, p_rhs2);
+  task->add_scalar_arg(legate::Scalar(op_code));
+
+  task->add_constraint(align(p_rhs1, p_rhs2));
+
+  runtime->submit(std::move(task));
+}
+
 void NDArray::unary_op(int32_t op_code, NDArray input)
 {
   auto runtime = CuNumericRuntime::get_runtime();
@@ -301,6 +339,34 @@ void NDArray::dot(NDArray rhs1, NDArray rhs2)
   runtime->submit(std::move(task));
 }
 
+void NDArray::arange(double start, double stop, double step)
+{
+  auto runtime = CuNumericRuntime::get_runtime();
+
+  assert(dim() == 1);
+
+  // TODO: Optimization when value is a scalar
+
+  auto task = runtime->create_task(CuNumericOpCode::CUNUMERIC_ARANGE);
+
+  auto p_lhs   = task->declare_partition();
+  auto p_start = task->declare_partition();
+  auto p_stop  = task->declare_partition();
+  auto p_step  = task->declare_partition();
+
+  task->add_output(store_, p_lhs);
+
+  auto start_value = runtime->create_scalar_store(Scalar(start));
+  auto stop_value  = runtime->create_scalar_store(Scalar(stop));
+  auto step_value  = runtime->create_scalar_store(Scalar(step));
+
+  task->add_input(start_value, p_start);
+  task->add_input(stop_value, p_stop);
+  task->add_input(step_value, p_step);
+
+  runtime->submit(std::move(task));
+}
+
 std::vector<NDArray> NDArray::nonzero()
 {
   auto runtime = CuNumericRuntime::get_runtime();
@@ -346,6 +412,34 @@ NDArray NDArray::unique()
   return result;
 }
 
+NDArray NDArray::as_type(std::unique_ptr<legate::Type> type)
+{
+  auto runtime = CuNumericRuntime::get_runtime();
+
+  // TODO: Check if conversion is valid
+
+  auto out = runtime->create_array(shape(), std::move(type));
+
+  assert(store_.type() != out.store_.type());
+
+  auto task = runtime->create_task(CuNumericOpCode::CUNUMERIC_CONVERT);
+
+  auto p_lhs = task->declare_partition();
+  auto p_rhs = task->declare_partition();
+
+  task->add_output(out.store_, p_lhs);
+  task->add_input(store_, p_rhs);
+  task->add_scalar_arg(legate::Scalar((int32_t)ConvertCode::NOOP));
+
+  task->add_constraint(align(p_lhs, p_rhs));
+
+  runtime->submit(std::move(task));
+
+  return std::move(out);
+}
+
+legate::LogicalStore NDArray::get_store() { return store_; }
+
 legate::LogicalStore NDArray::broadcast(const std::vector<size_t>& shape,
                                         legate::LogicalStore& store)
 {
@@ -372,6 +466,13 @@ legate::LogicalStore NDArray::broadcast(const std::vector<size_t>& shape,
 #endif
 
   return std::move(result);
+}
+
+legate::LogicalStore NDArray::broadcast(NDArray rhs1, NDArray rhs2)
+{
+  if (rhs1.shape() == rhs2.shape()) { return rhs1.store_; }
+  auto out_shape = broadcast_shapes({rhs1, rhs2});
+  return broadcast(out_shape, rhs1.store_);
 }
 
 /*static*/ legate::LibraryContext* NDArray::get_context()

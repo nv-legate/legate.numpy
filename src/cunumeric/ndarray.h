@@ -56,6 +56,7 @@ class NDArray {
   NDArray operator*(const legate::Scalar& other) const;
   NDArray& operator*=(const NDArray& other);
   NDArray operator[](std::initializer_list<slice> slices) const;
+  operator bool() const;
 
  public:
   // Copy the contents of the other ndarray to this one
@@ -66,17 +67,24 @@ class NDArray {
   void random(int32_t gen_code);
   void fill(const Scalar& value, bool argval);
   void binary_op(int32_t op_code, NDArray rhs1, NDArray rhs2);
+  void binary_reduction(int32_t op_code, NDArray rhs1, NDArray rhs2);
   void unary_op(int32_t op_code, NDArray input);
   void unary_reduction(int32_t op_code, NDArray input);
   void fill(NDArray fill_value);
   void eye(int32_t k);
   void trilu(NDArray rhs, int32_t k, bool lower);
   void dot(NDArray rhs1, NDArray rhs2);
+  void arange(double start, double stop, double step);
   std::vector<NDArray> nonzero();
   NDArray unique();
 
+ public:
+  NDArray as_type(std::unique_ptr<legate::Type> type);
+  legate::LogicalStore get_store();
+
  private:
   legate::LogicalStore broadcast(const std::vector<size_t>& shape, legate::LogicalStore& store);
+  legate::LogicalStore broadcast(NDArray rhs1, NDArray rhs2);
 
  public:
   static legate::LibraryContext* get_context();

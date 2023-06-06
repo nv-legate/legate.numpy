@@ -23,35 +23,6 @@
 
 namespace cunumeric {
 
-namespace {
-
-std::vector<size_t> broadcast_shapes(std::vector<NDArray> arrays)
-{
-#ifdef DEBUG_CUNUMERIC
-  assert(!arrays.empty());
-#endif
-  int32_t dim = 0;
-  for (auto& array : arrays) dim = std::max(dim, array.dim());
-
-  std::vector<size_t> result(dim, 1);
-
-  for (auto& array : arrays) {
-    auto& shape = array.shape();
-
-    auto in_it  = shape.rbegin();
-    auto out_it = result.rbegin();
-    for (; in_it != shape.rend() && out_it != result.rend(); ++in_it, ++out_it) {
-      if (1 == *out_it)
-        *out_it = *in_it;
-      else if (*in_it != 1 && *out_it != *in_it)
-        throw std::exception();
-    }
-  }
-  return result;
-}
-
-}  // namespace
-
 NDArray array(std::vector<size_t> shape, std::unique_ptr<legate::Type> type)
 {
   return CuNumericRuntime::get_runtime()->create_array(std::move(shape), std::move(type));
@@ -207,6 +178,39 @@ NDArray dot(NDArray rhs1, NDArray rhs2)
 NDArray sum(NDArray input) { return unary_reduction(UnaryRedCode::SUM, std::move(input)); }
 
 NDArray unique(NDArray input) { return input.unique(); }
+
+NDArray arange(std::optional<double> start,
+               std::optional<double> stop,
+               std::optional<double> step,
+               std::optional<std::unique_ptr<legate::Type>> type)
+{
+  if (!stop.has_value()) {
+    stop  = start;
+    start = 0;
+  }
+
+  size_t N = ceil((stop.value() - start.value()) / step.value());
+  auto out = CuNumericRuntime::get_runtime()->create_array({N}, std::move(type.value()));
+  out.arange(start.value(), stop.value(), step.value());
+  return std::move(out);
+}
+
+NDArray as_array(legate::LogicalStore store)
+{
+  return CuNumericRuntime::get_runtime()->create_array(std::move(store));
+}
+
+NDArray array_equal(NDArray input0, NDArray input1)
+{
+  auto dst = CuNumericRuntime::get_runtime()->create_array({1}, legate::bool_());
+
+  if (input0.shape() != input1.shape()) {
+    dst.fill(legate::Scalar(false), false);
+  } else {
+    dst.binary_reduction(static_cast<int32_t>(BinaryOpCode::EQUAL), input0, input1);
+  }
+  return dst;
+}
 
 std::vector<NDArray> nonzero(NDArray input) { return input.nonzero(); }
 

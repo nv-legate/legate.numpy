@@ -19,6 +19,7 @@ GEN_CPU_SRC += cunumeric/ternary/where.cc               \
 							 cunumeric/scan/scan_global.cc            \
 							 cunumeric/scan/scan_local.cc             \
 							 cunumeric/binary/binary_op.cc            \
+							 cunumeric/binary/binary_op_util.cc       \
 							 cunumeric/binary/binary_red.cc           \
 							 cunumeric/bits/packbits.cc               \
 							 cunumeric/bits/unpackbits.cc             \

@@ -61,6 +61,11 @@ NDArray CuNumericRuntime::create_array(std::vector<size_t> shape, const legate::
   return create_array(std::move(shape), type.clone());
 }
 
+NDArray CuNumericRuntime::create_array(legate::LogicalStore&& store)
+{
+  return NDArray(std::move(store));
+}
+
 legate::LogicalStore CuNumericRuntime::create_scalar_store(const Scalar& value)
 {
   return legate_runtime_->create_store(value);

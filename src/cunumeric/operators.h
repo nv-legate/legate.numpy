@@ -49,6 +49,15 @@ NDArray sum(NDArray input);
 
 NDArray unique(NDArray input);
 
+NDArray arange(std::optional<double> start                       = 0,
+               std::optional<double> stop                        = std::nullopt,
+               std::optional<double> step                        = 1,
+               std::optional<std::unique_ptr<legate::Type>> type = legate::float64());
+
+NDArray as_array(legate::LogicalStore store);
+
+NDArray array_equal(NDArray input0, NDArray input1);
+
 std::vector<NDArray> nonzero(NDArray input);
 
 NDArray eye(size_t n, std::optional<size_t> m, int32_t k = 0, std::unique_ptr<legate::Type> type = legate::float64());
