@@ -95,7 +95,7 @@ struct generate_identity_fn {
     Scalar operator()(const legate::Type&)
     {
       assert(false);
-      return Scalar();
+      return Scalar(0);
     }
   };
 
@@ -112,8 +112,8 @@ Scalar CuNumericRuntime::get_reduction_identity(UnaryRedCode op, const legate::T
   auto finder = identities.find(key);
   if (identities.end() != finder) return finder->second;
 
-  auto identity   = op_dispatch(op, generate_identity_fn{}, type);
-  identities[key] = identity;
+  auto identity = op_dispatch(op, generate_identity_fn{}, type);
+  identities.insert({key, identity});
   return identity;
 }
 
