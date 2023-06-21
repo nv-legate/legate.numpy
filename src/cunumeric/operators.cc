@@ -20,6 +20,7 @@
 #include "cunumeric/binary/binary_op_util.h"
 #include "cunumeric/unary/unary_op_util.h"
 #include "cunumeric/random/rand_util.h"
+#include "cunumeric/nullary/window_util.h"
 
 namespace cunumeric {
 
@@ -120,13 +121,11 @@ NDArray eye(size_t n, std::optional<size_t> m, int32_t k, std::unique_ptr<legate
 
 NDArray trilu(NDArray rhs, int32_t k, bool lower)
 {
-  auto dim = rhs.dim();
+  auto dim    = rhs.dim();
   auto& shape = rhs.shape();
   std::vector<size_t> out_shape(shape);
-  if (dim == 0)
-      throw std::invalid_argument("Dim of input array must be > 0");
-  if (dim == 1)
-      out_shape.emplace_back(shape[0]);
+  if (dim == 0) throw std::invalid_argument("Dim of input array must be > 0");
+  if (dim == 1) out_shape.emplace_back(shape[0]);
 
   auto runtime = CuNumericRuntime::get_runtime();
   auto out     = runtime->create_array(std::move(out_shape), rhs.type());
@@ -134,16 +133,9 @@ NDArray trilu(NDArray rhs, int32_t k, bool lower)
   return std::move(out);
 }
 
+NDArray tril(NDArray rhs, int32_t k) { return trilu(rhs, k, true); }
 
-NDArray tril(NDArray rhs, int32_t k)
-{
-  return trilu(rhs, k, true);
-}
-
-NDArray triu(NDArray rhs, int32_t k)
-{
-  return trilu(rhs, k, false);
-}
+NDArray triu(NDArray rhs, int32_t k) { return trilu(rhs, k, false); }
 
 NDArray dot(NDArray rhs1, NDArray rhs2)
 {
@@ -213,5 +205,33 @@ NDArray array_equal(NDArray input0, NDArray input1)
 }
 
 std::vector<NDArray> nonzero(NDArray input) { return input.nonzero(); }
+
+// window functions
+NDArray create_window(int64_t M, WindowOpCode op_code, std::vector<double> args)
+{
+  auto type    = legate::float64();
+  auto runtime = CuNumericRuntime::get_runtime();
+  if (M <= 0) {
+    return runtime->create_array({0}, std::move(type));
+  } else if (M == 1) {
+    auto out = runtime->create_array({1}, std::move(type));
+    auto one = legate::Scalar(static_cast<double>(1));
+    out.fill(one, false);
+    return out;
+  }
+  auto out = runtime->create_array({static_cast<size_t>(M)}, std::move(type));
+  out.create_window(op_code, M, args);
+  return out;
+}
+
+NDArray bartlett(int64_t M) { return create_window(M, WindowOpCode::BARLETT, {}); }
+
+NDArray blackman(int64_t M) { return create_window(M, WindowOpCode::BLACKMAN, {}); }
+
+NDArray hamming(int64_t M) { return create_window(M, WindowOpCode::HAMMING, {}); }
+
+NDArray hanning(int64_t M) { return create_window(M, WindowOpCode::HANNING, {}); }
+
+NDArray kaiser(int64_t M, double beta) { return create_window(M, WindowOpCode::KAISER, {beta}); }
 
 }  // namespace cunumeric

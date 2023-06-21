@@ -110,10 +110,7 @@ NDArray NDArray::operator[](std::initializer_list<slice> slices) const
   return NDArray(std::move(sliced));
 }
 
-NDArray::operator bool() const
-{
-  return ((NDArray *)this)->get_read_accessor<bool, 1>()[0];
-}
+NDArray::operator bool() const { return ((NDArray*)this)->get_read_accessor<bool, 1>()[0]; }
 
 void NDArray::assign(const NDArray& other)
 {
@@ -170,8 +167,8 @@ void NDArray::eye(int32_t k)
 
   auto runtime = CuNumericRuntime::get_runtime();
 
-  auto task         = runtime->create_task(CuNumericOpCode::CUNUMERIC_EYE);
-  auto p_lhs        = task->declare_partition();
+  auto task  = runtime->create_task(CuNumericOpCode::CUNUMERIC_EYE);
+  auto p_lhs = task->declare_partition();
 
   task->add_input(store_, p_lhs);
   task->add_output(store_, p_lhs);
@@ -184,12 +181,12 @@ void NDArray::trilu(NDArray rhs, int32_t k, bool lower)
 {
   auto runtime = CuNumericRuntime::get_runtime();
 
-  auto task         = runtime->create_task(CuNumericOpCode::CUNUMERIC_TRILU);
-  auto p_lhs        = task->declare_partition();
-  auto p_rhs        = task->declare_partition();
+  auto task  = runtime->create_task(CuNumericOpCode::CUNUMERIC_TRILU);
+  auto p_lhs = task->declare_partition();
+  auto p_rhs = task->declare_partition();
 
   auto& out_shape = shape();
-  rhs = rhs.broadcast(out_shape, rhs.store_);
+  rhs             = rhs.broadcast(out_shape, rhs.store_);
 
   task->add_scalar_arg(legate::Scalar(lower));
   task->add_scalar_arg(legate::Scalar(k));
@@ -436,6 +433,22 @@ NDArray NDArray::as_type(std::unique_ptr<legate::Type> type)
   runtime->submit(std::move(task));
 
   return std::move(out);
+}
+
+void NDArray::create_window(WindowOpCode op_code, int64_t M, std::vector<double> args)
+{
+  auto runtime = CuNumericRuntime::get_runtime();
+
+  auto task  = runtime->create_task(CuNumericOpCode::CUNUMERIC_WINDOW);
+  auto p_lhs = task->declare_partition();
+
+  task->add_output(store_, p_lhs);
+  task->add_scalar_arg(legate::Scalar(static_cast<int32_t>(op_code)));
+  task->add_scalar_arg(legate::Scalar(M));
+
+  for (double arg : args) { task->add_scalar_arg(legate::Scalar(arg)); }
+
+  runtime->submit(std::move(task));
 }
 
 legate::LogicalStore NDArray::get_store() { return store_; }
