@@ -22,6 +22,7 @@
 #include "legate.h"
 #include "cunumeric/slice.h"
 #include "cunumeric/typedefs.h"
+#include "cunumeric/nullary/window_util.h"
 
 namespace cunumeric {
 
@@ -77,6 +78,7 @@ class NDArray {
   void arange(double start, double stop, double step);
   std::vector<NDArray> nonzero();
   NDArray unique();
+  void create_window(WindowOpCode op_code, int64_t M, std::vector<double> args);
 
  public:
   NDArray as_type(std::unique_ptr<legate::Type> type);
