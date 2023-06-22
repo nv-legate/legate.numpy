@@ -70,7 +70,7 @@ void stencil(const Config& config)
   auto max_iter = config.iter + config.warmup;
   for (int32_t iter = 0; iter < max_iter; ++iter) {
     auto average = center + north + east + west + south;
-    auto work    = average * 0.2;
+    auto work    = average * legate::Scalar(double(0.2));
     center.assign(work);
     // print_array(average);
     // print_array(center);
@@ -81,11 +81,9 @@ void stencil(const Config& config)
 
 int main(int argc, char** argv)
 {
-  legate::initialize(argc, argv);
+  legate::start(argc, argv);
 
   cunumeric::initialize(argc, argv);
-
-  legate::start(argc, argv);
 
   stencil::Config config{};
 
@@ -98,5 +96,5 @@ int main(int argc, char** argv)
 
   stencil::stencil(config);
 
-  return legate::wait_for_shutdown();
+  return legate::finish();
 }
