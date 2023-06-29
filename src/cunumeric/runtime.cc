@@ -153,15 +153,12 @@ Legion::ReductionOpID CuNumericRuntime::get_reduction_op(UnaryRedCode op, const 
   return type.find_reduction_operator(TO_CORE_REDOP.at(op));
 }
 
-std::unique_ptr<legate::AutoTask> CuNumericRuntime::create_task(CuNumericOpCode op_code)
+legate::AutoTask CuNumericRuntime::create_task(CuNumericOpCode op_code)
 {
   return legate_runtime_->create_task(context_, op_code);
 }
 
-void CuNumericRuntime::submit(std::unique_ptr<legate::Task> task)
-{
-  legate_runtime_->submit(std::move(task));
-}
+void CuNumericRuntime::submit(legate::AutoTask&& task) { legate_runtime_->submit(std::move(task)); }
 
 uint32_t CuNumericRuntime::get_next_random_epoch() { return next_epoch_++; }
 

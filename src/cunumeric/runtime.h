@@ -48,8 +48,8 @@ class CuNumericRuntime {
   const legate::Type& get_argred_type(const legate::Type& value_type);
 
  public:
-  std::unique_ptr<legate::AutoTask> create_task(CuNumericOpCode op_code);
-  void submit(std::unique_ptr<legate::Task> task);
+  legate::AutoTask create_task(CuNumericOpCode op_code);
+  void submit(legate::AutoTask&& task);
 
  public:
   uint32_t get_next_random_epoch();

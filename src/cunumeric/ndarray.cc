@@ -130,13 +130,13 @@ void NDArray::random(int32_t gen_code)
 
   auto task = runtime->create_task(CuNumericOpCode::CUNUMERIC_RAND);
 
-  auto p_lhs = task->declare_partition();
+  auto p_lhs = task.declare_partition();
 
-  task->add_output(store_, p_lhs);
-  task->add_scalar_arg(legate::Scalar(static_cast<int32_t>(RandGenCode::UNIFORM)));
-  task->add_scalar_arg(legate::Scalar(runtime->get_next_random_epoch()));
+  task.add_output(store_, p_lhs);
+  task.add_scalar_arg(legate::Scalar(static_cast<int32_t>(RandGenCode::UNIFORM)));
+  task.add_scalar_arg(legate::Scalar(runtime->get_next_random_epoch()));
   auto strides = compute_strides(shape());
-  task->add_scalar_arg(legate::Scalar(strides));
+  task.add_scalar_arg(legate::Scalar(strides));
 
   runtime->submit(std::move(task));
 }
@@ -148,12 +148,12 @@ void NDArray::fill(const Scalar& value, bool argval)
   auto fill_value = runtime->create_scalar_store(value);
 
   auto task         = runtime->create_task(CuNumericOpCode::CUNUMERIC_FILL);
-  auto p_lhs        = task->declare_partition();
-  auto p_fill_value = task->declare_partition();
+  auto p_lhs        = task.declare_partition();
+  auto p_fill_value = task.declare_partition();
 
-  task->add_output(store_, p_lhs);
-  task->add_input(fill_value, p_fill_value);
-  task->add_scalar_arg(legate::Scalar(argval));
+  task.add_output(store_, p_lhs);
+  task.add_input(fill_value, p_fill_value);
+  task.add_scalar_arg(legate::Scalar(argval));
 
   runtime->submit(std::move(task));
 }
@@ -168,11 +168,11 @@ void NDArray::eye(int32_t k)
   auto runtime = CuNumericRuntime::get_runtime();
 
   auto task  = runtime->create_task(CuNumericOpCode::CUNUMERIC_EYE);
-  auto p_lhs = task->declare_partition();
+  auto p_lhs = task.declare_partition();
 
-  task->add_input(store_, p_lhs);
-  task->add_output(store_, p_lhs);
-  task->add_scalar_arg(legate::Scalar(k));
+  task.add_input(store_, p_lhs);
+  task.add_output(store_, p_lhs);
+  task.add_scalar_arg(legate::Scalar(k));
 
   runtime->submit(std::move(task));
 }
@@ -182,19 +182,19 @@ void NDArray::trilu(NDArray rhs, int32_t k, bool lower)
   auto runtime = CuNumericRuntime::get_runtime();
 
   auto task  = runtime->create_task(CuNumericOpCode::CUNUMERIC_TRILU);
-  auto p_lhs = task->declare_partition();
-  auto p_rhs = task->declare_partition();
+  auto p_lhs = task.declare_partition();
+  auto p_rhs = task.declare_partition();
 
   auto& out_shape = shape();
   rhs             = rhs.broadcast(out_shape, rhs.store_);
 
-  task->add_scalar_arg(legate::Scalar(lower));
-  task->add_scalar_arg(legate::Scalar(k));
+  task.add_scalar_arg(legate::Scalar(lower));
+  task.add_scalar_arg(legate::Scalar(k));
 
-  task->add_output(store_, p_lhs);
-  task->add_input(rhs.store_, p_rhs);
+  task.add_output(store_, p_lhs);
+  task.add_input(rhs.store_, p_rhs);
 
-  task->add_constraint(align(p_lhs, p_rhs));
+  task.add_constraint(align(p_lhs, p_rhs));
 
   runtime->submit(std::move(task));
 }
@@ -207,21 +207,21 @@ void NDArray::binary_op(int32_t op_code, NDArray rhs1, NDArray rhs2)
 
   auto task = runtime->create_task(CuNumericOpCode::CUNUMERIC_BINARY_OP);
 
-  auto p_lhs  = task->declare_partition();
-  auto p_rhs1 = task->declare_partition();
-  auto p_rhs2 = task->declare_partition();
+  auto p_lhs  = task.declare_partition();
+  auto p_rhs1 = task.declare_partition();
+  auto p_rhs2 = task.declare_partition();
 
   auto& out_shape = shape();
   auto rhs1_store = broadcast(out_shape, rhs1.store_);
   auto rhs2_store = broadcast(out_shape, rhs2.store_);
 
-  task->add_output(store_, p_lhs);
-  task->add_input(rhs1_store, p_rhs1);
-  task->add_input(rhs2_store, p_rhs2);
-  task->add_scalar_arg(legate::Scalar(op_code));
+  task.add_output(store_, p_lhs);
+  task.add_input(rhs1_store, p_rhs1);
+  task.add_input(rhs2_store, p_rhs2);
+  task.add_scalar_arg(legate::Scalar(op_code));
 
-  task->add_constraint(align(p_lhs, p_rhs1));
-  task->add_constraint(align(p_rhs1, p_rhs2));
+  task.add_constraint(align(p_lhs, p_rhs1));
+  task.add_constraint(align(p_rhs1, p_rhs2));
 
   runtime->submit(std::move(task));
 }
@@ -243,16 +243,16 @@ void NDArray::binary_reduction(int32_t op_code, NDArray rhs1, NDArray rhs2)
   }
   auto task = runtime->create_task(CuNumericOpCode::CUNUMERIC_BINARY_RED);
 
-  auto p_lhs  = task->declare_partition();
-  auto p_rhs1 = task->declare_partition();
-  auto p_rhs2 = task->declare_partition();
+  auto p_lhs  = task.declare_partition();
+  auto p_rhs1 = task.declare_partition();
+  auto p_rhs2 = task.declare_partition();
 
-  task->add_reduction(store_, redop, p_lhs);
-  task->add_input(rhs1_store, p_rhs1);
-  task->add_input(rhs2_store, p_rhs2);
-  task->add_scalar_arg(legate::Scalar(op_code));
+  task.add_reduction(store_, redop, p_lhs);
+  task.add_input(rhs1_store, p_rhs1);
+  task.add_input(rhs2_store, p_rhs2);
+  task.add_scalar_arg(legate::Scalar(op_code));
 
-  task->add_constraint(align(p_rhs1, p_rhs2));
+  task.add_constraint(align(p_rhs1, p_rhs2));
 
   runtime->submit(std::move(task));
 }
@@ -263,16 +263,16 @@ void NDArray::unary_op(int32_t op_code, NDArray input)
 
   auto task = runtime->create_task(CuNumericOpCode::CUNUMERIC_UNARY_OP);
 
-  auto p_out = task->declare_partition();
-  auto p_in  = task->declare_partition();
+  auto p_out = task.declare_partition();
+  auto p_in  = task.declare_partition();
 
   auto rhs = broadcast(shape(), input.store_);
 
-  task->add_output(store_, p_out);
-  task->add_input(rhs, p_in);
-  task->add_scalar_arg(legate::Scalar(op_code));
+  task.add_output(store_, p_out);
+  task.add_input(rhs, p_in);
+  task.add_scalar_arg(legate::Scalar(op_code));
 
-  task->add_constraint(align(p_out, p_in));
+  task.add_constraint(align(p_out, p_in));
 
   runtime->submit(std::move(task));
 }
@@ -288,15 +288,15 @@ void NDArray::unary_reduction(int32_t op_code_, NDArray input)
 
   auto task = runtime->create_task(CuNumericOpCode::CUNUMERIC_SCALAR_UNARY_RED);
 
-  auto p_out = task->declare_partition();
-  auto p_in  = task->declare_partition();
+  auto p_out = task.declare_partition();
+  auto p_in  = task.declare_partition();
 
   auto redop = runtime->get_reduction_op(op_code, type());
 
-  task->add_reduction(store_, redop, p_out);
-  task->add_input(input.store_, p_in);
-  task->add_scalar_arg(legate::Scalar(op_code_));
-  task->add_scalar_arg(legate::Scalar(input.shape()));
+  task.add_reduction(store_, redop, p_out);
+  task.add_input(input.store_, p_in);
+  task.add_scalar_arg(legate::Scalar(op_code_));
+  task.add_scalar_arg(legate::Scalar(input.shape()));
 
   runtime->submit(std::move(task));
 }
@@ -320,18 +320,18 @@ void NDArray::dot(NDArray rhs1, NDArray rhs2)
 
   auto task = runtime->create_task(CuNumericOpCode::CUNUMERIC_MATMUL);
 
-  auto p_lhs  = task->declare_partition();
-  auto p_rhs1 = task->declare_partition();
-  auto p_rhs2 = task->declare_partition();
+  auto p_lhs  = task.declare_partition();
+  auto p_rhs1 = task.declare_partition();
+  auto p_rhs2 = task.declare_partition();
 
   auto redop = runtime->get_reduction_op(UnaryRedCode::SUM, type());
 
-  task->add_reduction(lhs_s, redop, p_lhs);
-  task->add_input(rhs1_s, p_rhs1);
-  task->add_input(rhs2_s, p_rhs2);
+  task.add_reduction(lhs_s, redop, p_lhs);
+  task.add_input(rhs1_s, p_rhs1);
+  task.add_input(rhs2_s, p_rhs2);
 
-  task->add_constraint(align(p_lhs, p_rhs1));
-  task->add_constraint(align(p_rhs1, p_rhs2));
+  task.add_constraint(align(p_lhs, p_rhs1));
+  task.add_constraint(align(p_rhs1, p_rhs2));
 
   runtime->submit(std::move(task));
 }
@@ -346,20 +346,20 @@ void NDArray::arange(double start, double stop, double step)
 
   auto task = runtime->create_task(CuNumericOpCode::CUNUMERIC_ARANGE);
 
-  auto p_lhs   = task->declare_partition();
-  auto p_start = task->declare_partition();
-  auto p_stop  = task->declare_partition();
-  auto p_step  = task->declare_partition();
+  auto p_lhs   = task.declare_partition();
+  auto p_start = task.declare_partition();
+  auto p_stop  = task.declare_partition();
+  auto p_step  = task.declare_partition();
 
-  task->add_output(store_, p_lhs);
+  task.add_output(store_, p_lhs);
 
   auto start_value = runtime->create_scalar_store(Scalar(start));
   auto stop_value  = runtime->create_scalar_store(Scalar(stop));
   auto step_value  = runtime->create_scalar_store(Scalar(step));
 
-  task->add_input(start_value, p_start);
-  task->add_input(stop_value, p_stop);
-  task->add_input(step_value, p_step);
+  task.add_input(start_value, p_start);
+  task.add_input(stop_value, p_stop);
+  task.add_input(step_value, p_step);
 
   runtime->submit(std::move(task));
 }
@@ -374,15 +374,15 @@ std::vector<NDArray> NDArray::nonzero()
 
   auto task = runtime->create_task(CuNumericOpCode::CUNUMERIC_NONZERO);
 
-  auto p_rhs = task->declare_partition();
+  auto p_rhs = task.declare_partition();
 
   for (auto& output : outputs) {
-    auto p_lhs = task->declare_partition();
-    task->add_output(output.store_, p_lhs);
+    auto p_lhs = task.declare_partition();
+    task.add_output(output.store_, p_lhs);
   }
-  task->add_input(store_, p_rhs);
+  task.add_input(store_, p_rhs);
 
-  task->add_constraint(legate::broadcast(p_rhs, legate::from_range<int32_t>(1, ndim)));
+  task.add_constraint(legate::broadcast(p_rhs, legate::from_range<int32_t>(1, ndim)));
 
   runtime->submit(std::move(task));
 
@@ -398,13 +398,13 @@ NDArray NDArray::unique()
   auto result  = runtime->create_array(type());
 
   auto task     = runtime->create_task(CuNumericOpCode::CUNUMERIC_UNIQUE);
-  auto part_out = task->declare_partition();
-  auto part_in  = task->declare_partition();
-  task->add_output(result.store_, part_out);
-  task->add_input(store_, part_in);
-  task->add_communicator("nccl");
+  auto part_out = task.declare_partition();
+  auto part_in  = task.declare_partition();
+  task.add_output(result.store_, part_out);
+  task.add_input(store_, part_in);
+  task.add_communicator("nccl");
   if (!has_gpus)
-    task->add_constraint(legate::broadcast(part_in, legate::from_range<int32_t>(0, dim())));
+    task.add_constraint(legate::broadcast(part_in, legate::from_range<int32_t>(0, dim())));
   runtime->submit(std::move(task));
   return result;
 }
@@ -421,14 +421,14 @@ NDArray NDArray::as_type(std::unique_ptr<legate::Type> type)
 
   auto task = runtime->create_task(CuNumericOpCode::CUNUMERIC_CONVERT);
 
-  auto p_lhs = task->declare_partition();
-  auto p_rhs = task->declare_partition();
+  auto p_lhs = task.declare_partition();
+  auto p_rhs = task.declare_partition();
 
-  task->add_output(out.store_, p_lhs);
-  task->add_input(store_, p_rhs);
-  task->add_scalar_arg(legate::Scalar((int32_t)ConvertCode::NOOP));
+  task.add_output(out.store_, p_lhs);
+  task.add_input(store_, p_rhs);
+  task.add_scalar_arg(legate::Scalar((int32_t)ConvertCode::NOOP));
 
-  task->add_constraint(align(p_lhs, p_rhs));
+  task.add_constraint(align(p_lhs, p_rhs));
 
   runtime->submit(std::move(task));
 
@@ -440,13 +440,13 @@ void NDArray::create_window(WindowOpCode op_code, int64_t M, std::vector<double>
   auto runtime = CuNumericRuntime::get_runtime();
 
   auto task  = runtime->create_task(CuNumericOpCode::CUNUMERIC_WINDOW);
-  auto p_lhs = task->declare_partition();
+  auto p_lhs = task.declare_partition();
 
-  task->add_output(store_, p_lhs);
-  task->add_scalar_arg(legate::Scalar(static_cast<int32_t>(op_code)));
-  task->add_scalar_arg(legate::Scalar(M));
+  task.add_output(store_, p_lhs);
+  task.add_scalar_arg(legate::Scalar(static_cast<int32_t>(op_code)));
+  task.add_scalar_arg(legate::Scalar(M));
 
-  for (double arg : args) { task->add_scalar_arg(legate::Scalar(arg)); }
+  for (double arg : args) { task.add_scalar_arg(legate::Scalar(arg)); }
 
   runtime->submit(std::move(task));
 }
