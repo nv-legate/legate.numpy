@@ -266,9 +266,7 @@ class _CunumericSharedLib:
         ...
 
     @abstractmethod
-    def cunumeric_register_reduction_op(
-        self, type_uid: int, elem_type_code: int
-    ) -> None:
+    def cunumeric_register_reduction_op(self, raw_ptr: int) -> None:
         ...
 
 

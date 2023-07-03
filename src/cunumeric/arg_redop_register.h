@@ -24,7 +24,7 @@ namespace cunumeric {
 
 struct register_reduction_op_fn {
   template <legate::Type::Code CODE, std::enable_if_t<!legate::is_complex<CODE>::value>* = nullptr>
-  void operator()(int32_t type_uid)
+  void operator()(const legate::StructType* type)
   {
     using VAL = legate::legate_type_of<CODE>;
 
@@ -34,18 +34,18 @@ struct register_reduction_op_fn {
       auto redop_id =
         context->register_reduction_operator<ArgmaxReduction<VAL>>(next_reduction_operator_id());
       auto op_kind = static_cast<int32_t>(legate::ReductionOpKind::MAX);
-      runtime->record_reduction_operator(type_uid, op_kind, redop_id);
+      type->record_reduction_operator(op_kind, redop_id);
     }
     {
       auto redop_id =
         context->register_reduction_operator<ArgminReduction<VAL>>(next_reduction_operator_id());
       auto op_kind = static_cast<int32_t>(legate::ReductionOpKind::MIN);
-      runtime->record_reduction_operator(type_uid, op_kind, redop_id);
+      type->record_reduction_operator(op_kind, redop_id);
     }
   }
 
   template <legate::Type::Code CODE, std::enable_if_t<legate::is_complex<CODE>::value>* = nullptr>
-  void operator()(int32_t type_uid)
+  void operator()(const legate::StructType* type)
   {
     LEGATE_ABORT;
   }

@@ -325,7 +325,7 @@ extern "C" {
 
 void cunumeric_perform_registration();
 bool cunumeric_has_curand();
-void cunumeric_register_reduction_op(int32_t type_uid, int32_t elem_type_code);
+void cunumeric_register_reduction_op(uintptr_t raw_type);
 
 #ifdef __cplusplus
 }

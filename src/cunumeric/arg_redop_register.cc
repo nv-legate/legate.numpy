@@ -61,10 +61,10 @@ DEFINE_IDENTITIES(uint64_t)
 
 extern "C" {
 
-void cunumeric_register_reduction_op(int32_t type_uid, int32_t _elem_type_code)
+void cunumeric_register_reduction_op(uintptr_t raw_type)
 {
-  auto elem_type_code = static_cast<legate::Type::Code>(_elem_type_code);
-  legate::type_dispatch(elem_type_code, cunumeric::register_reduction_op_fn{}, type_uid);
+  const auto* type = reinterpret_cast<const legate::StructType*>(raw_type);
+  legate::type_dispatch(type->field_type(1).code, cunumeric::register_reduction_op_fn{}, type);
 }
 }
 
