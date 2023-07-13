@@ -6,6 +6,13 @@
       "git_shallow": false,
       "always_download": false,
       "git_tag" : "92cf12157fc186ae368cb40fd937ad4e1c68bb6e"
+    },
+    "legate_core_internal" : {
+      "version": "23.07.00",
+      "git_url" : "https://gitlab-master.nvidia.com/legate/legate.core.internal.git",
+      "git_shallow": false,
+      "always_download": false,
+      "git_tag" : "ce437ffbe659836eda5296bd45c180eb812996ea"
     }
   }
 }
