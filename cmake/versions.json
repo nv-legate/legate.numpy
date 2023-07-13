@@ -12,7 +12,7 @@
       "git_url" : "https://gitlab-master.nvidia.com/legate/legate.core.internal.git",
       "git_shallow": false,
       "always_download": false,
-      "git_tag" : "ce437ffbe659836eda5296bd45c180eb812996ea"
+      "git_tag" : "407b15b0d78e43b8bdecab59e70d8d11c4bc70d4"
     }
   }
 }
