@@ -148,9 +148,9 @@ const std::unordered_map<UnaryRedCode, legate::ReductionOpKind> TO_CORE_REDOP = 
 
 }  // namespace
 
-Legion::ReductionOpID CuNumericRuntime::get_reduction_op(UnaryRedCode op, const legate::Type& type)
+legate::ReductionOpKind CuNumericRuntime::get_reduction_op(UnaryRedCode op)
 {
-  return type.find_reduction_operator(TO_CORE_REDOP.at(op));
+  return TO_CORE_REDOP.at(op);
 }
 
 legate::AutoTask CuNumericRuntime::create_task(CuNumericOpCode op_code)

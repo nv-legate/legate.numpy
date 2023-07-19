@@ -182,8 +182,8 @@ void NDArray::trilu(NDArray rhs, int32_t k, bool lower)
   auto runtime = CuNumericRuntime::get_runtime();
 
   auto task  = runtime->create_task(CuNumericOpCode::CUNUMERIC_TRILU);
-  auto p_lhs = task.declare_partition();
-  auto p_rhs = task.declare_partition();
+  auto p_lhs = task.find_or_declare_partition(store_);
+  auto p_rhs = task.find_or_declare_partition(rhs.store_);
 
   auto& out_shape = shape();
   rhs             = rhs.broadcast(out_shape, rhs.store_);
@@ -207,13 +207,13 @@ void NDArray::binary_op(int32_t op_code, NDArray rhs1, NDArray rhs2)
 
   auto task = runtime->create_task(CuNumericOpCode::CUNUMERIC_BINARY_OP);
 
-  auto p_lhs  = task.declare_partition();
-  auto p_rhs1 = task.declare_partition();
-  auto p_rhs2 = task.declare_partition();
-
   auto& out_shape = shape();
   auto rhs1_store = broadcast(out_shape, rhs1.store_);
   auto rhs2_store = broadcast(out_shape, rhs2.store_);
+
+  auto p_lhs  = task.find_or_declare_partition(store_);
+  auto p_rhs1 = task.find_or_declare_partition(rhs1_store);
+  auto p_rhs2 = task.find_or_declare_partition(rhs2_store);
 
   task.add_output(store_, p_lhs);
   task.add_input(rhs1_store, p_rhs1);
@@ -233,19 +233,19 @@ void NDArray::binary_reduction(int32_t op_code, NDArray rhs1, NDArray rhs2)
   auto rhs1_store = broadcast(rhs1, rhs2);
   auto rhs2_store = broadcast(rhs2, rhs1);
 
-  Legion::ReductionOpID redop;
+  legate::ReductionOpKind redop;
   if (op_code == static_cast<int32_t>(BinaryOpCode::NOT_EQUAL)) {
-    redop = runtime->get_reduction_op(UnaryRedCode::SUM, type());
+    redop = runtime->get_reduction_op(UnaryRedCode::SUM);
     fill(legate::Scalar(false), false);
   } else {
-    redop = runtime->get_reduction_op(UnaryRedCode::PROD, type());
+    redop = runtime->get_reduction_op(UnaryRedCode::PROD);
     fill(legate::Scalar(true), false);
   }
   auto task = runtime->create_task(CuNumericOpCode::CUNUMERIC_BINARY_RED);
 
-  auto p_lhs  = task.declare_partition();
-  auto p_rhs1 = task.declare_partition();
-  auto p_rhs2 = task.declare_partition();
+  auto p_lhs  = task.find_or_declare_partition(store_);
+  auto p_rhs1 = task.find_or_declare_partition(rhs1_store);
+  auto p_rhs2 = task.find_or_declare_partition(rhs2_store);
 
   task.add_reduction(store_, redop, p_lhs);
   task.add_input(rhs1_store, p_rhs1);
@@ -263,10 +263,10 @@ void NDArray::unary_op(int32_t op_code, NDArray input)
 
   auto task = runtime->create_task(CuNumericOpCode::CUNUMERIC_UNARY_OP);
 
-  auto p_out = task.declare_partition();
-  auto p_in  = task.declare_partition();
-
   auto rhs = broadcast(shape(), input.store_);
+
+  auto p_out = task.find_or_declare_partition(store_);
+  auto p_in  = task.find_or_declare_partition(rhs);
 
   task.add_output(store_, p_out);
   task.add_input(rhs, p_in);
@@ -291,7 +291,7 @@ void NDArray::unary_reduction(int32_t op_code_, NDArray input)
   auto p_out = task.declare_partition();
   auto p_in  = task.declare_partition();
 
-  auto redop = runtime->get_reduction_op(op_code, type());
+  auto redop = runtime->get_reduction_op(op_code);
 
   task.add_reduction(store_, redop, p_out);
   task.add_input(input.store_, p_in);
@@ -320,11 +320,12 @@ void NDArray::dot(NDArray rhs1, NDArray rhs2)
 
   auto task = runtime->create_task(CuNumericOpCode::CUNUMERIC_MATMUL);
 
-  auto p_lhs  = task.declare_partition();
-  auto p_rhs1 = task.declare_partition();
-  auto p_rhs2 = task.declare_partition();
+  // TODO: aliased partitions will be created if the LHS and one of the RHSes are the same store
+  auto p_lhs  = task.find_or_declare_partition(lhs_s);
+  auto p_rhs1 = task.find_or_declare_partition(rhs1_s);
+  auto p_rhs2 = task.find_or_declare_partition(rhs2_s);
 
-  auto redop = runtime->get_reduction_op(UnaryRedCode::SUM, type());
+  auto redop = runtime->get_reduction_op(UnaryRedCode::SUM);
 
   task.add_reduction(lhs_s, redop, p_lhs);
   task.add_input(rhs1_s, p_rhs1);

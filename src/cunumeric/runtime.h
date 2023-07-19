@@ -42,7 +42,7 @@ class CuNumericRuntime {
 
  public:
   Scalar get_reduction_identity(UnaryRedCode op, const legate::Type& type);
-  Legion::ReductionOpID get_reduction_op(UnaryRedCode op, const legate::Type& type);
+  legate::ReductionOpKind get_reduction_op(UnaryRedCode op);
 
  public:
   const legate::Type& get_argred_type(const legate::Type& value_type);
