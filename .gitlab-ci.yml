@@ -4,7 +4,7 @@ image:
 stages:
     - build
 
-Build:LegateCore:
+Build:CuNumeric:
   stage: build
 
   rules:
