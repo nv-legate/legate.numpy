@@ -20,8 +20,7 @@ template <typename T, int32_t DIM>
 legate::AccessorRO<T, DIM> NDArray::get_read_accessor()
 {
   auto mapped = store_.get_physical_store();
-  auto shape  = mapped->shape<DIM>();
-  return mapped->read_accessor<T, DIM>(shape);
+  return mapped.read_accessor<T, DIM>();
 }
 
 }  // namespace cunumeric

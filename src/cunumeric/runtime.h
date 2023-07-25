@@ -30,12 +30,10 @@ class NDArray;
 
 class CuNumericRuntime {
  private:
-  CuNumericRuntime(legate::Runtime* legate_runtime, legate::LibraryContext* context);
+  CuNumericRuntime(legate::Runtime* legate_runtime, legate::Library library);
 
  public:
-  NDArray create_array(std::unique_ptr<legate::Type> type);
   NDArray create_array(const legate::Type& type);
-  NDArray create_array(std::vector<size_t> shape, std::unique_ptr<legate::Type> type);
   NDArray create_array(std::vector<size_t> shape, const legate::Type& type);
   NDArray create_array(legate::LogicalStore&& store);
   legate::LogicalStore create_scalar_store(const Scalar& value);
@@ -45,7 +43,7 @@ class CuNumericRuntime {
   legate::ReductionOpKind get_reduction_op(UnaryRedCode op);
 
  public:
-  const legate::Type& get_argred_type(const legate::Type& value_type);
+  legate::Type get_argred_type(const legate::Type& value_type);
 
  public:
   legate::AutoTask create_task(CuNumericOpCode op_code);
@@ -55,20 +53,20 @@ class CuNumericRuntime {
   uint32_t get_next_random_epoch();
 
  public:
-  legate::LibraryContext* get_context() const { return context_; }
+  legate::Library get_library() const { return library_; }
 
  public:
   static CuNumericRuntime* get_runtime();
-  static void initialize(legate::Runtime* legate_runtime, legate::LibraryContext* context);
+  static void initialize(legate::Runtime* legate_runtime, legate::Library library);
 
  private:
   static CuNumericRuntime* runtime_;
 
  private:
   legate::Runtime* legate_runtime_;
-  legate::LibraryContext* context_;
+  legate::Library library_;
   uint32_t next_epoch_{0};
-  std::unordered_map<legate::Type::Code, std::unique_ptr<legate::Type>> argred_types_;
+  std::unordered_map<legate::Type::Code, legate::Type> argred_types_;
 };
 
 }  // namespace cunumeric

@@ -128,8 +128,14 @@ class Runtime(object):
             return cached
         argred_dtype = ty.struct_type([ty.int64, value_dtype], True)
         self._cached_argred_types[value_dtype] = argred_dtype
-        self.cunumeric_lib.cunumeric_register_reduction_op(
-            argred_dtype.raw_ptr
+        ids = self.cunumeric_lib.cunumeric_register_reduction_ops(
+            value_dtype.code
+        )
+        argred_dtype.record_reduction_op(
+            ty.ReductionOp.MAX, ids.argmax_redop_id
+        )
+        argred_dtype.record_reduction_op(
+            ty.ReductionOp.MIN, ids.argmin_redop_id
         )
         return argred_dtype
 

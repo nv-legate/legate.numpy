@@ -24,9 +24,9 @@
 
 namespace cunumeric {
 
-NDArray array(std::vector<size_t> shape, std::unique_ptr<legate::Type> type)
+NDArray array(std::vector<size_t> shape, const legate::Type& type)
 {
-  return CuNumericRuntime::get_runtime()->create_array(std::move(shape), std::move(type));
+  return CuNumericRuntime::get_runtime()->create_array(std::move(shape), type);
 }
 
 NDArray unary_op(UnaryOpCode op_code, NDArray input)
@@ -91,30 +91,30 @@ struct generate_zero_fn {
 
 }  // namespace
 
-NDArray zeros(std::vector<size_t> shape, std::unique_ptr<legate::Type> type)
+NDArray zeros(std::vector<size_t> shape, std::optional<legate::Type> type)
 {
-  if (nullptr == type) type = legate::float64();
-  if (static_cast<int32_t>(type->code) >= static_cast<int32_t>(legate::Type::Code::FIXED_ARRAY))
+  auto code = type.has_value() ? type.value().code() : legate::Type::Code::FLOAT64;
+  if (static_cast<int32_t>(code) >= static_cast<int32_t>(legate::Type::Code::FIXED_ARRAY))
     throw std::invalid_argument("Type must be a primitive type");
-  auto zero = legate::type_dispatch(type->code, generate_zero_fn{});
+  auto zero = legate::type_dispatch(code, generate_zero_fn{});
   return full(shape, zero);
 }
 
 NDArray full(std::vector<size_t> shape, const Scalar& value)
 {
   auto runtime = CuNumericRuntime::get_runtime();
-  auto out     = runtime->create_array(std::move(shape), value.type().clone());
+  auto out     = runtime->create_array(std::move(shape), value.type());
   out.fill(value, false);
   return std::move(out);
 }
 
-NDArray eye(size_t n, std::optional<size_t> m, int32_t k, std::unique_ptr<legate::Type> type)
+NDArray eye(size_t n, std::optional<size_t> m, int32_t k, const legate::Type& type)
 {
-  if (static_cast<int32_t>(type->code) >= static_cast<int32_t>(legate::Type::Code::FIXED_ARRAY))
+  if (static_cast<int32_t>(type.code()) >= static_cast<int32_t>(legate::Type::Code::FIXED_ARRAY))
     throw std::invalid_argument("Type must be a primitive type");
 
   auto runtime = CuNumericRuntime::get_runtime();
-  auto out     = runtime->create_array({n, m.value_or(n)}, std::move(type));
+  auto out     = runtime->create_array({n, m.value_or(n)}, type);
   out.eye(k);
   return std::move(out);
 }
@@ -174,7 +174,7 @@ NDArray unique(NDArray input) { return input.unique(); }
 NDArray arange(std::optional<double> start,
                std::optional<double> stop,
                std::optional<double> step,
-               std::optional<std::unique_ptr<legate::Type>> type)
+               const legate::Type& type)
 {
   if (!stop.has_value()) {
     stop  = start;
@@ -182,7 +182,7 @@ NDArray arange(std::optional<double> start,
   }
 
   size_t N = ceil((stop.value() - start.value()) / step.value());
-  auto out = CuNumericRuntime::get_runtime()->create_array({N}, std::move(type.value()));
+  auto out = CuNumericRuntime::get_runtime()->create_array({N}, type);
   out.arange(start.value(), stop.value(), step.value());
   return std::move(out);
 }
@@ -220,7 +220,7 @@ NDArray create_window(int64_t M, WindowOpCode op_code, std::vector<double> args)
     return out;
   }
   auto out = runtime->create_array({static_cast<size_t>(M)}, std::move(type));
-  out.create_window(op_code, M, args);
+  out.create_window(static_cast<int32_t>(op_code), M, args);
   return out;
 }
 

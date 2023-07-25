@@ -27,7 +27,7 @@ namespace cunumeric {
 
 void initialize(int32_t argc, char** argv);
 
-NDArray array(std::vector<size_t> shape, std::unique_ptr<legate::Type> type);
+NDArray array(std::vector<size_t> shape, const legate::Type& type);
 
 NDArray abs(NDArray input);
 
@@ -41,7 +41,7 @@ NDArray negative(NDArray input);
 
 NDArray random(std::vector<size_t> shape);
 
-NDArray zeros(std::vector<size_t> shape, std::unique_ptr<legate::Type> type = nullptr);
+NDArray zeros(std::vector<size_t> shape, std::optional<legate::Type> type = std::nullopt);
 
 NDArray full(std::vector<size_t> shape, const Scalar& value);
 
@@ -49,10 +49,10 @@ NDArray sum(NDArray input);
 
 NDArray unique(NDArray input);
 
-NDArray arange(std::optional<double> start                       = 0,
-               std::optional<double> stop                        = std::nullopt,
-               std::optional<double> step                        = 1,
-               std::optional<std::unique_ptr<legate::Type>> type = legate::float64());
+NDArray arange(std::optional<double> start = 0,
+               std::optional<double> stop  = std::nullopt,
+               std::optional<double> step  = 1,
+               const legate::Type& type    = legate::float64());
 
 NDArray as_array(legate::LogicalStore store);
 
@@ -62,8 +62,8 @@ std::vector<NDArray> nonzero(NDArray input);
 
 NDArray eye(size_t n,
             std::optional<size_t> m,
-            int32_t k                          = 0,
-            std::unique_ptr<legate::Type> type = legate::float64());
+            int32_t k                = 0,
+            const legate::Type& type = legate::float64());
 
 NDArray tril(NDArray rhs, int32_t k = 0);
 

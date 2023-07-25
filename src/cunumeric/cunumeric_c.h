@@ -323,9 +323,14 @@ enum CuNumericBitorder { CUNUMERIC_BITORDER_BIG = 0, CUNUMERIC_BITORDER_LITTLE =
 extern "C" {
 #endif
 
+typedef struct ReductionOpIds {
+  int argmax_redop_id;
+  int argmin_redop_id;
+} ReductionOpIds;
+
 void cunumeric_perform_registration();
 bool cunumeric_has_curand();
-void cunumeric_register_reduction_op(uintptr_t raw_type);
+struct ReductionOpIds cunumeric_register_reduction_ops(int32_t code);
 
 #ifdef __cplusplus
 }

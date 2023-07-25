@@ -33,32 +33,21 @@ void initialize(int32_t argc, char** argv)
   Legion::Runtime::perform_registration_callback(bootstrapping_callback, true /*global*/);
 }
 
-CuNumericRuntime::CuNumericRuntime(legate::Runtime* legate_runtime, legate::LibraryContext* context)
-  : legate_runtime_(legate_runtime), context_(context)
+CuNumericRuntime::CuNumericRuntime(legate::Runtime* legate_runtime, legate::Library library)
+  : legate_runtime_(legate_runtime), library_(library)
 {
-}
-
-NDArray CuNumericRuntime::create_array(std::unique_ptr<legate::Type> type)
-{
-  auto store = legate_runtime_->create_store(std::move(type));
-  return NDArray(std::move(store));
 }
 
 NDArray CuNumericRuntime::create_array(const legate::Type& type)
 {
-  return create_array(type.clone());
-}
-
-NDArray CuNumericRuntime::create_array(std::vector<size_t> shape,
-                                       std::unique_ptr<legate::Type> type)
-{
-  auto store = legate_runtime_->create_store(shape, std::move(type), true /*optimize_scalar*/);
+  auto store = legate_runtime_->create_store(type);
   return NDArray(std::move(store));
 }
 
 NDArray CuNumericRuntime::create_array(std::vector<size_t> shape, const legate::Type& type)
 {
-  return create_array(std::move(shape), type.clone());
+  auto store = legate_runtime_->create_store(shape, type, true /*optimize_scalar*/);
+  return NDArray(std::move(store));
 }
 
 NDArray CuNumericRuntime::create_array(legate::LogicalStore&& store)
@@ -86,9 +75,9 @@ struct generate_identity_fn {
               std::enable_if_t<UnaryRedOp<OP, CODE>::valid && is_arg_reduce<OP>::value>* = nullptr>
     Scalar operator()(const legate::Type& type)
     {
-      auto value        = UnaryRedOp<OP, CODE>::OP::identity;
-      auto& argred_type = CuNumericRuntime::get_runtime()->get_argred_type(type);
-      return Scalar(value, argred_type.clone());
+      auto value       = UnaryRedOp<OP, CODE>::OP::identity;
+      auto argred_type = CuNumericRuntime::get_runtime()->get_argred_type(type);
+      return Scalar(value, argred_type);
     }
 
     template <legate::Type::Code CODE, std::enable_if_t<!UnaryRedOp<OP, CODE>::valid>* = nullptr>
@@ -102,13 +91,13 @@ struct generate_identity_fn {
   template <UnaryRedCode OP>
   Scalar operator()(const legate::Type& type)
   {
-    return legate::type_dispatch(type.code, generator<OP>{}, type);
+    return legate::type_dispatch(type.code(), generator<OP>{}, type);
   }
 };
 
 Scalar CuNumericRuntime::get_reduction_identity(UnaryRedCode op, const legate::Type& type)
 {
-  auto key    = std::make_pair(op, type.code);
+  auto key    = std::make_pair(op, type.code());
   auto finder = identities.find(key);
   if (identities.end() != finder) return finder->second;
 
@@ -117,18 +106,14 @@ Scalar CuNumericRuntime::get_reduction_identity(UnaryRedCode op, const legate::T
   return identity;
 }
 
-const legate::Type& CuNumericRuntime::get_argred_type(const legate::Type& value_type)
+legate::Type CuNumericRuntime::get_argred_type(const legate::Type& value_type)
 {
-  auto finder = argred_types_.find(value_type.code);
-  if (finder != argred_types_.end()) return *finder->second;
+  auto finder = argred_types_.find(value_type.code());
+  if (finder != argred_types_.end()) return finder->second;
 
-  std::vector<std::unique_ptr<legate::Type>> field_types{};
-  field_types.push_back(legate::int64());
-  field_types.push_back(value_type.clone());
-  auto argred_type   = legate::struct_type(std::move(field_types), true /*align*/);
-  const auto& result = *argred_type;
-  argred_types_.insert({value_type.code, std::move(argred_type)});
-  return result;
+  auto argred_type = legate::struct_type({legate::int64(), value_type}, true /*align*/);
+  argred_types_.insert({value_type.code(), argred_type});
+  return std::move(argred_type);
 }
 
 namespace {
@@ -155,7 +140,7 @@ legate::ReductionOpKind CuNumericRuntime::get_reduction_op(UnaryRedCode op)
 
 legate::AutoTask CuNumericRuntime::create_task(CuNumericOpCode op_code)
 {
-  return legate_runtime_->create_task(context_, op_code);
+  return legate_runtime_->create_task(library_, op_code);
 }
 
 void CuNumericRuntime::submit(legate::AutoTask&& task) { legate_runtime_->submit(std::move(task)); }
@@ -165,9 +150,9 @@ uint32_t CuNumericRuntime::get_next_random_epoch() { return next_epoch_++; }
 /*static*/ CuNumericRuntime* CuNumericRuntime::get_runtime() { return runtime_; }
 
 /*static*/ void CuNumericRuntime::initialize(legate::Runtime* legate_runtime,
-                                             legate::LibraryContext* context)
+                                             legate::Library library)
 {
-  runtime_ = new CuNumericRuntime(legate_runtime, context);
+  runtime_ = new CuNumericRuntime(legate_runtime, library);
 }
 
 }  // namespace cunumeric

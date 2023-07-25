@@ -18,9 +18,9 @@
 
 extern "C" {
 
-void cunumeric_register_reduction_op(uintptr_t raw_type)
+ReductionOpIds cunumeric_register_reduction_ops(int32_t code)
 {
-  const auto* type = reinterpret_cast<const legate::StructType*>(raw_type);
-  legate::type_dispatch(type->field_type(1).code, cunumeric::register_reduction_op_fn{}, type);
+  return legate::type_dispatch(static_cast<legate::Type::Code>(code),
+                               cunumeric::register_reduction_op_fn{});
 }
 }

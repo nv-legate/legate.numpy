@@ -37,10 +37,10 @@ void registration_callback()
   config.max_tasks         = CUNUMERIC_MAX_TASKS;
   config.max_reduction_ops = CUNUMERIC_MAX_REDOPS;
 
-  auto context = Runtime::get_runtime()->create_library(
+  auto library = Runtime::get_runtime()->create_library(
     cunumeric_library_name, config, std::make_unique<CuNumericMapper>());
 
-  CuNumericRegistrar::get_registrar().register_all_tasks(context);
+  CuNumericRegistrar::get_registrar().register_all_tasks(library);
 }
 
 void bootstrapping_callback(Legion::Machine machine,
@@ -50,9 +50,9 @@ void bootstrapping_callback(Legion::Machine machine,
   registration_callback();
 
   auto runtime = legate::Runtime::get_runtime();
-  auto context = runtime->find_library(cunumeric_library_name);
+  auto library = runtime->find_library(cunumeric_library_name);
 
-  CuNumericRuntime::initialize(runtime, context);
+  CuNumericRuntime::initialize(runtime, library);
 }
 
 }  // namespace cunumeric

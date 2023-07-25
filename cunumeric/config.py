@@ -28,6 +28,11 @@ if TYPE_CHECKING:
     from .runtime import Runtime
 
 
+class _ReductionOpIds:
+    argmax_redop_id: int
+    argmin_redop_id: int
+
+
 class _CunumericSharedLib:
     CUNUMERIC_ADVANCED_INDEXING: int
     CUNUMERIC_ARANGE: int
@@ -266,7 +271,7 @@ class _CunumericSharedLib:
         ...
 
     @abstractmethod
-    def cunumeric_register_reduction_op(self, raw_ptr: int) -> None:
+    def cunumeric_register_reduction_ops(self, code: int) -> _ReductionOpIds:
         ...
 
 

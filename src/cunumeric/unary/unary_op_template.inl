@@ -165,7 +165,7 @@ struct UnaryOpDispatch {
   {
     auto dim = std::max(args.in.dim(), 1);
     if ((OP_CODE == UnaryOpCode::COPY) && (args.in.code() == Type::Code::FIXED_ARRAY)) {
-      auto& type = static_cast<const FixedArrayType&>(args.in.type());
+      auto type = args.in.type().as_fixed_array_type();
       cunumeric::double_dispatch(dim, type.num_elements(), UnaryCopyImpl<KIND>{}, args);
     } else {
       auto code = OP_CODE == UnaryOpCode::GETARG ? args.out.code() : args.in.code();

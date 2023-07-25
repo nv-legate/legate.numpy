@@ -47,7 +47,7 @@ int32_t NDArray::dim() const { return store_.dim(); }
 
 const std::vector<size_t>& NDArray::shape() const { return store_.extents().data(); }
 
-const legate::Type& NDArray::type() const { return store_.type(); }
+legate::Type NDArray::type() const { return store_.type(); }
 
 static std::vector<int64_t> compute_strides(const std::vector<size_t>& shape)
 {
@@ -162,7 +162,7 @@ void NDArray::eye(int32_t k)
 {
   assert(dim() == 2);
 
-  auto zero = legate::type_dispatch(type().code, generate_zero_fn{});
+  auto zero = legate::type_dispatch(type().code(), generate_zero_fn{});
   fill(zero, false);
 
   auto runtime = CuNumericRuntime::get_runtime();
@@ -392,7 +392,7 @@ std::vector<NDArray> NDArray::nonzero()
 
 NDArray NDArray::unique()
 {
-  auto& machine = legate::Runtime::get_runtime()->get_machine();
+  auto machine  = legate::Runtime::get_runtime()->get_machine();
   bool has_gpus = machine.count(legate::mapping::TaskTarget::GPU) > 0;
 
   auto runtime = CuNumericRuntime::get_runtime();
@@ -410,13 +410,13 @@ NDArray NDArray::unique()
   return result;
 }
 
-NDArray NDArray::as_type(std::unique_ptr<legate::Type> type)
+NDArray NDArray::as_type(const legate::Type& type)
 {
   auto runtime = CuNumericRuntime::get_runtime();
 
   // TODO: Check if conversion is valid
 
-  auto out = runtime->create_array(shape(), std::move(type));
+  auto out = runtime->create_array(shape(), type);
 
   assert(store_.type() != out.store_.type());
 
@@ -436,7 +436,7 @@ NDArray NDArray::as_type(std::unique_ptr<legate::Type> type)
   return std::move(out);
 }
 
-void NDArray::create_window(WindowOpCode op_code, int64_t M, std::vector<double> args)
+void NDArray::create_window(int32_t op_code, int64_t M, std::vector<double> args)
 {
   auto runtime = CuNumericRuntime::get_runtime();
 
@@ -444,7 +444,7 @@ void NDArray::create_window(WindowOpCode op_code, int64_t M, std::vector<double>
   auto p_lhs = task.declare_partition();
 
   task.add_output(store_, p_lhs);
-  task.add_scalar_arg(legate::Scalar(static_cast<int32_t>(op_code)));
+  task.add_scalar_arg(legate::Scalar(op_code));
   task.add_scalar_arg(legate::Scalar(M));
 
   for (double arg : args) { task.add_scalar_arg(legate::Scalar(arg)); }
@@ -489,9 +489,9 @@ legate::LogicalStore NDArray::broadcast(NDArray rhs1, NDArray rhs2)
   return broadcast(out_shape, rhs1.store_);
 }
 
-/*static*/ legate::LibraryContext* NDArray::get_context()
+/*static*/ legate::Library NDArray::get_library()
 {
-  return CuNumericRuntime::get_runtime()->get_context();
+  return CuNumericRuntime::get_runtime()->get_library();
 }
 
 }  // namespace cunumeric
