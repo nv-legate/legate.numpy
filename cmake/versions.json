@@ -9,7 +9,7 @@
     },
     "legate_core_internal" : {
       "version": "23.07.00",
-      "git_url" : "https://gitlab-master.nvidia.com/legate/legate.core.internal.git",
+      "git_url" : "https://github.com/nv-legate/legate.core.internal.git",
       "git_shallow": false,
       "always_download": false,
       "git_tag" : "f1419c41eda8fd77f94a58e3493145a2589f665d"

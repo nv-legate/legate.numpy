@@ -1,4 +1,4 @@
-name: Build cunumeric on GH
+name: Build cunumeric.internal on GH
 
 concurrency:
   group: ci-gpu-on-${{ github.event_name }}-from-${{ github.ref_name }}
@@ -8,7 +8,7 @@ on:
   push:
     branches:
       - "pull-request/[0-9]+"
-      - "branch-*"
+      - "cpp-branch-*"
 
 jobs:
   build:
@@ -17,7 +17,7 @@ jobs:
       contents: read  # This is required for actions/checkout
 
     # Ref: https://docs.rapids.ai/resources/github-actions/#cpu-labels for `linux-amd64-cpu4`
-    runs-on: ${{ github.repository == 'nv-legate/cunumeric' && 'linux-amd64-cpu4' || 'ubuntu-latest' }}
+    runs-on: ${{ github.repository == 'nv-legate/cunumeric.internal' && 'linux-amd64-cpu4' || 'ubuntu-latest' }}
     container:
       options: -u root
       image: rapidsai/devcontainers:23.06-cpp-cuda11.8-mambaforge-ubuntu22.04
@@ -35,14 +35,15 @@ jobs:
         VAULT_S3_TTL: "28800s" # 8 hours
 
     steps:
-      - name: Checkout legate.core
+      - name: Checkout legate.core.internal
         uses: actions/checkout@v3
         with:
-          repository: nv-legate/legate.core
+          repository: nv-legate/legate.core.internal
           fetch-depth: 0
           path: legate
+          token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
 
-      - name: Checkout cunumeric (= this repo)
+      - name: Checkout cunumeric.internal (= this repo)
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
@@ -51,7 +52,7 @@ jobs:
       - name: Setup
         shell: bash -eo pipefail {0}
         run: |
-          export LEGATE_SHA=$(cat cunumeric/cmake/versions.json | jq -r '.packages.legate_core.git_tag')
+          export LEGATE_SHA=$(cat cunumeric/cmake/versions.json | jq -r '.packages.legate_core_internal.git_tag')
           echo "Checking out LEGATE_SHA: ${LEGATE_SHA}"
           git -C legate checkout $LEGATE_SHA
           
@@ -66,7 +67,7 @@ jobs:
           chown -R coder:coder /home/coder/;
           chown -R coder:coder /tmp/out;
 
-      - if: github.repository == 'nv-legate/cunumeric'
+      - if: github.repository == 'nv-legate/cunumeric.internal'
         name: Get AWS credentials for sccache bucket
         uses: aws-actions/configure-aws-credentials@v2
         with:
@@ -105,5 +106,5 @@ jobs:
       - name: Upload build output
         uses: actions/upload-artifact@v3
         with:
-          name: "cunumeric-${{ github.sha }}"
+          name: "cunumeric.internal-${{ github.sha }}"
           path: ./out/*
