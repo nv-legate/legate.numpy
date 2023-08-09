@@ -17,19 +17,13 @@
 #include "cunumeric/set/unique_reduce.h"
 #include "cunumeric/set/unique_reduce_template.inl"
 
+#include <thrust/system/omp/execution_policy.h>
+
 namespace cunumeric {
 
-/*static*/ void UniqueReduceTask::cpu_variant(TaskContext& context)
+/*static*/ void UniqueReduceTask::omp_variant(TaskContext& context)
 {
-  unique_reduce_template(context, thrust::host);
+  unique_reduce_template(context, thrust::omp::par);
 }
-
-namespace  // unnamed
-{
-static void __attribute__((constructor)) register_tasks(void)
-{
-  UniqueReduceTask::register_variants();
-}
-}  // namespace
 
 }  // namespace cunumeric
