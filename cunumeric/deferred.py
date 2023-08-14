@@ -2036,22 +2036,17 @@ class DeferredArray(NumPyThunk):
             assert src_array.shape == weight_array.shape or (
                 src_array.size == 1 and weight_array.size == 1
             )
-        else:
-            weight_array = self.runtime.create_wrapped_scalar(
-                np.array(1, dtype=np.int64),
-                np.dtype(np.int64),
-                shape=(),
-            )
 
         dst_array.fill(np.array(0, dst_array.dtype))
 
         task = self.context.create_auto_task(CuNumericOpCode.BINCOUNT)
         task.add_reduction(dst_array.base, ReductionOp.ADD)
         task.add_input(src_array.base)
-        task.add_input(weight_array.base)  # type: ignore
+        if weight_array is not None:
+            task.add_input(weight_array.base)  # type: ignore
 
         task.add_broadcast(dst_array.base)
-        if not weight_array.scalar:
+        if not (weight_array is None or weight_array.scalar):
             task.add_alignment(src_array.base, weight_array.base)  # type: ignore  # noqa
 
         task.execute()

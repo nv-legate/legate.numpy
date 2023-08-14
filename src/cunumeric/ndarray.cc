@@ -47,6 +47,8 @@ int32_t NDArray::dim() const { return store_.dim(); }
 
 const std::vector<size_t>& NDArray::shape() const { return store_.extents().data(); }
 
+size_t NDArray::size() const { return store_.volume(); }
+
 legate::Type NDArray::type() const { return store_.type(); }
 
 static std::vector<int64_t> compute_strides(const std::vector<size_t>& shape)
@@ -173,6 +175,34 @@ void NDArray::eye(int32_t k)
   task.add_input(store_, p_lhs);
   task.add_output(store_, p_lhs);
   task.add_scalar_arg(legate::Scalar(k));
+
+  runtime->submit(std::move(task));
+}
+
+void NDArray::bincount(NDArray rhs, std::optional<NDArray> weights /*=std::nullopt*/)
+{
+  assert(dim() == 1);
+
+  auto runtime = CuNumericRuntime::get_runtime();
+
+  if (weights.has_value()) { assert(rhs.shape() == weights.value().shape()); }
+
+  auto zero = legate::type_dispatch(type().code(), generate_zero_fn{});
+  fill(zero, false);
+
+  auto task                     = runtime->create_task(CuNumericOpCode::CUNUMERIC_BINCOUNT);
+  legate::ReductionOpKind redop = legate::ReductionOpKind::ADD;
+  auto p_lhs                    = task.find_or_declare_partition(store_);
+  auto p_rhs                    = task.find_or_declare_partition(rhs.store_);
+
+  task.add_reduction(store_, redop, p_lhs);
+  task.add_input(rhs.store_, p_rhs);
+  task.add_constraint(legate::broadcast(p_lhs, {0}));
+  if (weights.has_value()) {
+    auto p_weight = task.find_or_declare_partition(weights.value().store_);
+    task.add_input(weights.value().store_, p_weight);
+    task.add_constraint(legate::align(p_rhs, p_weight));
+  }
 
   runtime->submit(std::move(task));
 }

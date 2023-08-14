@@ -42,11 +42,14 @@ class NDArray {
  public:
   int32_t dim() const;
   const std::vector<size_t>& shape() const;
+  size_t size() const;
   legate::Type type() const;
 
  public:
   template <typename T, int32_t DIM>
   legate::AccessorRO<T, DIM> get_read_accessor();
+  template <typename T, int32_t DIM>
+  legate::AccessorWO<T, DIM> get_write_accessor();
 
  public:
   NDArray operator+(const NDArray& other) const;
@@ -78,6 +81,7 @@ class NDArray {
   std::vector<NDArray> nonzero();
   NDArray unique();
   void create_window(int32_t op_code, int64_t M, std::vector<double> args);
+  void bincount(NDArray rhs, std::optional<NDArray> weights = std::nullopt);
 
  public:
   NDArray as_type(const legate::Type& type);

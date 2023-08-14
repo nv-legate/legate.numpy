@@ -89,6 +89,22 @@ struct generate_zero_fn {
   }
 };
 
+struct generate_int_value_fn {
+  template <legate::Type::Code CODE, std::enable_if_t<legate::is_integral<CODE>::value>* = nullptr>
+  int operator()(NDArray& array)
+  {
+    using VAL = legate::legate_type_of<CODE>;
+    return static_cast<int>(array.get_read_accessor<VAL, 1>()[0]);
+  }
+
+  template <legate::Type::Code CODE, std::enable_if_t<!legate::is_integral<CODE>::value>* = nullptr>
+  int operator()(NDArray& array)
+  {
+    assert(false);
+    return -1;
+  }
+};
+
 }  // namespace
 
 NDArray zeros(std::vector<size_t> shape, std::optional<legate::Type> type)
@@ -117,6 +133,48 @@ NDArray eye(size_t n, std::optional<size_t> m, int32_t k, const legate::Type& ty
   auto out     = runtime->create_array({n, m.value_or(n)}, type);
   out.eye(k);
   return std::move(out);
+}
+
+NDArray bincount(NDArray x,
+                 std::optional<NDArray> weights /*=std::nullopt*/,
+                 uint32_t min_length /*=0*/)
+{
+  if (x.dim() != 1) throw std::invalid_argument("The input array must be 1-dimensional");
+  if (x.size() == 0) throw std::invalid_argument("The input array must be non-empty");
+
+  int32_t x_type_code = static_cast<int32_t>(x.type().code());
+  if (x_type_code < static_cast<int32_t>(legate::Type::Code::INT8) ||
+      x_type_code > static_cast<int32_t>(legate::Type::Code::UINT64))
+    throw std::invalid_argument("input array for bincount must be integer type");
+
+  auto max_val_arr = amax(x);
+  auto max_val =
+    legate::type_dispatch(max_val_arr.type().code(), generate_int_value_fn{}, max_val_arr);
+  auto min_val_arr = amin(x);
+  auto min_val =
+    legate::type_dispatch(min_val_arr.type().code(), generate_int_value_fn{}, min_val_arr);
+  if (min_val < 0) throw std::invalid_argument("the input array must have no negative elements");
+  if (min_length < max_val + 1) min_length = max_val + 1;
+
+  auto runtime = CuNumericRuntime::get_runtime();
+  if (!weights.has_value()) {
+    auto out = runtime->create_array({min_length}, legate::int64());
+    out.bincount(x);
+    return out;
+  } else {
+    auto weight_array = weights.value();
+    if (weight_array.shape() != x.shape())
+      throw std::invalid_argument("weights array must have the same shape as the input array");
+    auto weight_code = weight_array.type().code();
+    if (static_cast<int32_t>(weight_code) >= static_cast<int32_t>(legate::Type::Code::COMPLEX64))
+      throw std::invalid_argument("weights must be convertible to float64");
+    if (weight_code != legate::Type::Code::FLOAT64)
+      weight_array = weight_array.as_type(legate::float64());
+
+    auto out = runtime->create_array({min_length}, weight_array.type());
+    out.bincount(x, weight_array);
+    return out;
+  }
 }
 
 NDArray trilu(NDArray rhs, int32_t k, bool lower)
@@ -168,6 +226,10 @@ NDArray dot(NDArray rhs1, NDArray rhs2)
 }
 
 NDArray sum(NDArray input) { return unary_reduction(UnaryRedCode::SUM, std::move(input)); }
+
+NDArray amax(NDArray input) { return unary_reduction(UnaryRedCode::MAX, std::move(input)); }
+
+NDArray amin(NDArray input) { return unary_reduction(UnaryRedCode::MIN, std::move(input)); }
 
 NDArray unique(NDArray input) { return input.unique(); }
 

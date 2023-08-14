@@ -38,7 +38,7 @@ struct BincountImpl {
     if (rect.empty()) return;
 
     auto rhs = args.rhs.read_accessor<VAL, 1>(rect);
-    if (args.weights.dim() == 1) {
+    if (args.has_weights) {
       auto weights = args.weights.read_accessor<double, 1>(rect);
       auto lhs =
         args.lhs.reduce_accessor<SumReduction<double>, KIND != VariantKind::GPU, 1>(lhs_rect);
@@ -62,7 +62,17 @@ static void bincount_template(TaskContext& context)
 {
   auto inputs     = context.inputs();
   auto reductions = context.reductions();
-  BincountArgs args{reductions[0], inputs[0], inputs[1]};
+
+  BincountArgs args;
+  args.lhs = std::move(reductions[0]);
+  args.rhs = std::move(inputs[0]);
+  if (inputs.size() >= 2) {
+    args.has_weights = true;
+    args.weights     = std::move(inputs[1]);
+  } else {
+    args.has_weights = false;
+  }
+
   type_dispatch(args.rhs.code(), BincountImpl<KIND>{}, args);
 }
 

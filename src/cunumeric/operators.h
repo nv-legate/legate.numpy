@@ -47,6 +47,10 @@ NDArray full(std::vector<size_t> shape, const Scalar& value);
 
 NDArray sum(NDArray input);
 
+NDArray amax(NDArray input);
+
+NDArray amin(NDArray input);
+
 NDArray unique(NDArray input);
 
 NDArray arange(std::optional<double> start = 0,
@@ -78,5 +82,7 @@ NDArray hamming(int64_t M);
 NDArray hanning(int64_t M);
 
 NDArray kaiser(int64_t M, double beta);
+
+NDArray bincount(NDArray x, std::optional<NDArray> weights = std::nullopt, uint32_t min_length = 0);
 
 }  // namespace cunumeric

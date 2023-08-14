@@ -23,4 +23,11 @@ legate::AccessorRO<T, DIM> NDArray::get_read_accessor()
   return mapped.read_accessor<T, DIM>();
 }
 
+template <typename T, int32_t DIM>
+legate::AccessorWO<T, DIM> NDArray::get_write_accessor()
+{
+  auto mapped = store_.get_physical_store();
+  return mapped.write_accessor<T, DIM>();
+}
+
 }  // namespace cunumeric

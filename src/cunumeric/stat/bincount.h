@@ -24,6 +24,7 @@ struct BincountArgs {
   legate::Store lhs;
   legate::Store rhs;
   legate::Store weights;
+  bool has_weights;
 };
 
 class BincountTask : public CuNumericTask<BincountTask> {
