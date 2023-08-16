@@ -102,7 +102,7 @@ struct SearchSortedImplBody<VariantKind::GPU, CODE, DIM> {
   }
 };
 
-/*static*/ void SearchSortedTask::gpu_variant(TaskContext& context)
+/*static*/ void SearchSortedTask::gpu_variant(TaskContext context)
 {
   searchsorted_template<VariantKind::GPU>(context);
 }

@@ -53,7 +53,7 @@ struct WhereImplBody<VariantKind::OMP, CODE, DIM> {
   }
 };
 
-/*static*/ void WhereTask::omp_variant(TaskContext& context)
+/*static*/ void WhereTask::omp_variant(TaskContext context)
 {
   where_template<VariantKind::OMP>(context);
 }

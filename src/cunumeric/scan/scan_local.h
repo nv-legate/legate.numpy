@@ -22,9 +22,9 @@
 namespace cunumeric {
 
 struct ScanLocalArgs {
-  const legate::Store& out;
-  const legate::Store& in;
-  legate::Store& sum_vals;
+  legate::Store out;
+  legate::Store in;
+  legate::Store sum_vals;
   ScanCode op_code;
   bool nan_to_identity;
 };
@@ -34,12 +34,12 @@ class ScanLocalTask : public CuNumericTask<ScanLocalTask> {
   static const int TASK_ID = CUNUMERIC_SCAN_LOCAL;
 
  public:
-  static void cpu_variant(legate::TaskContext& context);
+  static void cpu_variant(legate::TaskContext context);
 #ifdef LEGATE_USE_OPENMP
-  static void omp_variant(legate::TaskContext& context);
+  static void omp_variant(legate::TaskContext context);
 #endif
 #ifdef LEGATE_USE_CUDA
-  static void gpu_variant(legate::TaskContext& context);
+  static void gpu_variant(legate::TaskContext context);
 #endif
 };
 

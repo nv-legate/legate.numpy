@@ -39,7 +39,7 @@ struct TileImplBody<VariantKind::OMP, VAL, OUT_DIM, IN_DIM> {
   }
 };
 
-/*static*/ void TileTask::omp_variant(TaskContext& context)
+/*static*/ void TileTask::omp_variant(TaskContext context)
 {
   tile_template<VariantKind::OMP>(context);
 }

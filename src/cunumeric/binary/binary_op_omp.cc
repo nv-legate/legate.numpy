@@ -53,7 +53,7 @@ struct BinaryOpImplBody<VariantKind::OMP, OP_CODE, CODE, DIM> {
   }
 };
 
-/*static*/ void BinaryOpTask::omp_variant(TaskContext& context)
+/*static*/ void BinaryOpTask::omp_variant(TaskContext context)
 {
   binary_op_template<VariantKind::OMP>(context);
 }

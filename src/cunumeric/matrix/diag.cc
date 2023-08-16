@@ -68,7 +68,7 @@ struct DiagImplBody<VariantKind::CPU, CODE, 2, false> {
   }
 };
 
-/*static*/ void DiagTask::cpu_variant(TaskContext& context)
+/*static*/ void DiagTask::cpu_variant(TaskContext context)
 {
   diag_template<VariantKind::CPU>(context);
 }

@@ -175,7 +175,7 @@ struct MultiOutUnaryOpImplBody<VariantKind::GPU, OP_CODE, CODE, DIM> {
   }
 };
 
-/*static*/ void UnaryOpTask::gpu_variant(TaskContext& context)
+/*static*/ void UnaryOpTask::gpu_variant(TaskContext context)
 {
   unary_op_template<VariantKind::GPU>(context);
 }

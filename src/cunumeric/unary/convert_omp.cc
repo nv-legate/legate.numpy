@@ -50,7 +50,7 @@ struct ConvertImplBody<VariantKind::OMP, NAN_OP, DST_TYPE, SRC_TYPE, DIM> {
   }
 };
 
-/*static*/ void ConvertTask::omp_variant(TaskContext& context)
+/*static*/ void ConvertTask::omp_variant(TaskContext context)
 {
   convert_template<VariantKind::OMP>(context);
 }

@@ -78,7 +78,7 @@ struct BinaryRedImplBody<VariantKind::GPU, OP_CODE, CODE, DIM> {
   }
 };
 
-/*static*/ void BinaryRedTask::gpu_variant(TaskContext& context)
+/*static*/ void BinaryRedTask::gpu_variant(TaskContext context)
 {
   binary_red_template<VariantKind::GPU>(context);
 }

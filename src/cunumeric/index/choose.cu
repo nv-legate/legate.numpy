@@ -78,7 +78,7 @@ struct ChooseImplBody<VariantKind::GPU, CODE, DIM> {
   }
 };
 
-/*static*/ void ChooseTask::gpu_variant(TaskContext& context)
+/*static*/ void ChooseTask::gpu_variant(TaskContext context)
 {
   choose_template<VariantKind::GPU>(context);
 }

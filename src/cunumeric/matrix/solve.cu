@@ -108,7 +108,7 @@ struct SolveImplBody<VariantKind::GPU, Type::Code::COMPLEX128> {
   }
 };
 
-/*static*/ void SolveTask::gpu_variant(TaskContext& context)
+/*static*/ void SolveTask::gpu_variant(TaskContext context)
 {
   solve_template<VariantKind::GPU>(context);
 }

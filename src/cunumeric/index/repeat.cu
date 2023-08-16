@@ -164,7 +164,7 @@ struct RepeatImplBody<VariantKind::GPU, CODE, DIM> {
   }
 };
 
-/*static*/ void RepeatTask::gpu_variant(TaskContext& context)
+/*static*/ void RepeatTask::gpu_variant(TaskContext context)
 {
   repeat_template<VariantKind::GPU>(context);
 }

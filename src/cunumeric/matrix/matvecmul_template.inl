@@ -96,8 +96,8 @@ struct MatVecMulImpl {
 template <VariantKind KIND>
 static void matvecmul_template(TaskContext& context)
 {
-  auto& reductions = context.reductions();
-  auto& inputs     = context.inputs();
+  auto reductions = context.reductions();
+  auto inputs     = context.inputs();
 
   MatVecMulArgs args{reductions[0], inputs[0], inputs[1]};
   // Note that we can't dispatch on the lhs's type,

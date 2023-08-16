@@ -69,7 +69,7 @@ struct DotImplBody<VariantKind::OMP, CODE> {
   }
 };
 
-/*static*/ void DotTask::omp_variant(TaskContext& context)
+/*static*/ void DotTask::omp_variant(TaskContext context)
 {
   dot_template<VariantKind::OMP>(context);
 }

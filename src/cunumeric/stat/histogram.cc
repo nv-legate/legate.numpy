@@ -62,7 +62,7 @@ struct HistogramImplBody<VariantKind::CPU, CODE> {
   }
 };
 
-/*static*/ void HistogramTask::cpu_variant(TaskContext& context)
+/*static*/ void HistogramTask::cpu_variant(TaskContext context)
 {
   histogram_template<VariantKind::CPU>(context);
 }

@@ -112,7 +112,7 @@ struct AdvancedIndexingImplBody<VariantKind::OMP, CODE, DIM, OUT_TYPE> {
   }
 };
 
-/*static*/ void AdvancedIndexingTask::omp_variant(TaskContext& context)
+/*static*/ void AdvancedIndexingTask::omp_variant(TaskContext context)
 {
   advanced_indexing_template<VariantKind::OMP>(context);
 }

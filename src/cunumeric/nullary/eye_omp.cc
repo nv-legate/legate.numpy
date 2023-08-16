@@ -32,7 +32,7 @@ struct EyeImplBody<VariantKind::OMP, VAL> {
   }
 };
 
-/*static*/ void EyeTask::omp_variant(TaskContext& context)
+/*static*/ void EyeTask::omp_variant(TaskContext context)
 {
   eye_template<VariantKind::OMP>(context);
 }

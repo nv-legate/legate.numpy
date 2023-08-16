@@ -29,7 +29,7 @@ struct ReadImplBody;
 template <VariantKind KIND>
 struct ReadImpl {
   template <Type::Code CODE>
-  void operator()(const Array& out_arr, const Array& in_arr) const
+  void operator()(legate::Store out_arr, legate::Store in_arr) const
   {
     using VAL = legate_type_of<CODE>;
     auto out  = out_arr.write_accessor<VAL, 1>();
@@ -41,9 +41,9 @@ struct ReadImpl {
 template <VariantKind KIND>
 static void read_template(TaskContext& context)
 {
-  auto& out = context.outputs()[0];
-  auto& in  = context.inputs()[0];
-  type_dispatch(in.code(), ReadImpl<KIND>{}, out, in);
+  auto out = context.output(0);
+  auto in  = context.input(0);
+  type_dispatch(in.type().code(), ReadImpl<KIND>{}, out, in);
 }
 
 }  // namespace cunumeric

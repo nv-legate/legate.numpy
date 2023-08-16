@@ -74,8 +74,8 @@ struct RandDispatch {
 template <VariantKind KIND>
 static void rand_template(TaskContext& context)
 {
-  auto& inputs  = context.inputs();
-  auto& outputs = context.outputs();
+  auto inputs   = context.inputs();
+  auto outputs  = context.outputs();
   auto& scalars = context.scalars();
 
   auto gen_code = scalars[0].value<RandGenCode>();

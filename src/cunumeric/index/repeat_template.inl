@@ -54,16 +54,16 @@ struct RepeatImpl {
 template <VariantKind KIND>
 static void repeat_template(TaskContext& context)
 {
-  bool scalar_repeats = context.scalars()[1].value<bool>();
-  auto axis           = context.scalars()[0].value<int32_t>();
+  bool scalar_repeats = context.scalar(1).value<bool>();
+  auto axis           = context.scalar(0).value<int32_t>();
   if (scalar_repeats) {
-    auto repeats = context.scalars()[2].value<int64_t>();
+    auto repeats = context.scalar(2).value<int64_t>();
     RepeatArgs args{
-      context.outputs()[0], context.inputs()[0], legate::Store(), repeats, axis, scalar_repeats};
+      context.output(0), context.input(0), legate::Store(), repeats, axis, scalar_repeats};
     double_dispatch(args.input.dim(), args.input.code(), RepeatImpl<KIND>{}, args);
   } else {
-    auto& repeats = context.inputs()[1];
-    RepeatArgs args{context.outputs()[0], context.inputs()[0], repeats, 0, axis, scalar_repeats};
+    auto repeats = context.input(1);
+    RepeatArgs args{context.output(0), context.input(0), repeats, 0, axis, scalar_repeats};
     double_dispatch(args.input.dim(), args.input.code(), RepeatImpl<KIND>{}, args);
   }
 }

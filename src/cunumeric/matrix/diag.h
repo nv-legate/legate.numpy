@@ -23,8 +23,8 @@ namespace cunumeric {
 struct DiagArgs {
   int naxes;
   bool extract;
-  const legate::Store& matrix;
-  const legate::Store& diag;
+  legate::Store matrix;
+  legate::Store diag;
 };
 
 class DiagTask : public CuNumericTask<DiagTask> {
@@ -32,12 +32,12 @@ class DiagTask : public CuNumericTask<DiagTask> {
   static const int TASK_ID = CUNUMERIC_DIAG;
 
  public:
-  static void cpu_variant(legate::TaskContext& context);
+  static void cpu_variant(legate::TaskContext context);
 #ifdef LEGATE_USE_OPENMP
-  static void omp_variant(legate::TaskContext& context);
+  static void omp_variant(legate::TaskContext context);
 #endif
 #ifdef LEGATE_USE_CUDA
-  static void gpu_variant(legate::TaskContext& context);
+  static void gpu_variant(legate::TaskContext context);
 #endif
 };
 

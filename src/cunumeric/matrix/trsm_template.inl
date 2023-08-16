@@ -40,7 +40,7 @@ struct support_trsm<Type::Code::COMPLEX128> : std::true_type {};
 template <VariantKind KIND>
 struct TrsmImpl {
   template <Type::Code CODE, std::enable_if_t<support_trsm<CODE>::value>* = nullptr>
-  void operator()(Array& lhs_array, Array& rhs_array) const
+  void operator()(legate::Store lhs_array, legate::Store rhs_array) const
   {
     using VAL = legate_type_of<CODE>;
 
@@ -63,7 +63,7 @@ struct TrsmImpl {
   }
 
   template <Type::Code CODE, std::enable_if_t<!support_trsm<CODE>::value>* = nullptr>
-  void operator()(Array& lhs_array, Array& rhs_array) const
+  void operator()(legate::Store lhs_array, legate::Store rhs_array) const
   {
     assert(false);
   }
@@ -72,10 +72,10 @@ struct TrsmImpl {
 template <VariantKind KIND>
 static void trsm_template(TaskContext& context)
 {
-  auto& lhs = context.outputs()[0];
-  auto& rhs = context.inputs()[0];
+  auto lhs = context.output(0);
+  auto rhs = context.input(0);
 
-  type_dispatch(lhs.code(), TrsmImpl<KIND>{}, lhs, rhs);
+  type_dispatch(lhs.type().code(), TrsmImpl<KIND>{}, lhs, rhs);
 }
 
 }  // namespace cunumeric

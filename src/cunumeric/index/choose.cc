@@ -55,7 +55,7 @@ struct ChooseImplBody<VariantKind::CPU, CODE, DIM> {
   }
 };
 
-/*static*/ void ChooseTask::cpu_variant(TaskContext& context)
+/*static*/ void ChooseTask::cpu_variant(TaskContext context)
 {
   choose_template<VariantKind::CPU>(context);
 }

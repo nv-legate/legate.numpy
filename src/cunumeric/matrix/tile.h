@@ -21,8 +21,8 @@
 namespace cunumeric {
 
 struct TileArgs {
-  const legate::Store& in;
-  const legate::Store& out;
+  legate::Store in;
+  legate::Store out;
 };
 
 class TileTask : public CuNumericTask<TileTask> {
@@ -30,12 +30,12 @@ class TileTask : public CuNumericTask<TileTask> {
   static const int TASK_ID = CUNUMERIC_TILE;
 
  public:
-  static void cpu_variant(legate::TaskContext& context);
+  static void cpu_variant(legate::TaskContext context);
 #ifdef LEGATE_USE_OPENMP
-  static void omp_variant(legate::TaskContext& context);
+  static void omp_variant(legate::TaskContext context);
 #endif
 #ifdef LEGATE_USE_CUDA
-  static void gpu_variant(legate::TaskContext& context);
+  static void gpu_variant(legate::TaskContext context);
 #endif
 };
 

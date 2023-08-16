@@ -39,7 +39,7 @@ struct RandImplBody<VariantKind::CPU, RNG, VAL, DIM> {
   }
 };
 
-/*static*/ void RandTask::cpu_variant(TaskContext& context)
+/*static*/ void RandTask::cpu_variant(TaskContext context)
 {
   rand_template<VariantKind::CPU>(context);
 }

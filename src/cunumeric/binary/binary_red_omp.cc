@@ -55,7 +55,7 @@ struct BinaryRedImplBody<VariantKind::OMP, OP_CODE, CODE, DIM> {
   }
 };
 
-/*static*/ void BinaryRedTask::omp_variant(TaskContext& context)
+/*static*/ void BinaryRedTask::omp_variant(TaskContext context)
 {
   binary_red_template<VariantKind::OMP>(context);
 }

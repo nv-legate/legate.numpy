@@ -22,8 +22,8 @@
 namespace cunumeric {
 
 struct ConvertArgs {
-  const legate::Store& out;
-  const legate::Store& in;
+  legate::Store out;
+  legate::Store in;
   ConvertCode nan_op;
 };
 
@@ -32,12 +32,12 @@ class ConvertTask : public CuNumericTask<ConvertTask> {
   static const int TASK_ID = CUNUMERIC_CONVERT;
 
  public:
-  static void cpu_variant(legate::TaskContext& context);
+  static void cpu_variant(legate::TaskContext context);
 #ifdef LEGATE_USE_OPENMP
-  static void omp_variant(legate::TaskContext& context);
+  static void omp_variant(legate::TaskContext context);
 #endif
 #ifdef LEGATE_USE_CUDA
-  static void gpu_variant(legate::TaskContext& context);
+  static void gpu_variant(legate::TaskContext context);
 #endif
 };
 

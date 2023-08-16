@@ -31,7 +31,7 @@ struct EyeImplBody<VariantKind::CPU, VAL> {
   }
 };
 
-/*static*/ void EyeTask::cpu_variant(TaskContext& context)
+/*static*/ void EyeTask::cpu_variant(TaskContext context)
 {
   eye_template<VariantKind::CPU>(context);
 }

@@ -69,7 +69,7 @@ struct PotrfImplBody<VariantKind::OMP, Type::Code::COMPLEX128> {
   }
 };
 
-/*static*/ void PotrfTask::omp_variant(TaskContext& context)
+/*static*/ void PotrfTask::omp_variant(TaskContext context)
 {
   openblas_set_num_threads(omp_get_max_threads());
   potrf_template<VariantKind::OMP>(context);

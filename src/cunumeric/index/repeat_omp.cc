@@ -114,7 +114,7 @@ struct RepeatImplBody<VariantKind::OMP, CODE, DIM> {
   }
 };
 
-/*static*/ void RepeatTask::omp_variant(TaskContext& context)
+/*static*/ void RepeatTask::omp_variant(TaskContext context)
 {
   repeat_template<VariantKind::OMP>(context);
 }

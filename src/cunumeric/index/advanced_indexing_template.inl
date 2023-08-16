@@ -68,10 +68,9 @@ template <VariantKind KIND>
 static void advanced_indexing_template(TaskContext& context)
 {
   // is_set flag is used to fill Point<N> field for in-place assignment operation
-  bool is_set     = context.scalars()[0].value<bool>();
-  int64_t key_dim = context.scalars()[1].value<int64_t>();
-  AdvancedIndexingArgs args{
-    context.outputs()[0], context.inputs()[0], context.inputs()[1], is_set, key_dim};
+  bool is_set     = context.scalar(0).value<bool>();
+  int64_t key_dim = context.scalar(1).value<int64_t>();
+  AdvancedIndexingArgs args{context.output(0), context.input(0), context.input(1), is_set, key_dim};
   double_dispatch(
     args.input_array.dim(), args.input_array.code(), AdvancedIndexingImpl<KIND>{}, args);
 }

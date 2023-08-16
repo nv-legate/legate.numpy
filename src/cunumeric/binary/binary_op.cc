@@ -51,7 +51,7 @@ struct BinaryOpImplBody<VariantKind::CPU, OP_CODE, CODE, DIM> {
   }
 };
 
-/*static*/ void BinaryOpTask::cpu_variant(TaskContext& context)
+/*static*/ void BinaryOpTask::cpu_variant(TaskContext context)
 {
   binary_op_template<VariantKind::CPU>(context);
 }

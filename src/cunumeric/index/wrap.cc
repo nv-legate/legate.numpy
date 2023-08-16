@@ -55,7 +55,7 @@ struct WrapImplBody<VariantKind::CPU, DIM> {
   }
 };
 
-/*static*/ void WrapTask::cpu_variant(TaskContext& context)
+/*static*/ void WrapTask::cpu_variant(TaskContext context)
 {
   wrap_template<VariantKind::CPU>(context);
 }

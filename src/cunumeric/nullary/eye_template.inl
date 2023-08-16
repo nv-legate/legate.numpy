@@ -69,7 +69,7 @@ struct EyeImpl {
 template <VariantKind KIND>
 static void eye_template(TaskContext& context)
 {
-  EyeArgs args{context.outputs()[0], context.scalars()[0].value<int32_t>()};
+  EyeArgs args{context.output(0), context.scalar(0).value<int32_t>()};
   type_dispatch(args.out.code(), EyeImpl<KIND>{}, args);
 }
 

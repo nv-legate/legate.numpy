@@ -203,9 +203,9 @@ struct ContractImpl {
 template <VariantKind KIND>
 static void contract_template(legate::TaskContext& context)
 {
-  auto& reductions = context.reductions();
-  auto& inputs     = context.inputs();
-  auto& scalars    = context.scalars();
+  auto reductions = context.reductions();
+  auto inputs     = context.inputs();
+  auto& scalars   = context.scalars();
 
   ContractArgs args{reductions[0],
                     inputs[0],

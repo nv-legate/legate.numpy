@@ -44,7 +44,7 @@ struct FlipImplBody<VariantKind::OMP, CODE, DIM> {
   }
 };
 
-/*static*/ void FlipTask::omp_variant(TaskContext& context)
+/*static*/ void FlipTask::omp_variant(TaskContext context)
 {
   flip_template<VariantKind::OMP>(context);
 }

@@ -68,7 +68,7 @@ struct ConvertImplBody<VariantKind::GPU, NAN_OP, DST_TYPE, SRC_TYPE, DIM> {
   }
 };
 
-/*static*/ void ConvertTask::gpu_variant(TaskContext& context)
+/*static*/ void ConvertTask::gpu_variant(TaskContext context)
 {
   convert_template<VariantKind::GPU>(context);
 }

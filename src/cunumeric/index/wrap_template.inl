@@ -79,16 +79,13 @@ struct WrapImpl {
 template <VariantKind KIND>
 static void wrap_template(TaskContext& context)
 {
-  auto shape        = context.scalars()[0].value<DomainPoint>();
+  auto shape        = context.scalar(0).value<DomainPoint>();
   int dim           = shape.dim;
-  bool has_input    = context.scalars()[1].value<bool>();
-  bool check_bounds = context.scalars()[2].value<bool>();
-  Array tmp_array   = Array();
-  WrapArgs args{context.outputs()[0],
-                shape,
-                has_input,
-                check_bounds,
-                has_input ? context.inputs()[0] : tmp_array};
+  bool has_input    = context.scalar(1).value<bool>();
+  bool check_bounds = context.scalar(2).value<bool>();
+  legate::Store tmp_array{};
+  WrapArgs args{
+    context.output(0), shape, has_input, check_bounds, has_input ? context.input(0) : tmp_array};
   dim_dispatch(dim, WrapImpl<KIND>{}, args);
 }
 

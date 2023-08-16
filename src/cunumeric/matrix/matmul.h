@@ -21,9 +21,9 @@
 namespace cunumeric {
 
 struct MatMulArgs {
-  const legate::Store& lhs;
-  const legate::Store& rhs1;
-  const legate::Store& rhs2;
+  legate::Store lhs;
+  legate::Store rhs1;
+  legate::Store rhs2;
 };
 
 class MatMulTask : public CuNumericTask<MatMulTask> {
@@ -31,12 +31,12 @@ class MatMulTask : public CuNumericTask<MatMulTask> {
   static const int TASK_ID = CUNUMERIC_MATMUL;
 
  public:
-  static void cpu_variant(legate::TaskContext& context);
+  static void cpu_variant(legate::TaskContext context);
 #ifdef LEGATE_USE_OPENMP
-  static void omp_variant(legate::TaskContext& context);
+  static void omp_variant(legate::TaskContext context);
 #endif
 #ifdef LEGATE_USE_CUDA
-  static void gpu_variant(legate::TaskContext& context);
+  static void gpu_variant(legate::TaskContext context);
 #endif
 };
 

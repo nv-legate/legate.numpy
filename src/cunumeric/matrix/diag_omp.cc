@@ -75,7 +75,7 @@ struct DiagImplBody<VariantKind::OMP, CODE, 2, false> {
   }
 };
 
-/*static*/ void DiagTask::omp_variant(TaskContext& context)
+/*static*/ void DiagTask::omp_variant(TaskContext context)
 {
   diag_template<VariantKind::OMP>(context);
 }

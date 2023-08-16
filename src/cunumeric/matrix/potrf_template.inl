@@ -40,7 +40,7 @@ struct support_potrf<Type::Code::COMPLEX128> : std::true_type {};
 template <VariantKind KIND>
 struct PotrfImpl {
   template <Type::Code CODE, std::enable_if_t<support_potrf<CODE>::value>* = nullptr>
-  void operator()(Array& array) const
+  void operator()(legate::Store array) const
   {
     using VAL = legate_type_of<CODE>;
 
@@ -59,7 +59,7 @@ struct PotrfImpl {
   }
 
   template <Type::Code CODE, std::enable_if_t<!support_potrf<CODE>::value>* = nullptr>
-  void operator()(Array& array) const
+  void operator()(legate::Store array) const
   {
     assert(false);
   }
@@ -68,8 +68,8 @@ struct PotrfImpl {
 template <VariantKind KIND>
 static void potrf_template(TaskContext& context)
 {
-  auto& array = context.outputs()[0];
-  type_dispatch(array.code(), PotrfImpl<KIND>{}, array);
+  auto array = context.output(0);
+  type_dispatch(array.type().code(), PotrfImpl<KIND>{}, array);
 }
 
 }  // namespace cunumeric

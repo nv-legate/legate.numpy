@@ -42,7 +42,7 @@ struct support_solve<Type::Code::COMPLEX128> : std::true_type {};
 template <VariantKind KIND>
 struct SolveImpl {
   template <Type::Code CODE, std::enable_if_t<support_solve<CODE>::value>* = nullptr>
-  void operator()(Array& a_array, Array& b_array) const
+  void operator()(legate::Store a_array, legate::Store b_array) const
   {
     using VAL = legate_type_of<CODE>;
 
@@ -96,7 +96,7 @@ struct SolveImpl {
   }
 
   template <Type::Code CODE, std::enable_if_t<!support_solve<CODE>::value>* = nullptr>
-  void operator()(Array& a_array, Array& b_array) const
+  void operator()(legate::Store a_array, legate::Store b_array) const
   {
     assert(false);
   }
@@ -105,9 +105,9 @@ struct SolveImpl {
 template <VariantKind KIND>
 static void solve_template(TaskContext& context)
 {
-  auto& a_array = context.outputs()[0];
-  auto& b_array = context.outputs()[1];
-  type_dispatch(a_array.code(), SolveImpl<KIND>{}, a_array, b_array);
+  auto a_array = context.output(0);
+  auto b_array = context.output(1);
+  type_dispatch(a_array.type().code(), SolveImpl<KIND>{}, a_array, b_array);
 }
 
 }  // namespace cunumeric

@@ -111,7 +111,7 @@ struct ScanLocalNanImplBody<VariantKind::OMP, OP_CODE, CODE, DIM> {
   }
 };
 
-/*static*/ void ScanLocalTask::omp_variant(TaskContext& context)
+/*static*/ void ScanLocalTask::omp_variant(TaskContext context)
 {
   scan_local_template<VariantKind::OMP>(context);
 }

@@ -21,10 +21,10 @@
 namespace cunumeric {
 
 struct ArangeArgs {
-  const legate::Store& out;
-  const legate::Store& start;
-  const legate::Store& stop;
-  const legate::Store& step;
+  legate::Store out;
+  legate::Store start;
+  legate::Store stop;
+  legate::Store step;
 };
 
 class ArangeTask : public CuNumericTask<ArangeTask> {
@@ -32,12 +32,12 @@ class ArangeTask : public CuNumericTask<ArangeTask> {
   static const int TASK_ID = CUNUMERIC_ARANGE;
 
  public:
-  static void cpu_variant(legate::TaskContext& context);
+  static void cpu_variant(legate::TaskContext context);
 #ifdef LEGATE_USE_OPENMP
-  static void omp_variant(legate::TaskContext& context);
+  static void omp_variant(legate::TaskContext context);
 #endif
 #ifdef LEGATE_USE_CUDA
-  static void gpu_variant(legate::TaskContext& context);
+  static void gpu_variant(legate::TaskContext context);
 #endif
 };
 

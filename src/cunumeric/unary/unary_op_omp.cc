@@ -106,7 +106,7 @@ struct MultiOutUnaryOpImplBody<VariantKind::OMP, OP_CODE, CODE, DIM> {
   }
 };
 
-/*static*/ void UnaryOpTask::omp_variant(TaskContext& context)
+/*static*/ void UnaryOpTask::omp_variant(TaskContext context)
 {
   unary_op_template<VariantKind::OMP>(context);
 }

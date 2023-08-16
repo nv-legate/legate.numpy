@@ -341,7 +341,7 @@ struct ContractImplBody<VariantKind::GPU, Type::Code::COMPLEX128> {
   }
 };
 
-/*static*/ void ContractTask::gpu_variant(TaskContext& context)
+/*static*/ void ContractTask::gpu_variant(TaskContext context)
 {
   contract_template<VariantKind::GPU>(context);
 }

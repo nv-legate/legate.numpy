@@ -108,7 +108,7 @@ struct DiagImplBody<VariantKind::GPU, CODE, 2, false> {
   }
 };
 
-/*static*/ void DiagTask::gpu_variant(TaskContext& context)
+/*static*/ void DiagTask::gpu_variant(TaskContext context)
 {
   diag_template<VariantKind::GPU>(context);
 }

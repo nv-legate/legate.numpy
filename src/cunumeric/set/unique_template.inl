@@ -30,8 +30,8 @@ struct UniqueImplBody;
 template <VariantKind KIND>
 struct UniqueImpl {
   template <Type::Code CODE, int32_t DIM>
-  void operator()(Array& output,
-                  Array& input,
+  void operator()(legate::Store output,
+                  legate::Store input,
                   std::vector<comm::Communicator>& comms,
                   const DomainPoint& point,
                   const Domain& launch_domain) const
@@ -51,11 +51,11 @@ struct UniqueImpl {
 template <VariantKind KIND>
 static void unique_template(TaskContext& context)
 {
-  auto& input  = context.inputs()[0];
-  auto& output = context.outputs()[0];
-  auto& comms  = context.communicators();
+  auto input  = context.input(0);
+  auto output = context.output(0);
+  auto comms  = context.communicators();
   double_dispatch(input.dim(),
-                  input.code(),
+                  input.type().code(),
                   UniqueImpl<KIND>{},
                   output,
                   input,

@@ -62,7 +62,7 @@ struct WrapImplBody<VariantKind::OMP, DIM> {
   }
 };
 
-/*static*/ void WrapTask::omp_variant(TaskContext& context)
+/*static*/ void WrapTask::omp_variant(TaskContext context)
 {
   wrap_template<VariantKind::OMP>(context);
 }

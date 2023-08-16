@@ -78,7 +78,7 @@ struct TileDispatch {
 template <VariantKind KIND>
 static void tile_template(TaskContext& context)
 {
-  TileArgs args{context.inputs()[0], context.outputs()[0]};
+  TileArgs args{context.input(0), context.output(0)};
   type_dispatch(args.in.code(), TileDispatch<KIND>{}, args);
 }
 

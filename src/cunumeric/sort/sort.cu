@@ -1188,23 +1188,24 @@ void rebalance_data(SegmentMergePiece<VAL>& merge_buffer,
 /////////////////////////////////////////////////////////////////////////////////////////////////
 
 template <Type::Code CODE>
-void sample_sort_nccl_nd(SortPiece<legate_type_of<CODE>> local_sorted,
-                         Array& output_array_unbound,  // only for unbound usage when !rebalance
-                         void* output_ptr,
-                         /* global domain information */
-                         size_t my_rank,  // global NCCL rank
-                         size_t num_ranks,
-                         size_t segment_size_g,
-                         /* domain information in sort dimension */
-                         size_t my_sort_rank,    // local rank id in sort dimension
-                         size_t num_sort_ranks,  // #ranks that share a sort dimension
-                         size_t* sort_ranks,     // rank ids that share a sort dimension with us
-                         size_t segment_size_l,  // (local) segment size
-                         /* other */
-                         bool rebalance,
-                         bool argsort,
-                         cudaStream_t stream,
-                         ncclComm_t* comm)
+void sample_sort_nccl_nd(
+  SortPiece<legate_type_of<CODE>> local_sorted,
+  legate::Store& output_array_unbound,  // only for unbound usage when !rebalance
+  void* output_ptr,
+  /* global domain information */
+  size_t my_rank,  // global NCCL rank
+  size_t num_ranks,
+  size_t segment_size_g,
+  /* domain information in sort dimension */
+  size_t my_sort_rank,    // local rank id in sort dimension
+  size_t num_sort_ranks,  // #ranks that share a sort dimension
+  size_t* sort_ranks,     // rank ids that share a sort dimension with us
+  size_t segment_size_l,  // (local) segment size
+  /* other */
+  bool rebalance,
+  bool argsort,
+  cudaStream_t stream,
+  ncclComm_t* comm)
 {
   using VAL = legate_type_of<CODE>;
 
@@ -1806,7 +1807,7 @@ struct SortImplBody<VariantKind::GPU, CODE, DIM> {
   }
 };
 
-/*static*/ void SortTask::gpu_variant(TaskContext& context)
+/*static*/ void SortTask::gpu_variant(TaskContext context)
 {
   sort_template<VariantKind::GPU>(context);
 }

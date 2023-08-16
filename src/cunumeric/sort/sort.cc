@@ -65,7 +65,7 @@ struct SortImplBody<VariantKind::CPU, CODE, DIM> {
   }
 };
 
-/*static*/ void SortTask::cpu_variant(TaskContext& context)
+/*static*/ void SortTask::cpu_variant(TaskContext context)
 {
   sort_template<VariantKind::CPU>(context);
 }

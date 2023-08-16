@@ -22,8 +22,8 @@
 namespace cunumeric {
 
 struct ScalarUnaryRedArgs {
-  const legate::Store& out;
-  const legate::Store& in;
+  legate::Store out;
+  legate::Store in;
   UnaryRedCode op_code;
   legate::DomainPoint shape;
   std::vector<legate::Store> args;
@@ -35,12 +35,12 @@ class ScalarUnaryRedTask : public CuNumericTask<ScalarUnaryRedTask> {
   static const int TASK_ID = CUNUMERIC_SCALAR_UNARY_RED;
 
  public:
-  static void cpu_variant(legate::TaskContext& context);
+  static void cpu_variant(legate::TaskContext context);
 #ifdef LEGATE_USE_OPENMP
-  static void omp_variant(legate::TaskContext& context);
+  static void omp_variant(legate::TaskContext context);
 #endif
 #ifdef LEGATE_USE_CUDA
-  static void gpu_variant(legate::TaskContext& context);
+  static void gpu_variant(legate::TaskContext context);
 #endif
 };
 

@@ -72,7 +72,7 @@ struct SearchSortedImplBody<VariantKind::OMP, CODE, DIM> {
   }
 };
 
-/*static*/ void SearchSortedTask::omp_variant(TaskContext& context)
+/*static*/ void SearchSortedTask::omp_variant(TaskContext context)
 {
   searchsorted_template<VariantKind::OMP>(context);
 }

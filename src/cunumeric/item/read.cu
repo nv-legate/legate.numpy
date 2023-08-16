@@ -37,7 +37,7 @@ struct ReadImplBody<VariantKind::GPU, VAL> {
   }
 };
 
-/*static*/ void ReadTask::gpu_variant(TaskContext& context)
+/*static*/ void ReadTask::gpu_variant(TaskContext context)
 {
   read_template<VariantKind::GPU>(context);
 }

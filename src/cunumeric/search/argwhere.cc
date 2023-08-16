@@ -25,7 +25,7 @@ template <Type::Code CODE, int DIM>
 struct ArgWhereImplBody<VariantKind::CPU, CODE, DIM> {
   using VAL = legate_type_of<CODE>;
 
-  void operator()(Array& out_array,
+  void operator()(legate::Store& out_array,
                   AccessorRO<VAL, DIM> input,
                   const Pitches<DIM - 1>& pitches,
                   const Rect<DIM>& rect,
@@ -53,7 +53,7 @@ struct ArgWhereImplBody<VariantKind::CPU, CODE, DIM> {
   }
 };
 
-/*static*/ void ArgWhereTask::cpu_variant(TaskContext& context)
+/*static*/ void ArgWhereTask::cpu_variant(TaskContext context)
 {
   argwhere_template<VariantKind::CPU>(context);
 }

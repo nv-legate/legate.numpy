@@ -25,7 +25,7 @@ namespace cunumeric {
 
 using namespace legate;
 
-/*static*/ void MatVecMulTask::omp_variant(TaskContext& context)
+/*static*/ void MatVecMulTask::omp_variant(TaskContext context)
 {
   openblas_set_num_threads(omp_get_max_threads());
   matvecmul_template<VariantKind::OMP>(context);

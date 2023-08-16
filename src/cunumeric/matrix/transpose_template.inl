@@ -53,12 +53,12 @@ struct TransposeImpl {
 template <VariantKind KIND>
 static void transpose_template(TaskContext& context)
 {
-  auto& output = context.outputs()[0];
-  auto& input  = context.inputs()[0];
-  auto logical = context.scalars()[0].value<bool>();
+  auto output  = context.output(0);
+  auto input   = context.input(0);
+  auto logical = context.scalar(0).value<bool>();
 
   TransposeArgs args{output, input, logical};
-  type_dispatch(input.code(), TransposeImpl<KIND>{}, args);
+  type_dispatch(input.type().code(), TransposeImpl<KIND>{}, args);
 }
 
 }  // namespace cunumeric

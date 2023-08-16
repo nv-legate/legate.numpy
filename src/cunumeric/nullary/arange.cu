@@ -47,7 +47,7 @@ struct ArangeImplBody<VariantKind::GPU, VAL> {
   }
 };
 
-/*static*/ void ArangeTask::gpu_variant(TaskContext& context)
+/*static*/ void ArangeTask::gpu_variant(TaskContext context)
 {
   arange_template<VariantKind::GPU>(context);
 }

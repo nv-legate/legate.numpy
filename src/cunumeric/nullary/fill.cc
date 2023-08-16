@@ -43,7 +43,7 @@ struct FillImplBody<VariantKind::CPU, VAL, DIM> {
   }
 };
 
-/*static*/ void FillTask::cpu_variant(TaskContext& context)
+/*static*/ void FillTask::cpu_variant(TaskContext context)
 {
   fill_template<VariantKind::CPU>(context);
 }

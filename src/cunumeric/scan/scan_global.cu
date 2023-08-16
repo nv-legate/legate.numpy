@@ -81,7 +81,7 @@ struct ScanGlobalImplBody<VariantKind::GPU, OP_CODE, CODE, DIM> {
   }
 };
 
-/*static*/ void ScanGlobalTask::gpu_variant(TaskContext& context)
+/*static*/ void ScanGlobalTask::gpu_variant(TaskContext context)
 {
   scan_global_template<VariantKind::GPU>(context);
 }

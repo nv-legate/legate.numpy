@@ -21,8 +21,8 @@
 namespace cunumeric {
 
 struct FillArgs {
-  const legate::Store& out;
-  const legate::Store& fill_value;
+  legate::Store out;
+  legate::Store fill_value;
   bool is_argval;
 };
 
@@ -31,12 +31,12 @@ class FillTask : public CuNumericTask<FillTask> {
   static const int TASK_ID = CUNUMERIC_FILL;
 
  public:
-  static void cpu_variant(legate::TaskContext& context);
+  static void cpu_variant(legate::TaskContext context);
 #ifdef LEGATE_USE_OPENMP
-  static void omp_variant(legate::TaskContext& context);
+  static void omp_variant(legate::TaskContext context);
 #endif
 #ifdef LEGATE_USE_CUDA
-  static void gpu_variant(legate::TaskContext& context);
+  static void gpu_variant(legate::TaskContext context);
 #endif
 };
 

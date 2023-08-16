@@ -61,7 +61,7 @@ struct FillImplBody<VariantKind::GPU, VAL, DIM> {
   }
 };
 
-/*static*/ void FillTask::gpu_variant(TaskContext& context)
+/*static*/ void FillTask::gpu_variant(TaskContext context)
 {
   fill_template<VariantKind::GPU>(context);
 }

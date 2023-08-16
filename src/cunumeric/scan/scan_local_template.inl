@@ -96,11 +96,11 @@ struct ScanLocalDispatch {
 template <VariantKind KIND>
 static void scan_local_template(TaskContext& context)
 {
-  ScanLocalArgs args{context.outputs()[0],
-                     context.inputs()[0],
-                     context.outputs()[1],
-                     context.scalars()[0].value<ScanCode>(),
-                     context.scalars()[1].value<bool>()};
+  ScanLocalArgs args{context.output(0),
+                     context.input(0),
+                     context.output(1),
+                     context.scalar(0).value<ScanCode>(),
+                     context.scalar(1).value<bool>()};
   op_dispatch(args.op_code, args.nan_to_identity, ScanLocalDispatch<KIND>{}, args);
 }
 

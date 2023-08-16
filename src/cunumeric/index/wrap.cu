@@ -152,7 +152,7 @@ struct WrapImplBody<VariantKind::GPU, DIM> {
   }
 };
 
-/*static*/ void WrapTask::gpu_variant(TaskContext& context)
+/*static*/ void WrapTask::gpu_variant(TaskContext context)
 {
   wrap_template<VariantKind::GPU>(context);
 }

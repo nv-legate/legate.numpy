@@ -52,7 +52,7 @@ struct ArgWhereImpl {
 template <VariantKind KIND>
 static void argwhere_template(TaskContext& context)
 {
-  ArgWhereArgs args{context.outputs()[0], context.inputs()[0]};
+  ArgWhereArgs args{context.output(0), context.input(0)};
   double_dispatch(args.in.dim(), args.in.code(), ArgWhereImpl<KIND>{}, args);
 }
 

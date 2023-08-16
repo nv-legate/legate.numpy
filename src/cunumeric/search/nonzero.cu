@@ -80,7 +80,7 @@ struct NonzeroImplBody<VariantKind::GPU, CODE, DIM> {
   }
 };
 
-/*static*/ void NonzeroTask::gpu_variant(TaskContext& context)
+/*static*/ void NonzeroTask::gpu_variant(TaskContext context)
 {
   nonzero_template<VariantKind::GPU>(context);
 }

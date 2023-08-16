@@ -27,7 +27,7 @@ template <Type::Code CODE, int32_t DIM>
 struct UniqueImplBody<VariantKind::OMP, CODE, DIM> {
   using VAL = legate_type_of<CODE>;
 
-  void operator()(Array& output,
+  void operator()(legate::Store& output,
                   const AccessorRO<VAL, DIM>& in,
                   const Pitches<DIM - 1>& pitches,
                   const Rect<DIM>& rect,
@@ -72,7 +72,7 @@ struct UniqueImplBody<VariantKind::OMP, CODE, DIM> {
   }
 };
 
-/*static*/ void UniqueTask::omp_variant(TaskContext& context)
+/*static*/ void UniqueTask::omp_variant(TaskContext context)
 {
   unique_template<VariantKind::OMP>(context);
 }

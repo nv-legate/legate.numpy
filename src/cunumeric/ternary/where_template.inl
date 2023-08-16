@@ -62,8 +62,8 @@ struct WhereImpl {
 template <VariantKind KIND>
 static void where_template(TaskContext& context)
 {
-  auto& inputs = context.inputs();
-  WhereArgs args{context.outputs()[0], inputs[0], inputs[1], inputs[2]};
+  auto inputs = context.inputs();
+  WhereArgs args{context.output(0), inputs[0], inputs[1], inputs[2]};
   auto dim = std::max(1, args.out.dim());
   double_dispatch(dim, args.out.code(), WhereImpl<KIND>{}, args);
 }

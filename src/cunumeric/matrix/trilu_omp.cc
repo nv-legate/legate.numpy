@@ -54,7 +54,7 @@ struct TriluImplBody<VariantKind::OMP, CODE, DIM, LOWER> {
   }
 };
 
-/*static*/ void TriluTask::omp_variant(TaskContext& context)
+/*static*/ void TriluTask::omp_variant(TaskContext context)
 {
   trilu_template<VariantKind::OMP>(context);
 }

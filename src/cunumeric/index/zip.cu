@@ -186,7 +186,7 @@ struct ZipImplBody<VariantKind::GPU, DIM, N> {
   }
 };
 
-/*static*/ void ZipTask::gpu_variant(TaskContext& context)
+/*static*/ void ZipTask::gpu_variant(TaskContext context)
 {
   zip_template<VariantKind::GPU>(context);
 }

@@ -19,7 +19,7 @@
 
 namespace cunumeric {
 
-/*static*/ void PutmaskTask::cpu_variant(TaskContext& context)
+/*static*/ void PutmaskTask::cpu_variant(TaskContext context)
 {
   putmask_template<VariantKind::CPU>(context);
 }

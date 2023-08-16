@@ -250,7 +250,7 @@ struct ConvolveImplBody<VariantKind::CPU, CODE, DIM> {
   }
 };
 
-/*static*/ void ConvolveTask::cpu_variant(TaskContext& context)
+/*static*/ void ConvolveTask::cpu_variant(TaskContext context)
 {
   convolve_template<VariantKind::CPU>(context);
 }

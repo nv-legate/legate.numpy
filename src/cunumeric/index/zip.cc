@@ -80,7 +80,7 @@ struct ZipImplBody<VariantKind::CPU, DIM, N> {
   }
 };
 
-/*static*/ void ZipTask::cpu_variant(TaskContext& context)
+/*static*/ void ZipTask::cpu_variant(TaskContext context)
 {
   zip_template<VariantKind::CPU>(context);
 }

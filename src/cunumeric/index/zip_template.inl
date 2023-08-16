@@ -89,11 +89,13 @@ static void zip_template(TaskContext& context)
   // key_dim = 3
   // start_index = 1
 
-  int64_t N           = context.scalars()[0].value<int64_t>();
-  int64_t key_dim     = context.scalars()[1].value<int64_t>();
-  int64_t start_index = context.scalars()[2].value<int64_t>();
-  auto shape          = context.scalars()[3].value<DomainPoint>();
-  ZipArgs args{context.outputs()[0], context.inputs(), N, key_dim, start_index, shape};
+  int64_t N           = context.scalar(0).value<int64_t>();
+  int64_t key_dim     = context.scalar(1).value<int64_t>();
+  int64_t start_index = context.scalar(2).value<int64_t>();
+  auto shape          = context.scalar(3).value<DomainPoint>();
+  std::vector<legate::Store> inputs;
+  for (auto& input : context.inputs()) { inputs.emplace_back(input); }
+  ZipArgs args{context.output(0), std::move(inputs), N, key_dim, start_index, shape};
   int dim = args.inputs[0].dim();
   // if scalar passed as an input, convert it to the array size 1
   if (dim == 0) { dim = 1; }

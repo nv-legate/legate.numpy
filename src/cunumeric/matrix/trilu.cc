@@ -52,7 +52,7 @@ struct TriluImplBody<VariantKind::CPU, CODE, DIM, LOWER> {
   }
 };
 
-/*static*/ void TriluTask::cpu_variant(TaskContext& context)
+/*static*/ void TriluTask::cpu_variant(TaskContext context)
 {
   trilu_template<VariantKind::CPU>(context);
 }

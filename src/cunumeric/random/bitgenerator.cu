@@ -63,7 +63,7 @@ std::map<legate::Processor, std::unique_ptr<generator_map<VariantKind::GPU>>>
 template <>
 std::mutex BitGeneratorImplBody<VariantKind::GPU>::lock_generators = {};
 
-/*static*/ void BitGeneratorTask::gpu_variant(legate::TaskContext& context)
+/*static*/ void BitGeneratorTask::gpu_variant(legate::TaskContext context)
 {
   bitgenerator_template<VariantKind::GPU>(context);
 }

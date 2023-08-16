@@ -321,7 +321,7 @@ struct UnaryRedImplBody<VariantKind::GPU, OP_CODE, CODE, DIM> {
   }
 };
 
-/*static*/ void UnaryRedTask::gpu_variant(TaskContext& context)
+/*static*/ void UnaryRedTask::gpu_variant(TaskContext context)
 {
   unary_red_template<VariantKind::GPU>(context);
 }

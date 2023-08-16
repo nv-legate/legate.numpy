@@ -72,10 +72,10 @@ static void trilu_template(TaskContext& context)
   auto& scalars = context.scalars();
   auto lower    = scalars[0].value<bool>();
   auto k        = scalars[1].value<int32_t>();
-  auto& input   = context.inputs()[0];
-  auto& output  = context.outputs()[0];
+  auto input    = context.input(0);
+  auto output   = context.output(0);
   TriluArgs args{lower, k, output, input};
-  double_dispatch(args.output.dim(), args.output.code(), TriluImpl<KIND>{}, args);
+  double_dispatch(args.output.dim(), args.output.type().code(), TriluImpl<KIND>{}, args);
 }
 
 }  // namespace cunumeric

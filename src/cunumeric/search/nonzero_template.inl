@@ -52,7 +52,9 @@ struct NonzeroImpl {
 template <VariantKind KIND>
 static void nonzero_template(TaskContext& context)
 {
-  NonzeroArgs args{context.inputs()[0], context.outputs()};
+  std::vector<legate::Store> outputs;
+  for (auto& output : context.outputs()) { outputs.emplace_back(output); }
+  NonzeroArgs args{context.input(0), std::move(outputs)};
   double_dispatch(args.input.dim(), args.input.code(), NonzeroImpl<KIND>{}, args);
 }
 

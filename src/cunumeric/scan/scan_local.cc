@@ -109,7 +109,7 @@ struct ScanLocalNanImplBody<VariantKind::CPU, OP_CODE, CODE, DIM> {
   }
 };
 
-/*static*/ void ScanLocalTask::cpu_variant(TaskContext& context)
+/*static*/ void ScanLocalTask::cpu_variant(TaskContext context)
 {
   scan_local_template<VariantKind::CPU>(context);
 }

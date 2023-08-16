@@ -21,8 +21,8 @@
 namespace cunumeric {
 
 struct ChooseArgs {
-  const legate::Store& out;
-  const std::vector<legate::Store>& inputs;
+  legate::Store out;
+  std::vector<legate::Store> inputs;
 };
 
 class ChooseTask : public CuNumericTask<ChooseTask> {
@@ -30,12 +30,12 @@ class ChooseTask : public CuNumericTask<ChooseTask> {
   static const int TASK_ID = CUNUMERIC_CHOOSE;
 
  public:
-  static void cpu_variant(legate::TaskContext& context);
+  static void cpu_variant(legate::TaskContext context);
 #ifdef LEGATE_USE_OPENMP
-  static void omp_variant(legate::TaskContext& context);
+  static void omp_variant(legate::TaskContext context);
 #endif
 #ifdef LEGATE_USE_CUDA
-  static void gpu_variant(legate::TaskContext& context);
+  static void gpu_variant(legate::TaskContext context);
 #endif
 };
 

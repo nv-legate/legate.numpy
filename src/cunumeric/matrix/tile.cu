@@ -55,7 +55,7 @@ struct TileImplBody<VariantKind::GPU, VAL, OUT_DIM, IN_DIM> {
   }
 };
 
-/*static*/ void TileTask::gpu_variant(TaskContext& context)
+/*static*/ void TileTask::gpu_variant(TaskContext context)
 {
   tile_template<VariantKind::GPU>(context);
 }

@@ -64,7 +64,7 @@ struct FlipImplBody<VariantKind::GPU, CODE, DIM> {
   }
 };
 
-/*static*/ void FlipTask::gpu_variant(TaskContext& context)
+/*static*/ void FlipTask::gpu_variant(TaskContext context)
 {
   flip_template<VariantKind::GPU>(context);
 }

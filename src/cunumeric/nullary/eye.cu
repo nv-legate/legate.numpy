@@ -42,7 +42,7 @@ struct EyeImplBody<VariantKind::GPU, VAL> {
   }
 };
 
-/*static*/ void EyeTask::gpu_variant(TaskContext& context)
+/*static*/ void EyeTask::gpu_variant(TaskContext context)
 {
   eye_template<VariantKind::GPU>(context);
 }

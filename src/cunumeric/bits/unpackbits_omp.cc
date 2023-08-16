@@ -39,7 +39,7 @@ struct UnpackbitsImplBody<VariantKind::OMP, DIM, BITORDER> {
   }
 };
 
-/*static*/ void UnpackbitsTask::omp_variant(TaskContext& context)
+/*static*/ void UnpackbitsTask::omp_variant(TaskContext context)
 {
   unpackbits_template<VariantKind::OMP>(context);
 }

@@ -50,7 +50,7 @@ struct RandImplBody<VariantKind::GPU, RNG, VAL, DIM> {
   }
 };
 
-/*static*/ void RandTask::gpu_variant(TaskContext& context)
+/*static*/ void RandTask::gpu_variant(TaskContext context)
 {
   rand_template<VariantKind::GPU>(context);
 }

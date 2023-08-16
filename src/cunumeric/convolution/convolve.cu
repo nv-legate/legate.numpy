@@ -1443,7 +1443,7 @@ struct ConvolveImplBody<VariantKind::GPU, CODE, DIM> {
   }
 };
 
-/*static*/ void ConvolveTask::gpu_variant(TaskContext& context)
+/*static*/ void ConvolveTask::gpu_variant(TaskContext context)
 {
   convolve_template<VariantKind::GPU>(context);
 }

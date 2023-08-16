@@ -19,7 +19,7 @@
 
 namespace cunumeric {
 
-/*static*/ void ScalarUnaryRedTask::cpu_variant(TaskContext& context)
+/*static*/ void ScalarUnaryRedTask::cpu_variant(TaskContext context)
 {
   scalar_unary_red_template<VariantKind::CPU>(context);
 }

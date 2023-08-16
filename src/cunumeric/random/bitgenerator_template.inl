@@ -50,8 +50,8 @@ struct BitGeneratorImpl {
 template <VariantKind KIND>
 static void bitgenerator_template(TaskContext& context)
 {
-  auto& inputs       = context.inputs();
-  auto& outputs      = context.outputs();
+  auto inputs        = context.inputs();
+  auto outputs       = context.outputs();
   auto& scalars      = context.scalars();
   auto bitgen_op     = scalars[0].value<BitGeneratorOperation>();
   auto generatorID   = scalars[1].value<int32_t>();

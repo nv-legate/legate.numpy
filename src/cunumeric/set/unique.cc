@@ -25,7 +25,7 @@ template <Type::Code CODE, int32_t DIM>
 struct UniqueImplBody<VariantKind::CPU, CODE, DIM> {
   using VAL = legate_type_of<CODE>;
 
-  void operator()(Array& output,
+  void operator()(legate::Store& output,
                   const AccessorRO<VAL, DIM>& in,
                   const Pitches<DIM - 1>& pitches,
                   const Rect<DIM>& rect,
@@ -47,7 +47,7 @@ struct UniqueImplBody<VariantKind::CPU, CODE, DIM> {
   }
 };
 
-/*static*/ void UniqueTask::cpu_variant(TaskContext& context)
+/*static*/ void UniqueTask::cpu_variant(TaskContext context)
 {
   unique_template<VariantKind::CPU>(context);
 }

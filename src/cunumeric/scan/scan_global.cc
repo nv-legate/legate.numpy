@@ -67,7 +67,7 @@ struct ScanGlobalImplBody<VariantKind::CPU, OP_CODE, CODE, DIM> {
   }
 };
 
-/*static*/ void ScanGlobalTask::cpu_variant(TaskContext& context)
+/*static*/ void ScanGlobalTask::cpu_variant(TaskContext context)
 {
   scan_global_template<VariantKind::CPU>(context);
 }

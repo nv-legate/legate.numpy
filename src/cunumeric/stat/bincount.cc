@@ -51,7 +51,7 @@ struct BincountImplBody<VariantKind::CPU, CODE> {
   }
 };
 
-/*static*/ void BincountTask::cpu_variant(TaskContext& context)
+/*static*/ void BincountTask::cpu_variant(TaskContext context)
 {
   bincount_template<VariantKind::CPU>(context);
 }

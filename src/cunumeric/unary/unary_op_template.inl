@@ -177,8 +177,8 @@ struct UnaryOpDispatch {
 template <VariantKind KIND>
 static void unary_op_template(TaskContext& context)
 {
-  auto& inputs  = context.inputs();
-  auto& outputs = context.outputs();
+  auto inputs   = context.inputs();
+  auto outputs  = context.outputs();
   auto& scalars = context.scalars();
 
   auto op_code = scalars[0].value<UnaryOpCode>();

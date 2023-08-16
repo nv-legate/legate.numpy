@@ -275,7 +275,7 @@ struct CURANDGenerator {
 
 struct generate_fn {
   template <int32_t DIM>
-  size_t operator()(CURANDGenerator& gen, legate::Store& output)
+  size_t operator()(CURANDGenerator& gen, legate::Store output)
   {
     auto rect       = output.shape<DIM>();
     uint64_t volume = rect.volume();
@@ -1364,7 +1364,7 @@ struct generate_distribution {
   generate_distribution(const generator_t& generator) : generator_(generator) {}
 
   template <int32_t DIM>
-  size_t operator()(CURANDGenerator& gen, legate::Store& output)
+  size_t operator()(CURANDGenerator& gen, legate::Store output)
   {
     auto rect       = output.shape<DIM>();
     uint64_t volume = rect.volume();
@@ -1383,7 +1383,7 @@ struct generate_distribution {
     return volume;
   }
 
-  static void generate(legate::Store& res,
+  static void generate(legate::Store res,
                        CURANDGenerator& cugen,
                        const std::vector<int64_t>& intparams,
                        const std::vector<float>& floatparams,

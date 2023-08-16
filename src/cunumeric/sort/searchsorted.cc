@@ -68,7 +68,7 @@ struct SearchSortedImplBody<VariantKind::CPU, CODE, DIM> {
   }
 };
 
-/*static*/ void SearchSortedTask::cpu_variant(TaskContext& context)
+/*static*/ void SearchSortedTask::cpu_variant(TaskContext context)
 {
   searchsorted_template<VariantKind::CPU>(context);
 }

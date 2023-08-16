@@ -34,7 +34,7 @@ struct ArangeImplBody<VariantKind::OMP, VAL> {
   }
 };
 
-/*static*/ void ArangeTask::omp_variant(TaskContext& context)
+/*static*/ void ArangeTask::omp_variant(TaskContext context)
 {
   arange_template<VariantKind::OMP>(context);
 }

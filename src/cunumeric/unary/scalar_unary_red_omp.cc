@@ -20,7 +20,7 @@
 
 namespace cunumeric {
 
-/*static*/ void ScalarUnaryRedTask::omp_variant(TaskContext& context)
+/*static*/ void ScalarUnaryRedTask::omp_variant(TaskContext context)
 {
   scalar_unary_red_template<VariantKind::OMP>(context);
 }

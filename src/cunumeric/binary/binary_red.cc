@@ -58,7 +58,7 @@ struct BinaryRedImplBody<VariantKind::CPU, OP_CODE, CODE, DIM> {
   }
 };
 
-/*static*/ void BinaryRedTask::cpu_variant(TaskContext& context)
+/*static*/ void BinaryRedTask::cpu_variant(TaskContext context)
 {
   binary_red_template<VariantKind::CPU>(context);
 }

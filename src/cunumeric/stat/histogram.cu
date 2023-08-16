@@ -69,7 +69,7 @@ struct HistogramImplBody<VariantKind::GPU, CODE> {
   }
 };
 
-/*static*/ void HistogramTask::gpu_variant(TaskContext& context)
+/*static*/ void HistogramTask::gpu_variant(TaskContext context)
 {
   histogram_template<VariantKind::GPU>(context);
 }

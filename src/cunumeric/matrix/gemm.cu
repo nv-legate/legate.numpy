@@ -112,7 +112,7 @@ struct GemmImplBody<VariantKind::GPU, Type::Code::COMPLEX128> {
   }
 };
 
-/*static*/ void GemmTask::gpu_variant(TaskContext& context)
+/*static*/ void GemmTask::gpu_variant(TaskContext context)
 {
   gemm_template<VariantKind::GPU>(context);
 }

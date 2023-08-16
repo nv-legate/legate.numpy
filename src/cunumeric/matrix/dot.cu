@@ -75,7 +75,7 @@ struct DotImplBody<VariantKind::GPU, CODE> {
   }
 };
 
-/*static*/ void DotTask::gpu_variant(TaskContext& context)
+/*static*/ void DotTask::gpu_variant(TaskContext context)
 {
   dot_template<VariantKind::GPU>(context);
 }

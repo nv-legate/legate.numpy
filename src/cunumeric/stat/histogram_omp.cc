@@ -113,7 +113,7 @@ struct HistogramImplBody<VariantKind::OMP, CODE> {
   }
 };
 
-/*static*/ void HistogramTask::omp_variant(TaskContext& context)
+/*static*/ void HistogramTask::omp_variant(TaskContext context)
 {
   histogram_template<VariantKind::OMP>(context);
 }

@@ -54,7 +54,7 @@ struct ChooseImplBody<VariantKind::OMP, CODE, DIM> {
   }
 };
 
-/*static*/ void ChooseTask::omp_variant(TaskContext& context)
+/*static*/ void ChooseTask::omp_variant(TaskContext context)
 {
   choose_template<VariantKind::OMP>(context);
 }

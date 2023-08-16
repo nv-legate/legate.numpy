@@ -52,7 +52,7 @@ struct PackbitsImplBody<VariantKind::OMP, CODE, DIM, BITORDER> {
   }
 };
 
-/*static*/ void PackbitsTask::omp_variant(TaskContext& context)
+/*static*/ void PackbitsTask::omp_variant(TaskContext context)
 {
   packbits_template<VariantKind::OMP>(context);
 }

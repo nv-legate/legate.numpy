@@ -72,8 +72,8 @@ struct DotImpl {
 template <VariantKind KIND>
 static void dot_template(TaskContext& context)
 {
-  auto& inputs = context.inputs();
-  DotArgs args{context.reductions()[0], inputs[0], inputs[1]};
+  auto inputs = context.inputs();
+  DotArgs args{context.reduction(0), inputs[0], inputs[1]};
   type_dispatch(args.rhs1.code(), DotImpl<KIND>{}, args);
 }
 

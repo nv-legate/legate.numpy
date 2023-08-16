@@ -30,7 +30,7 @@ struct WindowImplBody;
 template <VariantKind KIND>
 struct WindowImpl {
   template <WindowOpCode OP_CODE>
-  void operator()(legate::Store& output, int64_t M, double beta) const
+  void operator()(legate::Store output, int64_t M, double beta) const
   {
     auto rect = output.shape<1>();
 
@@ -53,7 +53,7 @@ struct WindowImpl {
 template <VariantKind KIND>
 static void window_template(TaskContext& context)
 {
-  auto& output  = context.outputs().front();
+  auto output   = context.outputs().front();
   auto& scalars = context.scalars();
   auto op_code  = scalars[0].value<WindowOpCode>();
   auto M        = scalars[1].value<int64_t>();

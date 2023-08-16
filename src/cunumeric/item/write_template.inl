@@ -29,7 +29,7 @@ struct WriteImplBody;
 template <VariantKind KIND>
 struct WriteImpl {
   template <Type::Code CODE>
-  void operator()(Array& out_arr, Array& in_arr) const
+  void operator()(legate::Store out_arr, legate::Store in_arr) const
   {
     using VAL = legate_type_of<CODE>;
     auto out  = out_arr.write_accessor<VAL, 1>();
@@ -41,9 +41,9 @@ struct WriteImpl {
 template <VariantKind KIND>
 static void write_template(TaskContext& context)
 {
-  auto& in  = context.inputs()[0];
-  auto& out = context.outputs()[0];
-  type_dispatch(out.code(), WriteImpl<KIND>{}, out, in);
+  auto in  = context.input(0);
+  auto out = context.output(0);
+  type_dispatch(out.type().code(), WriteImpl<KIND>{}, out, in);
 }
 
 }  // namespace cunumeric

@@ -78,7 +78,7 @@ struct PackbitsImplBody<VariantKind::GPU, CODE, DIM, BITORDER> {
   }
 };
 
-/*static*/ void PackbitsTask::gpu_variant(TaskContext& context)
+/*static*/ void PackbitsTask::gpu_variant(TaskContext context)
 {
   packbits_template<VariantKind::GPU>(context);
 }

@@ -21,9 +21,9 @@
 namespace cunumeric {
 
 struct PutmaskArgs {
-  const Array& input;
-  const Array& mask;
-  const Array& values;
+  legate::Store input;
+  legate::Store mask;
+  legate::Store values;
 };
 
 class PutmaskTask : public CuNumericTask<PutmaskTask> {
@@ -31,12 +31,12 @@ class PutmaskTask : public CuNumericTask<PutmaskTask> {
   static const int TASK_ID = CUNUMERIC_PUTMASK;
 
  public:
-  static void cpu_variant(legate::TaskContext& context);
+  static void cpu_variant(legate::TaskContext context);
 #ifdef LEGATE_USE_OPENMP
-  static void omp_variant(legate::TaskContext& context);
+  static void omp_variant(legate::TaskContext context);
 #endif
 #ifdef LEGATE_USE_CUDA
-  static void gpu_variant(legate::TaskContext& context);
+  static void gpu_variant(legate::TaskContext context);
 #endif
 };
 

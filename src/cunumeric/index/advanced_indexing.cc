@@ -92,7 +92,7 @@ struct AdvancedIndexingImplBody<VariantKind::CPU, CODE, DIM, OUT_TYPE> {
   }
 };
 
-/*static*/ void AdvancedIndexingTask::cpu_variant(TaskContext& context)
+/*static*/ void AdvancedIndexingTask::cpu_variant(TaskContext context)
 {
   advanced_indexing_template<VariantKind::CPU>(context);
 }

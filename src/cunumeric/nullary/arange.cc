@@ -33,7 +33,7 @@ struct ArangeImplBody<VariantKind::CPU, VAL> {
   }
 };
 
-/*static*/ void ArangeTask::cpu_variant(TaskContext& context)
+/*static*/ void ArangeTask::cpu_variant(TaskContext context)
 {
   arange_template<VariantKind::CPU>(context);
 }

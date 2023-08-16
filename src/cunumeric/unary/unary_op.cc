@@ -100,7 +100,7 @@ struct MultiOutUnaryOpImplBody<VariantKind::CPU, OP_CODE, CODE, DIM> {
   }
 };
 
-/*static*/ void UnaryOpTask::cpu_variant(TaskContext& context)
+/*static*/ void UnaryOpTask::cpu_variant(TaskContext context)
 {
   unary_op_template<VariantKind::CPU>(context);
 }

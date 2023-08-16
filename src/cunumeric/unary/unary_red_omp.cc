@@ -98,7 +98,7 @@ struct UnaryRedImplBody<VariantKind::OMP, OP_CODE, CODE, DIM> {
   }
 };
 
-/*static*/ void UnaryRedTask::omp_variant(TaskContext& context)
+/*static*/ void UnaryRedTask::omp_variant(TaskContext context)
 {
   unary_red_template<VariantKind::OMP>(context);
 }

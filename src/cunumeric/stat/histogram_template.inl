@@ -67,8 +67,8 @@ struct HistogramImpl {
 template <VariantKind KIND>
 static void histogram_template(TaskContext& context)
 {
-  auto& inputs     = context.inputs();
-  auto& reductions = context.reductions();
+  auto inputs     = context.inputs();
+  auto reductions = context.reductions();
   HistogramArgs args{reductions[0], inputs[0], inputs[1], inputs[2]};
   type_dispatch(args.src.code(), HistogramImpl<KIND>{}, args);
 }

@@ -24,7 +24,7 @@ using namespace legate;
 
 /*static*/ const char* SolveTask::ERROR_MESSAGE = "Singular matrix";
 
-/*static*/ void SolveTask::cpu_variant(TaskContext& context)
+/*static*/ void SolveTask::cpu_variant(TaskContext context)
 {
 #ifdef LEGATE_USE_OPENMP
   openblas_set_num_threads(1);  // make sure this isn't overzealous

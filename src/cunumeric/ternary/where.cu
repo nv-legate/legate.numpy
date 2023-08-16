@@ -71,7 +71,7 @@ struct WhereImplBody<VariantKind::GPU, CODE, DIM> {
   }
 };
 
-/*static*/ void WhereTask::gpu_variant(TaskContext& context)
+/*static*/ void WhereTask::gpu_variant(TaskContext context)
 {
   where_template<VariantKind::GPU>(context);
 }

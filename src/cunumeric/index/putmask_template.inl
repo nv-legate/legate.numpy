@@ -103,8 +103,8 @@ struct PutmaskImpl {
 template <VariantKind KIND>
 static void putmask_template(TaskContext& context)
 {
-  auto& inputs = context.inputs();
-  PutmaskArgs args{context.outputs()[0], inputs[1], inputs[2]};
+  auto inputs = context.inputs();
+  PutmaskArgs args{context.output(0), inputs[1], inputs[2]};
   int dim = std::max(1, args.input.dim());
   double_dispatch(dim, args.input.code(), PutmaskImpl<KIND>{}, args);
 }

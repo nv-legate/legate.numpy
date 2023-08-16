@@ -50,7 +50,7 @@ struct PackbitsImplBody<VariantKind::CPU, CODE, DIM, BITORDER> {
   }
 };
 
-/*static*/ void PackbitsTask::cpu_variant(TaskContext& context)
+/*static*/ void PackbitsTask::cpu_variant(TaskContext context)
 {
   packbits_template<VariantKind::CPU>(context);
 }

@@ -77,7 +77,7 @@ struct NonzeroImplBody<VariantKind::OMP, CODE, DIM> {
   }
 };
 
-/*static*/ void NonzeroTask::omp_variant(TaskContext& context)
+/*static*/ void NonzeroTask::omp_variant(TaskContext context)
 {
   nonzero_template<VariantKind::OMP>(context);
 }

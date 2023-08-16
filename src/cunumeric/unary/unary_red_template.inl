@@ -75,9 +75,9 @@ struct UnaryRedDispatch {
 template <VariantKind KIND>
 static void unary_red_template(TaskContext& context)
 {
-  auto& inputs     = context.inputs();
-  auto& reductions = context.reductions();
-  auto& scalars    = context.scalars();
+  auto inputs     = context.inputs();
+  auto reductions = context.reductions();
+  auto& scalars   = context.scalars();
 
   UnaryRedArgs args{
     reductions[0], inputs[0], scalars[0].value<int32_t>(), scalars[1].value<UnaryRedCode>()};

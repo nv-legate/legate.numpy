@@ -36,7 +36,7 @@ class FFTTask : public CuNumericTask<FFTTask> {
 
  public:
 #ifdef LEGATE_USE_CUDA
-  static void gpu_variant(legate::TaskContext& context);
+  static void gpu_variant(legate::TaskContext context);
 #endif
 };
 

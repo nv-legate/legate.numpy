@@ -67,14 +67,14 @@ static void convolve_template(TaskContext& context)
 {
   ConvolveArgs args;
 
-  auto& inputs  = context.inputs();
-  auto& outputs = context.outputs();
+  auto inputs  = context.inputs();
+  auto outputs = context.outputs();
 
   args.out    = std::move(outputs[0]);
   args.filter = std::move(inputs[0]);
   for (uint32_t idx = 1; idx < inputs.size(); ++idx) args.inputs.push_back(std::move(inputs[idx]));
 
-  auto shape           = context.scalars()[0].value<DomainPoint>();
+  auto shape           = context.scalar(0).value<DomainPoint>();
   args.root_domain.dim = shape.dim;
   for (int32_t dim = 0; dim < shape.dim; ++dim) {
     args.root_domain.rect_data[dim]             = 0;

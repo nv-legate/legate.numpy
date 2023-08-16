@@ -360,7 +360,7 @@ struct FFTImplBody<VariantKind::GPU, FFT_TYPE, CODE_OUT, CODE_IN, DIM> {
   }
 };
 
-/*static*/ void FFTTask::gpu_variant(TaskContext& context)
+/*static*/ void FFTTask::gpu_variant(TaskContext context)
 {
   fft_template<VariantKind::GPU>(context);
 };

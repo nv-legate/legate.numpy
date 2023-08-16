@@ -71,7 +71,7 @@ static void scan_global_template(TaskContext& context)
 {
   auto task_index = context.get_task_index();
   ScanGlobalArgs args{
-    context.inputs()[1], context.outputs()[0], context.scalars()[0].value<ScanCode>(), task_index};
+    context.input(1), context.output(0), context.scalar(0).value<ScanCode>(), task_index};
   op_dispatch(args.op_code, ScanGlobalDispatch<KIND>{}, args);
 }
 

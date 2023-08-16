@@ -80,7 +80,7 @@ struct TrsmImplBody<VariantKind::GPU, Type::Code::COMPLEX128> {
   }
 };
 
-/*static*/ void TrsmTask::gpu_variant(TaskContext& context)
+/*static*/ void TrsmTask::gpu_variant(TaskContext context)
 {
   trsm_template<VariantKind::GPU>(context);
 }

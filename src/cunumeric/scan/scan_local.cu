@@ -128,7 +128,7 @@ struct ScanLocalNanImplBody<VariantKind::GPU, OP_CODE, CODE, DIM> {
   }
 };
 
-/*static*/ void ScanLocalTask::gpu_variant(TaskContext& context)
+/*static*/ void ScanLocalTask::gpu_variant(TaskContext context)
 {
   scan_local_template<VariantKind::GPU>(context);
 }

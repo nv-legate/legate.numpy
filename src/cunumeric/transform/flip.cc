@@ -41,7 +41,7 @@ struct FlipImplBody<VariantKind::CPU, CODE, DIM> {
   }
 };
 
-/*static*/ void FlipTask::cpu_variant(TaskContext& context)
+/*static*/ void FlipTask::cpu_variant(TaskContext context)
 {
   flip_template<VariantKind::CPU>(context);
 }

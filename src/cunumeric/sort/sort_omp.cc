@@ -66,7 +66,7 @@ struct SortImplBody<VariantKind::OMP, CODE, DIM> {
   }
 };
 
-/*static*/ void SortTask::omp_variant(TaskContext& context)
+/*static*/ void SortTask::omp_variant(TaskContext context)
 {
   sort_template<VariantKind::OMP>(context);
 }

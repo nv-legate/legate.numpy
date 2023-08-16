@@ -70,7 +70,7 @@ struct TriluImplBody<VariantKind::GPU, CODE, DIM, LOWER> {
   }
 };
 
-/*static*/ void TriluTask::gpu_variant(TaskContext& context)
+/*static*/ void TriluTask::gpu_variant(TaskContext context)
 {
   trilu_template<VariantKind::GPU>(context);
 }

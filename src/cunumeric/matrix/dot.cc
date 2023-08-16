@@ -50,7 +50,7 @@ struct DotImplBody<VariantKind::CPU, CODE> {
   }
 };
 
-/*static*/ void DotTask::cpu_variant(TaskContext& context)
+/*static*/ void DotTask::cpu_variant(TaskContext context)
 {
   dot_template<VariantKind::CPU>(context);
 }

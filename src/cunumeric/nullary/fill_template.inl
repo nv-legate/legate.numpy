@@ -70,7 +70,7 @@ struct FillImpl {
 template <VariantKind KIND>
 static void fill_template(TaskContext& context)
 {
-  FillArgs args{context.outputs()[0], context.inputs()[0], context.scalars()[0].value<bool>()};
+  FillArgs args{context.output(0), context.input(0), context.scalar(0).value<bool>()};
   Type::Code code{args.out.code()};
   if (Type::Code::STRUCT == code) {
 #ifdef DEBUG_CUNUMERIC

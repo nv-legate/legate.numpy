@@ -21,9 +21,9 @@
 namespace cunumeric {
 
 struct RepeatArgs {
-  legate::Store& output;
-  const legate::Store& input;
-  const legate::Store& repeats_arr;
+  legate::Store output;
+  legate::Store input;
+  legate::Store repeats_arr;
   int64_t repeats;
   int32_t axis;
   const bool scalar_repeats;
@@ -34,12 +34,12 @@ class RepeatTask : public CuNumericTask<RepeatTask> {
   static const int TASK_ID = CUNUMERIC_REPEAT;
 
  public:
-  static void cpu_variant(legate::TaskContext& context);
+  static void cpu_variant(legate::TaskContext context);
 #ifdef LEGATE_USE_OPENMP
-  static void omp_variant(legate::TaskContext& context);
+  static void omp_variant(legate::TaskContext context);
 #endif
 #ifdef LEGATE_USE_CUDA
-  static void gpu_variant(legate::TaskContext& context);
+  static void gpu_variant(legate::TaskContext context);
 #endif
 };
 

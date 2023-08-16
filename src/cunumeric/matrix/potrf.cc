@@ -68,7 +68,7 @@ struct PotrfImplBody<VariantKind::CPU, Type::Code::COMPLEX128> {
   }
 };
 
-/*static*/ void PotrfTask::cpu_variant(TaskContext& context)
+/*static*/ void PotrfTask::cpu_variant(TaskContext context)
 {
 #ifdef LEGATE_USE_OPENMP
   openblas_set_num_threads(1);  // make sure this isn't overzealous

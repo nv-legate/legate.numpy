@@ -85,7 +85,7 @@ struct PotrfImplBody<VariantKind::GPU, Type::Code::COMPLEX128> {
   }
 };
 
-/*static*/ void PotrfTask::gpu_variant(TaskContext& context)
+/*static*/ void PotrfTask::gpu_variant(TaskContext context)
 {
   potrf_template<VariantKind::GPU>(context);
 }

@@ -51,8 +51,8 @@ struct FlipImpl {
 template <VariantKind KIND>
 static void flip_template(TaskContext& context)
 {
-  auto& inputs  = context.inputs();
-  auto& outputs = context.outputs();
+  auto inputs   = context.inputs();
+  auto outputs  = context.outputs();
   auto& scalars = context.scalars();
 
   FlipArgs args{inputs[0], outputs[0], scalars[0].values<int32_t>()};

@@ -37,7 +37,7 @@ struct WriteImplBody<VariantKind::GPU, VAL> {
   }
 };
 
-/*static*/ void WriteTask::gpu_variant(TaskContext& context)
+/*static*/ void WriteTask::gpu_variant(TaskContext context)
 {
   write_template<VariantKind::GPU>(context);
 }

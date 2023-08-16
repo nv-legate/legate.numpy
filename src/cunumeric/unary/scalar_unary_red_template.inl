@@ -142,7 +142,7 @@ struct ScalarUnaryRedDispatch {
 template <VariantKind KIND>
 static void scalar_unary_red_template(TaskContext& context)
 {
-  auto& inputs  = context.inputs();
+  auto inputs   = context.inputs();
   auto& scalars = context.scalars();
 
   std::vector<Store> extra_args;
@@ -155,8 +155,7 @@ static void scalar_unary_red_template(TaskContext& context)
     shape.dim = 1;
     shape[0]  = 1;
   }
-  ScalarUnaryRedArgs args{
-    context.reductions()[0], inputs[0], op_code, shape, std::move(extra_args)};
+  ScalarUnaryRedArgs args{context.reduction(0), inputs[0], op_code, shape, std::move(extra_args)};
   op_dispatch(args.op_code, ScalarUnaryRedDispatch<KIND>{}, args);
 }
 

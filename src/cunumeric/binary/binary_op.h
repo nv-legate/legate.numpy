@@ -22,9 +22,9 @@
 namespace cunumeric {
 
 struct BinaryOpArgs {
-  const legate::Store& in1;
-  const legate::Store& in2;
-  const legate::Store& out;
+  legate::Store in1;
+  legate::Store in2;
+  legate::Store out;
   BinaryOpCode op_code;
   std::vector<legate::Store> args;
 };
@@ -34,12 +34,12 @@ class BinaryOpTask : public CuNumericTask<BinaryOpTask> {
   static const int TASK_ID = CUNUMERIC_BINARY_OP;
 
  public:
-  static void cpu_variant(legate::TaskContext& context);
+  static void cpu_variant(legate::TaskContext context);
 #ifdef LEGATE_USE_OPENMP
-  static void omp_variant(legate::TaskContext& context);
+  static void omp_variant(legate::TaskContext context);
 #endif
 #ifdef LEGATE_USE_CUDA
-  static void gpu_variant(legate::TaskContext& context);
+  static void gpu_variant(legate::TaskContext context);
 #endif
 };
 

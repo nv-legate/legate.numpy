@@ -70,7 +70,7 @@ struct ScanGlobalImplBody<VariantKind::OMP, OP_CODE, CODE, DIM> {
   }
 };
 
-/*static*/ void ScanGlobalTask::omp_variant(TaskContext& context)
+/*static*/ void ScanGlobalTask::omp_variant(TaskContext context)
 {
   scan_global_template<VariantKind::OMP>(context);
 }

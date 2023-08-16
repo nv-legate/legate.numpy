@@ -102,7 +102,7 @@ struct BincountImplBody<VariantKind::OMP, CODE> {
   }
 };
 
-/*static*/ void BincountTask::omp_variant(TaskContext& context)
+/*static*/ void BincountTask::omp_variant(TaskContext context)
 {
   bincount_template<VariantKind::OMP>(context);
 }

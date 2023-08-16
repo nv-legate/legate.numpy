@@ -82,8 +82,8 @@ struct BinaryOpDispatch {
 template <VariantKind KIND>
 static void binary_op_template(TaskContext& context)
 {
-  auto& inputs  = context.inputs();
-  auto& outputs = context.outputs();
+  auto inputs   = context.inputs();
+  auto outputs  = context.outputs();
   auto& scalars = context.scalars();
 
   std::vector<Store> extra_args;

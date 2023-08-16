@@ -370,7 +370,7 @@ class LoadCUDALibsTask : public CuNumericTask<LoadCUDALibsTask> {
   static const int TASK_ID = CUNUMERIC_LOAD_CUDALIBS;
 
  public:
-  static void gpu_variant(legate::TaskContext& context)
+  static void gpu_variant(legate::TaskContext context)
   {
     const auto proc = legate::Processor::get_executing_processor();
     auto& lib       = get_cuda_libraries(proc);
@@ -385,7 +385,7 @@ class UnloadCUDALibsTask : public CuNumericTask<UnloadCUDALibsTask> {
   static const int TASK_ID = CUNUMERIC_UNLOAD_CUDALIBS;
 
  public:
-  static void gpu_variant(legate::TaskContext& context)
+  static void gpu_variant(legate::TaskContext context)
   {
     const auto proc = legate::Processor::get_executing_processor();
     auto& lib       = get_cuda_libraries(proc);

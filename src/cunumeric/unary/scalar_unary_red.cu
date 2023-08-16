@@ -23,7 +23,7 @@ namespace cunumeric {
 
 using namespace legate;
 
-/*static*/ void ScalarUnaryRedTask::gpu_variant(TaskContext& context)
+/*static*/ void ScalarUnaryRedTask::gpu_variant(TaskContext context)
 {
   scalar_unary_red_template<VariantKind::GPU>(context);
 }

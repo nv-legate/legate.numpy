@@ -21,8 +21,8 @@
 namespace cunumeric {
 
 struct NonzeroArgs {
-  const legate::Store& input;
-  std::vector<legate::Store>& results;
+  legate::Store input;
+  std::vector<legate::Store> results;
 };
 
 class NonzeroTask : public CuNumericTask<NonzeroTask> {
@@ -30,12 +30,12 @@ class NonzeroTask : public CuNumericTask<NonzeroTask> {
   static const int TASK_ID = CUNUMERIC_NONZERO;
 
  public:
-  static void cpu_variant(legate::TaskContext& context);
+  static void cpu_variant(legate::TaskContext context);
 #ifdef LEGATE_USE_OPENMP
-  static void omp_variant(legate::TaskContext& context);
+  static void omp_variant(legate::TaskContext context);
 #endif
 #ifdef LEGATE_USE_CUDA
-  static void gpu_variant(legate::TaskContext& context);
+  static void gpu_variant(legate::TaskContext context);
 #endif
 };
 

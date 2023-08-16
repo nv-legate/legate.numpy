@@ -65,11 +65,11 @@ struct SearchSortedImpl {
 template <VariantKind KIND>
 static void searchsorted_template(TaskContext& context)
 {
-  SearchSortedArgs args{context.inputs()[0],
-                        context.inputs()[1],
-                        context.reductions()[0],
-                        context.scalars()[0].value<bool>(),
-                        context.scalars()[1].value<int64_t>(),
+  SearchSortedArgs args{context.input(0),
+                        context.input(1),
+                        context.reduction(0),
+                        context.scalar(0).value<bool>(),
+                        context.scalar(1).value<int64_t>(),
                         !context.is_single_task()};
 
   assert(args.input_base.dim() == 1);

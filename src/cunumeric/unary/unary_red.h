@@ -22,8 +22,8 @@
 namespace cunumeric {
 
 struct UnaryRedArgs {
-  const legate::Store& lhs;
-  const legate::Store& rhs;
+  legate::Store lhs;
+  legate::Store rhs;
   int32_t collapsed_dim;
   UnaryRedCode op_code;
 };
@@ -33,12 +33,12 @@ class UnaryRedTask : public CuNumericTask<UnaryRedTask> {
   static const int TASK_ID = CUNUMERIC_UNARY_RED;
 
  public:
-  static void cpu_variant(legate::TaskContext& context);
+  static void cpu_variant(legate::TaskContext context);
 #ifdef LEGATE_USE_OPENMP
-  static void omp_variant(legate::TaskContext& context);
+  static void omp_variant(legate::TaskContext context);
 #endif
 #ifdef LEGATE_USE_CUDA
-  static void gpu_variant(legate::TaskContext& context);
+  static void gpu_variant(legate::TaskContext context);
 #endif
 };
 

@@ -64,7 +64,7 @@ struct WindowImplBody<VariantKind::GPU, OP_CODE> {
   }
 };
 
-/*static*/ void WindowTask::gpu_variant(TaskContext& context)
+/*static*/ void WindowTask::gpu_variant(TaskContext context)
 {
   window_template<VariantKind::GPU>(context);
 }

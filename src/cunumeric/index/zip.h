@@ -21,8 +21,8 @@
 namespace cunumeric {
 
 struct ZipArgs {
-  const legate::Store& out;
-  const std::vector<legate::Store>& inputs;
+  legate::Store out;
+  std::vector<legate::Store> inputs;
   const int64_t N;
   const int64_t key_dim;
   const int64_t start_index;
@@ -34,12 +34,12 @@ class ZipTask : public CuNumericTask<ZipTask> {
   static const int TASK_ID = CUNUMERIC_ZIP;
 
  public:
-  static void cpu_variant(legate::TaskContext& context);
+  static void cpu_variant(legate::TaskContext context);
 #ifdef LEGATE_USE_OPENMP
-  static void omp_variant(legate::TaskContext& context);
+  static void omp_variant(legate::TaskContext context);
 #endif
 #ifdef LEGATE_USE_CUDA
-  static void gpu_variant(legate::TaskContext& context);
+  static void gpu_variant(legate::TaskContext context);
 #endif
 };
 

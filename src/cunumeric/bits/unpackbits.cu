@@ -57,7 +57,7 @@ struct UnpackbitsImplBody<VariantKind::GPU, DIM, BITORDER> {
   }
 };
 
-/*static*/ void UnpackbitsTask::gpu_variant(TaskContext& context)
+/*static*/ void UnpackbitsTask::gpu_variant(TaskContext context)
 {
   unpackbits_template<VariantKind::GPU>(context);
 }

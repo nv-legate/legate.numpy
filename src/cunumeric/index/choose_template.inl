@@ -64,7 +64,9 @@ struct ChooseImpl {
 template <VariantKind KIND>
 static void choose_template(TaskContext& context)
 {
-  ChooseArgs args{context.outputs()[0], context.inputs()};
+  std::vector<legate::Store> inputs;
+  for (auto& input : context.inputs()) { inputs.emplace_back(input); }
+  ChooseArgs args{context.output(0), std::move(inputs)};
   double_dispatch(args.inputs[0].dim(), args.inputs[0].code(), ChooseImpl<KIND>{}, args);
 }
 

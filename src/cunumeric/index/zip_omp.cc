@@ -90,7 +90,7 @@ struct ZipImplBody<VariantKind::OMP, DIM, N> {
   }
 };
 
-/*static*/ void ZipTask::omp_variant(TaskContext& context)
+/*static*/ void ZipTask::omp_variant(TaskContext context)
 {
   zip_template<VariantKind::OMP>(context);
 }

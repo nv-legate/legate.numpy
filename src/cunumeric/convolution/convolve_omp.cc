@@ -214,7 +214,7 @@ struct ConvolveImplBody<VariantKind::OMP, CODE, DIM> {
   }
 };
 
-/*static*/ void ConvolveTask::omp_variant(TaskContext& context)
+/*static*/ void ConvolveTask::omp_variant(TaskContext context)
 {
   convolve_template<VariantKind::OMP>(context);
 }

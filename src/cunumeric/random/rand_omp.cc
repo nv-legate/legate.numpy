@@ -40,7 +40,7 @@ struct RandImplBody<VariantKind::OMP, RNG, VAL, DIM> {
   }
 };
 
-/*static*/ void RandTask::omp_variant(TaskContext& context)
+/*static*/ void RandTask::omp_variant(TaskContext context)
 {
   rand_template<VariantKind::OMP>(context);
 }

@@ -82,7 +82,7 @@ struct BinaryOpImplBody<VariantKind::GPU, OP_CODE, CODE, DIM> {
   }
 };
 
-/*static*/ void BinaryOpTask::gpu_variant(TaskContext& context)
+/*static*/ void BinaryOpTask::gpu_variant(TaskContext context)
 {
   binary_op_template<VariantKind::GPU>(context);
 }

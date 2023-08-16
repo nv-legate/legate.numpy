@@ -21,8 +21,8 @@
 namespace cunumeric {
 
 struct ArgWhereArgs {
-  Array& out;
-  const Array& in;
+  legate::Store out;
+  legate::Store in;
 };
 
 class ArgWhereTask : public CuNumericTask<ArgWhereTask> {
@@ -30,12 +30,12 @@ class ArgWhereTask : public CuNumericTask<ArgWhereTask> {
   static const int TASK_ID = CUNUMERIC_ARGWHERE;
 
  public:
-  static void cpu_variant(legate::TaskContext& context);
+  static void cpu_variant(legate::TaskContext context);
 #ifdef LEGATE_USE_OPENMP
-  static void omp_variant(legate::TaskContext& context);
+  static void omp_variant(legate::TaskContext context);
 #endif
 #ifdef LEGATE_USE_CUDA
-  static void gpu_variant(legate::TaskContext& context);
+  static void gpu_variant(legate::TaskContext context);
 #endif
 };
 

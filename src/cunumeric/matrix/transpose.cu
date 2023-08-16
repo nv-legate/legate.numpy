@@ -162,7 +162,7 @@ struct TransposeImplBody<VariantKind::GPU, CODE> {
   }
 };
 
-/*static*/ void TransposeTask::gpu_variant(TaskContext& context)
+/*static*/ void TransposeTask::gpu_variant(TaskContext context)
 {
   transpose_template<VariantKind::GPU>(context);
 }

@@ -268,7 +268,7 @@ struct MatVecMulImplBody<VariantKind::GPU, Type::Code::COMPLEX128> {
   }
 };
 
-/*static*/ void MatVecMulTask::gpu_variant(TaskContext& context)
+/*static*/ void MatVecMulTask::gpu_variant(TaskContext context)
 {
   matvecmul_template<VariantKind::GPU>(context);
 }

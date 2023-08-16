@@ -50,7 +50,7 @@ struct FillImplBody<VariantKind::OMP, VAL, DIM> {
   }
 };
 
-/*static*/ void FillTask::omp_variant(TaskContext& context)
+/*static*/ void FillTask::omp_variant(TaskContext context)
 {
   fill_template<VariantKind::OMP>(context);
 }

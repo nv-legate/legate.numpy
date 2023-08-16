@@ -21,13 +21,13 @@
 namespace cunumeric {
 
 struct WrapArgs {
-  const Array& out;                 // Array with Point<N> type that is used to
+  legate::Store out;                // Array with Point<N> type that is used to
                                     // copy information from original array to the
                                     //  `wrapped` one
   const legate::DomainPoint shape;  // shape of the original array
   const bool has_input;
   const bool check_bounds;
-  const Array& in = Array();
+  legate::Store in = legate::Store();
 };
 
 class WrapTask : public CuNumericTask<WrapTask> {
@@ -35,12 +35,12 @@ class WrapTask : public CuNumericTask<WrapTask> {
   static const int TASK_ID = CUNUMERIC_WRAP;
 
  public:
-  static void cpu_variant(legate::TaskContext& context);
+  static void cpu_variant(legate::TaskContext context);
 #ifdef LEGATE_USE_OPENMP
-  static void omp_variant(legate::TaskContext& context);
+  static void omp_variant(legate::TaskContext context);
 #endif
 #ifdef LEGATE_USE_CUDA
-  static void gpu_variant(legate::TaskContext& context);
+  static void gpu_variant(legate::TaskContext context);
 #endif
 };
 

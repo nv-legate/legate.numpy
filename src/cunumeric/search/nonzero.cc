@@ -53,7 +53,7 @@ struct NonzeroImplBody<VariantKind::CPU, CODE, DIM> {
   }
 };
 
-/*static*/ void NonzeroTask::cpu_variant(TaskContext& context)
+/*static*/ void NonzeroTask::cpu_variant(TaskContext context)
 {
   nonzero_template<VariantKind::CPU>(context);
 }

@@ -52,8 +52,8 @@ struct ArangeImpl {
 template <VariantKind KIND>
 static void arange_template(TaskContext& context)
 {
-  auto& inputs = context.inputs();
-  ArangeArgs args{context.outputs()[0], inputs[0], inputs[1], inputs[2]};
+  auto inputs = context.inputs();
+  ArangeArgs args{context.output(0), inputs[0], inputs[1], inputs[2]};
   type_dispatch(args.out.code(), ArangeImpl<KIND>{}, args);
 }
 

@@ -38,7 +38,7 @@ struct WindowImplBody<VariantKind::OMP, OP_CODE> {
   }
 };
 
-/*static*/ void WindowTask::omp_variant(TaskContext& context)
+/*static*/ void WindowTask::omp_variant(TaskContext context)
 {
   window_template<VariantKind::OMP>(context);
 }

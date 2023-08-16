@@ -42,7 +42,7 @@ struct UnaryRedImplBody<VariantKind::CPU, OP_CODE, CODE, DIM> {
   }
 };
 
-/*static*/ void UnaryRedTask::cpu_variant(TaskContext& context)
+/*static*/ void UnaryRedTask::cpu_variant(TaskContext context)
 {
   unary_red_template<VariantKind::CPU>(context);
 }

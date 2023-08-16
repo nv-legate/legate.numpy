@@ -48,7 +48,7 @@ struct ConvertImplBody<VariantKind::CPU, NAN_OP, DST_TYPE, SRC_TYPE, DIM> {
   }
 };
 
-/*static*/ void ConvertTask::cpu_variant(TaskContext& context)
+/*static*/ void ConvertTask::cpu_variant(TaskContext context)
 {
   convert_template<VariantKind::CPU>(context);
 }

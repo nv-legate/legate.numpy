@@ -22,8 +22,8 @@
 namespace cunumeric {
 
 struct ScanGlobalArgs {
-  const legate::Store& sum_vals;
-  const legate::Store& out;
+  legate::Store sum_vals;
+  legate::Store out;
   ScanCode op_code;
   const legate::DomainPoint& partition_index;
 };
@@ -33,12 +33,12 @@ class ScanGlobalTask : public CuNumericTask<ScanGlobalTask> {
   static const int TASK_ID = CUNUMERIC_SCAN_GLOBAL;
 
  public:
-  static void cpu_variant(legate::TaskContext& context);
+  static void cpu_variant(legate::TaskContext context);
 #ifdef LEGATE_USE_OPENMP
-  static void omp_variant(legate::TaskContext& context);
+  static void omp_variant(legate::TaskContext context);
 #endif
 #ifdef LEGATE_USE_CUDA
-  static void gpu_variant(legate::TaskContext& context);
+  static void gpu_variant(legate::TaskContext context);
 #endif
 };
 

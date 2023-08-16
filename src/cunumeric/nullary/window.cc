@@ -37,7 +37,7 @@ struct WindowImplBody<VariantKind::CPU, OP_CODE> {
   }
 };
 
-/*static*/ void WindowTask::cpu_variant(TaskContext& context)
+/*static*/ void WindowTask::cpu_variant(TaskContext context)
 {
   window_template<VariantKind::CPU>(context);
 }

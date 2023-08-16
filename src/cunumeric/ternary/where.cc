@@ -51,7 +51,7 @@ struct WhereImplBody<VariantKind::CPU, CODE, DIM> {
   }
 };
 
-/*static*/ void WhereTask::cpu_variant(TaskContext& context)
+/*static*/ void WhereTask::cpu_variant(TaskContext context)
 {
   where_template<VariantKind::CPU>(context);
 }

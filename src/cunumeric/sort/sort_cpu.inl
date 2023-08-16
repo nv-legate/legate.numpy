@@ -443,7 +443,7 @@ void rebalance_data(SegmentMergePiece<VAL>& merge_buffer,
 
 template <Type::Code CODE, typename DerivedPolicy>
 void sample_sort_nd(SortPiece<legate_type_of<CODE>> local_sorted,
-                    legate::Store& output_array_unbound,  // only for unbound usage when !rebalance
+                    legate::Store output_array_unbound,  // only for unbound usage when !rebalance
                     void* output_ptr,
                     /* global domain information */
                     size_t my_rank,  // global rank
@@ -899,8 +899,8 @@ struct SortImplBodyCpu {
   using VAL = legate_type_of<CODE>;
 
   template <typename DerivedPolicy>
-  void operator()(const legate::Store& input_array,
-                  legate::Store& output_array,
+  void operator()(legate::Store input_array,
+                  legate::Store output_array,
                   const Pitches<DIM - 1>& pitches,
                   const Rect<DIM>& rect,
                   const size_t volume,

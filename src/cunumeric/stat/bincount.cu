@@ -206,7 +206,7 @@ struct BincountImplBody<VariantKind::GPU, CODE> {
   }
 };
 
-/*static*/ void BincountTask::gpu_variant(TaskContext& context)
+/*static*/ void BincountTask::gpu_variant(TaskContext context)
 {
   bincount_template<VariantKind::GPU>(context);
 }

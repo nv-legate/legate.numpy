@@ -30,7 +30,7 @@ struct UnpackbitsImplBody;
 template <VariantKind KIND, Bitorder BITORDER>
 struct UnpackbitsImpl {
   template <int32_t DIM>
-  void operator()(Store& output, Store& input, uint32_t axis) const
+  void operator()(Store output, Store input, uint32_t axis) const
   {
     auto out_rect = output.shape<DIM>();
 
@@ -48,7 +48,7 @@ struct UnpackbitsImpl {
   }
 
   template <Type::Code CODE, int32_t DIM, std::enable_if_t<!is_integral<CODE>::value>* = nullptr>
-  void operator()(Array& output, Array& input, uint32_t axis) const
+  void operator()(legate::Store output, legate::Store input, uint32_t axis) const
   {
     // Unreachable
     assert(false);
@@ -58,11 +58,11 @@ struct UnpackbitsImpl {
 template <VariantKind KIND>
 static void unpackbits_template(TaskContext& context)
 {
-  auto& output  = context.outputs().front();
-  auto& input   = context.inputs().front();
-  auto& scalars = context.scalars();
-  auto axis     = scalars[0].value<uint32_t>();
-  auto bitorder = scalars[1].value<Bitorder>();
+  legate::Store output = context.output(0);
+  legate::Store input  = context.input(0);
+  auto& scalars        = context.scalars();
+  auto axis            = scalars[0].value<uint32_t>();
+  auto bitorder        = scalars[1].value<Bitorder>();
 
   auto code = input.code();
   switch (bitorder) {

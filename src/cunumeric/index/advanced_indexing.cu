@@ -151,7 +151,7 @@ struct AdvancedIndexingImplBody<VariantKind::GPU, CODE, DIM, OUT_TYPE> {
   }
 };
 
-/*static*/ void AdvancedIndexingTask::gpu_variant(TaskContext& context)
+/*static*/ void AdvancedIndexingTask::gpu_variant(TaskContext context)
 {
   advanced_indexing_template<VariantKind::GPU>(context);
 }

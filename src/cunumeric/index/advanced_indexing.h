@@ -21,9 +21,9 @@
 namespace cunumeric {
 
 struct AdvancedIndexingArgs {
-  legate::Store& output;
-  const legate::Store& input_array;
-  const legate::Store& indexing_array;
+  legate::Store output;
+  legate::Store input_array;
+  legate::Store indexing_array;
   const bool is_set;
   const int64_t key_dim;
 };
@@ -33,12 +33,12 @@ class AdvancedIndexingTask : public CuNumericTask<AdvancedIndexingTask> {
   static const int TASK_ID = CUNUMERIC_ADVANCED_INDEXING;
 
  public:
-  static void cpu_variant(legate::TaskContext& context);
+  static void cpu_variant(legate::TaskContext context);
 #ifdef LEGATE_USE_OPENMP
-  static void omp_variant(legate::TaskContext& context);
+  static void omp_variant(legate::TaskContext context);
 #endif
 #ifdef LEGATE_USE_CUDA
-  static void gpu_variant(legate::TaskContext& context);
+  static void gpu_variant(legate::TaskContext context);
 #endif
 };
 

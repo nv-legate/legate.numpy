@@ -80,8 +80,8 @@ static void fft_template(TaskContext& context)
 {
   FFTArgs args;
 
-  auto& inputs  = context.inputs();
-  auto& outputs = context.outputs();
+  auto inputs   = context.inputs();
+  auto outputs  = context.outputs();
   auto& scalars = context.scalars();
 
   args.output = std::move(outputs[0]);

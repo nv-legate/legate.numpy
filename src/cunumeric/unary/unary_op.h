@@ -22,16 +22,16 @@
 namespace cunumeric {
 
 struct UnaryOpArgs {
-  const legate::Store& in;
-  const legate::Store& out;
+  legate::Store in;
+  legate::Store out;
   UnaryOpCode op_code;
   std::vector<legate::Store> args;
 };
 
 struct MultiOutUnaryOpArgs {
-  const legate::Store& in;
-  const legate::Store& out1;
-  const legate::Store& out2;
+  legate::Store in;
+  legate::Store out1;
+  legate::Store out2;
   UnaryOpCode op_code;
 };
 
@@ -40,12 +40,12 @@ class UnaryOpTask : public CuNumericTask<UnaryOpTask> {
   static const int TASK_ID = CUNUMERIC_UNARY_OP;
 
  public:
-  static void cpu_variant(legate::TaskContext& context);
+  static void cpu_variant(legate::TaskContext context);
 #ifdef LEGATE_USE_OPENMP
-  static void omp_variant(legate::TaskContext& context);
+  static void omp_variant(legate::TaskContext context);
 #endif
 #ifdef LEGATE_USE_CUDA
-  static void gpu_variant(legate::TaskContext& context);
+  static void gpu_variant(legate::TaskContext context);
 #endif
 };
 

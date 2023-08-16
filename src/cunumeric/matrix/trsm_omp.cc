@@ -87,7 +87,7 @@ struct TrsmImplBody<VariantKind::CPU, Type::Code::COMPLEX128> {
   }
 };
 
-/*static*/ void TrsmTask::omp_variant(TaskContext& context)
+/*static*/ void TrsmTask::omp_variant(TaskContext context)
 {
   openblas_set_num_threads(omp_get_max_threads());
   trsm_template<VariantKind::CPU>(context);

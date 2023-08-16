@@ -16,15 +16,15 @@
 
 #pragma once
 
-#include "cunumeric/cunumeric.h"
+#include "cunumeric/cunumeric_task.h"
 
 namespace cunumeric {
 
 struct HistogramArgs {
-  const Array& result;
-  const Array& src;
-  const Array& bins;
-  const Array& weights;
+  legate::Store result;
+  legate::Store src;
+  legate::Store bins;
+  legate::Store weights;
 };
 
 class HistogramTask : public CuNumericTask<HistogramTask> {
@@ -32,12 +32,12 @@ class HistogramTask : public CuNumericTask<HistogramTask> {
   static const int TASK_ID = CUNUMERIC_HISTOGRAM;
 
  public:
-  static void cpu_variant(legate::TaskContext& context);
+  static void cpu_variant(legate::TaskContext context);
 #ifdef LEGATE_USE_OPENMP
-  static void omp_variant(legate::TaskContext& context);
+  static void omp_variant(legate::TaskContext context);
 #endif
 #ifdef LEGATE_USE_CUDA
-  static void gpu_variant(legate::TaskContext& context);
+  static void gpu_variant(legate::TaskContext context);
 #endif
 };
 

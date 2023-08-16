@@ -115,7 +115,7 @@ struct RepeatImplBody<VariantKind::CPU, CODE, DIM> {
   }
 };
 
-/*static*/ void RepeatTask::cpu_variant(TaskContext& context)
+/*static*/ void RepeatTask::cpu_variant(TaskContext context)
 {
   repeat_template<VariantKind::CPU>(context);
 }

@@ -23,8 +23,8 @@
 namespace cunumeric {
 
 struct SortArgs {
-  const legate::Store& input;
-  legate::Store& output;
+  legate::Store input;
+  legate::Store output;
   bool argsort;
   bool stable;
   size_t segment_size_g;
@@ -95,12 +95,12 @@ class SortTask : public CuNumericTask<SortTask> {
   static const int TASK_ID = CUNUMERIC_SORT;
 
  public:
-  static void cpu_variant(legate::TaskContext& context);
+  static void cpu_variant(legate::TaskContext context);
 #ifdef LEGATE_USE_OPENMP
-  static void omp_variant(legate::TaskContext& context);
+  static void omp_variant(legate::TaskContext context);
 #endif
 #ifdef LEGATE_USE_CUDA
-  static void gpu_variant(legate::TaskContext& context);
+  static void gpu_variant(legate::TaskContext context);
 #endif
 };
 

@@ -115,8 +115,8 @@ struct MatMulImpl {
 template <VariantKind KIND>
 static void matmul_template(TaskContext& context)
 {
-  auto& reductions = context.reductions();
-  auto& inputs     = context.inputs();
+  auto reductions = context.reductions();
+  auto inputs     = context.inputs();
 
   MatMulArgs args{reductions[0], inputs[0], inputs[1]};
   // Note that we can't dispatch on the lhs's type,
