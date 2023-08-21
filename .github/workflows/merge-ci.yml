@@ -1,0 +1,30 @@
+name: merge-public
+
+on:
+  workflow_dispatch:
+
+jobs:
+  merge:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Cunumeric Internal repository
+      uses: actions/checkout@v3
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Merge the branches
+      run: |
+        DEFAULT_BRANCH=$(git remote show origin | awk '/HEAD branch/ {print $NF}')
+        git fetch origin
+        git checkout $DEFAULT_BRANCH
+        git reset --hard origin/$DEFAULT_BRANCH
+        git config --local user.name 'SyncAction'
+        git config --local user.email 'sync@nowhere'
+        git remote add GhCunumericPublic  https://github.com/nv-legate/cunumeric.git || true
+        git branch -a
+        git remote show origin
+        git remote set-url --push origin https://github.com/nv-legate/cunumeric.internal.git
+        git remote show origin
+        . .github/workflows/merge-branches.sh GhCunumericPublic
+        git push origin --tags
+
