@@ -28,10 +28,7 @@ extern void bootstrapping_callback(Legion::Machine machine,
                                    Legion::Runtime* runtime,
                                    const std::set<Legion::Processor>& local_procs);
 
-void initialize(int32_t argc, char** argv)
-{
-  Legion::Runtime::perform_registration_callback(bootstrapping_callback, true /*global*/);
-}
+void initialize(int32_t argc, char** argv) { cunumeric_perform_registration(); }
 
 CuNumericRuntime::CuNumericRuntime(legate::Runtime* legate_runtime, legate::Library library)
   : legate_runtime_(legate_runtime), library_(library)
