@@ -2,6 +2,8 @@ name: merge-public
 
 on:
   workflow_dispatch:
+  schedule:
+    - cron: '*/15 * * * *' # Run every 15 mins
 
 jobs:
   merge:
