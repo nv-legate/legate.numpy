@@ -7,6 +7,7 @@ on:
 
 jobs:
   merge:
+    if: github.repository_owner == 'nv-legate'
     runs-on: ubuntu-latest
     steps:
     - name: Cunumeric Internal repository
