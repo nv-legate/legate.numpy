@@ -128,6 +128,8 @@ void NDArray::assign(const legate::Scalar& other)
 
 void NDArray::random(int32_t gen_code)
 {
+  if (size() == 0) return;
+
   auto runtime = CuNumericRuntime::get_runtime();
 
   auto task = runtime->create_task(CuNumericOpCode::CUNUMERIC_RAND);
@@ -143,6 +145,8 @@ void NDArray::random(int32_t gen_code)
 
 void NDArray::fill(const Scalar& value, bool argval)
 {
+  if (size() == 0) return;
+
   auto runtime = CuNumericRuntime::get_runtime();
 
   auto fill_value = runtime->create_scalar_store(value);
@@ -158,6 +162,8 @@ void NDArray::fill(const Scalar& value, bool argval)
 
 void NDArray::eye(int32_t k)
 {
+  if (size() == 0) return;
+
   assert(dim() == 2);
 
   auto zero = legate::type_dispatch(type().code(), generate_zero_fn{});
@@ -176,6 +182,8 @@ void NDArray::eye(int32_t k)
 
 void NDArray::bincount(NDArray rhs, std::optional<NDArray> weights /*=std::nullopt*/)
 {
+  if (size() == 0) return;
+
   assert(dim() == 1);
 
   auto runtime = CuNumericRuntime::get_runtime();
@@ -201,6 +209,8 @@ void NDArray::bincount(NDArray rhs, std::optional<NDArray> weights /*=std::nullo
 
 void NDArray::trilu(NDArray rhs, int32_t k, bool lower)
 {
+  if (size() == 0) return;
+
   auto runtime = CuNumericRuntime::get_runtime();
 
   auto task = runtime->create_task(CuNumericOpCode::CUNUMERIC_TRILU);
@@ -223,6 +233,8 @@ void NDArray::binary_op(int32_t op_code, NDArray rhs1, NDArray rhs2)
 {
   if (rhs1.type() != rhs2.type()) throw std::invalid_argument("Operands must have the same type");
 
+  if (size() == 0) return;
+
   auto runtime = CuNumericRuntime::get_runtime();
 
   auto task = runtime->create_task(CuNumericOpCode::CUNUMERIC_BINARY_OP);
@@ -244,6 +256,8 @@ void NDArray::binary_op(int32_t op_code, NDArray rhs1, NDArray rhs2)
 
 void NDArray::binary_reduction(int32_t op_code, NDArray rhs1, NDArray rhs2)
 {
+  if (size() == 0) return;
+
   auto runtime = CuNumericRuntime::get_runtime();
 
   auto rhs1_store = broadcast(rhs1, rhs2);
@@ -271,6 +285,8 @@ void NDArray::binary_reduction(int32_t op_code, NDArray rhs1, NDArray rhs2)
 
 void NDArray::unary_op(int32_t op_code, NDArray input)
 {
+  if (size() == 0) return;
+
   auto runtime = CuNumericRuntime::get_runtime();
 
   auto task = runtime->create_task(CuNumericOpCode::CUNUMERIC_UNARY_OP);
@@ -288,6 +304,8 @@ void NDArray::unary_op(int32_t op_code, NDArray input)
 
 void NDArray::unary_reduction(int32_t op_code_, NDArray input)
 {
+  if (size() == 0) return;
+
   auto runtime = CuNumericRuntime::get_runtime();
 
   auto op_code = static_cast<UnaryRedCode>(op_code_);
@@ -309,6 +327,8 @@ void NDArray::unary_reduction(int32_t op_code_, NDArray input)
 
 void NDArray::dot(NDArray rhs1, NDArray rhs2)
 {
+  if (size() == 0) return;
+
   auto runtime = CuNumericRuntime::get_runtime();
 
   auto identity = runtime->get_reduction_identity(UnaryRedCode::SUM, type());
@@ -340,6 +360,8 @@ void NDArray::dot(NDArray rhs1, NDArray rhs2)
 
 void NDArray::arange(double start, double stop, double step)
 {
+  if (size() == 0) return;
+
   auto runtime = CuNumericRuntime::get_runtime();
 
   assert(dim() == 1);
@@ -409,6 +431,8 @@ NDArray NDArray::as_type(const legate::Type& type)
 
   auto out = runtime->create_array(shape(), type);
 
+  if (size() == 0) return std::move(out);
+
   assert(store_.type() != out.store_.type());
 
   auto task = runtime->create_task(CuNumericOpCode::CUNUMERIC_CONVERT);
@@ -426,6 +450,8 @@ NDArray NDArray::as_type(const legate::Type& type)
 
 void NDArray::create_window(int32_t op_code, int64_t M, std::vector<double> args)
 {
+  if (size() == 0) return;
+
   auto runtime = CuNumericRuntime::get_runtime();
 
   auto task = runtime->create_task(CuNumericOpCode::CUNUMERIC_WINDOW);
