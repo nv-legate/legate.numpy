@@ -38,8 +38,6 @@ enable_testing()
 
 file(GLOB main_SRC ${PROJECT_SOURCE_DIR}/main.cc)
 file(GLOB integration_SRC ${PROJECT_SOURCE_DIR}/integration/*.cc)
-file(GLOB tasks_SRC ${PROJECT_SOURCE_DIR}/integration/tasks/*.cc)
-file(GLOB unit_SRC ${PROJECT_SOURCE_DIR}/unit/*.cc)
 
 if(Legion_USE_CUDA)
 

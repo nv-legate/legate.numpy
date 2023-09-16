@@ -82,6 +82,7 @@ class NDArray {
   NDArray unique();
   void create_window(int32_t op_code, int64_t M, std::vector<double> args);
   void bincount(NDArray rhs, std::optional<NDArray> weights = std::nullopt);
+  void convolve(NDArray input, NDArray filter);
 
  public:
   NDArray as_type(const legate::Type& type);

@@ -85,4 +85,6 @@ NDArray kaiser(int64_t M, double beta);
 
 NDArray bincount(NDArray x, std::optional<NDArray> weights = std::nullopt, uint32_t min_length = 0);
 
+NDArray convolve(NDArray a, NDArray v);
+
 }  // namespace cunumeric

@@ -465,6 +465,28 @@ void NDArray::create_window(int32_t op_code, int64_t M, std::vector<double> args
   runtime->submit(std::move(task));
 }
 
+void NDArray::convolve(NDArray input, NDArray filter)
+{
+  auto runtime = CuNumericRuntime::get_runtime();
+
+  auto task = runtime->create_task(CuNumericOpCode::CUNUMERIC_CONVOLVE);
+
+  auto p_filter = task.add_input(filter.store_);
+  auto p_input  = task.add_input(input.store_);
+  auto p_halo   = task.declare_partition();
+  task.add_input(input.store_, p_halo);
+  auto p_output = task.add_output(store_);
+  task.add_scalar_arg(legate::Scalar(shape()));
+
+  auto offsets = (filter.store_.extents() + size_t{1}) / size_t{2};
+
+  task.add_constraint(legate::align(p_input, p_output));
+  task.add_constraint(legate::bloat(p_input, p_halo, offsets, offsets));
+  task.add_constraint(legate::broadcast(p_filter, legate::from_range<int32_t>(dim())));
+
+  runtime->submit(std::move(task));
+}
+
 legate::LogicalStore NDArray::get_store() { return store_; }
 
 legate::LogicalStore NDArray::broadcast(const std::vector<size_t>& shape,

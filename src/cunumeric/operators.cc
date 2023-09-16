@@ -296,4 +296,16 @@ NDArray hanning(int64_t M) { return create_window(M, WindowOpCode::HANNING, {});
 
 NDArray kaiser(int64_t M, double beta) { return create_window(M, WindowOpCode::KAISER, {beta}); }
 
+NDArray convolve(NDArray a, NDArray v)
+{
+  if (a.dim() != v.dim()) { throw std::invalid_argument("Arrays should have the same dimensions"); }
+  if (a.dim() > 3) {
+    throw std::runtime_error(std::to_string(a.dim()) + "-D arrays are not yet supported");
+  }
+  auto out = CuNumericRuntime::get_runtime()->create_array(a.shape(), a.type());
+  if (a.type() != v.type()) { v = v.as_type(a.type()); }
+  out.convolve(std::move(a), std::move(v));
+  return out;
+}
+
 }  // namespace cunumeric
