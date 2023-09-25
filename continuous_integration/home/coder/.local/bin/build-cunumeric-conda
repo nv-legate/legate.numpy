@@ -39,6 +39,9 @@ build_cunumeric_conda_package() {
 numpy:
   - 1.22
 
+gpu_enabled:
+  - ${GPU_ENABLED}
+
 package_version:
   - "$(git -C ~/cunumeric describe --abbrev=0 --tags | sed 's/[a-zA-Z]//g' | cut -d '.' -f -2).00"
 EOF
