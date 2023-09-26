@@ -34,10 +34,10 @@ class UnaryRedTask : public CuNumericTask<UnaryRedTask> {
 
  public:
   static void cpu_variant(legate::TaskContext context);
-#ifdef LEGATE_USE_OPENMP
+#if LegateDefined(LEGATE_USE_OPENMP)
   static void omp_variant(legate::TaskContext context);
 #endif
-#ifdef LEGATE_USE_CUDA
+#if LegateDefined(LEGATE_USE_CUDA)
   static void gpu_variant(legate::TaskContext context);
 #endif
 };

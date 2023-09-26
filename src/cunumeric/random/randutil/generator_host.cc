@@ -17,7 +17,7 @@
 #include "generator.h"
 #include "generator_create.inl"
 
-#if !defined(LEGATE_USE_CUDA)
+#if !LegateDefined(LEGATE_USE_CUDA)
 // the host code of cuRAND try to extern these variables out of nowhere,
 // so we need to define them somewhere.
 const dim3 blockDim{};

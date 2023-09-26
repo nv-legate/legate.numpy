@@ -31,7 +31,7 @@
 
 #include "cunumeric/stat/histogram_gen.h"
 
-#ifndef LEGATE_USE_CUDA
+#if !LegateDefined(LEGATE_USE_CUDA)
 using cudaStream_t = void*;
 #endif
 
