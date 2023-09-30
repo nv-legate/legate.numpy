@@ -35,7 +35,7 @@ repos:
         - id: legate-defined
           name: legate-defined
           description: 'Find uses of ifdef LEGATE_ that should be using LegateDefined()'
-          entry: ./scripts/pre-commit/legate_defined.sh
+          entry: ./scripts/hooks/legate_defined.sh
           language: script
           'types_or': [c++, c, cuda]
           require_serial: false
