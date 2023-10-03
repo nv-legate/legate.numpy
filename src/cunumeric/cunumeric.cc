@@ -49,10 +49,7 @@ void registration_callback()
 
 extern "C" {
 
-void cunumeric_perform_registration(void)
-{
-  legate::Core::perform_registration<cunumeric::registration_callback>();
-}
+void cunumeric_perform_registration(void) { cunumeric::registration_callback(); }
 
 bool cunumeric_has_curand()
 {
