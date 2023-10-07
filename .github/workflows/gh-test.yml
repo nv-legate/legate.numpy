@@ -12,6 +12,9 @@ on:
       device:
         required: true
         type: string
+      repos-name:
+        required: true
+        type: string
       runs-on:
         required: true
         type: string
@@ -27,7 +30,7 @@ on:
         type: boolean
 
 env:
-  build_artifact_name: "cunumeric-${{ inputs.device }}-${{ github.sha }}"
+  build_artifact_name: "${{ inputs.repos-name }}-${{ inputs.device }}-${{ github.sha }}"
 
 jobs:
   test:
@@ -58,7 +61,7 @@ jobs:
             sudo apt-get update && \
             sudo apt-get install -y numactl
 
-      - name: Checkout cunumeric
+      - name: Checkout ${{ inputs.repos-name }}
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
@@ -79,7 +82,7 @@ jobs:
           name: ${{ env.build_artifact_name }}
           path: /home/coder/.artifacts
 
-      - name: Run cunumeric test / analysis
+      - name: Run ${{ inputs.repos-name }} test / analysis
         shell: su coder {0}
         run: |
           set -x

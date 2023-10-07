@@ -7,17 +7,21 @@ on:
       device:
         type: string
         required: true
-
+      repos-name:
+        required: true
+        type: string
 
 jobs:
   build:
-    name: "Build cunumeric (with ${{ inputs.device }} legate) on GH"
+    name: "Build ${{ inputs.repos-name }} (with ${{ inputs.device }} legate) on GH"
     uses:
       ./.github/workflows/gh-build.yml
     with:
       device: ${{ inputs.device }}
+      repos-name: ${{ inputs.repos-name }}
       image: ${{ inputs.image }}
       runs-on: ${{ github.repository_owner == 'nv-legate' && 'linux-amd64-32cpu' || 'ubuntu-latest' }}
+    secrets: inherit
 
   test:
     needs:
@@ -86,6 +90,7 @@ jobs:
       name: ${{ matrix.name }}
       device: ${{ inputs.device }}
       image: ${{ inputs.image }}
+      repos-name: ${{ inputs.repos-name }}
       runs-on: ${{ matrix.runner }}
       has-gpu: ${{ matrix.has-gpu }}
       test-options: ${{ matrix.options }}

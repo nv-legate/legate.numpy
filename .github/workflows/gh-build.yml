@@ -9,9 +9,12 @@ on:
       device:
         required: true
         type: string
-      runs-on:
+      repos-name:
         required: true
         type: string
+      runs-on:
+        required: true
+        type: string    
 
 jobs:
   build:
@@ -43,7 +46,7 @@ jobs:
         working-directory: /home/coder
 
     steps:
-      - name: Checkout cunumeric (= this repo)
+      - name: Checkout ${{ inputs.repos-name }} (= this repo)
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
@@ -69,8 +72,7 @@ jobs:
         name: Read legate.core SHA
         shell: bash --noprofile --norc -xeo pipefail {0}
         run: |
-          git_tag="$(jq -r '.packages.legate_core.git_tag' cunumeric/cmake/versions.json)";
-
+          git_tag="$(jq -r '.packages.legate_core_internal.git_tag' cunumeric/cmake/versions.json)";
           echo "git_tag=$git_tag" | tee -a "${GITHUB_OUTPUT}";
 
       - name: Download dependencies (artifacts)
@@ -78,6 +80,8 @@ jobs:
         with:
           device: "${{ inputs.device }}"
           git_sha: "${{ steps.legate_core_info.outputs.git_tag }}"
+          repos-name: "${{ inputs.repos-name }}"
+          workflow_token: ${{ secrets.workflow_token }}
 
       - if: github.repository_owner == 'nv-legate'
         name: Get AWS credentials for sccache bucket
@@ -87,7 +91,7 @@ jobs:
           role-duration-seconds: 28800 # 8 hours
           role-to-assume: arn:aws:iam::279114543810:role/gha-oidc-nv-legate
 
-      - name: Build cunumeric
+      - name: Build ${{ inputs.repos-name }}
         run: |
           export PATH="/home/coder/cunumeric/continuous_integration/scripts:$PATH"
           build-cunumeric-all
@@ -95,7 +99,7 @@ jobs:
       - name: Upload build artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: "cunumeric-${{ inputs.device }}-${{ github.sha }}"
+          name: "${{ inputs.repos-name }}-${{ inputs.device }}-${{ github.sha }}"
           path: |
             /tmp/out
             /tmp/conda-build

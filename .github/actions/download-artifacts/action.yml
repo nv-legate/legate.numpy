@@ -5,6 +5,9 @@ description: Download dependencies (artifacts)
 inputs:
   device: {type: string, required: true}
   git_sha: {type: string, required: true}
+  repos-name: {type: string, required: true}
+  workflow_token: {required: true}
+
 
 runs:
   using: composite
@@ -14,19 +17,22 @@ runs:
       name: Cache conda artifacts
       uses: actions/cache@v3
       with:
-        key: "nv-legate/legate.core@${{ inputs.git_sha }}-${{ inputs.device }}"
+        key: "nv-legate/legate.core.internal@${{ inputs.git_sha }}-${{ inputs.device }}"
         path: .artifacts
 
     - if: steps.cache.outputs.cache-hit != 'true'
       name: Download conda artifacts
       uses: dawidd6/action-download-artifact@v2
       with:
+        github_token: ${{ inputs.workflow_token }}
         path: .artifacts-dl
-        repo: nv-legate/legate.core
+        repo: nv-legate/legate.core.internal
+        check_artifacts: true
+        search_artifacts: true
         commit: ${{ inputs.git_sha }}
         workflow_conclusion: success
         workflow: "ci-gh-${{ inputs.device }}-build-and-test.yml"
-        name: "legate.core-${{ inputs.device }}-[0-9a-z]{40}"
+        name: "legate.core.internal-${{ inputs.device }}-release-gcc-[0-9a-z]{40}"
         name_is_regexp: true
 
     - if: steps.cache.outputs.cache-hit != 'true'
@@ -34,9 +40,9 @@ runs:
       shell: bash --noprofile --norc -xeo pipefail {0}
       run: |
         mkdir -p .artifacts;
-        find .artifacts-dl/legate.core-${{ inputs.device }}-*/ \
+        find .artifacts-dl/legate.core.internal-${{ inputs.device }}-release-gcc-*/ \
           -maxdepth 2 -type d -name legate_core -exec mv {} .artifacts/ \;
-        find .artifacts-dl/legate.core-${{ inputs.device }}-*/ \
+        find .artifacts-dl/legate.core.internal-${{ inputs.device }}-release-gcc-*/ \
           -maxdepth 2 -type f -name "environment*.yaml" -exec mv {} .artifacts/ \;
 
     - name: Copy and change cache dir ownership
