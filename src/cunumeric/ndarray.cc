@@ -207,6 +207,18 @@ void NDArray::bincount(NDArray rhs, std::optional<NDArray> weights /*=std::nullo
   runtime->submit(std::move(task));
 }
 
+int32_t NDArray::normalize_axis_index(int32_t axis)
+{
+  auto ndim           = dim();
+  std::string err_msg = "The input axis is out of the bounds";
+  if (axis > ndim) throw std::invalid_argument(std::move(err_msg));
+
+  auto updated_axis = axis >= 0 ? axis : ndim + axis;
+  if (updated_axis < 0) throw std::invalid_argument(std::move(err_msg));
+
+  return updated_axis;
+}
+
 void NDArray::trilu(NDArray rhs, int32_t k, bool lower)
 {
   if (size() == 0) return;
@@ -421,6 +433,26 @@ NDArray NDArray::unique()
     task.add_constraint(legate::broadcast(part_in, legate::from_range<int32_t>(0, dim())));
   runtime->submit(std::move(task));
   return result;
+}
+
+NDArray NDArray::swapaxes(int32_t axis1, int32_t axis2)
+{
+  axis1 = normalize_axis_index(axis1);
+  axis2 = normalize_axis_index(axis2);
+
+  if (shape().size() == 1 || axis1 == axis2) return *this;
+
+  auto ndim = dim();
+  std::vector<int32_t> dims;
+  for (auto i = 0; i < ndim; ++i) dims.push_back(i);
+
+  if (axis1 < 0 || axis2 < 0) throw std::out_of_range("Index is out of range");
+
+  std::swap(dims[axis1], dims[axis2]);
+
+  auto transposed = store_.transpose(std::move(dims));
+  auto runtime    = CuNumericRuntime::get_runtime();
+  return runtime->create_array(std::move(transposed));
 }
 
 NDArray NDArray::as_type(const legate::Type& type)

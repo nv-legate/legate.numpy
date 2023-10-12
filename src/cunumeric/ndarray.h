@@ -80,6 +80,7 @@ class NDArray {
   void arange(double start, double stop, double step);
   std::vector<NDArray> nonzero();
   NDArray unique();
+  NDArray swapaxes(int32_t axis1, int32_t axis2);
   void create_window(int32_t op_code, int64_t M, std::vector<double> args);
   void bincount(NDArray rhs, std::optional<NDArray> weights = std::nullopt);
   void convolve(NDArray input, NDArray filter);
@@ -87,6 +88,7 @@ class NDArray {
  public:
   NDArray as_type(const legate::Type& type);
   legate::LogicalStore get_store();
+  int32_t normalize_axis_index(int32_t axis);
 
  private:
   legate::LogicalStore broadcast(const std::vector<size_t>& shape, legate::LogicalStore& store);

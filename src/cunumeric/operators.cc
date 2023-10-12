@@ -233,6 +233,11 @@ NDArray amin(NDArray input) { return unary_reduction(UnaryRedCode::MIN, std::mov
 
 NDArray unique(NDArray input) { return input.unique(); }
 
+NDArray swapaxes(NDArray input, int32_t axis1, int32_t axis2)
+{
+  return input.swapaxes(axis1, axis2);
+}
+
 NDArray arange(std::optional<double> start,
                std::optional<double> stop,
                std::optional<double> step,

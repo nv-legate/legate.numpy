@@ -53,6 +53,8 @@ NDArray amin(NDArray input);
 
 NDArray unique(NDArray input);
 
+NDArray swapaxes(NDArray input, int32_t axis1, int32_t axis2);
+
 NDArray arange(std::optional<double> start = 0,
                std::optional<double> stop  = std::nullopt,
                std::optional<double> step  = 1,
