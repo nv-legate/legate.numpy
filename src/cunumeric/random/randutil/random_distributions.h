@@ -326,8 +326,6 @@ RANDUTIL_QUALIFIERS double rk_standard_t(rk_state* state, double df)
   return sqrt(df / 2) * rk_gauss(state) / sqrt(rk_standard_gamma(state, df / 2));
 }
 
-#pragma region geometric
-
 template <typename rk_state>
 RANDUTIL_QUALIFIERS long rk_geometric_search(rk_state* state, double p)
 {
@@ -421,10 +419,6 @@ RANDUTIL_QUALIFIERS double rk_vonmises(rk_state* state, double mu, double kappa)
   }
 }
 
-#pragma endregion
-
-#pragma region hypergeometric
-
 RANDUTIL_QUALIFIERS long long_min(long a, long b) { return a < b ? a : b; }
 RANDUTIL_QUALIFIERS long long_max(long a, long b) { return a > b ? a : b; }
 
@@ -504,10 +498,6 @@ RANDUTIL_QUALIFIERS long rk_hypergeometric(rk_state* state, long good, long bad,
     return rk_hypergeometric_hyp(state, good, bad, sample);
   }
 }
-
-#pragma endregion
-
-#pragma region binomial
 
 template <typename rk_state>
 RANDUTIL_QUALIFIERS unsigned rk_binomial_btpe(rk_state* state, unsigned n, double p)
@@ -645,5 +635,3 @@ RANDUTIL_QUALIFIERS unsigned rk_binomial(rk_state* state, unsigned n, double p)
     }
   }
 }
-
-#pragma endregion

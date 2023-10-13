@@ -53,7 +53,9 @@ struct SearchSortedImplBody<VariantKind::CPU, CODE, DIM> {
         VAL key             = input_v_ptr[idx];
         auto v_point        = pitches.unflatten(idx, rect_values.lo);
         int64_t lower_bound = std::lower_bound(input_ptr, input_ptr + volume, key) - input_ptr;
-        if (lower_bound < volume) { output_reduction.reduce(v_point, lower_bound + offset); }
+        if (lower_bound < static_cast<int64_t>(volume)) {
+          output_reduction.reduce(v_point, lower_bound + offset);
+        }
       }
     } else {
       auto output_reduction =

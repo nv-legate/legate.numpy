@@ -110,7 +110,7 @@ legate::Type CuNumericRuntime::get_argred_type(const legate::Type& value_type)
 
   auto argred_type = legate::struct_type({legate::int64(), value_type}, true /*align*/);
   argred_types_.insert({value_type.code(), argred_type});
-  return std::move(argred_type);
+  return argred_type;
 }
 
 namespace {

@@ -37,7 +37,7 @@ struct DotImplBody<VariantKind::CPU, CODE> {
     if (dense) {
       auto rhs1ptr = rhs1.ptr(rect);
       auto rhs2ptr = rhs2.ptr(rect);
-      for (coord_t idx = 0; idx < volume; ++idx) {
+      for (size_t idx = 0; idx < volume; ++idx) {
         const auto prod = static_cast<ACC>(rhs1ptr[idx]) * static_cast<ACC>(rhs2ptr[idx]);
         out.reduce(0, prod);
       }

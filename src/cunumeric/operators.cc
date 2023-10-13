@@ -34,7 +34,7 @@ NDArray unary_op(UnaryOpCode op_code, NDArray input)
   auto runtime = CuNumericRuntime::get_runtime();
   auto out     = runtime->create_array(input.shape(), input.type());
   out.unary_op(static_cast<int32_t>(op_code), std::move(input));
-  return std::move(out);
+  return out;
 }
 
 NDArray unary_reduction(UnaryRedCode op_code, NDArray input)
@@ -42,7 +42,7 @@ NDArray unary_reduction(UnaryRedCode op_code, NDArray input)
   auto runtime = CuNumericRuntime::get_runtime();
   auto out     = runtime->create_array({1}, input.type());
   out.unary_reduction(static_cast<int32_t>(op_code), std::move(input));
-  return std::move(out);
+  return out;
 }
 
 NDArray binary_op(BinaryOpCode op_code, NDArray rhs1, NDArray rhs2, std::optional<NDArray> out)
@@ -53,7 +53,7 @@ NDArray binary_op(BinaryOpCode op_code, NDArray rhs1, NDArray rhs2, std::optiona
     out            = runtime->create_array(out_shape, rhs1.type());
   }
   out->binary_op(static_cast<int32_t>(op_code), std::move(rhs1), std::move(rhs2));
-  return std::move(out.value());
+  return out.value();
 }
 
 NDArray abs(NDArray input) { return unary_op(UnaryOpCode::ABSOLUTE, std::move(input)); }
@@ -75,7 +75,7 @@ NDArray random(std::vector<size_t> shape)
   auto runtime = CuNumericRuntime::get_runtime();
   auto out     = runtime->create_array(std::move(shape), legate::float64());
   out.random(static_cast<int32_t>(RandGenCode::UNIFORM));
-  return std::move(out);
+  return out;
 }
 
 namespace {
@@ -121,7 +121,7 @@ NDArray full(std::vector<size_t> shape, const Scalar& value)
   auto runtime = CuNumericRuntime::get_runtime();
   auto out     = runtime->create_array(std::move(shape), value.type());
   out.fill(value, false);
-  return std::move(out);
+  return out;
 }
 
 NDArray eye(size_t n, std::optional<size_t> m, int32_t k, const legate::Type& type)
@@ -132,7 +132,7 @@ NDArray eye(size_t n, std::optional<size_t> m, int32_t k, const legate::Type& ty
   auto runtime = CuNumericRuntime::get_runtime();
   auto out     = runtime->create_array({n, m.value_or(n)}, type);
   out.eye(k);
-  return std::move(out);
+  return out;
 }
 
 NDArray bincount(NDArray x,
@@ -154,7 +154,7 @@ NDArray bincount(NDArray x,
   auto min_val =
     legate::type_dispatch(min_val_arr.type().code(), generate_int_value_fn{}, min_val_arr);
   if (min_val < 0) throw std::invalid_argument("the input array must have no negative elements");
-  if (min_length < max_val + 1) min_length = max_val + 1;
+  if (static_cast<int32_t>(min_length) < max_val + 1) min_length = max_val + 1;
 
   auto runtime = CuNumericRuntime::get_runtime();
   if (!weights.has_value()) {
@@ -188,7 +188,7 @@ NDArray trilu(NDArray rhs, int32_t k, bool lower)
   auto runtime = CuNumericRuntime::get_runtime();
   auto out     = runtime->create_array(std::move(out_shape), rhs.type());
   out.trilu(std::move(rhs), k, lower);
-  return std::move(out);
+  return out;
 }
 
 NDArray tril(NDArray rhs, int32_t k) { return trilu(rhs, k, true); }
@@ -222,7 +222,7 @@ NDArray dot(NDArray rhs1, NDArray rhs2)
 
   auto out = runtime->create_array(std::move(shape), rhs1.type());
   out.dot(std::move(rhs1), std::move(rhs2));
-  return std::move(out);
+  return out;
 }
 
 NDArray sum(NDArray input) { return unary_reduction(UnaryRedCode::SUM, std::move(input)); }
@@ -251,7 +251,7 @@ NDArray arange(std::optional<double> start,
   size_t N = ceil((stop.value() - start.value()) / step.value());
   auto out = CuNumericRuntime::get_runtime()->create_array({N}, type);
   out.arange(start.value(), stop.value(), step.value());
-  return std::move(out);
+  return out;
 }
 
 NDArray as_array(legate::LogicalStore store)

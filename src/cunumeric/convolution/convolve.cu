@@ -881,7 +881,7 @@ __host__ void direct_convolution(AccessorWO<VAL, DIM> out,
     }
     Point<DIM> l2_filter_tile;
     size_t total_l2_filters = 1;
-    if (l2_output_tile_size <= (properties.l2CacheSize / 4)) {
+    if (l2_output_tile_size <= (static_cast<size_t>(properties.l2CacheSize) / 4)) {
       for (int d = 0; d < DIM; d++) l2_filter_tile[d] = 1;
       // Compute the L2 filter tile size so that the L2 filter and the
       // corresponding L2 input tile will fit in the L2 cache

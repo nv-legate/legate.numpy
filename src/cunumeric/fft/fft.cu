@@ -130,8 +130,7 @@ __host__ static inline void cufft_over_axes_c2c(INOUT_TYPE* out,
   dim_t n[DIM];
 
   // Full volume dimensions / strides
-  const Point<DIM> zero = Point<DIM>::ZEROES();
-  const Point<DIM> one  = Point<DIM>::ONES();
+  const Point<DIM> one = Point<DIM>::ONES();
 
   Point<DIM> fft_size = inout_rect.hi - inout_rect.lo + one;
   size_t num_elements = 1;
@@ -207,7 +206,6 @@ __host__ static inline void cufft_r2c_c2r(OUTPUT_TYPE* out,
   dim_t onembed[DIM];
 
   // Full volume dimensions / strides
-  const Point<DIM> zero   = Point<DIM>::ZEROES();
   const Point<DIM> one    = Point<DIM>::ONES();
   Point<DIM> fft_size_in  = in_rect.hi - in_rect.lo + one;
   Point<DIM> fft_size_out = out_rect.hi - out_rect.lo + one;

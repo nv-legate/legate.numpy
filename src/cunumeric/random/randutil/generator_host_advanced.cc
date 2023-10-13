@@ -16,8 +16,6 @@
 
 #include "generator.h"
 
-#pragma region beta
-
 #include "generator_beta.inl"
 
 extern "C" curandStatus_t randutilGenerateBetaEx(
@@ -39,10 +37,6 @@ extern "C" curandStatus_t randutilGenerateBetaDoubleEx(
   func.b = b;
   return randutilimpl::dispatch<decltype(func), double>(gen, func, n, outputPtr);
 }
-
-#pragma endregion
-
-#pragma region FisherSnedecor
 
 #include "generator_f.inl"
 
@@ -91,10 +85,6 @@ extern "C" curandStatus_t randutilGenerateFisherSnedecorDoubleEx(
   }
 }
 
-#pragma endregion
-
-#pragma region logseries
-
 #include "generator_logseries.inl"
 
 extern "C" curandStatus_t randutilGenerateLogSeriesEx(randutilGenerator_t generator,
@@ -107,10 +97,6 @@ extern "C" curandStatus_t randutilGenerateLogSeriesEx(randutilGenerator_t genera
   func.p = p;
   return randutilimpl::dispatch<decltype(func), uint32_t>(gen, func, n, outputPtr);
 }
-
-#pragma endregion
-
-#pragma region ChiSquared
 
 #include "generator_chisquare.inl"
 
@@ -154,10 +140,6 @@ extern "C" curandStatus_t randutilGenerateChiSquareDoubleEx(
   }
 }
 
-#pragma endregion
-
-#pragma region gamma
-
 #include "generator_gamma.inl"
 
 extern "C" curandStatus_t randutilGenerateGammaEx(randutilGenerator_t generator,
@@ -186,10 +168,6 @@ extern "C" curandStatus_t randutilGenerateGammaDoubleEx(randutilGenerator_t gene
   return randutilimpl::dispatch<decltype(func), double>(gen, func, n, outputPtr);
 }
 
-#pragma endregion
-
-#pragma region standart_t
-
 #include "generator_standard_t.inl"
 
 extern "C" curandStatus_t randutilGenerateStandardTEx(randutilGenerator_t generator,
@@ -214,10 +192,6 @@ extern "C" curandStatus_t randutilGenerateStandardTDoubleEx(randutilGenerator_t 
   return randutilimpl::dispatch<decltype(func), double>(gen, func, n, outputPtr);
 }
 
-#pragma endregion
-
-#pragma region von mises
-
 #include "generator_vonmises.inl"
 
 extern "C" curandStatus_t randutilGenerateVonMisesEx(
@@ -240,10 +214,6 @@ extern "C" curandStatus_t randutilGenerateVonMisesDoubleEx(
   return randutilimpl::dispatch<decltype(func), double>(gen, func, n, outputPtr);
 }
 
-#pragma endregion
-
-#pragma region hypergeometric
-
 #include "generator_hypergeometric.inl"
 
 extern "C" curandStatus_t randutilGenerateHyperGeometricEx(randutilGenerator_t generator,
@@ -261,10 +231,6 @@ extern "C" curandStatus_t randutilGenerateHyperGeometricEx(randutilGenerator_t g
   return randutilimpl::dispatch<decltype(func), uint32_t>(gen, func, n, outputPtr);
 }
 
-#pragma endregion
-
-#pragma region zipf
-
 #include "generator_zipf.inl"
 
 extern "C" curandStatus_t randutilGenerateZipfEx(randutilGenerator_t generator,
@@ -278,10 +244,6 @@ extern "C" curandStatus_t randutilGenerateZipfEx(randutilGenerator_t generator,
   return randutilimpl::dispatch<decltype(func), uint32_t>(gen, func, n, outputPtr);
 }
 
-#pragma endregion
-
-#pragma region geometric
-
 #include "generator_geometric.inl"
 
 extern "C" curandStatus_t randutilGenerateGeometricEx(randutilGenerator_t generator,
@@ -294,10 +256,6 @@ extern "C" curandStatus_t randutilGenerateGeometricEx(randutilGenerator_t genera
   func.p = p;
   return randutilimpl::dispatch<decltype(func), uint32_t>(gen, func, n, outputPtr);
 }
-
-#pragma endregion
-
-#pragma region wald
 
 #include "generator_wald.inl"
 
@@ -321,10 +279,6 @@ extern "C" curandStatus_t randutilGenerateWaldDoubleEx(
   return randutilimpl::dispatch<decltype(func), double>(gen, func, n, outputPtr);
 }
 
-#pragma endregion
-
-#pragma region binomial
-
 #include "generator_binomial.inl"
 
 extern "C" curandStatus_t randutilGenerateBinomialEx(
@@ -337,10 +291,6 @@ extern "C" curandStatus_t randutilGenerateBinomialEx(
   return randutilimpl::dispatch<decltype(func), uint32_t>(gen, func, n, outputPtr);
 }
 
-#pragma endregion
-
-#pragma region negative binomial
-
 #include "generator_negative_binomial.inl"
 
 extern "C" curandStatus_t randutilGenerateNegativeBinomialEx(
@@ -352,5 +302,3 @@ extern "C" curandStatus_t randutilGenerateNegativeBinomialEx(
   func.p = p;
   return randutilimpl::dispatch<decltype(func), uint32_t>(gen, func, n, outputPtr);
 }
-
-#pragma endregion

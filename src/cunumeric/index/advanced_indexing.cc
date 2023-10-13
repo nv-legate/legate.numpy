@@ -41,11 +41,11 @@ struct AdvancedIndexingImplBody<VariantKind::CPU, CODE, DIM, OUT_TYPE> {
       if (index[p] == true) {
         Point<DIM> out_p;
         out_p[0] = out_idx;
-        for (size_t i = 0; i < DIM - key_dim; i++) {
+        for (int32_t i = 0; i < static_cast<int32_t>(DIM - key_dim); i++) {
           size_t j     = key_dim + i;
           out_p[i + 1] = p[j];
         }
-        for (size_t i = DIM - key_dim + 1; i < DIM; i++) out_p[i] = 0;
+        for (int32_t i = DIM - key_dim + 1; i < DIM; i++) out_p[i] = 0;
         fill_out(out[out_p], p, input[p]);
         // The logic below is based on the assumtion that
         // pitches enumerate points in C-order, but this might
@@ -81,11 +81,11 @@ struct AdvancedIndexingImplBody<VariantKind::CPU, CODE, DIM, OUT_TYPE> {
     // calculating the shape of the output region for this sub-task
     Point<DIM> extents;
     extents[0] = size;
-    for (size_t i = 0; i < DIM - key_dim; i++) {
+    for (int32_t i = 0; i < static_cast<int32_t>(DIM - key_dim); i++) {
       size_t j       = key_dim + i;
       extents[i + 1] = 1 + rect.hi[j] - rect.lo[j];
     }
-    for (size_t i = DIM - key_dim + 1; i < DIM; i++) extents[i] = 1;
+    for (int32_t i = DIM - key_dim + 1; i < DIM; i++) extents[i] = 1;
 
     auto out = out_arr.create_output_buffer<OUT_TYPE, DIM>(extents, true);
     if (size > 0) compute_output(out, input, index, pitches, rect, volume, key_dim, skip_size);

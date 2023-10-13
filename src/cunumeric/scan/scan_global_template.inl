@@ -14,7 +14,7 @@
  *
  */
 
-#include "cunumeric/scan/scan_global_util.h"
+#include "cunumeric/scan/scan_util.h"
 #include "cunumeric/pitches.h"
 
 namespace cunumeric {
@@ -38,7 +38,6 @@ struct ScanGlobalImpl {
     Pitches<DIM - 1> out_pitches;
     size_t volume = out_pitches.flatten(out_rect);
     Pitches<DIM - 1> sum_vals_pitches;
-    size_t sum_vals_volume = sum_vals_pitches.flatten(sum_vals_rect);
 
     if (volume == 0) return;
 

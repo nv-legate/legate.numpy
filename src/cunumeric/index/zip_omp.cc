@@ -73,7 +73,7 @@ struct ZipImplBody<VariantKind::OMP, DIM, N> {
       for (size_t idx = 0; idx < volume; ++idx) {
         auto p = pitches.unflatten(idx, rect.lo);
         Point<N> new_point;
-        for (size_t i = 0; i < start_index; i++) { new_point[i] = p[i]; }
+        for (int64_t i = 0; i < start_index; i++) { new_point[i] = p[i]; }
         for (size_t i = 0; i < index_arrays.size(); i++) {
           auto pair                  = compute_idx_omp(index_arrays[i][p], shape[start_index + i]);
           new_point[start_index + i] = pair.first;

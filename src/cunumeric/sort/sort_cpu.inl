@@ -100,9 +100,9 @@ void rebalance_data(SegmentMergePiece<VAL>& merge_buffer,
     {
       if (num_segments_l > 1) {
         auto* p_segments = merge_buffer.segments.ptr(0);
-        int64_t position = 0;
-        int64_t count    = 0;
-        for (int64_t segment = 0; segment < num_segments_l; ++segment) {
+        size_t position  = 0;
+        size_t count     = 0;
+        for (size_t segment = 0; segment < num_segments_l; ++segment) {
           while (position < merge_buffer.size && p_segments[position] == segment) {
             position++;
             count++;
@@ -163,8 +163,8 @@ void rebalance_data(SegmentMergePiece<VAL>& merge_buffer,
     auto segment_diff_2d = create_buffer<int64_t>(num_segments_l * num_sort_ranks);
     {
       int pos = 0;
-      for (int64_t segment = 0; segment < num_segments_l; ++segment) {
-        for (int64_t sort_rank = 0; sort_rank < num_sort_ranks; ++sort_rank) {
+      for (size_t segment = 0; segment < num_segments_l; ++segment) {
+        for (size_t sort_rank = 0; sort_rank < num_sort_ranks; ++sort_rank) {
           segment_diff_2d[pos++] = segment_diff_buffers[sort_rank * num_segments_l + segment];
         }
       }
@@ -208,7 +208,7 @@ void rebalance_data(SegmentMergePiece<VAL>& merge_buffer,
                            segment_diff_2d_ptr,
                            segment_diff_2d_ptr + num_segments_l * num_sort_ranks,
                            segment_diff_2d_scan_ptr);
-    for (int64_t segment = 0; segment < num_segments_l; ++segment) {
+    for (size_t segment = 0; segment < num_segments_l; ++segment) {
       send_right[segment] = segment_diff_2d_scan_ptr[segment * num_sort_ranks + my_sort_rank];
     }
 
@@ -228,7 +228,7 @@ void rebalance_data(SegmentMergePiece<VAL>& merge_buffer,
     size_t recv_left_size  = 0;
     size_t send_right_size = 0;
     size_t recv_right_size = 0;
-    for (int64_t segment = 0; segment < num_segments_l; ++segment) {
+    for (size_t segment = 0; segment < num_segments_l; ++segment) {
       if (send_left[segment] > 0)
         send_left_size += send_left[segment];
       else
@@ -485,7 +485,7 @@ void sample_sort_nd(SortPiece<legate_type_of<CODE>> local_sorted,
     int32_t worker_count =
       std::accumulate(p_worker_count, p_worker_count + num_ranks, 0, std::plus<int32_t>());
 
-    if (worker_count < num_ranks) {
+    if (static_cast<size_t>(worker_count) < num_ranks) {
       const size_t number_sort_groups = num_ranks / num_sort_ranks;
       num_sort_ranks                  = worker_count / number_sort_groups;
 
@@ -602,12 +602,6 @@ void sample_sort_nd(SortPiece<legate_type_of<CODE>> local_sorted,
       num_usable_samples_per_segment--;
   }
 
-  SegmentSample<VAL> init_sample;
-  init_sample.rank = -1;
-  auto lower_bound = std::lower_bound(
-    p_samples, p_samples + num_samples_per_segment_g, init_sample, SegmentSampleComparator<VAL>());
-  int32_t num_usable_samples = lower_bound - p_samples;
-
   // segment_blocks[r][segment]->global position in data for segment and r
   // perform blocksize wide scan on size_send[r][block*blocksize] within warp
   auto segment_blocks = create_buffer<int32_t>(num_sort_ranks * num_segments_l);
@@ -618,22 +612,22 @@ void sample_sort_nd(SortPiece<legate_type_of<CODE>> local_sorted,
   std::fill(p_size_send, p_size_send + num_sort_ranks * (num_segments_l + 1), 0);
 
   {
-    for (int32_t segment = 0; segment < num_segments_l; ++segment) {
+    for (size_t segment = 0; segment < num_segments_l; ++segment) {
       int32_t start_position = segment_size_l * segment;
-      for (int32_t sort_rank = 0; sort_rank < num_sort_ranks; ++sort_rank) {
+      for (size_t sort_rank = 0; sort_rank < num_sort_ranks; ++sort_rank) {
         int32_t end_position = (segment + 1) * segment_size_l;
         if (sort_rank < num_sort_ranks - 1) {
           // actually search for split position in data
           const int32_t index =
             (sort_rank + 1) * num_usable_samples_per_segment / (num_sort_ranks)-1;
           auto& splitter = p_samples[segment * num_samples_per_segment_g + index];
-          if (my_sort_rank > splitter.rank) {
+          if (my_sort_rank > static_cast<size_t>(splitter.rank)) {
             // position of the last position with smaller value than splitter.value + 1
             end_position =
               std::lower_bound(
                 local_values + start_position, local_values + end_position, splitter.value) -
               local_values;
-          } else if (my_sort_rank < splitter.rank) {
+          } else if (my_sort_rank < static_cast<size_t>(splitter.rank)) {
             // position of the first position with value larger than splitter.value
             end_position =
               std::upper_bound(
@@ -663,7 +657,7 @@ void sample_sort_nd(SortPiece<legate_type_of<CODE>> local_sorted,
 
 #ifdef DEBUG_CUNUMERIC
   {
-    int32_t total_send = 0;
+    size_t total_send = 0;
     for (size_t r = 0; r < num_sort_ranks; ++r) {
       total_send += size_send[r * (num_segments_l + 1) + num_segments_l];
     }
@@ -711,15 +705,15 @@ void sample_sort_nd(SortPiece<legate_type_of<CODE>> local_sorted,
 
   auto positions = create_buffer<int32_t>(num_sort_ranks);
   positions[0]   = 0;
-  for (int32_t sort_rank = 1; sort_rank < num_sort_ranks; ++sort_rank) {
+  for (size_t sort_rank = 1; sort_rank < num_sort_ranks; ++sort_rank) {
     positions[sort_rank] =
       positions[sort_rank - 1] + size_send[(sort_rank - 1) * (num_segments_l + 1) + num_segments_l];
   }
 
   // fill send buffers
   {
-    for (int32_t segment = 0; segment < num_segments_l; ++segment) {
-      for (int32_t sort_rank = 0; sort_rank < num_sort_ranks; ++sort_rank) {
+    for (size_t segment = 0; segment < num_segments_l; ++segment) {
+      for (size_t sort_rank = 0; sort_rank < num_sort_ranks; ++sort_rank) {
         int32_t start_position = segment_blocks[sort_rank * num_segments_l + segment];
         int32_t size           = size_send[sort_rank * (num_segments_l + 1) + segment];
         std::memcpy(val_send_buffer.ptr(0) + positions[sort_rank],
@@ -753,8 +747,8 @@ void sample_sort_nd(SortPiece<legate_type_of<CODE>> local_sorted,
       auto* p_segments = merge_buffer.segments.ptr(0);
       // initialize segment information
       int32_t start_pos = 0;
-      for (int32_t sort_rank = 0; sort_rank < num_sort_ranks; ++sort_rank) {
-        for (int32_t segment = 0; segment < num_segments_l; ++segment) {
+      for (size_t sort_rank = 0; sort_rank < num_sort_ranks; ++sort_rank) {
+        for (size_t segment = 0; segment < num_segments_l; ++segment) {
           int32_t size = size_recv[sort_rank * (num_segments_l + 1) + segment];
           std::fill(p_segments + start_pos, p_segments + start_pos + size, segment);
           start_pos += size;
@@ -986,7 +980,7 @@ struct SortImplBodyCpu {
         assert(is_index_space || is_unbound_1d_storage);
         std::vector<size_t> sort_ranks(num_sort_ranks);
         size_t rank_group = local_rank / num_sort_ranks;
-        for (int r = 0; r < num_sort_ranks; ++r) sort_ranks[r] = rank_group * num_sort_ranks + r;
+        for (size_t r = 0; r < num_sort_ranks; ++r) sort_ranks[r] = rank_group * num_sort_ranks + r;
 
         void* output_ptr = nullptr;
         // in case the storage *is NOT* unbound -- we provide a target pointer

@@ -84,9 +84,8 @@ struct ConvolveImplBody<VariantKind::CPU, CODE, DIM> {
                   const Rect<DIM>& subrect,
                   const Rect<DIM>& filter_rect) const
   {
-    const Point<DIM> zero = Point<DIM>::ZEROES();
-    const Point<DIM> one  = Point<DIM>::ONES();
-    Point<DIM> extents    = filter_rect.hi - filter_rect.lo + one;
+    const Point<DIM> one = Point<DIM>::ONES();
+    Point<DIM> extents   = filter_rect.hi - filter_rect.lo + one;
     Point<DIM> centers;
     for (int d = 0; d < DIM; d++) centers[d] = extents[d] / 2;
 

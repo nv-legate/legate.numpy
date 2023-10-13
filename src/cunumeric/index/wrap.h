@@ -44,12 +44,12 @@ class WrapTask : public CuNumericTask<WrapTask> {
 #endif
 };
 
-__CUDA_HD__ static int64_t compute_idx(const int64_t i, const int64_t volume, const bool&)
+__CUDA_HD__ inline int64_t compute_idx(const int64_t i, const int64_t volume, const bool&)
 {
   return i % volume;
 }
 
-__CUDA_HD__ static int64_t compute_idx(const int64_t i,
+__CUDA_HD__ inline int64_t compute_idx(const int64_t i,
                                        const int64_t volume,
                                        const legate::AccessorRO<int64_t, 1>& indices)
 {
@@ -58,7 +58,7 @@ __CUDA_HD__ static int64_t compute_idx(const int64_t i,
   return index;
 }
 
-static void check_idx(const int64_t i,
+inline void check_idx(const int64_t i,
                       const int64_t volume,
                       const legate::AccessorRO<int64_t, 1>& indices)
 {
@@ -67,12 +67,12 @@ static void check_idx(const int64_t i,
   if (index < 0 || index >= volume)
     throw legate::TaskException("index is out of bounds in index array");
 }
-static void check_idx(const int64_t i, const int64_t volume, const bool&)
+inline void check_idx(const int64_t i, const int64_t volume, const bool&)
 {
   // don't do anything when wrapping indices
 }
 
-static bool check_idx_omp(const int64_t i,
+inline bool check_idx_omp(const int64_t i,
                           const int64_t volume,
                           const legate::AccessorRO<int64_t, 1>& indices)
 {
@@ -80,6 +80,6 @@ static bool check_idx_omp(const int64_t i,
   int64_t index = idx < 0 ? idx + volume : idx;
   return (index < 0 || index >= volume);
 }
-static bool check_idx_omp(const int64_t i, const int64_t volume, const bool&) { return false; }
+inline bool check_idx_omp(const int64_t i, const int64_t volume, const bool&) { return false; }
 
 }  // namespace cunumeric

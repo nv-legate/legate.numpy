@@ -84,7 +84,7 @@ std::vector<StoreMapping> CuNumericMapper::store_mappings(
       auto& input_mapping = mappings.back();
       for (uint32_t idx = 2; idx < inputs.size(); ++idx)
         input_mapping.add_store(inputs[idx].data());
-      return std::move(mappings);
+      return mappings;
     }
     case CUNUMERIC_FFT: {
       std::vector<StoreMapping> mappings;
@@ -93,7 +93,7 @@ std::vector<StoreMapping> CuNumericMapper::store_mappings(
       mappings.push_back(StoreMapping::default_mapping(inputs[0].data(), options.front()));
       mappings.push_back(
         StoreMapping::default_mapping(outputs[0].data(), options.front(), true /*exact*/));
-      return std::move(mappings);
+      return mappings;
     }
     case CUNUMERIC_TRANSPOSE_COPY_2D: {
       auto logical = task.scalars()[0].value<bool>();
@@ -103,7 +103,7 @@ std::vector<StoreMapping> CuNumericMapper::store_mappings(
         mappings.push_back(
           StoreMapping::default_mapping(outputs[0].data(), options.front(), true /*exact*/));
         mappings.back().policy().ordering.set_fortran_order();
-        return std::move(mappings);
+        return mappings;
       } else
         return {};
     }
@@ -123,7 +123,7 @@ std::vector<StoreMapping> CuNumericMapper::store_mappings(
         mappings.push_back(
           StoreMapping::default_mapping(reduction.data(), options.front(), true /*exact*/));
       }
-      return std::move(mappings);
+      return mappings;
     }
     case CUNUMERIC_POTRF:
     case CUNUMERIC_TRSM:
@@ -143,7 +143,7 @@ std::vector<StoreMapping> CuNumericMapper::store_mappings(
           StoreMapping::default_mapping(output.data(), options.front(), true /*exact*/));
         mappings.back().policy().ordering.set_fortran_order();
       }
-      return std::move(mappings);
+      return mappings;
     }
     case CUNUMERIC_TRILU: {
       if (task.scalars().size() == 2) return {};
@@ -154,14 +154,14 @@ std::vector<StoreMapping> CuNumericMapper::store_mappings(
       mappings.push_back(
         StoreMapping::default_mapping(input.data(), options.front(), true /*exact*/));
       mappings.back().policy().ordering.set_fortran_order();
-      return std::move(mappings);
+      return mappings;
     }
     case CUNUMERIC_SEARCHSORTED: {
       std::vector<StoreMapping> mappings;
       auto inputs = task.inputs();
       mappings.push_back(
         StoreMapping::default_mapping(inputs[0].data(), options.front(), true /*exact*/));
-      return std::move(mappings);
+      return mappings;
     }
     case CUNUMERIC_SORT: {
       std::vector<StoreMapping> mappings;
@@ -175,7 +175,7 @@ std::vector<StoreMapping> CuNumericMapper::store_mappings(
         mappings.push_back(
           StoreMapping::default_mapping(output.data(), options.front(), true /*exact*/));
       }
-      return std::move(mappings);
+      return mappings;
     }
     case CUNUMERIC_SCAN_LOCAL: {
       std::vector<StoreMapping> mappings;
@@ -189,7 +189,7 @@ std::vector<StoreMapping> CuNumericMapper::store_mappings(
         mappings.push_back(
           StoreMapping::default_mapping(output.data(), options.front(), true /*exact*/));
       }
-      return std::move(mappings);
+      return mappings;
     }
     case CUNUMERIC_SCAN_GLOBAL: {
       std::vector<StoreMapping> mappings;
@@ -203,7 +203,7 @@ std::vector<StoreMapping> CuNumericMapper::store_mappings(
         mappings.push_back(
           StoreMapping::default_mapping(output.data(), options.front(), true /*exact*/));
       }
-      return std::move(mappings);
+      return mappings;
     }
     case CUNUMERIC_BITGENERATOR: {
       std::vector<StoreMapping> mappings;
@@ -217,7 +217,7 @@ std::vector<StoreMapping> CuNumericMapper::store_mappings(
         mappings.push_back(
           StoreMapping::default_mapping(output.data(), options.front(), true /*exact*/));
       }
-      return std::move(mappings);
+      return mappings;
     }
     default: {
       return {};

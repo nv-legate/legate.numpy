@@ -54,7 +54,7 @@ size_t stride_for_blas(size_t m, size_t n, size_t x_stride, size_t y_stride, boo
     // the matrix represents the transpose of a row-major nxm matrix. We then tell the BLAS library
     // that we are passing a row-major nxm matrix, and ask for the matrix to be transposed.
 #ifdef DEBUG_CUNUMERIC
-    assert(x_stride == 1 && y_stride > 1 || y_stride == 1 && x_stride > 1);
+    assert((x_stride == 1 && y_stride > 1) || (y_stride == 1 && x_stride > 1));
 #endif
     blas_stride = std::max(x_stride, y_stride);
     transpose   = x_stride == 1;

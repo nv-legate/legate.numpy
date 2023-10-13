@@ -16,8 +16,6 @@
 
 #include "generator.h"
 
-#pragma region exponential
-
 #include "generator_exponential.inl"
 
 extern "C" curandStatus_t randutilGenerateExponentialEx(randutilGenerator_t generator,
@@ -42,10 +40,6 @@ extern "C" curandStatus_t randutilGenerateExponentialDoubleEx(randutilGenerator_
   return randutilimpl::dispatch<decltype(func), double>(gen, func, n, outputPtr);
 }
 
-#pragma endregion
-
-#pragma region gumbel
-
 #include "generator_gumbel.inl"
 
 extern "C" curandStatus_t randutilGenerateGumbelEx(
@@ -67,10 +61,6 @@ extern "C" curandStatus_t randutilGenerateGumbelDoubleEx(
   func.beta = beta;
   return randutilimpl::dispatch<decltype(func), double>(gen, func, n, outputPtr);
 }
-
-#pragma endregion
-
-#pragma region laplace
 
 #include "generator_laplace.inl"
 
@@ -94,10 +84,6 @@ extern "C" curandStatus_t randutilGenerateLaplaceDoubleEx(
   return randutilimpl::dispatch<decltype(func), double>(gen, func, n, outputPtr);
 }
 
-#pragma endregion
-
-#pragma region logistic
-
 #include "generator_logistic.inl"
 
 extern "C" curandStatus_t randutilGenerateLogisticEx(
@@ -120,10 +106,6 @@ extern "C" curandStatus_t randutilGenerateLogisticDoubleEx(
   return randutilimpl::dispatch<decltype(func), double>(gen, func, n, outputPtr);
 }
 
-#pragma endregion
-
-#pragma region pareto
-
 #include "generator_pareto.inl"
 
 extern "C" curandStatus_t randutilGenerateParetoEx(
@@ -145,10 +127,6 @@ extern "C" curandStatus_t randutilGenerateParetoDoubleEx(
   func.invalpha = 1.0 / alpha;
   return randutilimpl::dispatch<decltype(func), double>(gen, func, n, outputPtr);
 }
-
-#pragma endregion
-
-#pragma region power
 
 #include "generator_power.inl"
 
@@ -174,10 +152,6 @@ extern "C" curandStatus_t randutilGeneratePowerDoubleEx(randutilGenerator_t gene
   return randutilimpl::dispatch<decltype(func), double>(gen, func, n, outputPtr);
 }
 
-#pragma endregion
-
-#pragma region rayleigh
-
 #include "generator_rayleigh.inl"
 
 extern "C" curandStatus_t randutilGenerateRayleighEx(randutilGenerator_t generator,
@@ -202,10 +176,6 @@ extern "C" curandStatus_t randutilGenerateRayleighDoubleEx(randutilGenerator_t g
   return randutilimpl::dispatch<decltype(func), double>(gen, func, n, outputPtr);
 }
 
-#pragma endregion
-
-#pragma region cauchy
-
 #include "generator_cauchy.inl"
 
 extern "C" curandStatus_t randutilGenerateCauchyEx(
@@ -227,10 +197,6 @@ extern "C" curandStatus_t randutilGenerateCauchyDoubleEx(
   func.gamma = gamma;
   return randutilimpl::dispatch<decltype(func), double>(gen, func, n, outputPtr);
 }
-
-#pragma endregion
-
-#pragma region triangular
 
 #include "generator_triangular.inl"
 
@@ -256,10 +222,6 @@ extern "C" curandStatus_t randutilGenerateTriangularDoubleEx(
   return randutilimpl::dispatch<decltype(func), double>(gen, func, n, outputPtr);
 }
 
-#pragma endregion
-
-#pragma region weibull
-
 #include "generator_weibull.inl"
 
 extern "C" curandStatus_t randutilGenerateWeibullEx(
@@ -281,5 +243,3 @@ extern "C" curandStatus_t randutilGenerateWeibullDoubleEx(
   func.invk   = 1.0 / k;
   return randutilimpl::dispatch<decltype(func), double>(gen, func, n, outputPtr);
 }
-
-#pragma endregion

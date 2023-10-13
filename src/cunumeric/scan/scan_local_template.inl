@@ -14,7 +14,7 @@
  *
  */
 
-#include "cunumeric/scan/scan_local_util.h"
+#include "cunumeric/scan/scan_util.h"
 #include "cunumeric/pitches.h"
 
 namespace cunumeric {

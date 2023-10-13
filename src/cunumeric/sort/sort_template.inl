@@ -44,8 +44,6 @@ struct SortImpl {
   template <Type::Code CODE, int32_t DIM>
   void operator()(SortArgs& args, std::vector<comm::Communicator> comms) const
   {
-    using VAL = legate_type_of<CODE>;
-
     auto rect = args.input.shape<DIM>();
 
     Pitches<DIM - 1> pitches;

@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "cunumeric/scan/scan_global_util.h"
+#include "cunumeric/scan/scan_util.h"
 #include "cunumeric/cunumeric_task.h"
 
 namespace cunumeric {

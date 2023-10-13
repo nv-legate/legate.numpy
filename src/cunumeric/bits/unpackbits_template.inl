@@ -64,7 +64,6 @@ static void unpackbits_template(TaskContext& context)
   auto axis            = scalars[0].value<uint32_t>();
   auto bitorder        = scalars[1].value<Bitorder>();
 
-  auto code = input.code();
   switch (bitorder) {
     case Bitorder::BIG: {
       dim_dispatch(input.dim(), UnpackbitsImpl<KIND, Bitorder::BIG>{}, output, input, axis);

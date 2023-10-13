@@ -1112,6 +1112,16 @@ struct UnaryOp<UnaryOpCode::SQUARE, CODE> {
   constexpr T operator()(const T& x) const { return x * x; }
 };
 
+template <>
+struct UnaryOp<UnaryOpCode::SQUARE, legate::Type::Code::BOOL> {
+  static constexpr bool valid = true;
+  using T                     = bool;
+
+  UnaryOp(const std::vector<legate::Store>& args) {}
+
+  constexpr bool operator()(const bool& x) const { return x && x; }
+};
+
 template <legate::Type::Code CODE>
 struct UnaryOp<UnaryOpCode::SQRT, CODE> {
   static constexpr bool valid = true;

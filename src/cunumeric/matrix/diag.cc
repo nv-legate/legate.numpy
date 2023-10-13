@@ -35,7 +35,7 @@ struct DiagImplBody<VariantKind::CPU, CODE, DIM, true> {
   {
     size_t skip_size = 1;
 
-    for (int i = 0; i < naxes; i++) {
+    for (size_t i = 0; i < naxes; i++) {
       auto diff = 1 + m_shape.hi[DIM - i - 1] - m_shape.lo[DIM - i - 1];
       if (diff != 0) skip_size *= diff;
     }

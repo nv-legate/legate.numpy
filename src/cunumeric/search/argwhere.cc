@@ -49,7 +49,7 @@ struct ArgWhereImplBody<VariantKind::CPU, CODE, DIM> {
       }
     }
 
-    assert(size == out_idx);
+    assert(static_cast<size_t>(size) == out_idx);
   }
 };
 

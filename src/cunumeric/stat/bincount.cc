@@ -30,7 +30,7 @@ struct BincountImplBody<VariantKind::CPU, CODE> {
                   const Rect<1>& rect,
                   const Rect<1>& lhs_rect) const
   {
-    for (size_t idx = rect.lo[0]; idx <= rect.hi[0]; ++idx) {
+    for (int64_t idx = rect.lo[0]; idx <= rect.hi[0]; ++idx) {
       auto value = rhs[idx];
       assert(lhs_rect.contains(value));
       lhs.reduce(value, 1);
@@ -43,7 +43,7 @@ struct BincountImplBody<VariantKind::CPU, CODE> {
                   const Rect<1>& rect,
                   const Rect<1>& lhs_rect) const
   {
-    for (size_t idx = rect.lo[0]; idx <= rect.hi[0]; ++idx) {
+    for (int64_t idx = rect.lo[0]; idx <= rect.hi[0]; ++idx) {
       auto value = rhs[idx];
       assert(lhs_rect.contains(value));
       lhs.reduce(value, weights[idx]);

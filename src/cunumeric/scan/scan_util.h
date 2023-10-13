@@ -40,19 +40,51 @@ constexpr decltype(auto) op_dispatch(ScanCode op_code, Functor f, Fnargs&&... ar
   return f.template operator()<ScanCode::SUM>(std::forward<Fnargs>(args)...);
 }
 
+template <typename Functor, typename... Fnargs>
+constexpr decltype(auto) op_dispatch(ScanCode op_code,
+                                     bool nan_to_identity,
+                                     Functor f,
+                                     Fnargs&&... args)
+{
+  switch (op_code) {
+    case ScanCode::PROD:
+      if (nan_to_identity) {
+        return f.template operator()<ScanCode::PROD, true>(std::forward<Fnargs>(args)...);
+      } else {
+        return f.template operator()<ScanCode::PROD, false>(std::forward<Fnargs>(args)...);
+      }
+    case ScanCode::SUM:
+      if (nan_to_identity) {
+        return f.template operator()<ScanCode::SUM, true>(std::forward<Fnargs>(args)...);
+      } else {
+        return f.template operator()<ScanCode::SUM, false>(std::forward<Fnargs>(args)...);
+      }
+    default: break;
+  }
+  assert(false);
+  return f.template operator()<ScanCode::SUM, false>(std::forward<Fnargs>(args)...);
+}
+
 template <ScanCode OP_CODE, legate::Type::Code CODE>
-struct ScanOp {};
+struct ScanOp;
 
 template <legate::Type::Code CODE>
 struct ScanOp<ScanCode::SUM, CODE> : thrust::plus<legate::legate_type_of<CODE>> {
+  using T                           = legate::legate_type_of<CODE>;
   static constexpr int nan_identity = 0;
-  ScanOp() {}
 };
 
 template <legate::Type::Code CODE>
 struct ScanOp<ScanCode::PROD, CODE> : thrust::multiplies<legate::legate_type_of<CODE>> {
+  using T                           = legate::legate_type_of<CODE>;
   static constexpr int nan_identity = 1;
-  ScanOp() {}
+};
+
+template <>
+struct ScanOp<ScanCode::PROD, legate::Type::Code::BOOL> {
+  using T                            = bool;
+  static constexpr bool nan_identity = true;
+  constexpr T operator()(const bool& lhs, const bool& rhs) const { return lhs && rhs; }
 };
 
 }  // namespace cunumeric

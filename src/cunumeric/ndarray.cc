@@ -61,7 +61,7 @@ static std::vector<int64_t> compute_strides(const std::vector<size_t>& shape)
       stride *= shape[dim];
     }
   }
-  return std::move(strides);
+  return strides;
 }
 
 NDArray NDArray::operator+(const NDArray& other) const { return add(*this, other); }
@@ -412,7 +412,7 @@ std::vector<NDArray> NDArray::nonzero()
 
   runtime->submit(std::move(task));
 
-  return std::move(outputs);
+  return outputs;
 }
 
 NDArray NDArray::unique()
@@ -463,7 +463,7 @@ NDArray NDArray::as_type(const legate::Type& type)
 
   auto out = runtime->create_array(shape(), type);
 
-  if (size() == 0) return std::move(out);
+  if (size() == 0) return out;
 
   assert(store_.type() != out.store_.type());
 
@@ -477,7 +477,7 @@ NDArray NDArray::as_type(const legate::Type& type)
 
   runtime->submit(std::move(task));
 
-  return std::move(out);
+  return out;
 }
 
 void NDArray::create_window(int32_t op_code, int64_t M, std::vector<double> args)
@@ -543,10 +543,10 @@ legate::LogicalStore NDArray::broadcast(const std::vector<size_t>& shape,
     }
 
 #ifdef DEBUG_CUNUMERIC
-  assert(result.dim() == shape.size());
+  assert(static_cast<size_t>(result.dim()) == shape.size());
 #endif
 
-  return std::move(result);
+  return result;
 }
 
 legate::LogicalStore NDArray::broadcast(NDArray rhs1, NDArray rhs2)

@@ -39,7 +39,7 @@ struct ChooseImplBody<VariantKind::OMP, CODE, DIM> {
 #pragma omp parallel for schedule(static)
       for (size_t idx = 0; idx < volume; ++idx) {
 #ifdef DEBUG_CUNUMERIC
-        assert(indexptr[idx] < choices.size());
+        assert(indexptr[idx] < static_cast<int64_t>(choices.size()));
 #endif
         auto chptr  = choices[indexptr[idx]].ptr(rect);
         outptr[idx] = chptr[idx];

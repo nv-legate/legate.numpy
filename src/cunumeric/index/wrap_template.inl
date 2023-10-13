@@ -32,7 +32,6 @@ struct WrapImpl {
   template <int DIM>
   void operator()(WrapArgs& args) const
   {
-    using VAL     = Point<DIM>;
     auto rect_out = args.out.shape<1>();  // output array is always 1D
     auto out      = args.out.write_accessor<Point<DIM>, 1>(rect_out);
 
@@ -40,7 +39,7 @@ struct WrapImpl {
     size_t volume_out = pitches_out.flatten(rect_out);
     if (volume_out == 0) return;
 
-#ifndef LEGATE_BOUNDS_CHECKS
+#if LegateDefined(LEGATE_BOUNDS_CHECKS)
     bool dense = out.accessor.is_dense_row_major(rect_out);
 #else
     bool dense = false;

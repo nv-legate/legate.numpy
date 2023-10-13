@@ -587,7 +587,7 @@ SegmentMergePiece<legate_type_of<CODE>> merge_all_buffers(
       create_buffer<size_t>(num_sort_ranks, legate::Memory::Z_COPY_MEM);
 
     // loop comparably small -> no init kernel
-    for (int i = 0; i < num_sort_ranks; ++i) {
+    for (size_t i = 0; i < num_sort_ranks; ++i) {
       target_offsets[i] = merged_size;
       merged_size += merge_buffers[i].size;
     }
@@ -628,7 +628,7 @@ SegmentMergePiece<legate_type_of<CODE>> merge_all_buffers(
       target_offsets.destroy();
 
       // destroy buffers
-      for (int i = 0; i < num_sort_ranks; ++i) {
+      for (size_t i = 0; i < num_sort_ranks; ++i) {
         SegmentMergePiece<VAL> piece = merge_buffers[i];
         piece.values.destroy();
         if (argsort) { piece.indices.destroy(); }
@@ -729,7 +729,7 @@ SegmentMergePiece<legate_type_of<CODE>> merge_all_buffers(
       }
 
       // destroy buffers only after each sweep
-      for (int i = 0; i < destroy_queue.size(); ++i) {
+      for (size_t i = 0; i < destroy_queue.size(); ++i) {
         SegmentMergePiece<VAL> piece = destroy_queue[i];
         piece.values.destroy();
         if (segmented) { piece.segments.destroy(); }
@@ -1222,7 +1222,7 @@ void sample_sort_nccl_nd(
   // a full sort group being empty, this should not affect local sort rank size.
   {
     auto worker_count_d = create_buffer<int32_t>(1, legate::Memory::GPU_FB_MEM);
-    int worker_count    = (segment_size_l > 0 ? 1 : 0);
+    size_t worker_count = (segment_size_l > 0 ? 1 : 0);
     CHECK_CUDA(cudaMemcpyAsync(
       worker_count_d.ptr(0), &worker_count, sizeof(int32_t), cudaMemcpyHostToDevice, stream));
     CHECK_NCCL(ncclAllReduce(
@@ -1758,7 +1758,7 @@ struct SortImplBody<VariantKind::GPU, CODE, DIM> {
         assert(is_index_space || is_unbound_1d_storage);
         std::vector<size_t> sort_ranks(num_sort_ranks);
         size_t rank_group = local_rank / num_sort_ranks;
-        for (int r = 0; r < num_sort_ranks; ++r) sort_ranks[r] = rank_group * num_sort_ranks + r;
+        for (size_t r = 0; r < num_sort_ranks; ++r) sort_ranks[r] = rank_group * num_sort_ranks + r;
 
         void* output_ptr = nullptr;
         // in case the storage *is NOT* unbound -- we provide a target pointer

@@ -43,13 +43,13 @@ struct BincountImplBody<VariantKind::OMP, CODE> {
       auto tid                         = omp_get_thread_num();
       std::vector<int64_t>& local_bins = all_local_bins[tid];
 #pragma omp for schedule(static)
-      for (size_t idx = rect.lo[0]; idx <= rect.hi[0]; ++idx) {
+      for (int64_t idx = rect.lo[0]; idx <= rect.hi[0]; ++idx) {
         auto value = rhs[idx];
         assert(lhs_rect.contains(value));
         SumReduction<int64_t>::fold<true>(local_bins[value], 1);
       }
     }
-    return std::move(all_local_bins);
+    return all_local_bins;
   }
 
   std::vector<std::vector<double>> _bincount(const AccessorRO<VAL, 1>& rhs,
@@ -69,13 +69,13 @@ struct BincountImplBody<VariantKind::OMP, CODE> {
       auto tid                        = omp_get_thread_num();
       std::vector<double>& local_bins = all_local_bins[tid];
 #pragma omp for schedule(static)
-      for (size_t idx = rect.lo[0]; idx <= rect.hi[0]; ++idx) {
+      for (int64_t idx = rect.lo[0]; idx <= rect.hi[0]; ++idx) {
         auto value = rhs[idx];
         assert(lhs_rect.contains(value));
         SumReduction<double>::fold<true>(local_bins[value], weights[idx]);
       }
     }
-    return std::move(all_local_bins);
+    return all_local_bins;
   }
 
   void operator()(AccessorRD<SumReduction<int64_t>, true, 1> lhs,

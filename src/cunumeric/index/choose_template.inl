@@ -43,7 +43,7 @@ struct ChooseImpl {
     auto index_rect = args.inputs[0].shape<DIM>();
     auto index_arr  = args.inputs[0].read_accessor<int64_t, DIM>(index_rect);
 
-#ifndef LEGATE_BOUNDS_CHECKS
+#if LegateDefined(LEGATE_BOUNDS_CHECKS)
     // Check to see if this is dense or not
     bool dense =
       index_arr.accessor.is_dense_row_major(out_rect) && out.accessor.is_dense_row_major(out_rect);
@@ -52,7 +52,7 @@ struct ChooseImpl {
     bool dense = false;
 #endif
     std::vector<AccessorRO<VAL, DIM>> choices;
-    for (int i = 1; i < args.inputs.size(); i++) {
+    for (uint32_t i = 1; i < args.inputs.size(); i++) {
       auto rect_c = args.inputs[i].shape<DIM>();
       choices.push_back(args.inputs[i].read_accessor<VAL, DIM>(rect_c));
       dense = dense && choices[i - 1].accessor.is_dense_row_major(out_rect);

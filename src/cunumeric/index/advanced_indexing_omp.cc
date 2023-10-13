@@ -39,7 +39,7 @@ struct AdvancedIndexingImplBody<VariantKind::OMP, CODE, DIM, OUT_TYPE> {
                                 const size_t max_threads) const
   {
     ThreadLocalStorage<int64_t> sizes(max_threads);
-    for (auto idx = 0; idx < max_threads; ++idx) sizes[idx] = 0;
+    for (size_t idx = 0; idx < max_threads; ++idx) sizes[idx] = 0;
 #pragma omp parallel
     {
       const int tid = omp_get_thread_num();
@@ -50,7 +50,7 @@ struct AdvancedIndexingImplBody<VariantKind::OMP, CODE, DIM, OUT_TYPE> {
       }
     }  // end of parallel
     size_t size = 0;
-    for (auto idx = 0; idx < max_threads; ++idx) {
+    for (size_t idx = 0; idx < max_threads; ++idx) {
       offsets[idx] = size;
       size += sizes[idx];
     }
@@ -80,7 +80,7 @@ struct AdvancedIndexingImplBody<VariantKind::OMP, CODE, DIM, OUT_TYPE> {
     // calculating the shape of the output region for this sub-task
     Point<DIM> extents;
     extents[0] = size;
-    for (size_t i = 0; i < DIM - key_dim; i++) {
+    for (int32_t i = 0; i < DIM - key_dim; i++) {
       size_t j       = key_dim + i;
       extents[i + 1] = 1 + rect.hi[j] - rect.lo[j];
     }
@@ -98,11 +98,11 @@ struct AdvancedIndexingImplBody<VariantKind::OMP, CODE, DIM, OUT_TYPE> {
         if (index[p] == true) {
           Point<DIM> out_p;
           out_p[0] = out_idx;
-          for (size_t i = 0; i < DIM - key_dim; i++) {
+          for (int32_t i = 0; i < DIM - key_dim; i++) {
             size_t j     = key_dim + i;
             out_p[i + 1] = p[j];
           }
-          for (size_t i = DIM - key_dim + 1; i < DIM; i++) out_p[i] = 0;
+          for (int32_t i = DIM - key_dim + 1; i < DIM; i++) out_p[i] = 0;
           fill_out(out[out_p], p, input[p]);
           if ((idx + 1) % skip_size == 0) out_idx++;
         }

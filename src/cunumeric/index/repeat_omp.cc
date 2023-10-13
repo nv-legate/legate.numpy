@@ -96,7 +96,6 @@ struct RepeatImplBody<VariantKind::OMP, CODE, DIM> {
     Pitches<DIM - 1> in_pitches;
     auto in_volume = in_pitches.flatten(in_rect);
 
-    int64_t axis_base = in_rect.lo[axis];
 #pragma omp parallel for schedule(static)
     for (size_t idx = 0; idx < in_volume; ++idx) {
       auto in_p  = in_pitches.unflatten(idx, in_rect.lo);

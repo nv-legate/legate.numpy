@@ -32,8 +32,6 @@ struct SearchSortedImpl {
   template <Type::Code CODE, int32_t DIM>
   void operator()(SearchSortedArgs& args) const
   {
-    using VAL = legate_type_of<CODE>;
-
     auto rect_base       = args.input_base.shape<1>();
     auto rect_values_in  = args.input_values.shape<DIM>();
     auto rect_values_out = args.output_reduction.shape<DIM>();

@@ -41,7 +41,7 @@ struct ConvolveImpl {
     if (subrect.empty()) return;
 
     auto input_subrect = subrect;
-    for (auto idx = 1; idx < args.inputs.size(); ++idx) {
+    for (uint32_t idx = 1; idx < args.inputs.size(); ++idx) {
       auto image_subrect = args.inputs[idx].shape<DIM>();
       input_subrect      = input_subrect.union_bbox(image_subrect);
     }
@@ -96,7 +96,7 @@ static unsigned compute_output_tile(Point<DIM>& tile,
   assert((target_volume & (target_volume - 1)) == 0);
   unsigned volume = 1;
   // Try to make the last dimension at least the min last elements for locality
-  for (int idx = 1; idx < min_last_elements; idx *= 2) {
+  for (uint32_t idx = 1; idx < min_last_elements; idx *= 2) {
     tile[DIM - 1] *= 2;
     if (bounds[DIM - 1] < tile[DIM - 1]) {
       tile[DIM - 1] /= 2;
@@ -110,7 +110,7 @@ static unsigned compute_output_tile(Point<DIM>& tile,
   // Round-robin powers of 2 onto the other dimensions until
   // we hit the max or get all the dimensions balanced
   if (DIM > 1) {
-    for (int idx = 1; idx < min_last_elements; idx *= 2) {
+    for (uint32_t idx = 1; idx < min_last_elements; idx *= 2) {
       for (int d = DIM - 2; d >= 0; d--) {
         tile[d] *= 2;
         if (bounds[d] < tile[d])
@@ -290,7 +290,7 @@ static unsigned roundup_tile(Point<DIM>& tile,
         skipdims |= (1 << d1);
         continue;
       }
-      unsigned bound = elements - padding[d1];
+      int bound = elements - padding[d1];
       if (bounds[d1] < bound) {
         tile[d1] = bounds[d1];
         result   = pitch * (tile[d1] + padding[d1]);
@@ -324,7 +324,7 @@ static unsigned roundup_tile(Point<DIM>& tile,
         if ((next_size > max_size) || (next_size == result)) break;
         result = next_size;
         for (int d = 0; d < DIM; d++) {
-          if (skipdims && (1 << d)) continue;
+          if (skipdims & (1 << d)) continue;
           tile[d]++;
         }
       }
