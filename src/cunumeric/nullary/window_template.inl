@@ -38,7 +38,7 @@ struct WindowImpl {
 
     auto out = output.write_accessor<double, 1>(rect);
 
-#ifndef LEGATE_BOUNDS_CHECKS
+#if !LegateDefined(LEGATE_BOUNDS_CHECKS)
     // Check to see if this is dense or not
     bool dense = out.accessor.is_dense_row_major(rect);
 #else

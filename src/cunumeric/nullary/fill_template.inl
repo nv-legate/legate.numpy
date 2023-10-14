@@ -44,7 +44,7 @@ struct FillImpl {
     auto out        = args.out.write_accessor<VAL, DIM>(rect);
     auto fill_value = args.fill_value.read_accessor<VAL, 1>();
 
-#ifndef LEGATE_BOUNDS_CHECKS
+#if !LegateDefined(LEGATE_BOUNDS_CHECKS)
     // Check to see if this is dense or not
     bool dense = out.accessor.is_dense_row_major(rect);
 #else

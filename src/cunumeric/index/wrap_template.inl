@@ -39,7 +39,7 @@ struct WrapImpl {
     size_t volume_out = pitches_out.flatten(rect_out);
     if (volume_out == 0) return;
 
-#if LegateDefined(LEGATE_BOUNDS_CHECKS)
+#if !LegateDefined(LEGATE_BOUNDS_CHECKS)
     bool dense = out.accessor.is_dense_row_major(rect_out);
 #else
     bool dense = false;

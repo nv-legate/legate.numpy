@@ -39,7 +39,7 @@ struct ZipImpl {
     size_t volume = pitches.flatten(out_rect);
     if (volume == 0) return;
 
-#if LegateDefined(LEGATE_BOUNDS_CHECKS)
+#if !LegateDefined(LEGATE_BOUNDS_CHECKS)
     bool dense = out.accessor.is_dense_row_major(out_rect);
 #else
     bool dense = false;
