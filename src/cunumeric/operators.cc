@@ -313,4 +313,12 @@ NDArray convolve(NDArray a, NDArray v)
   return out;
 }
 
+NDArray sort(NDArray input, std::optional<int32_t> axis /*=-1*/, std::string kind /*="quicksort"*/)
+{
+  auto runtime = CuNumericRuntime::get_runtime();
+  auto result  = runtime->create_array(input.shape(), input.type());
+  result.sort(input, false, axis, kind);
+  return result;
+}
+
 }  // namespace cunumeric

@@ -89,4 +89,6 @@ NDArray bincount(NDArray x, std::optional<NDArray> weights = std::nullopt, uint3
 
 NDArray convolve(NDArray a, NDArray v);
 
+NDArray sort(NDArray input, std::optional<int32_t> axis = -1, std::string kind = "quicksort");
+
 }  // namespace cunumeric

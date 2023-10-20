@@ -84,15 +84,22 @@ class NDArray {
   void create_window(int32_t op_code, int64_t M, std::vector<double> args);
   void bincount(NDArray rhs, std::optional<NDArray> weights = std::nullopt);
   void convolve(NDArray input, NDArray filter);
+  void sort(NDArray rhs,
+            bool argsort                = false,
+            std::optional<int32_t> axis = -1,
+            std::string kind            = "quicksort");
 
  public:
   NDArray as_type(const legate::Type& type);
   legate::LogicalStore get_store();
   int32_t normalize_axis_index(int32_t axis);
+  void sort(NDArray rhs, bool argsort, std::optional<int32_t> axis = -1, bool stable = false);
 
  private:
   legate::LogicalStore broadcast(const std::vector<size_t>& shape, legate::LogicalStore& store);
   legate::LogicalStore broadcast(NDArray rhs1, NDArray rhs2);
+  void sort_task(NDArray rhs, bool argsort, bool stable);
+  void sort_swapped(NDArray rhs, bool argsort, int32_t sort_axis, bool stable);
 
  public:
   static legate::Library get_library();

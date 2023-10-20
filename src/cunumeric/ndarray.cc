@@ -219,6 +219,85 @@ int32_t NDArray::normalize_axis_index(int32_t axis)
   return updated_axis;
 }
 
+void NDArray::sort_task(NDArray rhs, bool argsort, bool stable)
+{
+  auto runtime = CuNumericRuntime::get_runtime();
+  auto task    = runtime->create_task(CuNumericOpCode::CUNUMERIC_SORT);
+  auto p_rhs   = task.add_input(rhs.store_);
+
+  auto machine             = legate::Runtime::get_runtime()->get_machine();
+  bool uses_unbound_output = machine.count() > 1 and rhs.dim() == 1;
+  std::optional<NDArray> unbound;
+  if (uses_unbound_output) {
+    unbound = runtime->create_array(type());
+    task.add_output(unbound.value().get_store());
+  } else {
+    auto p_lhs = task.add_output(store_);
+    task.add_constraint(align(p_lhs, p_rhs));
+  }
+
+  if (machine.count(legate::mapping::TaskTarget::GPU) > 0)
+    task.add_communicator("nccl");
+  else
+    task.add_communicator("cpu");
+
+  task.add_scalar_arg(legate::Scalar(argsort));
+  task.add_scalar_arg(legate::Scalar(rhs.shape()));
+  task.add_scalar_arg(legate::Scalar(stable));
+  runtime->submit(std::move(task));
+  if (uses_unbound_output) store_ = unbound.value().get_store();
+}
+
+void NDArray::sort_swapped(NDArray rhs, bool argsort, int32_t sort_axis, bool stable)
+{
+  sort_axis = rhs.normalize_axis_index(sort_axis);
+
+  auto swapped      = rhs.swapaxes(sort_axis, rhs.dim() - 1);
+  auto runtime      = CuNumericRuntime::get_runtime();
+  auto swapped_copy = runtime->create_array(swapped.shape(), swapped.type());
+  swapped_copy.assign(swapped);
+
+  if (argsort) {
+    auto sort_result = runtime->create_array(swapped_copy.shape(), type());
+    sort_result.sort(swapped_copy, argsort, -1, stable);
+    store_ = sort_result.swapaxes(rhs.dim() - 1, sort_axis).get_store();
+  } else {
+    swapped_copy.sort(swapped_copy, argsort, -1, stable);
+    store_ = swapped_copy.swapaxes(rhs.dim() - 1, sort_axis).get_store();
+  }
+}
+
+void NDArray::sort(NDArray rhs, bool argsort, std::optional<int32_t> axis, bool stable)
+{
+  if (!axis.has_value() && rhs.dim() > 1) {
+    // TODO: need to flatten the rhs and sort it, the implementation depends on reshape method.
+    assert(false);
+  }
+  int32_t computed_axis = 0;
+  if (axis.has_value()) computed_axis = rhs.normalize_axis_index(axis.value());
+
+  if (computed_axis == rhs.dim() - 1) {
+    sort_task(rhs, argsort, stable);
+  } else {
+    sort_swapped(rhs, argsort, computed_axis, stable);
+  }
+}
+
+void NDArray::sort(NDArray rhs,
+                   bool argsort /*=false*/,
+                   std::optional<int32_t> axis /*=-1*/,
+                   std::string kind /*="quicksort"*/)
+{
+  if (axis.has_value() && (axis >= rhs.dim() || axis < -rhs.dim()))
+    throw std::invalid_argument("invalid axis");
+
+  if (!(kind == "quicksort" || kind == "mergesort" || kind == "heapsort" || kind == "stable"))
+    throw std::invalid_argument("invalid kind");
+
+  bool stable = (kind == "stable");
+  sort(rhs, argsort, axis, stable);
+}
+
 void NDArray::trilu(NDArray rhs, int32_t k, bool lower)
 {
   if (size() == 0) return;
