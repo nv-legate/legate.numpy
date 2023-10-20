@@ -20,7 +20,6 @@ from collections.abc import Iterable
 from enum import IntEnum, unique
 from functools import reduce, wraps
 from inspect import signature
-from itertools import product
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -35,7 +34,17 @@ from typing import (
 
 import legate.core.types as ty
 import numpy as np
-from legate.core import Annotation, Future, ReductionOp, Store
+from legate.core import (
+    Annotation,
+    LogicalStore,
+    ReductionOp,
+    Scalar,
+    align,
+    bloat,
+    broadcast,
+    get_legate_runtime,
+    scale,
+)
 from legate.core.utils import OrderedSet
 from numpy.core.numeric import (  # type: ignore [attr-defined]
     normalize_axis_tuple,
@@ -61,8 +70,6 @@ from .utils import is_advanced_indexing
 
 if TYPE_CHECKING:
     import numpy.typing as npt
-    from legate.core import FieldID, Region
-    from legate.core.operation import AutoTask, ManualTask
 
     from .config import BitGeneratorType, FFTDirection, FFTType, WindowOpCode
     from .runtime import Runtime
@@ -89,6 +96,8 @@ def _prod(tpl: Sequence[int]) -> int:
 
 R = TypeVar("R")
 P = ParamSpec("P")
+
+legate_runtime = get_legate_runtime()
 
 
 def auto_convert(
@@ -131,30 +140,6 @@ def auto_convert(
         return wrapper
 
     return decorator
-
-
-# This is a dummy object that is only used as an initializer for the
-# RegionField object above. It is thrown away as soon as the
-# RegionField is constructed.
-class _CuNumericNDarray(object):
-    __slots__ = ["__array_interface__"]
-
-    def __init__(
-        self,
-        shape: NdShape,
-        field_type: Any,
-        base_ptr: Any,
-        strides: tuple[int, ...],
-        read_only: bool,
-    ) -> None:
-        # See: https://docs.scipy.org/doc/numpy/reference/arrays.interface.html
-        self.__array_interface__ = {
-            "version": 3,
-            "shape": shape,
-            "typestr": field_type.str,
-            "data": (base_ptr, read_only),
-            "strides": strides,
-        }
 
 
 _UNARY_RED_TO_REDUCTION_OPS: Dict[int, int] = {
@@ -251,27 +236,25 @@ class DeferredArray(NumPyThunk):
     def __init__(
         self,
         runtime: Runtime,
-        base: Store,
+        base: LogicalStore,
         numpy_array: Optional[npt.NDArray[Any]] = None,
+        needs_detach: bool = False,
     ) -> None:
         super().__init__(runtime, base.type.to_numpy_dtype())
         assert base is not None
-        assert isinstance(base, Store)
-        self.base: Any = base  # a Legate Store
+        assert isinstance(base, LogicalStore)
+        self.base: LogicalStore = base  # a Legate Store
         self.numpy_array = (
             None if numpy_array is None else weakref.ref(numpy_array)
         )
+        self.needs_detach = needs_detach
+
+    def __del__(self) -> None:
+        if self.needs_detach:
+            self.base.detach()
 
     def __str__(self) -> str:
         return f"DeferredArray(base: {self.base})"
-
-    @property
-    def storage(self) -> Union[Future, tuple[Region, FieldID]]:
-        storage = self.base.storage
-        if self.base.kind == Future:
-            return storage
-        else:
-            return (storage.region, storage.field.field_id)
 
     @property
     def shape(self) -> NdShape:
@@ -304,30 +287,9 @@ class DeferredArray(NumPyThunk):
             # and type
             return np.empty(shape=self.shape, dtype=self.dtype)
 
-        if self.scalar:
-            result = np.full(
-                self.shape,
-                self.get_scalar_array(),
-                dtype=self.dtype,
-            )
-        else:
-            alloc = self.base.get_inline_allocation()
-
-            def construct_ndarray(
-                shape: NdShape, address: Any, strides: tuple[int, ...]
-            ) -> npt.NDArray[Any]:
-                initializer = _CuNumericNDarray(
-                    shape, self.dtype, address, strides, False
-                )
-                result = np.asarray(initializer)
-                if self.shape == ():
-                    result = result.reshape(())
-                return result
-
-            result = cast("npt.NDArray[Any]", alloc.consume(construct_ndarray))
-
-        self.numpy_array = weakref.ref(result)
-        return result
+        return np.asarray(
+            self.base.get_physical_store().get_inline_allocation()
+        )
 
     # TODO: We should return a view of the field instead of a copy
     def imag(self) -> NumPyThunk:
@@ -341,7 +303,6 @@ class DeferredArray(NumPyThunk):
             UnaryOpCode.IMAG,
             self,
             True,
-            [],
         )
 
         return result
@@ -358,7 +319,6 @@ class DeferredArray(NumPyThunk):
             UnaryOpCode.REAL,
             self,
             True,
-            [],
         )
 
         return result
@@ -374,7 +334,6 @@ class DeferredArray(NumPyThunk):
             UnaryOpCode.CONJ,
             self,
             True,
-            [],
         )
 
         return result
@@ -383,24 +342,17 @@ class DeferredArray(NumPyThunk):
     @auto_convert("rhs")
     def copy(self, rhs: Any, deep: bool = False) -> None:
         if self.scalar and rhs.scalar:
-            self.base.set_storage(rhs.base.storage)
+            legate_runtime.issue_fill(self.base, rhs.base)
             return
         self.unary_op(
             UnaryOpCode.COPY,
             rhs,
             True,
-            [],
         )
 
     @property
     def scalar(self) -> bool:
-        return self.base.scalar
-
-    def get_scalar_array(self) -> npt.NDArray[Any]:
-        assert self.scalar
-        buf = self.base.storage.get_buffer(self.dtype.itemsize)
-        result = np.frombuffer(buf, dtype=self.dtype, count=1)
-        return result.reshape(())
+        return self.base.has_scalar_storage and self.base.size == 1
 
     def _zip_indices(
         self, start_index: int, arrays: tuple[Any, ...]
@@ -476,7 +428,7 @@ class DeferredArray(NumPyThunk):
         # dtype, to store N-dimensional index points, to be used as the
         # indirection field in a copy.
         N = self.ndim
-        pointN_dtype = self.runtime.get_point_type(N)
+        pointN_dtype = ty.point_type(N)
         output_arr = cast(
             DeferredArray,
             self.runtime.create_empty_thunk(
@@ -487,16 +439,20 @@ class DeferredArray(NumPyThunk):
         )
 
         # call ZIP function to combine index arrays into a singe array
-        task = self.context.create_auto_task(CuNumericOpCode.ZIP)
-        task.throws_exception(IndexError)
-        task.add_output(output_arr.base)
+        task = legate_runtime.create_auto_task(
+            self.library, CuNumericOpCode.ZIP
+        )
+        # TODO: We need to put back the precise Python exception support
+        # task.throws_exception(IndexError)
+        task.throws_exception(True)
+        p_out = task.add_output(output_arr.base)
         task.add_scalar_arg(self.ndim, ty.int64)  # N of points in Point<N>
         task.add_scalar_arg(key_dim, ty.int64)  # key_dim
         task.add_scalar_arg(start_index, ty.int64)  # start_index
         task.add_scalar_arg(self.shape, (ty.int64,))
         for a in arrays:
-            task.add_input(a)
-            task.add_alignment(output_arr.base, a)
+            p_in = task.add_input(a)
+            task.add_constraint(align(p_out, p_in))
         task.execute()
 
         return output_arr
@@ -515,7 +471,9 @@ class DeferredArray(NumPyThunk):
         return cast(DeferredArray, store_copy)
 
     @staticmethod
-    def _slice_store(k: slice, store: Store, dim: int) -> tuple[slice, Store]:
+    def _slice_store(
+        k: slice, store: LogicalStore, dim: int
+    ) -> tuple[slice, LogicalStore]:
         start = k.start
         end = k.stop
         step = k.step
@@ -697,7 +655,7 @@ class DeferredArray(NumPyThunk):
             # indirect copy operation
             if is_set:
                 N = rhs.ndim
-                out_dtype = rhs.runtime.get_point_type(N)
+                out_dtype = ty.point_type(N)
 
             # TODO : current implementation of the ND output regions
             # requires out.ndim == rhs.ndim. This will be fixed in the
@@ -705,17 +663,18 @@ class DeferredArray(NumPyThunk):
             out = rhs.runtime.create_unbound_thunk(out_dtype, ndim=rhs.ndim)
             key_dims = key.ndim  # dimension of the original key
 
-            task = rhs.context.create_auto_task(
-                CuNumericOpCode.ADVANCED_INDEXING
+            task = legate_runtime.create_auto_task(
+                self.library,
+                CuNumericOpCode.ADVANCED_INDEXING,
             )
             task.add_output(out.base)
-            task.add_input(rhs.base)
-            task.add_input(key_store)
+            p_rhs = task.add_input(rhs.base)
+            p_key = task.add_input(key_store)
             task.add_scalar_arg(is_set, ty.bool_)
             task.add_scalar_arg(key_dims, ty.int64)
-            task.add_alignment(rhs.base, key_store)
-            task.add_broadcast(
-                rhs.base, axes=tuple(range(1, len(rhs.base.shape)))
+            task.add_constraint(align(p_rhs, p_key))
+            task.add_constraint(
+                broadcast(p_rhs, range(1, len(rhs.base.shape)))
             )
             task.execute()
 
@@ -819,7 +778,7 @@ class DeferredArray(NumPyThunk):
         for dim, k in enumerate(key):
             if np.isscalar(k):
                 if k < 0:  # type: ignore [operator]
-                    k += store.shape[dim + shift]
+                    k += store.shape[dim + shift]  # type: ignore [operator]
                 store = store.project(dim + shift, k)
                 shift -= 1
             elif k is np.newaxis:
@@ -896,7 +855,7 @@ class DeferredArray(NumPyThunk):
                 k, store = self._slice_store(k, store, dim + shift)
             elif np.isscalar(k):
                 if k < 0:  # type: ignore [operator]
-                    k += store.shape[dim + shift]
+                    k += store.shape[dim + shift]  # type: ignore [operator]
                 store = store.project(dim + shift, k)
                 shift -= 1
             else:
@@ -931,7 +890,7 @@ class DeferredArray(NumPyThunk):
             shape: NdShape = (1,)
         else:
             shape = self.shape
-        store = self.context.create_store(
+        store = legate_runtime.create_store(
             self.base.type,
             shape=shape,
             optimize_scalar=False,
@@ -955,12 +914,12 @@ class DeferredArray(NumPyThunk):
             ) = self._create_indexing_array(key)
 
             if copy_needed:
-                if rhs.base.kind == Future:
+                if rhs.base.has_scalar_storage:
                     rhs = rhs._convert_future_to_regionfield()
                 result: NumPyThunk
-                if index_array.base.kind == Future:
+                if index_array.base.has_scalar_storage:
                     index_array = index_array._convert_future_to_regionfield()
-                    result_store = self.context.create_store(
+                    result_store = legate_runtime.create_store(
                         self.base.type,
                         shape=index_array.shape,
                         optimize_scalar=False,
@@ -977,12 +936,9 @@ class DeferredArray(NumPyThunk):
                         inputs=[self],
                     )
 
-                copy = self.context.create_copy()
-                copy.set_source_indirect_out_of_range(False)
-                copy.add_input(rhs.base)
-                copy.add_source_indirect(index_array.base)
-                copy.add_output(result.base)  # type: ignore
-                copy.execute()
+                legate_runtime.issue_gather(
+                    result.base, rhs.base, index_array.base  # type: ignore
+                )
 
             else:
                 return index_array
@@ -996,7 +952,9 @@ class DeferredArray(NumPyThunk):
                     (), self.base.type, inputs=[self]
                 )
 
-                task = self.context.create_auto_task(CuNumericOpCode.READ)
+                task = legate_runtime.create_auto_task(
+                    self.library, CuNumericOpCode.READ
+                )
                 task.add_input(input.base)
                 task.add_output(result.base)  # type: ignore
 
@@ -1032,7 +990,7 @@ class DeferredArray(NumPyThunk):
             # the case when rhs is a scalar and indices array contains
             # a single value
             # TODO this logic should be removed when copy accepts Futures
-            if rhs_store.kind == Future:
+            if rhs_store.has_scalar_storage:
                 rhs_tmp = DeferredArray(
                     self.runtime,
                     base=rhs_store,
@@ -1040,21 +998,17 @@ class DeferredArray(NumPyThunk):
                 rhs_tmp2 = rhs_tmp._convert_future_to_regionfield()
                 rhs_store = rhs_tmp2.base
 
-            if index_array.base.kind == Future:
+            if index_array.base.has_scalar_storage:
                 index_array = index_array._convert_future_to_regionfield()
-            if lhs.base.kind == Future:
+            if lhs.base.has_scalar_storage:
                 lhs = lhs._convert_future_to_regionfield()
             if lhs.base.transformed:
                 lhs = lhs._copy_store(lhs.base)
 
             if index_array.size != 0:
-                copy = self.context.create_copy()
-                copy.set_target_indirect_out_of_range(False)
-
-                copy.add_input(rhs_store)
-                copy.add_target_indirect(index_array.base)
-                copy.add_output(lhs.base)
-                copy.execute()
+                legate_runtime.issue_scatter(
+                    lhs.base, index_array.base, rhs_store
+                )
 
             # TODO this copy will be removed when affine copies are
             # supported in Legion/Realm
@@ -1068,7 +1022,9 @@ class DeferredArray(NumPyThunk):
                 # We're just writing a single value
                 assert rhs.size == 1
 
-                task = self.context.create_auto_task(CuNumericOpCode.WRITE)
+                task = legate_runtime.create_auto_task(
+                    self.library, CuNumericOpCode.WRITE
+                )
                 # Since we pass the view with write discard privilege,
                 # we should make sure that the mapper either creates a fresh
                 # instance just for this one-element view or picks one of the
@@ -1325,10 +1281,8 @@ class DeferredArray(NumPyThunk):
         dims = list(range(self.ndim))
         dims[axis1], dims[axis2] = dims[axis2], dims[axis1]
 
-        result = self.base.transpose(dims)
-        result = DeferredArray(self.runtime, result)
-
-        return result
+        result = self.base.transpose(tuple(dims))
+        return DeferredArray(self.runtime, result)
 
     # Convert the source array to the destination array
     @auto_convert("rhs")
@@ -1355,50 +1309,39 @@ class DeferredArray(NumPyThunk):
         lhs = lhs_array.base
         rhs = rhs_array.base
 
-        task = self.context.create_auto_task(CuNumericOpCode.CONVERT)
-        task.add_output(lhs)
-        task.add_input(rhs)
+        task = legate_runtime.create_auto_task(
+            self.library, CuNumericOpCode.CONVERT
+        )
+        p_lhs = task.add_output(lhs)
+        p_rhs = task.add_input(rhs)
         task.add_scalar_arg(nan_op, ty.int32)
 
-        task.add_alignment(lhs, rhs)
+        task.add_constraint(align(p_lhs, p_rhs))
 
         task.execute()
-
-        if temporary:
-            lhs.set_linear()
 
     @auto_convert("v", "lhs")
     def convolve(self, v: Any, lhs: Any, mode: ConvolveMode) -> None:
         input = self.base
         filter = v.base
-        out = lhs.base
+        output = lhs.base
 
-        task = self.context.create_auto_task(CuNumericOpCode.CONVOLVE)
+        task = legate_runtime.create_auto_task(
+            self.library, CuNumericOpCode.CONVOLVE
+        )
 
-        offsets = (filter.shape + 1) // 2
-        stencils: list[tuple[int, ...]] = []
-        for offset in offsets:
-            stencils.append((-offset, 0, offset))
-        stencils = list(product(*stencils))
-        stencils.remove((0,) * self.ndim)
+        offsets = tuple((filter.shape + 1) // 2)
 
-        p_out = task.declare_partition(out)
-        p_input = task.declare_partition(input)
-        p_stencils = []
-        for _ in stencils:
-            p_stencils.append(task.declare_partition(input, complete=False))
-
-        task.add_output(out, partition=p_out)
-        task.add_input(filter)
-        task.add_input(input, partition=p_input)
-        for p_stencil in p_stencils:
-            task.add_input(input, partition=p_stencil)
+        p_out = task.add_output(output)
+        p_filter = task.add_input(filter)
+        p_in = task.add_input(input)
+        p_halo = task.declare_partition()
+        task.add_input(input, p_halo)
         task.add_scalar_arg(self.shape, (ty.int64,))
 
-        task.add_constraint(p_out == p_input)
-        for stencil, p_stencil in zip(stencils, p_stencils):
-            task.add_constraint(p_input + stencil <= p_stencil)  # type: ignore
-        task.add_broadcast(filter)
+        task.add_constraint(align(p_out, p_in))
+        task.add_constraint(bloat(p_out, p_halo, offsets, offsets))
+        task.add_constraint(broadcast(p_filter))
 
         task.execute()
 
@@ -1421,12 +1364,12 @@ class DeferredArray(NumPyThunk):
             input = rhs.base
             output = lhs.base
 
-            task = self.context.create_auto_task(CuNumericOpCode.FFT)
-            p_output = task.declare_partition(output)
-            p_input = task.declare_partition(input)
+            task = legate_runtime.create_auto_task(
+                self.library, CuNumericOpCode.FFT
+            )
 
-            task.add_output(output, partition=p_output)
-            task.add_input(input, partition=p_input)
+            p_output = task.add_output(output)
+            p_input = task.add_input(input)
             task.add_scalar_arg(kind.type_id, ty.int32)
             task.add_scalar_arg(direction.value, ty.int32)
             task.add_scalar_arg(
@@ -1439,33 +1382,35 @@ class DeferredArray(NumPyThunk):
                 task.add_scalar_arg(ax, ty.int64)
 
             if input.ndim > len(OrderedSet(axes)):
-                task.add_broadcast(input, axes=OrderedSet(axes))
+                task.add_constraint(broadcast(p_input, OrderedSet(axes)))
             else:
-                task.add_broadcast(input)
-            task.add_constraint(p_output == p_input)
+                task.add_constraint(broadcast(p_input))
+            if input.shape == output.shape:
+                task.add_constraint(align(p_output, p_input))
+            else:
+                # TODO: We need the relaxed alignment to avoid serializing the
+                # task here. Batched FFT was relying on the relaxed alignment.
+                task.add_constraint(broadcast(p_output))
 
             task.execute()
 
     # Fill the cuNumeric array with the value in the numpy array
     def _fill(self, value: Any) -> None:
-        assert value.scalar
         assert self.base is not None
 
-        if self.scalar:
-            # Handle the 0D case special
-            self.base.set_storage(value.storage)
-        elif self.dtype.kind != "V" and self.base.kind is not Future:
-            # Emit a Legion fill
-            self.context.issue_fill(self.base, value)
+        if self.dtype.kind != "V":
+            # Emit a Legate fill
+            legate_runtime.issue_fill(self.base, value)
         else:
             # Perform the fill using a task
             # If this is a fill for an arg value, make sure to pass
             # the value dtype so that we get it packed correctly
-            argval = self.dtype.kind == "V"
-            task = self.context.create_auto_task(CuNumericOpCode.FILL)
+            task = legate_runtime.create_auto_task(
+                self.library, CuNumericOpCode.FILL
+            )
             task.add_output(self.base)
             task.add_input(value)
-            task.add_scalar_arg(argval, ty.bool_)
+            task.add_scalar_arg(True, ty.bool_)
             task.execute()
 
     def fill(self, numpy_array: Any) -> None:
@@ -1476,11 +1421,8 @@ class DeferredArray(NumPyThunk):
         # Have to copy the numpy array because this launch is asynchronous
         # and we need to make sure the application doesn't mutate the value
         # so make a future result, this is immediate so no dependence
-        value = self.runtime.create_scalar(numpy_array.data)
-        store = self.context.create_store(
-            self.base.type, shape=(1,), storage=value, optimize_scalar=True
-        )
-        self._fill(store)
+        value = Scalar(numpy_array.tobytes(), self.base.type)
+        self._fill(legate_runtime.create_store_from_scalar(value))
 
     @auto_convert("rhs1_thunk", "rhs2_thunk")
     def contract(
@@ -1585,19 +1527,22 @@ class DeferredArray(NumPyThunk):
         # The underlying libraries are not guaranteed to work with stride
         # values of 0. The frontend should therefore handle broadcasting
         # directly, instead of promoting stores.
-        assert not lhs.has_fake_dims()
-        assert not rhs1.has_fake_dims()
-        assert not rhs2.has_fake_dims()
+        # TODO: We need a better API for this
+        # assert not lhs.has_fake_dims()
+        # assert not rhs1.has_fake_dims()
+        # assert not rhs2.has_fake_dims()
 
         # Special cases where we can use BLAS
         if blas_op is not None:
             if blas_op == BlasOperation.VV:
                 # Vector dot product
-                task = self.context.create_auto_task(CuNumericOpCode.DOT)
+                task = legate_runtime.create_auto_task(
+                    self.library, CuNumericOpCode.DOT
+                )
                 task.add_reduction(lhs, ReductionOp.ADD)
-                task.add_input(rhs1)
-                task.add_input(rhs2)
-                task.add_alignment(rhs1, rhs2)
+                p_rhs1 = task.add_input(rhs1)
+                p_rhs2 = task.add_input(rhs2)
+                task.add_constraint(align(p_rhs1, p_rhs2))
                 task.execute()
 
             elif blas_op == BlasOperation.MV:
@@ -1616,12 +1561,14 @@ class DeferredArray(NumPyThunk):
                 rhs2 = rhs2.promote(0, m)
                 lhs = lhs.promote(1, n)
 
-                task = self.context.create_auto_task(CuNumericOpCode.MATVECMUL)
-                task.add_reduction(lhs, ReductionOp.ADD)
-                task.add_input(rhs1)
-                task.add_input(rhs2)
-                task.add_alignment(lhs, rhs1)
-                task.add_alignment(lhs, rhs2)
+                task = legate_runtime.create_auto_task(
+                    self.library, CuNumericOpCode.MATVECMUL
+                )
+                p_lhs = task.add_reduction(lhs, ReductionOp.ADD)
+                p_rhs1 = task.add_input(rhs1)
+                p_rhs2 = task.add_input(rhs2)
+                task.add_constraint(align(p_lhs, p_rhs1))
+                task.add_constraint(align(p_lhs, p_rhs2))
                 task.execute()
 
             elif blas_op == BlasOperation.MM:
@@ -1653,12 +1600,14 @@ class DeferredArray(NumPyThunk):
                 rhs1 = rhs1.promote(2, n)
                 rhs2 = rhs2.promote(0, m)
 
-                task = self.context.create_auto_task(CuNumericOpCode.MATMUL)
-                task.add_reduction(lhs, ReductionOp.ADD)
-                task.add_input(rhs1)
-                task.add_input(rhs2)
-                task.add_alignment(lhs, rhs1)
-                task.add_alignment(lhs, rhs2)
+                task = legate_runtime.create_auto_task(
+                    self.library, CuNumericOpCode.MATMUL
+                )
+                p_lhs = task.add_reduction(lhs, ReductionOp.ADD)
+                p_rhs1 = task.add_input(rhs1)
+                p_rhs2 = task.add_input(rhs2)
+                task.add_constraint(align(p_lhs, p_rhs1))
+                task.add_constraint(align(p_lhs, p_rhs2))
                 task.execute()
 
             else:
@@ -1680,8 +1629,8 @@ class DeferredArray(NumPyThunk):
 
         # Transpose arrays according to alphabetical order of mode labels
         def alphabetical_transpose(
-            store: Store, modes: Sequence[str]
-        ) -> Store:
+            store: LogicalStore, modes: Sequence[str]
+        ) -> LogicalStore:
             perm = tuple(
                 dim for (_, dim) in sorted(zip(modes, range(len(modes))))
             )
@@ -1699,7 +1648,7 @@ class DeferredArray(NumPyThunk):
             extent = mode2extent[mode]
 
             def add_mode(
-                store: Store, modes: Sequence[str], dim_mask: list[bool]
+                store: LogicalStore, modes: Sequence[str], dim_mask: list[bool]
             ) -> Any:
                 if mode not in modes:
                     dim_mask.append(False)
@@ -1715,15 +1664,17 @@ class DeferredArray(NumPyThunk):
         assert lhs.shape == rhs2.shape
 
         # Prepare the launch
-        task = self.context.create_auto_task(CuNumericOpCode.CONTRACT)
-        task.add_reduction(lhs, ReductionOp.ADD)
-        task.add_input(rhs1)
-        task.add_input(rhs2)
+        task = legate_runtime.create_auto_task(
+            self.library, CuNumericOpCode.CONTRACT
+        )
+        p_lhs = task.add_reduction(lhs, ReductionOp.ADD)
+        p_rhs1 = task.add_input(rhs1)
+        p_rhs2 = task.add_input(rhs2)
         task.add_scalar_arg(tuple(lhs_dim_mask), (ty.bool_,))
         task.add_scalar_arg(tuple(rhs1_dim_mask), (ty.bool_,))
         task.add_scalar_arg(tuple(rhs2_dim_mask), (ty.bool_,))
-        task.add_alignment(lhs, rhs1)
-        task.add_alignment(lhs, rhs2)
+        task.add_constraint(align(p_lhs, p_rhs1))
+        task.add_constraint(align(p_lhs, p_rhs2))
         task.execute()
 
     # Create array from input array and indices
@@ -1734,18 +1685,18 @@ class DeferredArray(NumPyThunk):
 
         out_arr = self.base
         # broadcast input array and all choices arrays to the same shape
-        index = index_arr._broadcast(out_arr.shape)
-        ch_tuple = tuple(c._broadcast(out_arr.shape) for c in ch_def)
+        index = index_arr._broadcast(tuple(out_arr.shape))
+        ch_tuple = tuple(c._broadcast(tuple(out_arr.shape)) for c in ch_def)
 
-        task = self.context.create_auto_task(CuNumericOpCode.CHOOSE)
-        task.add_output(out_arr)
-        task.add_input(index)
+        task = legate_runtime.create_auto_task(
+            self.library, CuNumericOpCode.CHOOSE
+        )
+        p_out = task.add_output(out_arr)
+        p_ind = task.add_input(index)
+        task.add_constraint(align(p_ind, p_out))
         for c in ch_tuple:
-            task.add_input(c)
-
-        task.add_alignment(index, out_arr)
-        for c in ch_tuple:
-            task.add_alignment(index, c)
+            p_c = task.add_input(c)
+            task.add_constraint(align(p_ind, p_c))
         task.execute()
 
     # Create or extract a diagonal from a matrix
@@ -1801,17 +1752,19 @@ class DeferredArray(NumPyThunk):
             else:
                 diag = diag.promote(0, matrix.shape[0])
 
-        task = self.context.create_auto_task(CuNumericOpCode.DIAG)
+        task = legate_runtime.create_auto_task(
+            self.library, CuNumericOpCode.DIAG
+        )
 
         if extract:
-            task.add_reduction(diag, ReductionOp.ADD)
-            task.add_input(matrix)
-            task.add_alignment(matrix, diag)
+            p_diag = task.add_reduction(diag, ReductionOp.ADD)
+            p_mat = task.add_input(matrix)
+            task.add_constraint(align(p_mat, p_diag))
         else:
-            task.add_output(matrix)
-            task.add_input(diag)
-            task.add_input(matrix)
-            task.add_alignment(diag, matrix)
+            p_mat = task.add_output(matrix)
+            p_diag = task.add_input(diag)
+            task.add_input(matrix, p_mat)
+            task.add_constraint(align(p_diag, p_mat))
 
         task.add_scalar_arg(naxes, ty.int32)
         task.add_scalar_arg(extract, ty.bool_)
@@ -1820,15 +1773,15 @@ class DeferredArray(NumPyThunk):
 
     @auto_convert("indices", "values")
     def put(self, indices: Any, values: Any, check_bounds: bool) -> None:
-        if indices.base.kind == Future or indices.base.transformed:
-            change_shape = indices.base.kind == Future
+        if indices.base.has_scalar_storage or indices.base.transformed:
+            change_shape = indices.base.has_scalar_storage
             indices = indices._convert_future_to_regionfield(change_shape)
-        if values.base.kind == Future or values.base.transformed:
-            change_shape = values.base.kind == Future
+        if values.base.has_scalar_storage or values.base.transformed:
+            change_shape = values.base.has_scalar_storage
             values = values._convert_future_to_regionfield(change_shape)
 
-        if self.base.kind == Future or self.base.transformed:
-            change_shape = self.base.kind == Future
+        if self.base.has_scalar_storage or self.base.transformed:
+            change_shape = self.base.has_scalar_storage
             self_tmp = self._convert_future_to_regionfield(change_shape)
         else:
             self_tmp = self
@@ -1839,7 +1792,7 @@ class DeferredArray(NumPyThunk):
         # (indices.size,) shape and is used to copy data from values
         # to the target ND array (self)
         N = self_tmp.ndim
-        pointN_dtype = self.runtime.get_point_type(N)
+        pointN_dtype = ty.point_type(N)
         indirect = cast(
             DeferredArray,
             self.runtime.create_empty_thunk(
@@ -1850,24 +1803,23 @@ class DeferredArray(NumPyThunk):
         )
 
         shape = self_tmp.shape
-        task = self.context.create_auto_task(CuNumericOpCode.WRAP)
-        task.add_output(indirect.base)
+        task = legate_runtime.create_auto_task(
+            self.library, CuNumericOpCode.WRAP
+        )
+        p_indirect = task.add_output(indirect.base)
         task.add_scalar_arg(shape, (ty.int64,))
         task.add_scalar_arg(True, ty.bool_)  # has_input
         task.add_scalar_arg(check_bounds, ty.bool_)
-        task.add_input(indices.base)
-        task.add_alignment(indices.base, indirect.base)
-        task.throws_exception(IndexError)
+        p_indices = task.add_input(indices.base)
+        task.add_constraint(align(p_indices, p_indirect))
+        # TODO: We need to put back the precise Python exception support
+        # task.throws_exception(IndexError)
+        task.throws_exception(True)
         task.execute()
-        if indirect.base.kind == Future:
+        if indirect.base.has_scalar_storage:
             indirect = indirect._convert_future_to_regionfield()
 
-        copy = self.context.create_copy()
-        copy.set_target_indirect_out_of_range(False)
-        copy.add_input(values.base)
-        copy.add_target_indirect(indirect.base)
-        copy.add_output(self_tmp.base)
-        copy.execute()
+        legate_runtime.issue_scatter(self_tmp.base, indirect.base, values.base)
 
         if self_tmp is not self:
             self.copy(self_tmp, deep=True)
@@ -1880,13 +1832,15 @@ class DeferredArray(NumPyThunk):
             values_new = values._broadcast(self.shape)
         else:
             values_new = values.base
-        task = self.context.create_auto_task(CuNumericOpCode.PUTMASK)
-        task.add_input(self.base)
-        task.add_input(mask.base)
-        task.add_input(values_new)
-        task.add_output(self.base)
-        task.add_alignment(self.base, mask.base)
-        task.add_alignment(self.base, values_new)
+        task = legate_runtime.create_auto_task(
+            self.library, CuNumericOpCode.PUTMASK
+        )
+        p_self = task.add_input(self.base)
+        p_mask = task.add_input(mask.base)
+        p_values = task.add_input(values_new)
+        task.add_output(self.base, p_self)
+        task.add_constraint(align(p_self, p_mask))
+        task.add_constraint(align(p_self, p_values))
         task.execute()
 
     # Create an identity array with the ones offset from the diagonal by k
@@ -1903,7 +1857,9 @@ class DeferredArray(NumPyThunk):
         # privilege, then, is not appropriate for this call, as it essentially
         # tells the runtime that it can throw away the previous contents of the
         # entire region.
-        task = self.context.create_auto_task(CuNumericOpCode.EYE)
+        task = legate_runtime.create_auto_task(
+            self.library, CuNumericOpCode.EYE
+        )
         task.add_input(self.base)
         task.add_output(self.base)
         task.add_scalar_arg(k, ty.int32)
@@ -1915,24 +1871,15 @@ class DeferredArray(NumPyThunk):
         if self.scalar:
             # Handle the special case of a single value here
             assert self.shape[0] == 1
-            array = np.array(start, dtype=self.dtype)
-            future = self.runtime.create_scalar(array.data)
-            self.base.set_storage(future)
+            legate_runtime.issue_fill(self.base, Scalar(start, self.base.type))
             return
 
-        def create_scalar(value: Any, dtype: np.dtype[Any]) -> Any:
-            array = np.array(value, dtype)
-            return self.runtime.create_wrapped_scalar(
-                array.data,
-                array.dtype,
-                shape=(1,),
-            ).base
-
-        task = self.context.create_auto_task(CuNumericOpCode.ARANGE)
+        task = legate_runtime.create_auto_task(
+            self.library, CuNumericOpCode.ARANGE
+        )
         task.add_output(self.base)
-        task.add_input(create_scalar(start, self.dtype))
-        task.add_input(create_scalar(stop, self.dtype))
-        task.add_input(create_scalar(step, self.dtype))
+        task.add_scalar_arg(start, self.base.type)
+        task.add_scalar_arg(step, self.base.type)
 
         task.execute()
 
@@ -1947,36 +1894,39 @@ class DeferredArray(NumPyThunk):
             self._fill(src_array.base)
             return
 
-        task = self.context.create_auto_task(CuNumericOpCode.TILE)
+        task = legate_runtime.create_auto_task(
+            self.library, CuNumericOpCode.TILE
+        )
 
         task.add_output(self.base)
-        task.add_input(rhs.base)
+        p_rhs = task.add_input(rhs.base)
 
-        task.add_broadcast(rhs.base)
+        task.add_constraint(broadcast(p_rhs))
 
         task.execute()
 
     # Transpose the matrix dimensions
     def transpose(
-        self, axes: Union[None, tuple[int, ...], list[int]]
+        self, axes: Union[tuple[int, ...], list[int]]
     ) -> DeferredArray:
-        result = self.base.transpose(axes)
-        result = DeferredArray(self.runtime, result)
-        return result
+        result = self.base.transpose(tuple(axes))
+        return DeferredArray(self.runtime, result)
 
     @auto_convert("rhs")
     def trilu(self, rhs: Any, k: int, lower: bool) -> None:
         lhs = self.base
         rhs = rhs._broadcast(lhs.shape)
 
-        task = self.context.create_auto_task(CuNumericOpCode.TRILU)
+        task = legate_runtime.create_auto_task(
+            self.library, CuNumericOpCode.TRILU
+        )
 
-        task.add_output(lhs)
-        task.add_input(rhs)
+        p_lhs = task.add_output(lhs)
+        p_rhs = task.add_input(rhs)
         task.add_scalar_arg(lower, ty.bool_)
         task.add_scalar_arg(k, ty.int32)
 
-        task.add_alignment(lhs, rhs)
+        task.add_constraint(align(p_lhs, p_rhs))
 
         task.execute()
 
@@ -1985,8 +1935,10 @@ class DeferredArray(NumPyThunk):
         self, repeats: Any, axis: int, scalar_repeats: bool
     ) -> DeferredArray:
         out = self.runtime.create_unbound_thunk(self.base.type, ndim=self.ndim)
-        task = self.context.create_auto_task(CuNumericOpCode.REPEAT)
-        task.add_input(self.base)
+        task = legate_runtime.create_auto_task(
+            self.library, CuNumericOpCode.REPEAT
+        )
+        p_self = task.add_input(self.base)
         task.add_output(out.base)
         # We pass axis now but don't use for 1D case (will use for ND case
         task.add_scalar_arg(axis, ty.int32)
@@ -2000,8 +1952,8 @@ class DeferredArray(NumPyThunk):
                 if dim == axis:
                     continue
                 repeats = repeats.promote(dim, extent)
-            task.add_input(repeats)
-            task.add_alignment(self.base, repeats)
+            p_repeats = task.add_input(repeats)
+            task.add_constraint(align(p_self, p_repeats))
         task.execute()
         return out
 
@@ -2015,13 +1967,15 @@ class DeferredArray(NumPyThunk):
         else:
             axes = normalize_axis_tuple(axes, self.ndim)
 
-        task = self.context.create_auto_task(CuNumericOpCode.FLIP)
-        task.add_output(output)
-        task.add_input(input)
+        task = legate_runtime.create_auto_task(
+            self.library, CuNumericOpCode.FLIP
+        )
+        p_out = task.add_output(output)
+        p_in = task.add_input(input)
         task.add_scalar_arg(axes, (ty.int32,))
 
-        task.add_broadcast(input)
-        task.add_alignment(input, output)
+        task.add_constraint(broadcast(p_in))
+        task.add_constraint(align(p_in, p_out))
 
         task.execute()
 
@@ -2040,15 +1994,16 @@ class DeferredArray(NumPyThunk):
 
         dst_array.fill(np.array(0, dst_array.dtype))
 
-        task = self.context.create_auto_task(CuNumericOpCode.BINCOUNT)
-        task.add_reduction(dst_array.base, ReductionOp.ADD)
-        task.add_input(src_array.base)
+        task = legate_runtime.create_auto_task(
+            self.library, CuNumericOpCode.BINCOUNT
+        )
+        p_dst = task.add_reduction(dst_array.base, ReductionOp.ADD)
+        p_src = task.add_input(src_array.base)
+        task.add_constraint(broadcast(p_dst))
         if weight_array is not None:
-            task.add_input(weight_array.base)  # type: ignore
-
-        task.add_broadcast(dst_array.base)
-        if not (weight_array is None or weight_array.scalar):
-            task.add_alignment(src_array.base, weight_array.base)  # type: ignore  # noqa
+            p_weight = task.add_input(cast(DeferredArray, weight_array).base)
+            if not weight_array.scalar:
+                task.add_constraint(align(p_src, p_weight))
 
         task.execute()
 
@@ -2058,13 +2013,15 @@ class DeferredArray(NumPyThunk):
             for _ in range(self.ndim)
         )
 
-        task = self.context.create_auto_task(CuNumericOpCode.NONZERO)
+        task = legate_runtime.create_auto_task(
+            self.library, CuNumericOpCode.NONZERO
+        )
 
-        task.add_input(self.base)
+        p_self = task.add_input(self.base)
         for result in results:
             task.add_output(result.base)
 
-        task.add_broadcast(self.base, axes=range(1, self.ndim))
+        task.add_constraint(broadcast(p_self, range(1, self.ndim)))
 
         task.execute()
         return results
@@ -2076,7 +2033,9 @@ class DeferredArray(NumPyThunk):
         seed: Union[int, None],
         flags: int,
     ) -> None:
-        task = self.context.create_auto_task(CuNumericOpCode.BITGENERATOR)
+        task = legate_runtime.create_auto_task(
+            self.library, CuNumericOpCode.BITGENERATOR
+        )
 
         task.add_output(self.base)
 
@@ -2102,7 +2061,9 @@ class DeferredArray(NumPyThunk):
         floatparams: tuple[float, ...],
         doubleparams: tuple[float, ...],
     ) -> None:
-        task = self.context.create_auto_task(CuNumericOpCode.BITGENERATOR)
+        task = legate_runtime.create_auto_task(
+            self.library, CuNumericOpCode.BITGENERATOR
+        )
 
         task.add_output(self.base)
 
@@ -3061,15 +3022,18 @@ class DeferredArray(NumPyThunk):
             doubleparams,
         )
 
-    def random(self, gen_code: Any, args: Any = ()) -> None:
-        task = self.context.create_auto_task(CuNumericOpCode.RAND)
+    def random(self, gen_code: Any, args: tuple[Scalar, ...] = ()) -> None:
+        task = legate_runtime.create_auto_task(
+            self.library, CuNumericOpCode.RAND
+        )
 
         task.add_output(self.base)
         task.add_scalar_arg(gen_code.value, ty.int32)
         epoch = self.runtime.get_next_random_epoch()
         task.add_scalar_arg(epoch, ty.uint32)
         task.add_scalar_arg(self.compute_strides(self.shape), (ty.int64,))
-        self.add_arguments(task, args)
+        for arg in args:
+            task.add_scalar_arg(arg)
 
         task.execute()
 
@@ -3087,9 +3051,8 @@ class DeferredArray(NumPyThunk):
         high: Union[int, npt.NDArray[Any]],
     ) -> None:
         assert self.dtype.kind == "i"
-        low = np.array(low, self.dtype)
-        high = np.array(high, self.dtype)
-        self.random(RandGenCode.INTEGER, [low, high])
+        args = (Scalar(low, self.base.type), Scalar(high, self.base.type))
+        self.random(RandGenCode.INTEGER, args)
 
     # Perform the unary operation and put the result in the array
     @auto_convert("src")
@@ -3098,25 +3061,28 @@ class DeferredArray(NumPyThunk):
         op: UnaryOpCode,
         src: Any,
         where: Any,
-        args: Any,
+        args: tuple[Scalar, ...] = (),
         multiout: Optional[Any] = None,
     ) -> None:
         lhs = self.base
         rhs = src._broadcast(lhs.shape)
 
         with Annotation({"OpCode": op.name}):
-            task = self.context.create_auto_task(CuNumericOpCode.UNARY_OP)
-            task.add_output(lhs)
-            task.add_input(rhs)
+            task = legate_runtime.create_auto_task(
+                self.library, CuNumericOpCode.UNARY_OP
+            )
+            p_lhs = task.add_output(lhs)
+            p_rhs = task.add_input(rhs)
             task.add_scalar_arg(op.value, ty.int32)
-            self.add_arguments(task, args)
+            for arg in args:
+                task.add_scalar_arg(arg)
 
-            task.add_alignment(lhs, rhs)
+            task.add_constraint(align(p_lhs, p_rhs))
 
             if multiout is not None:
                 for out in multiout:
-                    task.add_output(out.base)
-                    task.add_alignment(out.base, rhs)
+                    p_out = task.add_output(out.base)
+                    task.add_constraint(align(p_out, p_rhs))
 
             task.execute()
 
@@ -3131,7 +3097,7 @@ class DeferredArray(NumPyThunk):
         orig_axis: Union[int, None],
         axes: tuple[int, ...],
         keepdims: bool,
-        args: Any,
+        args: tuple[Scalar, ...],
         initial: Any,
     ) -> None:
         lhs_array: Union[NumPyThunk, DeferredArray] = self
@@ -3172,8 +3138,8 @@ class DeferredArray(NumPyThunk):
                 lhs = lhs.project(0, 0)
 
             with Annotation({"OpCode": op.name, "ArgRed?": str(argred)}):
-                task = self.context.create_auto_task(
-                    CuNumericOpCode.SCALAR_UNARY_RED
+                task = legate_runtime.create_auto_task(
+                    self.library, CuNumericOpCode.SCALAR_UNARY_RED
                 )
 
                 task.add_reduction(lhs, _UNARY_RED_TO_REDUCTION_OPS[op])
@@ -3181,7 +3147,8 @@ class DeferredArray(NumPyThunk):
                 task.add_scalar_arg(op, ty.int32)
                 task.add_scalar_arg(rhs_array.shape, (ty.int64,))
 
-                self.add_arguments(task, args)
+                for arg in args:
+                    task.add_scalar_arg(arg)
 
                 task.execute()
 
@@ -3213,16 +3180,21 @@ class DeferredArray(NumPyThunk):
                 )
 
             with Annotation({"OpCode": op.name, "ArgRed?": str(argred)}):
-                task = self.context.create_auto_task(CuNumericOpCode.UNARY_RED)
+                task = legate_runtime.create_auto_task(
+                    self.library, CuNumericOpCode.UNARY_RED
+                )
 
-                task.add_input(rhs_array.base)
-                task.add_reduction(result, _UNARY_RED_TO_REDUCTION_OPS[op])
+                p_rhs = task.add_input(rhs_array.base)
+                p_result = task.add_reduction(
+                    result, _UNARY_RED_TO_REDUCTION_OPS[op]
+                )
                 task.add_scalar_arg(axis, ty.int32)
                 task.add_scalar_arg(op, ty.int32)
 
-                self.add_arguments(task, args)
+                for arg in args:
+                    task.add_scalar_arg(arg)
 
-                task.add_alignment(result, rhs_array.base)
+                task.add_constraint(align(p_result, p_rhs))
 
                 task.execute()
 
@@ -3231,7 +3203,6 @@ class DeferredArray(NumPyThunk):
                 UnaryOpCode.GETARG,
                 lhs_array,
                 True,
-                [],
             )
 
     def isclose(
@@ -3239,8 +3210,8 @@ class DeferredArray(NumPyThunk):
     ) -> None:
         assert not equal_nan
         args = (
-            np.array(rtol, dtype=np.float64),
-            np.array(atol, dtype=np.float64),
+            Scalar(rtol, ty.float64),
+            Scalar(atol, ty.float64),
         )
         self.binary_op(BinaryOpCode.ISCLOSE, rhs1, rhs2, True, args)
 
@@ -3252,7 +3223,7 @@ class DeferredArray(NumPyThunk):
         src1: Any,
         src2: Any,
         where: Any,
-        args: Any,
+        args: tuple[Scalar, ...],
     ) -> None:
         lhs = self.base
         rhs1 = src1._broadcast(lhs.shape)
@@ -3260,15 +3231,18 @@ class DeferredArray(NumPyThunk):
 
         with Annotation({"OpCode": op_code.name}):
             # Populate the Legate launcher
-            task = self.context.create_auto_task(CuNumericOpCode.BINARY_OP)
-            task.add_output(lhs)
-            task.add_input(rhs1)
-            task.add_input(rhs2)
+            task = legate_runtime.create_auto_task(
+                self.library, CuNumericOpCode.BINARY_OP
+            )
+            p_lhs = task.add_output(lhs)
+            p_rhs1 = task.add_input(rhs1)
+            p_rhs2 = task.add_input(rhs2)
             task.add_scalar_arg(op_code.value, ty.int32)
-            self.add_arguments(task, args)
+            for arg in args:
+                task.add_scalar_arg(arg)
 
-            task.add_alignment(lhs, rhs1)
-            task.add_alignment(lhs, rhs2)
+            task.add_constraint(align(p_lhs, p_rhs1))
+            task.add_constraint(align(p_lhs, p_rhs2))
 
             task.execute()
 
@@ -3279,12 +3253,12 @@ class DeferredArray(NumPyThunk):
         src1: Any,
         src2: Any,
         broadcast: Union[NdShape, None],
-        args: Any,
+        args: tuple[Scalar, ...],
     ) -> None:
         lhs = self.base
         rhs1 = src1.base
         rhs2 = src2.base
-        assert lhs.scalar
+        assert lhs.has_scalar_storage
 
         if broadcast is not None:
             rhs1 = rhs1._broadcast(broadcast)
@@ -3297,14 +3271,17 @@ class DeferredArray(NumPyThunk):
         else:
             redop = ReductionOp.MUL
             self.fill(np.array(True))
-        task = self.context.create_auto_task(CuNumericOpCode.BINARY_RED)
+        task = legate_runtime.create_auto_task(
+            self.library, CuNumericOpCode.BINARY_RED
+        )
         task.add_reduction(lhs, redop)
-        task.add_input(rhs1)
-        task.add_input(rhs2)
+        p_rhs1 = task.add_input(rhs1)
+        p_rhs2 = task.add_input(rhs2)
         task.add_scalar_arg(op.value, ty.int32)
-        self.add_arguments(task, args)
+        for arg in args:
+            task.add_scalar_arg(arg)
 
-        task.add_alignment(rhs1, rhs2)
+        task.add_constraint(align(p_rhs1, p_rhs2))
 
         task.execute()
 
@@ -3316,47 +3293,35 @@ class DeferredArray(NumPyThunk):
         rhs3 = src3._broadcast(lhs.shape)
 
         # Populate the Legate launcher
-        task = self.context.create_auto_task(CuNumericOpCode.WHERE)
-        task.add_output(lhs)
-        task.add_input(rhs1)
-        task.add_input(rhs2)
-        task.add_input(rhs3)
+        task = legate_runtime.create_auto_task(
+            self.library, CuNumericOpCode.WHERE
+        )
+        p_lhs = task.add_output(lhs)
+        p_rhs1 = task.add_input(rhs1)
+        p_rhs2 = task.add_input(rhs2)
+        p_rhs3 = task.add_input(rhs3)
 
-        task.add_alignment(lhs, rhs1)
-        task.add_alignment(lhs, rhs2)
-        task.add_alignment(lhs, rhs3)
+        task.add_constraint(align(p_lhs, p_rhs1))
+        task.add_constraint(align(p_lhs, p_rhs2))
+        task.add_constraint(align(p_lhs, p_rhs3))
 
         task.execute()
 
     def argwhere(self) -> NumPyThunk:
         result = self.runtime.create_unbound_thunk(ty.int64, ndim=2)
 
-        task = self.context.create_auto_task(CuNumericOpCode.ARGWHERE)
+        task = legate_runtime.create_auto_task(
+            self.library, CuNumericOpCode.ARGWHERE
+        )
 
         task.add_output(result.base)
-        task.add_input(self.base)
-        task.add_broadcast(self.base, axes=range(1, self.ndim))
+        p_self = task.add_input(self.base)
+        if self.ndim > 1:
+            task.add_constraint(broadcast(p_self, range(1, self.ndim)))
 
         task.execute()
 
         return result
-
-    # A helper method for attaching arguments
-    def add_arguments(
-        self,
-        task: Union[AutoTask, ManualTask],
-        args: Optional[Sequence[npt.NDArray[Any]]],
-    ) -> None:
-        if args is None:
-            return
-        for numpy_array in args:
-            assert numpy_array.size == 1
-            scalar = self.runtime.create_wrapped_scalar(
-                numpy_array.data,
-                numpy_array.dtype,
-                shape=(1,),
-            )
-            task.add_input(scalar.base)
 
     @staticmethod
     def compute_strides(shape: NdShape) -> tuple[int, ...]:
@@ -3402,27 +3367,31 @@ class DeferredArray(NumPyThunk):
             input.copy(swapped, deep=True)
             output = input
 
-        task = output.context.create_auto_task(CuNumericOpCode.SCAN_LOCAL)
-        task.add_output(output.base)
-        task.add_input(input.base)
+        task = legate_runtime.create_auto_task(
+            self.library, CuNumericOpCode.SCAN_LOCAL
+        )
+        p_out = task.add_output(output.base)
+        p_in = task.add_input(input.base)
         task.add_output(temp.base)
         task.add_scalar_arg(op, ty.int32)
         task.add_scalar_arg(nan_to_identity, ty.bool_)
 
-        task.add_alignment(input.base, output.base)
+        task.add_constraint(align(p_in, p_out))
 
         task.execute()
         # Global sum
         # NOTE: Assumes the partitioning stays the same from previous task.
         # NOTE: Each node will do a sum up to its index, alternatively could
         # do one centralized scan and broadcast (slightly less redundant work)
-        task = output.context.create_auto_task(CuNumericOpCode.SCAN_GLOBAL)
+        task = legate_runtime.create_auto_task(
+            self.library, CuNumericOpCode.SCAN_GLOBAL
+        )
         task.add_input(output.base)
-        task.add_input(temp.base)
+        p_temp = task.add_input(temp.base)
         task.add_output(output.base)
         task.add_scalar_arg(op, ty.int32)
 
-        task.add_broadcast(temp.base)
+        task.add_constraint(broadcast(p_temp))
 
         task.execute()
 
@@ -3435,7 +3404,9 @@ class DeferredArray(NumPyThunk):
     def unique(self) -> NumPyThunk:
         result = self.runtime.create_unbound_thunk(self.base.type)
 
-        task = self.context.create_auto_task(CuNumericOpCode.UNIQUE)
+        task = legate_runtime.create_auto_task(
+            self.library, CuNumericOpCode.UNIQUE
+        )
 
         task.add_output(result.base)
         task.add_input(self.base)
@@ -3446,32 +3417,34 @@ class DeferredArray(NumPyThunk):
         task.execute()
 
         if self.runtime.num_gpus == 0 and self.runtime.num_procs > 1:
-            result.base = self.context.tree_reduce(
-                CuNumericOpCode.UNIQUE_REDUCE, result.base
+            result.base = legate_runtime.tree_reduce(
+                self.library, CuNumericOpCode.UNIQUE_REDUCE, result.base
             )
 
         return result
 
     @auto_convert("rhs", "v")
     def searchsorted(self, rhs: Any, v: Any, side: SortSide = "left") -> None:
-        task = self.context.create_auto_task(CuNumericOpCode.SEARCHSORTED)
+        task = legate_runtime.create_auto_task(
+            self.library, CuNumericOpCode.SEARCHSORTED
+        )
 
         is_left = side == "left"
 
         if is_left:
             self.fill(np.array(rhs.size, self.dtype))
-            task.add_reduction(self.base, ReductionOp.MIN)
+            p_self = task.add_reduction(self.base, ReductionOp.MIN)
         else:
             self.fill(np.array(0, self.dtype))
-            task.add_reduction(self.base, ReductionOp.MAX)
+            p_self = task.add_reduction(self.base, ReductionOp.MAX)
 
         task.add_input(rhs.base)
-        task.add_input(v.base)
+        p_v = task.add_input(v.base)
 
         # every partition needs the value information
-        task.add_broadcast(v.base)
-        task.add_broadcast(self.base)
-        task.add_alignment(self.base, v.base)
+        task.add_constraint(broadcast(p_v))
+        task.add_constraint(broadcast(p_self))
+        task.add_constraint(align(p_self, p_v))
 
         task.add_scalar_arg(is_left, ty.bool_)
         task.add_scalar_arg(rhs.size, ty.int64)
@@ -3523,7 +3496,9 @@ class DeferredArray(NumPyThunk):
         sort(self, rhs, argpartition, axis, False)
 
     def create_window(self, op_code: WindowOpCode, M: int, *args: Any) -> None:
-        task = self.context.create_auto_task(CuNumericOpCode.WINDOW)
+        task = legate_runtime.create_auto_task(
+            self.library, CuNumericOpCode.WINDOW
+        )
         task.add_output(self.base)
         task.add_scalar_arg(op_code, ty.int32)
         task.add_scalar_arg(M, ty.int64)
@@ -3536,15 +3511,17 @@ class DeferredArray(NumPyThunk):
         self, src: Any, axis: Union[int, None], bitorder: BitOrder
     ) -> None:
         bitorder_code = getattr(Bitorder, bitorder.upper())
-        task = self.context.create_auto_task(CuNumericOpCode.PACKBITS)
-        p_out = task.declare_partition(self.base)
-        p_in = task.declare_partition(src.base)
-        task.add_output(self.base, partition=p_out)
-        task.add_input(src.base, partition=p_in)
+        task = legate_runtime.create_auto_task(
+            self.library, CuNumericOpCode.PACKBITS
+        )
+        p_out = task.declare_partition()
+        p_in = task.declare_partition()
+        task.add_output(self.base, p_out)
+        task.add_input(src.base, p_in)
         task.add_scalar_arg(axis, ty.uint32)
         task.add_scalar_arg(bitorder_code, ty.uint32)
-        scale = tuple(8 if dim == axis else 1 for dim in range(src.ndim))
-        task.add_constraint(p_in <= p_out * scale)  # type: ignore
+        factors = tuple(8 if dim == axis else 1 for dim in range(src.ndim))
+        task.add_constraint(scale(factors, p_out, p_in))  # type: ignore
         task.execute()
 
     @auto_convert("src")
@@ -3552,28 +3529,30 @@ class DeferredArray(NumPyThunk):
         self, src: Any, axis: Union[int, None], bitorder: BitOrder
     ) -> None:
         bitorder_code = getattr(Bitorder, bitorder.upper())
-        task = self.context.create_auto_task(CuNumericOpCode.UNPACKBITS)
-        p_out = task.declare_partition(self.base)
-        p_in = task.declare_partition(src.base)
-        task.add_output(self.base, partition=p_out)
-        task.add_input(src.base, partition=p_in)
+        task = legate_runtime.create_auto_task(
+            self.library, CuNumericOpCode.UNPACKBITS
+        )
+        p_out = task.declare_partition()
+        p_in = task.declare_partition()
+        task.add_output(self.base, p_out)
+        task.add_input(src.base, p_in)
         task.add_scalar_arg(axis, ty.uint32)
         task.add_scalar_arg(bitorder_code, ty.uint32)
-        scale = tuple(8 if dim == axis else 1 for dim in range(src.ndim))
-        task.add_constraint(p_out <= p_in * scale)  # type: ignore
+        factors = tuple(8 if dim == axis else 1 for dim in range(src.ndim))
+        task.add_constraint(scale(factors, p_in, p_out))  # type: ignore
         task.execute()
 
     @auto_convert("src")
     def _wrap(self, src: Any, new_len: int) -> None:
-        if src.base.kind == Future or src.base.transformed:
-            change_shape = src.base.kind == Future
+        if src.base.has_scalar_storage or src.base.transformed:
+            change_shape = src.base.has_scalar_storage
             src = src._convert_future_to_regionfield(change_shape)
 
         # first, we create indirect array with PointN type that
         # (len,) shape and is used to copy data from original array
         # to the target 1D wrapped array
         N = src.ndim
-        pointN_dtype = self.runtime.get_point_type(N)
+        pointN_dtype = ty.point_type(N)
         indirect = cast(
             DeferredArray,
             self.runtime.create_empty_thunk(
@@ -3583,19 +3562,16 @@ class DeferredArray(NumPyThunk):
             ),
         )
 
-        task = self.context.create_auto_task(CuNumericOpCode.WRAP)
+        task = legate_runtime.create_auto_task(
+            self.library, CuNumericOpCode.WRAP
+        )
         task.add_output(indirect.base)
         task.add_scalar_arg(src.shape, (ty.int64,))
         task.add_scalar_arg(False, ty.bool_)  # has_input
         task.add_scalar_arg(False, ty.bool_)  # check bounds
         task.execute()
 
-        copy = self.context.create_copy()
-        copy.set_target_indirect_out_of_range(False)
-        copy.add_input(src.base)
-        copy.add_source_indirect(indirect.base)
-        copy.add_output(self.base)
-        copy.execute()
+        legate_runtime.issue_gather(self.base, src.base, indirect.base)
 
     # Perform a histogram operation on the array
     @auto_convert("src", "bins", "weights")
@@ -3614,14 +3590,16 @@ class DeferredArray(NumPyThunk):
 
         dst_array.fill(np.array(0, dst_array.dtype))
 
-        task = self.context.create_auto_task(CuNumericOpCode.HISTOGRAM)
-        task.add_reduction(dst_array.base, ReductionOp.ADD)
-        task.add_input(src_array.base)
-        task.add_input(bins_array.base)
-        task.add_input(weight_array.base)
+        task = legate_runtime.create_auto_task(
+            self.library, CuNumericOpCode.HISTOGRAM
+        )
+        p_dst = task.add_reduction(dst_array.base, ReductionOp.ADD)
+        p_src = task.add_input(src_array.base)
+        p_bins = task.add_input(bins_array.base)
+        p_weight = task.add_input(weight_array.base)
 
-        task.add_broadcast(bins_array.base)
-        task.add_broadcast(dst_array.base)
-        task.add_alignment(src_array.base, weight_array.base)
+        task.add_constraint(broadcast(p_bins))
+        task.add_constraint(broadcast(p_dst))
+        task.add_constraint(align(p_src, p_weight))
 
         task.execute()

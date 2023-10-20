@@ -115,7 +115,7 @@ def test_solve_with_output():
     n = 8
     a = np.random.rand(n, n).astype(np.float32)
     b = np.random.rand(n).astype(np.float32)
-    output = np.zeros((n,)).astype(np.float32)
+    output = num.zeros((n,)).astype(np.float32)
 
     out = num.linalg.solve(a, b, out=output)
 
@@ -206,7 +206,9 @@ class TestSolveErrors:
     def test_a_singular_matrix(self):
         a = num.zeros((self.n, self.n)).astype(np.float64)
         msg = "Singular matrix"
-        with pytest.raises(num.linalg.LinAlgError, match=msg):
+        # FIXME: We need full Python exception support
+        # with pytest.raises(num.linalg.LinAlgError, match=msg):
+        with pytest.raises(RuntimeError, match=msg):
             num.linalg.solve(a, self.b)
 
 

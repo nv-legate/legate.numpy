@@ -86,8 +86,9 @@ static void binary_op_template(TaskContext& context)
   auto outputs  = context.outputs();
   auto& scalars = context.scalars();
 
-  std::vector<Store> extra_args;
-  for (size_t idx = 2; idx < inputs.size(); ++idx) extra_args.push_back(std::move(inputs[idx]));
+  std::vector<Scalar> extra_args;
+  extra_args.reserve(scalars.size() - 1);
+  for (size_t idx = 1; idx < scalars.size(); ++idx) extra_args.emplace_back(scalars[idx]);
 
   BinaryOpArgs args{
     inputs[0], inputs[1], outputs[0], scalars[0].value<BinaryOpCode>(), std::move(extra_args)};

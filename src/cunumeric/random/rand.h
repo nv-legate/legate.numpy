@@ -26,7 +26,7 @@ struct RandArgs {
   RandGenCode gen_code;
   uint32_t epoch;
   legate::DomainPoint strides;
-  std::vector<legate::Store> args;
+  std::vector<legate::Scalar> args;
 };
 
 class RandTask : public CuNumericTask<RandTask> {

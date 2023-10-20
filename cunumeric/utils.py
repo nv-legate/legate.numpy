@@ -48,7 +48,7 @@ def is_supported_type(dtype: Union[str, np.dtype[Any]]) -> bool:
     return np.dtype(dtype) in SUPPORTED_DTYPES
 
 
-def to_core_dtype(dtype: Union[str, np.dtype[Any]]) -> ty.Dtype:
+def to_core_dtype(dtype: Union[str, np.dtype[Any]]) -> ty.Type:
     core_dtype = SUPPORTED_DTYPES.get(np.dtype(dtype))
     if core_dtype is None:
         raise TypeError(f"cuNumeric does not support dtype={dtype}")

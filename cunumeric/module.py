@@ -33,6 +33,7 @@ from typing import (
 
 import numpy as np
 import opt_einsum as oe  # type: ignore [import]
+from legate.core import Scalar, types as ty
 from numpy.core.multiarray import (  # type: ignore [attr-defined]
     normalize_axis_index,
 )
@@ -5043,7 +5044,7 @@ def allclose(
         raise NotImplementedError(
             "cuNumeric does not support `equal_nan` yet for allclose"
         )
-    args = (np.array(rtol, dtype=np.float64), np.array(atol, dtype=np.float64))
+    args = (Scalar(rtol, ty.float64), Scalar(atol, ty.float64))
     return ndarray._perform_binary_reduction(
         BinaryOpCode.ISCLOSE,
         a,

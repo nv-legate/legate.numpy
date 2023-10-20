@@ -25,7 +25,7 @@ struct UnaryOpArgs {
   legate::Store in;
   legate::Store out;
   UnaryOpCode op_code;
-  std::vector<legate::Store> args;
+  std::vector<legate::Scalar> args;
 };
 
 struct MultiOutUnaryOpArgs {

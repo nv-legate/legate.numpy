@@ -26,7 +26,7 @@ struct BinaryOpArgs {
   legate::Store in2;
   legate::Store out;
   BinaryOpCode op_code;
-  std::vector<legate::Store> args;
+  std::vector<legate::Scalar> args;
 };
 
 class BinaryOpTask : public CuNumericTask<BinaryOpTask> {

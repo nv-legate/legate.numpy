@@ -15,17 +15,19 @@
 from __future__ import annotations
 
 import os
+import platform
 from abc import abstractmethod
+from ctypes import CDLL, RTLD_GLOBAL
 from enum import IntEnum, unique
-from typing import TYPE_CHECKING, Union, cast
+from typing import TYPE_CHECKING, Any, Union, cast
 
+import cffi  # type: ignore
 import numpy as np
-from legate.core import Library, get_legate_runtime
+
+ffi = cffi.FFI()
 
 if TYPE_CHECKING:
     import numpy.typing as npt
-
-    from .runtime import Runtime
 
 
 class _ReductionOpIds:
@@ -282,16 +284,35 @@ class _CunumericSharedLib:
         ...
 
 
+def dlopen_no_autoclose(ffi: Any, lib_path: str) -> Any:
+    # Use an already-opened library handle, which cffi will convert to a
+    # regular FFI object (using the definitions previously added using
+    # ffi.cdef), but will not automatically dlclose() on collection.
+    lib = CDLL(lib_path, mode=RTLD_GLOBAL)
+    return ffi.dlopen(ffi.cast("void *", lib._handle))
+
+
 # Load the cuNumeric library first so we have a shard object that
 # we can use to initialize all these configuration enumerations
-class CuNumericLib(Library):
+class CuNumericLib:
     def __init__(self, name: str) -> None:
         self.name = name
-        self.runtime: Union[Runtime, None] = None
-        self.shared_object: Union[_CunumericSharedLib, None] = None
 
-    def get_name(self) -> str:
-        return self.name
+        shared_lib_path = self.get_shared_library()
+        assert shared_lib_path is not None
+        header = self.get_c_header()
+        if header is not None:
+            ffi.cdef(header)
+        # Don't use ffi.dlopen(), because that will call dlclose()
+        # automatically when the object gets collected, thus removing
+        # symbols that may be needed when destroying C++ objects later
+        # (e.g. vtable entries, which will be queried for virtual
+        # destructors), causing errors at shutdown.
+        shared_lib = dlopen_no_autoclose(ffi, shared_lib_path)
+        callback = getattr(shared_lib, "cunumeric_perform_registration")
+        callback()
+
+        self.shared_object = cast(_CunumericSharedLib, shared_lib)
 
     def get_shared_library(self) -> str:
         from cunumeric.install_info import libpath
@@ -305,27 +326,19 @@ class CuNumericLib(Library):
 
         return header
 
-    def get_registration_callback(self) -> str:
-        return "cunumeric_perform_registration"
-
-    def initialize(self, shared_object: _CunumericSharedLib) -> None:
-        assert self.runtime is None
-        self.shared_object = shared_object
-
-    def set_runtime(self, runtime: Runtime) -> None:
-        assert self.runtime is None
-        assert self.shared_object is not None
-        self.runtime = runtime
-
-    def destroy(self) -> None:
-        if self.runtime is not None:
-            self.runtime.destroy()
+    @staticmethod
+    def get_library_extension() -> str:
+        os_name = platform.system()
+        if os_name == "Linux":
+            return ".so"
+        elif os_name == "Darwin":
+            return ".dylib"
+        raise RuntimeError(f"unknown platform {os_name!r}")
 
 
 CUNUMERIC_LIB_NAME = "cunumeric"
 cunumeric_lib = CuNumericLib(CUNUMERIC_LIB_NAME)
-cunumeric_context = get_legate_runtime().register_library(cunumeric_lib)
-_cunumeric = cast(_CunumericSharedLib, cunumeric_lib.shared_object)
+_cunumeric = cunumeric_lib.shared_object
 
 
 # Match these to CuNumericOpCode in cunumeric_c.h

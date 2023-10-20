@@ -60,7 +60,7 @@ struct ScalarUnaryRed {
     shape  = args.shape;
 
     out = args.out.reduce_accessor<LG_OP, true, 1>();
-    if constexpr (OP_CODE == UnaryRedCode::CONTAINS) { to_find = args.args[0].scalar<RHS>(); }
+    if constexpr (OP_CODE == UnaryRedCode::CONTAINS) { to_find = args.args.front().value<RHS>(); }
 
 #if !LegateDefined(LEGATE_BOUNDS_CHECKS)
     // Check to see if this is dense or not
@@ -142,11 +142,10 @@ struct ScalarUnaryRedDispatch {
 template <VariantKind KIND>
 static void scalar_unary_red_template(TaskContext& context)
 {
-  auto inputs   = context.inputs();
   auto& scalars = context.scalars();
 
-  std::vector<Store> extra_args;
-  for (size_t idx = 1; idx < inputs.size(); ++idx) extra_args.push_back(std::move(inputs[idx]));
+  std::vector<Scalar> extra_args;
+  for (size_t idx = 2; idx < scalars.size(); ++idx) extra_args.push_back(scalars[idx]);
 
   auto op_code = scalars[0].value<UnaryRedCode>();
   auto shape   = scalars[1].value<DomainPoint>();
@@ -155,7 +154,8 @@ static void scalar_unary_red_template(TaskContext& context)
     shape.dim = 1;
     shape[0]  = 1;
   }
-  ScalarUnaryRedArgs args{context.reduction(0), inputs[0], op_code, shape, std::move(extra_args)};
+  ScalarUnaryRedArgs args{
+    context.reduction(0), context.input(0), op_code, shape, std::move(extra_args)};
   op_dispatch(args.op_code, ScalarUnaryRedDispatch<KIND>{}, args);
 }
 

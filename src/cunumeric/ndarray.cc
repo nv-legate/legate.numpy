@@ -463,13 +463,8 @@ void NDArray::arange(double start, double stop, double step)
 
   task.add_output(store_);
 
-  auto start_value = runtime->create_scalar_store(Scalar(start));
-  auto stop_value  = runtime->create_scalar_store(Scalar(stop));
-  auto step_value  = runtime->create_scalar_store(Scalar(step));
-
-  task.add_input(start_value);
-  task.add_input(stop_value);
-  task.add_input(step_value);
+  task.add_scalar_arg(Scalar(start));
+  task.add_scalar_arg(Scalar(step));
 
   runtime->submit(std::move(task));
 }

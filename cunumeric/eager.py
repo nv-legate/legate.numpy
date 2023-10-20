@@ -26,6 +26,7 @@ from typing import (
 )
 
 import numpy as np
+from legate.core import Scalar, get_legate_runtime
 
 from .config import (
     FFT_C2R,
@@ -42,11 +43,10 @@ from .config import (
 )
 from .deferred import DeferredArray
 from .thunk import NumPyThunk
-from .utils import is_advanced_indexing, is_supported_type
+from .utils import is_advanced_indexing, is_supported_type, to_core_dtype
 
 if TYPE_CHECKING:
     import numpy.typing as npt
-    from legate.core import FieldID, Future, Region
 
     from .config import BitGeneratorType, FFTType
     from .runtime import Runtime
@@ -234,15 +234,6 @@ class EagerArray(NumPyThunk):
         self.escaped = False
 
     @property
-    def storage(self) -> Union[Future, tuple[Region, FieldID]]:
-        if self.deferred is None:
-            self.to_deferred_array()
-
-        assert self.deferred is not None
-
-        return self.deferred.storage
-
-    @property
     def shape(self) -> NdShape:
         return self.array.shape
 
@@ -309,11 +300,15 @@ class EagerArray(NumPyThunk):
                 # We are at the root of the tree so we need to
                 # actually make a DeferredArray to use
                 if self.array.size == 1:
-                    self.deferred = self.runtime.create_wrapped_scalar(
-                        self.array.data,
-                        dtype=self.array.dtype,
+                    runtime = get_legate_runtime()
+                    store = runtime.create_store_from_scalar(
+                        Scalar(
+                            self.array.tobytes(),
+                            to_core_dtype(self.array.dtype),
+                        ),
                         shape=self.shape,
                     )
+                    self.deferred = DeferredArray(self.runtime, store)
                 else:
                     self.deferred = self.runtime.find_or_create_array_thunk(
                         self.array,
@@ -405,11 +400,6 @@ class EagerArray(NumPyThunk):
             return self.deferred.scalar
         return self.array.size == 1
 
-    def get_scalar_array(self) -> npt.NDArray[Any]:
-        if self.deferred is not None:
-            return self.deferred.get_scalar_array()
-        return self.array.reshape(())
-
     def _create_indexing_key(self, key: Any) -> Any:
         if key is None or key is Ellipsis:
             return key
@@ -430,7 +420,12 @@ class EagerArray(NumPyThunk):
             return self.deferred.get_item(key)
         if is_advanced_indexing(key):
             index_key = self._create_indexing_key(key)
-            out = self.array[index_key]
+            # FIXME: Need to raise RuntimeError instead of IndexError to be
+            # consistent with the DeferredArray implementation
+            try:
+                out = self.array[index_key]
+            except IndexError as e:
+                raise RuntimeError(e) from e
             result = EagerArray(self.runtime, out)
         else:
             child = self.array[key]
@@ -447,10 +442,15 @@ class EagerArray(NumPyThunk):
         else:
             if is_advanced_indexing(key):
                 index_key = self._create_indexing_key(key)
-                if isinstance(value, EagerArray):
-                    self.array[index_key] = value.array
-                else:
-                    self.array[index_key] = value
+                # FIXME: Need to raise RuntimeError instead of IndexError to be
+                # consistent with the DeferredArray implementation
+                try:
+                    if isinstance(value, EagerArray):
+                        self.array[index_key] = value.array
+                    else:
+                        self.array[index_key] = value
+                except IndexError as e:
+                    raise RuntimeError(e) from e
             else:
                 if isinstance(value, EagerArray):
                     self.array[key] = value.array
@@ -534,9 +534,7 @@ class EagerArray(NumPyThunk):
         else:
             self.array.fill(value)
 
-    def transpose(
-        self, axes: Union[None, tuple[int, ...], list[int]]
-    ) -> NumPyThunk:
+    def transpose(self, axes: Union[tuple[int, ...], list[int]]) -> NumPyThunk:
         if self.deferred is not None:
             return self.deferred.transpose(axes)
         # See https://github.com/numpy/numpy/issues/22019
@@ -658,7 +656,12 @@ class EagerArray(NumPyThunk):
         if self.deferred is not None:
             self.deferred.put(indices, values, check_bounds)
         else:
-            np.put(self.array, indices.array, values.array)
+            # FIXME: Need to raise RuntimeError instead of IndexError to be
+            # consistent with the DeferredArray implementation
+            try:
+                np.put(self.array, indices.array, values.array)
+            except IndexError as e:
+                raise RuntimeError(e) from e
 
     def putmask(self, mask: Any, values: Any) -> None:
         self.check_eager_args(mask, values)
@@ -1434,7 +1437,7 @@ class EagerArray(NumPyThunk):
         op: UnaryOpCode,
         rhs: Any,
         where: Any,
-        args: Any,
+        args: tuple[Scalar, ...] = (),
         multiout: Optional[Any] = None,
     ) -> None:
         if multiout is None:
@@ -1465,7 +1468,12 @@ class EagerArray(NumPyThunk):
                     else where.array,
                 )
         elif op == UnaryOpCode.CLIP:
-            np.clip(rhs.array, out=self.array, a_min=args[0], a_max=args[1])
+            np.clip(
+                rhs.array,
+                out=self.array,
+                a_min=args[0].value(),
+                a_max=args[1].value(),
+            )
         elif op == UnaryOpCode.COPY:
             self.array[:] = rhs.array[:]
         elif op == UnaryOpCode.IMAG:
@@ -1483,7 +1491,7 @@ class EagerArray(NumPyThunk):
         orig_axis: Union[int, None],
         axes: tuple[int, ...],
         keepdims: bool,
-        args: Any,
+        args: tuple[Scalar, ...],
         initial: Any,
     ) -> None:
         self.check_eager_args(rhs, where)
@@ -1525,7 +1533,7 @@ class EagerArray(NumPyThunk):
                 **kws,
             )
         elif op == UnaryRedCode.CONTAINS:
-            self.array.fill(args[0] in rhs.array)
+            self.array.fill(args[0].value() in rhs.array)
         elif op == UnaryRedCode.COUNT_NONZERO:
             self.array[()] = np.count_nonzero(rhs.array, axis=orig_axis)
         else:
@@ -1547,7 +1555,12 @@ class EagerArray(NumPyThunk):
             )
 
     def binary_op(
-        self, op: BinaryOpCode, rhs1: Any, rhs2: Any, where: Any, args: Any
+        self,
+        op: BinaryOpCode,
+        rhs1: Any,
+        rhs2: Any,
+        where: Any,
+        args: tuple[Scalar, ...],
     ) -> None:
         self.check_eager_args(rhs1, rhs2, where)
         if self.deferred is not None:
@@ -1571,7 +1584,7 @@ class EagerArray(NumPyThunk):
         rhs1: Any,
         rhs2: Any,
         broadcast: Union[NdShape, None],
-        args: Any,
+        args: tuple[Scalar, ...],
     ) -> None:
         self.check_eager_args(rhs1, rhs2)
         if self.deferred is not None:
@@ -1580,7 +1593,10 @@ class EagerArray(NumPyThunk):
             if op == BinaryOpCode.ISCLOSE:
                 self.array = np.array(
                     np.allclose(
-                        rhs1.array, rhs2.array, rtol=args[0], atol=args[1]
+                        rhs1.array,
+                        rhs2.array,
+                        rtol=args[0].value(),
+                        atol=args[1].value(),
                     )
                 )
             elif op == BinaryOpCode.EQUAL:
@@ -1636,9 +1652,12 @@ class EagerArray(NumPyThunk):
             try:
                 result = np.linalg.solve(a.array, b.array)
             except np.linalg.LinAlgError as e:
-                from .linalg import LinAlgError
+                # from .linalg import LinAlgError
 
-                raise LinAlgError(e) from e
+                # FIXME: Use RuntimeError for now to be consistent with the
+                # DeferredArray implementation
+                # raise LinAlgError(e) from e
+                raise RuntimeError(e) from e
             self.array[:] = result
 
     def scan(

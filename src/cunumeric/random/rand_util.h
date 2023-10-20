@@ -56,7 +56,7 @@ struct RandomGenerator<RandGenCode::UNIFORM, CODE> {
   using RNG                   = Philox_2x32<10>;
   static constexpr bool valid = CODE == legate::Type::Code::FLOAT64;
 
-  RandomGenerator(uint32_t ep, const std::vector<legate::Store>& args) : epoch(ep) {}
+  RandomGenerator(uint32_t ep, const std::vector<legate::Scalar>& args) : epoch(ep) {}
 
   __CUDAPREFIX__ double operator()(uint32_t hi, uint32_t lo) const
   {
@@ -71,7 +71,7 @@ struct RandomGenerator<RandGenCode::NORMAL, CODE> {
   using RNG                   = Philox_2x32<10>;
   static constexpr bool valid = CODE == legate::Type::Code::FLOAT64;
 
-  RandomGenerator(uint32_t ep, const std::vector<legate::Store>& args) : epoch(ep) {}
+  RandomGenerator(uint32_t ep, const std::vector<legate::Scalar>& args) : epoch(ep) {}
 
 #ifndef __NVCC__
   static inline double erfinv(double a)
@@ -181,11 +181,11 @@ struct RandomGenerator<RandGenCode::INTEGER, CODE> {
 
   static constexpr bool valid = legate::is_integral<CODE>::value;
 
-  RandomGenerator(uint32_t ep, const std::vector<legate::Store>& args) : epoch(ep)
+  RandomGenerator(uint32_t ep, const std::vector<legate::Scalar>& args) : epoch(ep)
   {
     assert(args.size() == 2);
-    lo   = args[0].scalar<VAL>();
-    diff = args[1].scalar<VAL>() - lo;
+    lo   = args[0].value<VAL>();
+    diff = args[1].value<VAL>() - lo;
   }
 
   __CUDAPREFIX__ double operator()(uint32_t hi_bits, uint32_t lo_bits) const

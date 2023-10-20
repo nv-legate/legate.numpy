@@ -164,7 +164,10 @@ def test_ndim_out(ndim):
         shape_new = tuple(shape_list)
 
         out_np = np.random.randint(1, 10, shape_new)
-        out_num = np.random.randint(-10, -1, shape_new)
+        # FIXME: we should be able to output to a NumPy array once we have
+        # the full attach support
+        # out_num = np.random.randint(-10, -1, shape_new)
+        out_num = num.random.randint(-10, -1, shape_new)
 
         np.compress(np_condition, np_arr, axis, out_np)
         num.compress(num_condition, num_arr, axis, out=out_num)

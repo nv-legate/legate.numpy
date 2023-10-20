@@ -31,7 +31,7 @@ from typing import (
 )
 
 import numpy as np
-from legate.core import Array, Field
+from legate.core import Field, LogicalArray, Scalar
 from legate.core.utils import OrderedSet
 from numpy.core.multiarray import (  # type: ignore [attr-defined]
     normalize_axis_index,
@@ -356,7 +356,7 @@ class ndarray:
             # We don't have nullable data for the moment
             # until we support masked arrays
             dtype = deferred_thunk.base.type
-            array = Array(dtype, [None, deferred_thunk.base])
+            array = LogicalArray.from_store(deferred_thunk.base)
             self._legate_data = dict()
             self._legate_data["version"] = 1
             field = Field("cuNumeric Array", dtype)
@@ -872,12 +872,13 @@ class ndarray:
             args = (np.array(item, dtype=self.dtype),)
         if args[0].size != 1:
             raise ValueError("contains needs scalar item")
+        core_dtype = to_core_dtype(self.dtype)
         return self._perform_unary_reduction(
             UnaryRedCode.CONTAINS,
             self,
             axis=None,
             res_dtype=bool,
-            args=args,
+            args=(Scalar(args[0].squeeze()[()], core_dtype),),
         )
 
     def __copy__(self) -> ndarray:
@@ -2276,8 +2277,10 @@ class ndarray:
                 return convert_to_cunumeric_ndarray(
                     self.__array__().clip(args[0], args[1])
                 )
+        core_dtype = to_core_dtype(self.dtype)
+        extra_args = (Scalar(min, core_dtype), Scalar(max, core_dtype))
         return self._perform_unary_op(
-            UnaryOpCode.CLIP, self, out=out, extra_args=args
+            UnaryOpCode.CLIP, self, out=out, extra_args=extra_args
         )
 
     def conj(self) -> ndarray:
@@ -4132,7 +4135,7 @@ class ndarray:
         res_dtype: Union[npt.DTypeLike, None] = None,
         out: Union[ndarray, None] = None,
         keepdims: bool = False,
-        args: Union[Any, None] = None,
+        args: tuple[Scalar, ...] = (),
         initial: Union[int, float, None] = None,
         where: Union[bool, ndarray] = True,
     ) -> ndarray:
@@ -4234,7 +4237,7 @@ class ndarray:
         one: ndarray,
         two: ndarray,
         dtype: np.dtype[Any],
-        extra_args: Union[tuple[Any, ...], None] = None,
+        extra_args: tuple[Scalar, ...] = (),
     ) -> ndarray:
         args = (one, two)
 

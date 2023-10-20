@@ -198,8 +198,8 @@ static void unary_op_template(TaskContext& context)
       break;
     }
     default: {
-      std::vector<Store> extra_args;
-      for (size_t idx = 1; idx < inputs.size(); ++idx) extra_args.push_back(std::move(inputs[idx]));
+      std::vector<Scalar> extra_args;
+      for (size_t idx = 1; idx < scalars.size(); ++idx) extra_args.push_back(scalars[idx]);
 
       UnaryOpArgs args{inputs[0], outputs[0], op_code, std::move(extra_args)};
       op_dispatch(args.op_code, UnaryOpDispatch<KIND>{}, args);

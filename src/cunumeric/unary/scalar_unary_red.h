@@ -26,7 +26,7 @@ struct ScalarUnaryRedArgs {
   legate::Store in;
   UnaryRedCode op_code;
   legate::DomainPoint shape;
-  std::vector<legate::Store> args;
+  std::vector<legate::Scalar> args;
 };
 
 // Unary reduction task that produces scalar results

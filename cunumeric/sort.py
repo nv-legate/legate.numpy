@@ -16,7 +16,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Union, cast
 
-from legate.core import types as ty
+from legate.core import get_legate_runtime, types as ty
 from numpy.core.multiarray import (  # type: ignore [attr-defined]
     normalize_axis_index,
 )
@@ -86,7 +86,8 @@ def sort_swapped(
 def sort_task(
     output: DeferredArray, input: DeferredArray, argsort: bool, stable: bool
 ) -> None:
-    task = output.context.create_auto_task(CuNumericOpCode.SORT)
+    runtime = get_legate_runtime()
+    task = runtime.create_auto_task(output.library, CuNumericOpCode.SORT)
 
     uses_unbound_output = output.runtime.num_procs > 1 and input.ndim == 1
 

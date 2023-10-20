@@ -79,7 +79,7 @@ static void fill_template(TaskContext& context)
     auto field_type = args.out.type().as_struct_type().field_type(1);
     code            = field_type.code();
   }
-  double_dispatch(args.out.dim(), code, FillImpl<KIND>{}, args);
+  double_dispatch(std::max<int32_t>(args.out.dim(), 1), code, FillImpl<KIND>{}, args);
 }
 
 }  // namespace cunumeric

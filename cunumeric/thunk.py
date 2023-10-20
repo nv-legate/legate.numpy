@@ -22,7 +22,7 @@ from .config import ConvertCode
 if TYPE_CHECKING:
     import numpy as np
     import numpy.typing as npt
-    from legate.core import FieldID, Future, Region
+    from legate.core import Scalar
 
     from .config import (
         BinaryOpCode,
@@ -55,7 +55,7 @@ class NumPyThunk(ABC):
 
     def __init__(self, runtime: Runtime, dtype: np.dtype[Any]) -> None:
         self.runtime = runtime
-        self.context = runtime.legate_context
+        self.library = runtime.library
         self.dtype = dtype
 
     @property
@@ -72,11 +72,6 @@ class NumPyThunk(ABC):
         return s
 
     # Abstract methods
-
-    @abstractproperty
-    def storage(self) -> Union[Future, tuple[Region, FieldID]]:
-        """Return the Legion storage primitive for this NumPy thunk"""
-        ...
 
     @abstractproperty
     def shape(self) -> NdShape:
@@ -128,10 +123,6 @@ class NumPyThunk(ABC):
         ...
 
     @abstractmethod
-    def get_scalar_array(self) -> npt.NDArray[Any]:
-        ...
-
-    @abstractmethod
     def get_item(self, key: Any) -> NumPyThunk:
         ...
 
@@ -166,9 +157,7 @@ class NumPyThunk(ABC):
         ...
 
     @abstractmethod
-    def transpose(
-        self, axes: Union[None, tuple[int, ...], list[int]]
-    ) -> NumPyThunk:
+    def transpose(self, axes: Union[tuple[int, ...], list[int]]) -> NumPyThunk:
         ...
 
     @abstractmethod
@@ -640,7 +629,7 @@ class NumPyThunk(ABC):
         op: UnaryOpCode,
         rhs: Any,
         where: Any,
-        args: Any,
+        args: tuple[Scalar, ...] = (),
         multiout: Optional[Any] = None,
     ) -> None:
         ...
@@ -654,7 +643,7 @@ class NumPyThunk(ABC):
         orig_axis: Union[int, None],
         axes: tuple[int, ...],
         keepdims: bool,
-        args: Any,
+        args: tuple[Scalar, ...],
         initial: Any,
     ) -> None:
         ...
@@ -667,7 +656,12 @@ class NumPyThunk(ABC):
 
     @abstractmethod
     def binary_op(
-        self, op: BinaryOpCode, rhs1: Any, rhs2: Any, where: Any, args: Any
+        self,
+        op: BinaryOpCode,
+        rhs1: Any,
+        rhs2: Any,
+        where: Any,
+        args: tuple[Scalar, ...],
     ) -> None:
         ...
 
@@ -678,7 +672,7 @@ class NumPyThunk(ABC):
         rhs1: Any,
         rhs2: Any,
         broadcast: Union[NdShape, None],
-        args: Any,
+        args: tuple[Scalar, ...],
     ) -> None:
         ...
 

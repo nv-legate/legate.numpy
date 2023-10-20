@@ -22,9 +22,8 @@ namespace cunumeric {
 
 struct ArangeArgs {
   legate::Store out;
-  legate::Store start;
-  legate::Store stop;
-  legate::Store step;
+  legate::Scalar start;
+  legate::Scalar step;
 };
 
 class ArangeTask : public CuNumericTask<ArangeTask> {

@@ -427,7 +427,7 @@ class unary_ufunc(ufunc):
         )
 
         op_code = self._overrides.get(x.dtype.char, self._op_code)
-        result._thunk.unary_op(op_code, x._thunk, where, ())
+        result._thunk.unary_op(op_code, x._thunk, where)
 
         return self._maybe_cast_output(out, result)
 

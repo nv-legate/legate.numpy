@@ -26,7 +26,7 @@ struct BinaryRedArgs {
   legate::Store in1;
   legate::Store in2;
   BinaryOpCode op_code;
-  std::vector<legate::Store> args;
+  std::vector<legate::Scalar> args;
 };
 
 class BinaryRedTask : public CuNumericTask<BinaryRedTask> {
