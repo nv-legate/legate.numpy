@@ -14,31 +14,14 @@
 #
 
 import pytest
-# from legate.core import Library
-from legate.core.context import Context
-from mock import patch
 
 import cunumeric.config as m  # module under test
-from cunumeric import runtime
-
-
-class _FakeSO:
-    CUNUMERIC_MAX_TASKS = 10
-    CUNUMERIC_MAX_MAPPERS = 20
-    CUNUMERIC_MAX_REDOPS = 30
 
 
 class TestCuNumericLib:
     def test___init__(self) -> None:
         lib = m.CuNumericLib("foo")
-        # assert isinstance(lib, Library)
         assert lib.name == "foo"
-        assert lib.shared_object is None
-        assert lib.runtime is None
-
-    def test_get_name(self) -> None:
-        lib = m.CuNumericLib("foo")
-        assert lib.get_name() == "foo"
 
     def test_get_shared_library(self) -> None:
         lib = m.CuNumericLib("foo")
@@ -60,45 +43,6 @@ class TestCuNumericLib:
 
         assert lib.get_c_header() == header
 
-    def test_get_registration_callback(self) -> None:
-        lib = m.CuNumericLib("foo")
-        assert (
-            lib.get_registration_callback() == "cunumeric_perform_registration"
-        )
-
-    def test_initialize(self) -> None:
-        lib = m.CuNumericLib("foo")
-        lib.initialize(_FakeSO)
-        assert lib.shared_object == _FakeSO
-
-        # error if runtime already set
-        lib.runtime = runtime
-        with pytest.raises(AssertionError):
-            lib.initialize(_FakeSO)
-
-    def test_set_runtine(self) -> None:
-        lib = m.CuNumericLib("foo")
-
-        # error if not initialized
-        with pytest.raises(AssertionError):
-            lib.set_runtime(runtime)
-
-        lib.initialize(_FakeSO)
-        lib.set_runtime(runtime)
-        assert lib.runtime == runtime
-
-        # error if runtime already set
-        with pytest.raises(AssertionError):
-            lib.set_runtime(runtime)
-
-    @patch("cunumeric.runtime.destroy")
-    def test_destroy(self, mock_destroy) -> None:
-        lib = m.CuNumericLib("foo")
-        lib.initialize(_FakeSO)
-        lib.set_runtime(runtime)
-        lib.destroy()
-        mock_destroy.assert_called_once_with()
-
 
 def test_CUNUMERIC_LIB_NAME() -> None:
     assert m.CUNUMERIC_LIB_NAME == "cunumeric"
@@ -106,10 +50,6 @@ def test_CUNUMERIC_LIB_NAME() -> None:
 
 def test_cunumeric_lib() -> None:
     assert isinstance(m.cunumeric_lib, m.CuNumericLib)
-
-
-def test_cunumeric_context() -> None:
-    assert isinstance(m.cunumeric_context, Context)
 
 
 def test_CuNumericOpCode() -> None:

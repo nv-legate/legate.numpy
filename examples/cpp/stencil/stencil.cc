@@ -54,7 +54,7 @@ cunumeric::NDArray initialize(uint64_t N)
   grid[{slice(), slice(-1, open)}].assign(-273.15);
   grid[{slice(-1, open), slice()}].assign(-273.15);
   grid[{slice(0, 1), slice()}].assign(40.0);
-  return std::move(grid);
+  return grid;
 }
 
 void stencil(const Config& config)
@@ -72,8 +72,6 @@ void stencil(const Config& config)
     auto average = center + north + east + west + south;
     auto work    = average * legate::Scalar(double(0.2));
     center.assign(work);
-    // print_array(average);
-    // print_array(center);
   };
 }
 

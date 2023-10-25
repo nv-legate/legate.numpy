@@ -24,8 +24,6 @@ from typing import TYPE_CHECKING, Any, Union, cast
 import cffi  # type: ignore
 import numpy as np
 
-ffi = cffi.FFI()
-
 if TYPE_CHECKING:
     import numpy.typing as npt
 
@@ -301,6 +299,7 @@ class CuNumericLib:
         shared_lib_path = self.get_shared_library()
         assert shared_lib_path is not None
         header = self.get_c_header()
+        ffi = cffi.FFI()
         if header is not None:
             ffi.cdef(header)
         # Don't use ffi.dlopen(), because that will call dlclose()
@@ -309,10 +308,13 @@ class CuNumericLib:
         # (e.g. vtable entries, which will be queried for virtual
         # destructors), causing errors at shutdown.
         shared_lib = dlopen_no_autoclose(ffi, shared_lib_path)
-        callback = getattr(shared_lib, "cunumeric_perform_registration")
-        callback()
-
         self.shared_object = cast(_CunumericSharedLib, shared_lib)
+
+    def register(self) -> None:
+        callback = getattr(
+            self.shared_object, "cunumeric_perform_registration"
+        )
+        callback()
 
     def get_shared_library(self) -> str:
         from cunumeric.install_info import libpath
@@ -338,6 +340,7 @@ class CuNumericLib:
 
 CUNUMERIC_LIB_NAME = "cunumeric"
 cunumeric_lib = CuNumericLib(CUNUMERIC_LIB_NAME)
+cunumeric_lib.register()
 _cunumeric = cunumeric_lib.shared_object
 
 

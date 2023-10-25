@@ -134,7 +134,7 @@ void NDArray::random(int32_t gen_code)
 
   auto task = runtime->create_task(CuNumericOpCode::CUNUMERIC_RAND);
 
-  auto p_lhs = task.add_output(store_);
+  task.add_output(store_);
   task.add_scalar_arg(legate::Scalar(static_cast<int32_t>(RandGenCode::UNIFORM)));
   task.add_scalar_arg(legate::Scalar(runtime->get_next_random_epoch()));
   auto strides = compute_strides(shape());
@@ -153,8 +153,8 @@ void NDArray::fill(const Scalar& value, bool argval)
 
   auto task = runtime->create_task(CuNumericOpCode::CUNUMERIC_FILL);
 
-  auto p_lhs        = task.add_output(store_);
-  auto p_fill_value = task.add_input(fill_value);
+  task.add_output(store_);
+  task.add_input(fill_value);
   task.add_scalar_arg(legate::Scalar(argval));
 
   runtime->submit(std::move(task));
@@ -364,7 +364,7 @@ void NDArray::binary_reduction(int32_t op_code, NDArray rhs1, NDArray rhs2)
   }
   auto task = runtime->create_task(CuNumericOpCode::CUNUMERIC_BINARY_RED);
 
-  auto p_lhs  = task.add_reduction(store_, redop);
+  task.add_reduction(store_, redop);
   auto p_rhs1 = task.add_input(rhs1_store);
   auto p_rhs2 = task.add_input(rhs2_store);
   task.add_scalar_arg(legate::Scalar(op_code));
