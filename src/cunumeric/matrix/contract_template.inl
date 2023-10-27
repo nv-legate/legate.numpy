@@ -218,11 +218,11 @@ static void contract_template(legate::TaskContext& context)
   auto code = args.lhs.code();
 
 #ifdef DEBUG_CUNUMERIC
-  assert(dim = args.rhs1.dim());
-  assert(dim = args.rhs2.dim());
-  assert(dim = args.lhs_dim_mask.size());
-  assert(dim = args.rhs1_dim_mask.size());
-  assert(dim = args.rhs2_dim_mask.size());
+  assert(dim == args.rhs1.dim());
+  assert(dim == args.rhs2.dim());
+  assert(dim == static_cast<int32_t>(args.lhs_dim_mask.size()));
+  assert(dim == static_cast<int32_t>(args.rhs1_dim_mask.size()));
+  assert(dim == static_cast<int32_t>(args.rhs2_dim_mask.size()));
   assert(code == args.rhs1.code());
   assert(code == args.rhs2.code());
 #endif
