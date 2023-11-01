@@ -88,6 +88,7 @@ class NDArray {
             bool argsort                = false,
             std::optional<int32_t> axis = -1,
             std::string kind            = "quicksort");
+  NDArray transpose(std::optional<std::vector<int32_t>> axes = std::nullopt);
 
  public:
   NDArray as_type(const legate::Type& type);

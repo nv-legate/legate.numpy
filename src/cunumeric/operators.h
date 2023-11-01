@@ -91,4 +91,6 @@ NDArray convolve(NDArray a, NDArray v);
 
 NDArray sort(NDArray input, std::optional<int32_t> axis = -1, std::string kind = "quicksort");
 
+NDArray transpose(NDArray a, std::optional<std::vector<int32_t>> axes = std::nullopt);
+
 }  // namespace cunumeric
