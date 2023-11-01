@@ -599,7 +599,7 @@ NDArray NDArray::transpose(std::optional<std::vector<int32_t>> axes)
   std::vector<int32_t> v_axes;
   if (!axes.has_value()) {
     for (int32_t i = dim() - 1; i > -1; --i) v_axes.push_back(i);
-  } else if (axes.value().size() != dim()) {
+  } else if (static_cast<int32_t>(axes.value().size()) != dim()) {
     throw std::invalid_argument("axes must be the same size as ndim for transpose");
   } else {
     v_axes = axes.value();

@@ -43,7 +43,7 @@ NDArray CuNumericRuntime::create_array(const legate::Type& type)
 
 NDArray CuNumericRuntime::create_array(std::vector<size_t> shape, const legate::Type& type)
 {
-  auto store = legate_runtime_->create_store(shape, type, true /*optimize_scalar*/);
+  auto store = legate_runtime_->create_store(legate::Shape{shape}, type, true /*optimize_scalar*/);
   return NDArray(std::move(store));
 }
 
