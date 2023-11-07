@@ -20,11 +20,11 @@ from legate.core import broadcast, get_legate_runtime, types as ty
 
 from cunumeric.config import CuNumericOpCode
 
+from .exception import LinAlgError
+
 # from legate.core.shape import Shape
 # from legate.settings import settings
 
-
-# from .exception import LinAlgError
 
 legate_runtime = get_legate_runtime()
 
@@ -79,9 +79,7 @@ def transpose_copy(
 
 def potrf_single(library: Library, output: LogicalStore) -> None:
     task = legate_runtime.create_auto_task(library, CuNumericOpCode.POTRF)
-    # TODO: We need to put back the precise Python exception support
-    # task.throws_exception(LinAlgError)
-    task.throws_exception(True)
+    task.throws_exception(LinAlgError)
     task.add_output(output)
     task.add_input(output)
     task.execute()
@@ -92,9 +90,7 @@ def potrf_single(library: Library, output: LogicalStore) -> None:
 #    task = legate_runtime.create_manual_task(
 #        library, CuNumericOpCode.POTRF, launch_domain
 #    )
-#    # TODO: We need to put back the precise Python exception support
-#    # task.throws_exception(LinAlgError)
-#    task.throws_exception(True)
+#    task.throws_exception(LinAlgError)
 #    task.add_output(p_output)
 #    task.add_input(p_output)
 #    task.execute()

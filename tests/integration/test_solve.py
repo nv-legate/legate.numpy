@@ -206,9 +206,7 @@ class TestSolveErrors:
     def test_a_singular_matrix(self):
         a = num.zeros((self.n, self.n)).astype(np.float64)
         msg = "Singular matrix"
-        # FIXME: We need full Python exception support
-        # with pytest.raises(num.linalg.LinAlgError, match=msg):
-        with pytest.raises(RuntimeError, match=msg):
+        with pytest.raises(num.linalg.LinAlgError, match=msg):
             num.linalg.solve(a, self.b)
 
 

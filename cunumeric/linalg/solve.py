@@ -21,8 +21,7 @@ from legate.core import broadcast, get_legate_runtime
 from cunumeric.config import CuNumericOpCode
 
 from .cholesky import transpose_copy_single
-
-# from .exception import LinAlgError
+from .exception import LinAlgError
 
 if TYPE_CHECKING:
     from legate.core import Library, LogicalStore
@@ -34,9 +33,7 @@ def solve_single(library: Library, a: LogicalStore, b: LogicalStore) -> None:
     task = get_legate_runtime().create_auto_task(
         library, CuNumericOpCode.SOLVE
     )
-    # TODO: We need to put back the precise Python exception support
-    # task.throws_exception(LinAlgError)
-    task.throws_exception(True)
+    task.throws_exception(LinAlgError)
     p_a = task.add_input(a)
     p_b = task.add_input(b)
     task.add_output(a, p_a)

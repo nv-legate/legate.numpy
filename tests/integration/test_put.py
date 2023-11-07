@@ -200,9 +200,7 @@ class TestPutErrors:
         values = 10
         with pytest.raises(expected_exc):
             np.put(x_np, indices, values)
-        # FIXME: Needs full Python exception support
-        # with pytest.raises(expected_exc):
-        with pytest.raises(RuntimeError):
+        with pytest.raises(expected_exc):
             num.put(x_num, indices, values)
 
     @pytest.mark.parametrize(

@@ -420,12 +420,7 @@ class EagerArray(NumPyThunk):
             return self.deferred.get_item(key)
         if is_advanced_indexing(key):
             index_key = self._create_indexing_key(key)
-            # FIXME: Need to raise RuntimeError instead of IndexError to be
-            # consistent with the DeferredArray implementation
-            try:
-                out = self.array[index_key]
-            except IndexError as e:
-                raise RuntimeError(e) from e
+            out = self.array[index_key]
             result = EagerArray(self.runtime, out)
         else:
             child = self.array[key]
@@ -442,15 +437,10 @@ class EagerArray(NumPyThunk):
         else:
             if is_advanced_indexing(key):
                 index_key = self._create_indexing_key(key)
-                # FIXME: Need to raise RuntimeError instead of IndexError to be
-                # consistent with the DeferredArray implementation
-                try:
-                    if isinstance(value, EagerArray):
-                        self.array[index_key] = value.array
-                    else:
-                        self.array[index_key] = value
-                except IndexError as e:
-                    raise RuntimeError(e) from e
+                if isinstance(value, EagerArray):
+                    self.array[index_key] = value.array
+                else:
+                    self.array[index_key] = value
             else:
                 if isinstance(value, EagerArray):
                     self.array[key] = value.array
@@ -656,12 +646,7 @@ class EagerArray(NumPyThunk):
         if self.deferred is not None:
             self.deferred.put(indices, values, check_bounds)
         else:
-            # FIXME: Need to raise RuntimeError instead of IndexError to be
-            # consistent with the DeferredArray implementation
-            try:
-                np.put(self.array, indices.array, values.array)
-            except IndexError as e:
-                raise RuntimeError(e) from e
+            np.put(self.array, indices.array, values.array)
 
     def putmask(self, mask: Any, values: Any) -> None:
         self.check_eager_args(mask, values)
@@ -1652,12 +1637,9 @@ class EagerArray(NumPyThunk):
             try:
                 result = np.linalg.solve(a.array, b.array)
             except np.linalg.LinAlgError as e:
-                # from .linalg import LinAlgError
+                from .linalg import LinAlgError
 
-                # FIXME: Use RuntimeError for now to be consistent with the
-                # DeferredArray implementation
-                # raise LinAlgError(e) from e
-                raise RuntimeError(e) from e
+                raise LinAlgError(e) from e
             self.array[:] = result
 
     def scan(

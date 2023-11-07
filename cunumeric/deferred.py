@@ -442,9 +442,7 @@ class DeferredArray(NumPyThunk):
         task = legate_runtime.create_auto_task(
             self.library, CuNumericOpCode.ZIP
         )
-        # TODO: We need to put back the precise Python exception support
-        # task.throws_exception(IndexError)
-        task.throws_exception(True)
+        task.throws_exception(IndexError)
         p_out = task.add_output(output_arr.base)
         task.add_scalar_arg(self.ndim, ty.int64)  # N of points in Point<N>
         task.add_scalar_arg(key_dim, ty.int64)  # key_dim
@@ -1812,9 +1810,7 @@ class DeferredArray(NumPyThunk):
         task.add_scalar_arg(check_bounds, ty.bool_)
         p_indices = task.add_input(indices.base)
         task.add_constraint(align(p_indices, p_indirect))
-        # TODO: We need to put back the precise Python exception support
-        # task.throws_exception(IndexError)
-        task.throws_exception(True)
+        task.throws_exception(IndexError)
         task.execute()
         if indirect.base.has_scalar_storage:
             indirect = indirect._convert_future_to_regionfield()
