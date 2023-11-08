@@ -28,7 +28,13 @@ void transpose_int32_test(std::array<int32_t, SIZE> input,
 {
   auto a_input = cunumeric::zeros(in_shape, legate::int32());
   assign_values_to_array<int32_t, DIM>(a_input, input.data(), input.size());
-  auto a_output = cunumeric::transpose(a_input, axes);
+
+  auto a_output = cunumeric::array(out_shape, legate::int32());
+
+  if (axes)
+    a_output = cunumeric::transpose(a_input, axes.value());
+  else
+    a_output = cunumeric::transpose(a_input);
   check_array_eq<int32_t, DIM>(a_output, exp.data(), exp.size());
   EXPECT_EQ(a_output.shape(), out_shape);
 }
@@ -106,11 +112,10 @@ TEST(Transpose, DefaultType)
   std::array<double, size> exp   = {1.3, 4, 2, 5, 3.6, 6};
   std::vector<size_t> in_shape   = {2, 3};
   std::vector<size_t> out_shape  = {3, 2};
-  auto axes                      = std::nullopt;
 
   auto a_input = cunumeric::zeros(in_shape);
   assign_values_to_array<double, dim>(a_input, input.data(), input.size());
-  auto a_output = cunumeric::transpose(a_input, axes);
+  auto a_output = cunumeric::transpose(a_input);
   check_array_eq<double, dim>(a_output, exp.data(), exp.size());
   EXPECT_EQ(a_output.shape(), out_shape);
 }
@@ -125,8 +130,8 @@ TEST(TransposeErrors, InvalidAxes)
 
   auto a_input = cunumeric::zeros(in_shape);
   assign_values_to_array<double, dim>(a_input, input.data(), input.size());
-  EXPECT_THROW(cunumeric::transpose(a_input, (std::vector<int32_t>){0, 1, 2}), std::invalid_argument);
+  EXPECT_THROW(cunumeric::transpose(a_input, (std::vector<int32_t>){0, 1, 2}),
+               std::invalid_argument);
   EXPECT_THROW(cunumeric::transpose(a_input, (std::vector<int32_t>){1}), std::invalid_argument);
   EXPECT_THROW(cunumeric::transpose(a_input, (std::vector<int32_t>){3, 4}), std::invalid_argument);
 }
-

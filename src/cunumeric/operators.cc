@@ -321,9 +321,8 @@ NDArray sort(NDArray input, std::optional<int32_t> axis /*=-1*/, std::string kin
   return result;
 }
 
-NDArray transpose(NDArray a, std::optional<std::vector<int32_t>> axes)
-{
-  return a.transpose(axes);
-}
+NDArray transpose(NDArray a) { return a.transpose(); }
+
+NDArray transpose(NDArray a, std::vector<int32_t> axes) { return a.transpose(axes); }
 
 }  // namespace cunumeric

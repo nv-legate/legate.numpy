@@ -593,19 +593,21 @@ void NDArray::convolve(NDArray input, NDArray filter)
   runtime->submit(std::move(task));
 }
 
-NDArray NDArray::transpose(std::optional<std::vector<int32_t>> axes)
+NDArray NDArray::transpose()
 {
   if (dim() == 1) return NDArray(std::move(store_));
-  std::vector<int32_t> v_axes;
-  if (!axes.has_value()) {
-    for (int32_t i = dim() - 1; i > -1; --i) v_axes.push_back(i);
-  } else if (static_cast<int32_t>(axes.value().size()) != dim()) {
-    throw std::invalid_argument("axes must be the same size as ndim for transpose");
-  } else {
-    v_axes = axes.value();
-  }
+  std::vector<int32_t> axes;
+  for (int32_t i = dim() - 1; i > -1; --i) axes.push_back(i);
+  return transpose(axes);
+}
 
-  return NDArray(store_.transpose(std::move(v_axes)));
+NDArray NDArray::transpose(std::vector<int32_t> axes)
+{
+  if (dim() == 1) return NDArray(std::move(store_));
+  if (axes.size() != dim()) {
+    throw std::invalid_argument("axes must be the same size as ndim for transpose");
+  }
+  return NDArray(store_.transpose(std::move(axes)));
 }
 
 legate::LogicalStore NDArray::get_store() { return store_; }
