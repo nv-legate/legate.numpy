@@ -94,7 +94,6 @@ class NDArray {
  public:
   NDArray as_type(const legate::Type& type);
   legate::LogicalStore get_store();
-  int32_t normalize_axis_index(int32_t axis);
   void sort(NDArray rhs, bool argsort, std::optional<int32_t> axis = -1, bool stable = false);
 
  private:

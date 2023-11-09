@@ -325,4 +325,51 @@ NDArray transpose(NDArray a) { return a.transpose(); }
 
 NDArray transpose(NDArray a, std::vector<int32_t> axes) { return a.transpose(axes); }
 
+int32_t normalize_axis_index(int32_t axis, int32_t ndim)
+{
+  if (-ndim <= axis && axis < ndim) {
+    axis = axis < 0 ? axis + ndim : axis;
+  } else {
+    std::stringstream ss;
+    ss << "AxisError: axis " << axis << " is out of bounds for array of dimension " << ndim;
+    throw std::invalid_argument(ss.str());
+  }
+  return axis;
+}
+
+std::vector<int32_t> normalize_axis_vector(std::vector<int32_t> axis,
+                                           int32_t ndim,
+                                           bool allow_duplicate)
+{
+  std::vector<int32_t> new_axis;
+  for (auto ax : axis) { new_axis.emplace_back(normalize_axis_index(ax, ndim)); }
+  std::set<int32_t> s(new_axis.begin(), new_axis.end());
+  if (!allow_duplicate && s.size() != new_axis.size()) {
+    throw std::invalid_argument("repeated axis");
+  }
+  return new_axis;
+}
+
+NDArray moveaxis(NDArray a, std::vector<int32_t> source, std::vector<int32_t> destination)
+{
+  if (source.size() != destination.size()) {
+    throw std::invalid_argument(
+      "`source` and `destination` arguments must have the same number "
+      "of elements");
+  }
+  auto ndim = a.dim();
+  auto src  = normalize_axis_vector(source, ndim);
+  auto dst  = normalize_axis_vector(destination, ndim);
+  std::vector<int32_t> order;
+  std::set<int32_t> set_src(src.begin(), src.end());
+  for (auto i = 0; i < ndim; ++i) {
+    if (set_src.find(i) == set_src.end()) order.emplace_back(i);
+  }
+  std::vector<std::pair<int32_t, int32_t>> vp;
+  for (auto i = 0; i < src.size(); ++i) { vp.push_back(std::make_pair(dst[i], src[i])); }
+  std::sort(vp.begin(), vp.end());
+  for (auto p : vp) { order.emplace(order.begin() + p.first, p.second); }
+  return a.transpose(order);
+}
+
 }  // namespace cunumeric

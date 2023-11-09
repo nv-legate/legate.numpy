@@ -95,4 +95,13 @@ NDArray transpose(NDArray a);
 
 NDArray transpose(NDArray a, std::vector<int32_t> axes);
 
+NDArray moveaxis(NDArray a, std::vector<int32_t> source, std::vector<int32_t> destination);
+
+// helper methods
+int32_t normalize_axis_index(int32_t axis, int32_t ndim);
+
+std::vector<int32_t> normalize_axis_vector(std::vector<int32_t> axis,
+                                           int32_t ndim,
+                                           bool allow_duplicate = false);
+
 }  // namespace cunumeric

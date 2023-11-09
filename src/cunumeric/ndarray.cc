@@ -207,18 +207,6 @@ void NDArray::bincount(NDArray rhs, std::optional<NDArray> weights /*=std::nullo
   runtime->submit(std::move(task));
 }
 
-int32_t NDArray::normalize_axis_index(int32_t axis)
-{
-  auto ndim           = dim();
-  std::string err_msg = "The input axis is out of the bounds";
-  if (axis > ndim) throw std::invalid_argument(std::move(err_msg));
-
-  auto updated_axis = axis >= 0 ? axis : ndim + axis;
-  if (updated_axis < 0) throw std::invalid_argument(std::move(err_msg));
-
-  return updated_axis;
-}
-
 void NDArray::sort_task(NDArray rhs, bool argsort, bool stable)
 {
   auto runtime = CuNumericRuntime::get_runtime();
@@ -250,7 +238,7 @@ void NDArray::sort_task(NDArray rhs, bool argsort, bool stable)
 
 void NDArray::sort_swapped(NDArray rhs, bool argsort, int32_t sort_axis, bool stable)
 {
-  sort_axis = rhs.normalize_axis_index(sort_axis);
+  sort_axis = normalize_axis_index(sort_axis, rhs.dim());
 
   auto swapped      = rhs.swapaxes(sort_axis, rhs.dim() - 1);
   auto runtime      = CuNumericRuntime::get_runtime();
@@ -274,7 +262,7 @@ void NDArray::sort(NDArray rhs, bool argsort, std::optional<int32_t> axis, bool 
     assert(false);
   }
   int32_t computed_axis = 0;
-  if (axis.has_value()) computed_axis = rhs.normalize_axis_index(axis.value());
+  if (axis.has_value()) computed_axis = normalize_axis_index(axis.value(), rhs.dim());
 
   if (computed_axis == rhs.dim() - 1) {
     sort_task(rhs, argsort, stable);
@@ -511,8 +499,8 @@ NDArray NDArray::unique()
 
 NDArray NDArray::swapaxes(int32_t axis1, int32_t axis2)
 {
-  axis1 = normalize_axis_index(axis1);
-  axis2 = normalize_axis_index(axis2);
+  axis1 = normalize_axis_index(axis1, dim());
+  axis2 = normalize_axis_index(axis2, dim());
 
   if (shape().size() == 1 || axis1 == axis2) return *this;
 
