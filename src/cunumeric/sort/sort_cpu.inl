@@ -145,14 +145,15 @@ void rebalance_data(SegmentMergePiece<VAL>& merge_buffer,
         rdispls[sort_ranks[sort_rank]]   = sort_rank * num_segments_l;
       }
 
-      comm::coll::collAlltoallv(segment_diff.ptr(0),
-                                comm_size.ptr(0),  // num_segments_l for all in sort group
-                                sdispls.ptr(0),    // zero for all
-                                segment_diff_buffers.ptr(0),
-                                comm_size.ptr(0),  // num_segments_l for all in sort group
-                                rdispls.ptr(0),    // exclusive_scan of recv size
-                                comm::coll::CollDataType::CollInt64,
-                                comm);
+      static_cast<void>(
+        comm::coll::collAlltoallv(segment_diff.ptr(0),
+                                  comm_size.ptr(0),  // num_segments_l for all in sort group
+                                  sdispls.ptr(0),    // zero for all
+                                  segment_diff_buffers.ptr(0),
+                                  comm_size.ptr(0),  // num_segments_l for all in sort group
+                                  rdispls.ptr(0),    // exclusive_scan of recv size
+                                  comm::coll::CollDataType::CollInt64,
+                                  comm));
 
       comm_size.destroy();
       sdispls.destroy();
@@ -325,23 +326,23 @@ void rebalance_data(SegmentMergePiece<VAL>& merge_buffer,
       }
 
       if (argsort) {
-        comm::coll::collAlltoallv(send_leftright_data.indices.ptr(0),
-                                  comm_send_size.ptr(0),
-                                  sdispls.ptr(0),
-                                  recv_leftright_data.indices.ptr(0),
-                                  comm_recv_size.ptr(0),
-                                  rdispls.ptr(0),
-                                  comm::coll::CollDataType::CollInt8,
-                                  comm);
+        static_cast<void>(comm::coll::collAlltoallv(send_leftright_data.indices.ptr(0),
+                                                    comm_send_size.ptr(0),
+                                                    sdispls.ptr(0),
+                                                    recv_leftright_data.indices.ptr(0),
+                                                    comm_recv_size.ptr(0),
+                                                    rdispls.ptr(0),
+                                                    comm::coll::CollDataType::CollInt8,
+                                                    comm));
       } else {
-        comm::coll::collAlltoallv(send_leftright_data.values.ptr(0),
-                                  comm_send_size.ptr(0),
-                                  sdispls.ptr(0),
-                                  recv_leftright_data.values.ptr(0),
-                                  comm_recv_size.ptr(0),
-                                  rdispls.ptr(0),
-                                  comm::coll::CollDataType::CollInt8,
-                                  comm);
+        static_cast<void>(comm::coll::collAlltoallv(send_leftright_data.values.ptr(0),
+                                                    comm_send_size.ptr(0),
+                                                    sdispls.ptr(0),
+                                                    recv_leftright_data.values.ptr(0),
+                                                    comm_recv_size.ptr(0),
+                                                    rdispls.ptr(0),
+                                                    comm::coll::CollDataType::CollInt8,
+                                                    comm));
       }
 
       comm_send_size.destroy();
@@ -478,8 +479,11 @@ void sample_sort_nd(SortPiece<legate_type_of<CODE>> local_sorted,
   {
     auto worker_counts     = create_buffer<int32_t>(num_ranks);
     worker_counts[my_rank] = (segment_size_l > 0 ? 1 : 0);
-    comm::coll::collAllgather(
-      worker_counts.ptr(my_rank), worker_counts.ptr(0), 1, comm::coll::CollDataType::CollInt, comm);
+    static_cast<void>(comm::coll::collAllgather(worker_counts.ptr(my_rank),
+                                                worker_counts.ptr(0),
+                                                1,
+                                                comm::coll::CollDataType::CollInt,
+                                                comm));
 
     auto p_worker_count = worker_counts.ptr(0);
     int32_t worker_count =
@@ -568,14 +572,15 @@ void sample_sort_nd(SortPiece<legate_type_of<CODE>> local_sorted,
       auto p_comm_size = comm_size.ptr(0);
       thrust::exclusive_scan(exec, p_comm_size, p_comm_size + num_ranks, rdispls.ptr(0), 0);
 
-      comm::coll::collAlltoallv(samples_l.ptr(0),
-                                comm_size.ptr(0),  // num_samples_l*size for all in sort group
-                                sdispls.ptr(0),    // zero for all
-                                p_samples,
-                                comm_size.ptr(0),  // num_samples_l*size for all in sort group
-                                rdispls.ptr(0),    // exclusive_scan of recv size
-                                comm::coll::CollDataType::CollUint8,
-                                comm);
+      static_cast<void>(
+        comm::coll::collAlltoallv(samples_l.ptr(0),
+                                  comm_size.ptr(0),  // num_samples_l*size for all in sort group
+                                  sdispls.ptr(0),    // zero for all
+                                  p_samples,
+                                  comm_size.ptr(0),  // num_samples_l*size for all in sort group
+                                  rdispls.ptr(0),    // exclusive_scan of recv size
+                                  comm::coll::CollDataType::CollUint8,
+                                  comm));
 
       samples_l.destroy();
       comm_size.destroy();
@@ -684,7 +689,7 @@ void sample_sort_nd(SortPiece<legate_type_of<CODE>> local_sorted,
     auto p_comm_size = comm_size.ptr(0);
     thrust::exclusive_scan(exec, p_comm_size, p_comm_size + num_ranks, displs.ptr(0), 0);
 
-    comm::coll::collAlltoallv(
+    static_cast<void>(comm::coll::collAlltoallv(
       size_send.ptr(0),
       comm_size.ptr(0),  // (num_segments_l+1)*size for all in sort group
       displs.ptr(0),     // exclusive_scan of comm_size
@@ -692,7 +697,7 @@ void sample_sort_nd(SortPiece<legate_type_of<CODE>> local_sorted,
       comm_size.ptr(0),  // (num_segments_l+1)*valuesize for all in sort group
       displs.ptr(0),     // exclusive_scan of comm_size
       comm::coll::CollDataType::CollInt,
-      comm);
+      comm));
 
     comm_size.destroy();
     displs.destroy();
@@ -785,14 +790,14 @@ void sample_sort_nd(SortPiece<legate_type_of<CODE>> local_sorted,
     thrust::exclusive_scan(
       exec, p_recv_size_total, p_recv_size_total + num_ranks, rdispls.ptr(0), 0);
 
-    comm::coll::collAlltoallv(val_send_buffer.ptr(0),
-                              send_size_total.ptr(0),
-                              sdispls.ptr(0),
-                              merge_buffer.values.ptr(0),
-                              recv_size_total.ptr(0),
-                              rdispls.ptr(0),
-                              comm::coll::CollDataType::CollUint8,
-                              comm);
+    static_cast<void>(comm::coll::collAlltoallv(val_send_buffer.ptr(0),
+                                                send_size_total.ptr(0),
+                                                sdispls.ptr(0),
+                                                merge_buffer.values.ptr(0),
+                                                recv_size_total.ptr(0),
+                                                rdispls.ptr(0),
+                                                comm::coll::CollDataType::CollUint8,
+                                                comm));
 
     if (argsort) {
       for (size_t sort_rank = 0; sort_rank < num_sort_ranks; ++sort_rank) {
@@ -806,14 +811,14 @@ void sample_sort_nd(SortPiece<legate_type_of<CODE>> local_sorted,
         exec, p_send_size_total, p_send_size_total + num_ranks, sdispls.ptr(0), 0);
       thrust::exclusive_scan(
         exec, p_recv_size_total, p_recv_size_total + num_ranks, rdispls.ptr(0), 0);
-      comm::coll::collAlltoallv(idc_send_buffer.ptr(0),
-                                send_size_total.ptr(0),
-                                sdispls.ptr(0),
-                                merge_buffer.indices.ptr(0),
-                                recv_size_total.ptr(0),
-                                rdispls.ptr(0),
-                                comm::coll::CollDataType::CollInt64,
-                                comm);
+      static_cast<void>(comm::coll::collAlltoallv(idc_send_buffer.ptr(0),
+                                                  send_size_total.ptr(0),
+                                                  sdispls.ptr(0),
+                                                  merge_buffer.indices.ptr(0),
+                                                  recv_size_total.ptr(0),
+                                                  rdispls.ptr(0),
+                                                  comm::coll::CollDataType::CollInt64,
+                                                  comm));
     }
 
     send_size_total.destroy();

@@ -366,7 +366,7 @@ NDArray moveaxis(NDArray a, std::vector<int32_t> source, std::vector<int32_t> de
     if (set_src.find(i) == set_src.end()) order.emplace_back(i);
   }
   std::vector<std::pair<int32_t, int32_t>> vp;
-  for (auto i = 0; i < src.size(); ++i) { vp.push_back(std::make_pair(dst[i], src[i])); }
+  for (size_t i = 0; i < src.size(); ++i) { vp.push_back(std::make_pair(dst[i], src[i])); }
   std::sort(vp.begin(), vp.end());
   for (auto p : vp) { order.emplace(order.begin() + p.first, p.second); }
   return a.transpose(order);

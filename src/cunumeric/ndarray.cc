@@ -592,7 +592,7 @@ NDArray NDArray::transpose()
 NDArray NDArray::transpose(std::vector<int32_t> axes)
 {
   if (dim() == 1) return NDArray(std::move(store_));
-  if (axes.size() != dim()) {
+  if (static_cast<int32_t>(axes.size()) != dim()) {
     throw std::invalid_argument("axes must be the same size as ndim for transpose");
   }
   return NDArray(store_.transpose(std::move(axes)));
