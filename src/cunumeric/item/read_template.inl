@@ -29,9 +29,9 @@ struct ReadImplBody;
 template <VariantKind KIND>
 struct ReadImpl {
   template <Type::Code CODE>
-  void operator()(legate::Store out_arr, legate::Store in_arr) const
+  void operator()(legate::PhysicalStore out_arr, legate::PhysicalStore in_arr) const
   {
-    using VAL = legate_type_of<CODE>;
+    using VAL = type_of<CODE>;
     auto out  = out_arr.write_accessor<VAL, 1>();
     auto in   = in_arr.read_accessor<VAL, 1>();
     ReadImplBody<KIND, VAL>()(out, in);

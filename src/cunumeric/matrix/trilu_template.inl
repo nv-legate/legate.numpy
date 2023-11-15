@@ -32,7 +32,7 @@ struct TriluImpl {
   template <Type::Code CODE, int32_t DIM, std::enable_if_t<(DIM >= 2)>* = nullptr>
   void operator()(TriluArgs& args) const
   {
-    using VAL = legate_type_of<CODE>;
+    using VAL = type_of<CODE>;
 
     auto shape = args.output.shape<DIM>();
     if (shape.empty()) return;

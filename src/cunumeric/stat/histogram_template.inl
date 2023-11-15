@@ -39,7 +39,7 @@ struct HistogramImpl {
   template <Type::Code CODE, std::enable_if_t<is_candidate<CODE>>* = nullptr>
   void operator()(HistogramArgs& args) const
   {
-    using VAL = legate_type_of<CODE>;
+    using VAL = type_of<CODE>;
 
     auto result_rect  = args.result.shape<1>();
     auto src_rect     = args.src.shape<1>();

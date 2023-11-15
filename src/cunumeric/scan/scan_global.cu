@@ -38,7 +38,7 @@ static __global__ void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM)
 template <ScanCode OP_CODE, Type::Code CODE, int DIM>
 struct ScanGlobalImplBody<VariantKind::GPU, OP_CODE, CODE, DIM> {
   using OP  = ScanOp<OP_CODE, CODE>;
-  using VAL = legate_type_of<CODE>;
+  using VAL = type_of<CODE>;
 
   void operator()(OP func,
                   const AccessorRW<VAL, DIM>& out,

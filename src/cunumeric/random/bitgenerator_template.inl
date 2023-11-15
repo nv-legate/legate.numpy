@@ -93,10 +93,10 @@ static void bitgenerator_template(TaskContext& context)
     default: LEGATE_ABORT;
   }
 
-  std::vector<Store> extra_args;
+  std::vector<PhysicalStore> extra_args;
   for (auto& input : inputs) extra_args.push_back(std::move(input));
 
-  std::vector<Store> optional_output;
+  std::vector<PhysicalStore> optional_output;
   for (auto& output : outputs) optional_output.push_back(std::move(output));
 
   // destroy ?

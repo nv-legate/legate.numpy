@@ -55,7 +55,7 @@ struct MatMulImpl {
   template <Type::Code CODE, std::enable_if_t<support_matmul<CODE>::value>* = nullptr>
   void operator()(MatMulArgs& args) const
   {
-    using VAL = legate_type_of<CODE>;
+    using VAL = type_of<CODE>;
     using ACC = typename support_matmul<CODE>::ACC_TYPE;
 
     // Note that rhs1 and rhs2 may have different shapes. Here's why: rhs1 and rhs2 are promoted

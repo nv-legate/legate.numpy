@@ -167,14 +167,14 @@ struct BinaryOp {
 };
 
 template <legate::Type::Code CODE>
-struct BinaryOp<BinaryOpCode::ADD, CODE> : std::plus<legate::legate_type_of<CODE>> {
+struct BinaryOp<BinaryOpCode::ADD, CODE> : std::plus<legate::type_of<CODE>> {
   static constexpr bool valid = true;
   BinaryOp(const std::vector<legate::Scalar>&) {}
 };
 
 template <legate::Type::Code CODE>
 struct BinaryOp<BinaryOpCode::ARCTAN2, CODE> {
-  using T                     = legate::legate_type_of<CODE>;
+  using T                     = legate::type_of<CODE>;
   static constexpr bool valid = legate::is_floating_point<CODE>::value;
 
   __CUDA_HD__ BinaryOp() {}
@@ -200,7 +200,7 @@ struct BinaryOp<BinaryOpCode::ARCTAN2, legate::Type::Code::FLOAT16> {
 
 template <legate::Type::Code CODE>
 struct BinaryOp<BinaryOpCode::BITWISE_AND, CODE> {
-  using T                     = legate::legate_type_of<CODE>;
+  using T                     = legate::type_of<CODE>;
   static constexpr bool valid = std::is_integral<T>::value;
 
   BinaryOp(const std::vector<legate::Scalar>&) {}
@@ -213,7 +213,7 @@ struct BinaryOp<BinaryOpCode::BITWISE_AND, CODE> {
 
 template <legate::Type::Code CODE>
 struct BinaryOp<BinaryOpCode::BITWISE_OR, CODE> {
-  using T                     = legate::legate_type_of<CODE>;
+  using T                     = legate::type_of<CODE>;
   static constexpr bool valid = std::is_integral<T>::value;
 
   BinaryOp(const std::vector<legate::Scalar>&) {}
@@ -226,7 +226,7 @@ struct BinaryOp<BinaryOpCode::BITWISE_OR, CODE> {
 
 template <legate::Type::Code CODE>
 struct BinaryOp<BinaryOpCode::BITWISE_XOR, CODE> {
-  using T                     = legate::legate_type_of<CODE>;
+  using T                     = legate::type_of<CODE>;
   static constexpr bool valid = std::is_integral<T>::value;
 
   BinaryOp(const std::vector<legate::Scalar>&) {}
@@ -239,7 +239,7 @@ struct BinaryOp<BinaryOpCode::BITWISE_XOR, CODE> {
 
 template <legate::Type::Code CODE>
 struct BinaryOp<BinaryOpCode::COPYSIGN, CODE> {
-  using T                     = legate::legate_type_of<CODE>;
+  using T                     = legate::type_of<CODE>;
   static constexpr bool valid = legate::is_floating_point<CODE>::value;
   __CUDA_HD__ BinaryOp() {}
   BinaryOp(const std::vector<legate::Scalar>&) {}
@@ -265,7 +265,7 @@ struct BinaryOp<BinaryOpCode::COPYSIGN, legate::Type::Code::FLOAT16> {
 
 template <legate::Type::Code CODE>
 struct BinaryOp<BinaryOpCode::DIVIDE, CODE> {
-  using T                     = legate::legate_type_of<CODE>;
+  using T                     = legate::type_of<CODE>;
   static constexpr bool valid = true;
   BinaryOp(const std::vector<legate::Scalar>&) {}
 
@@ -283,14 +283,14 @@ struct BinaryOp<BinaryOpCode::DIVIDE, CODE> {
 };
 
 template <legate::Type::Code CODE>
-struct BinaryOp<BinaryOpCode::EQUAL, CODE> : std::equal_to<legate::legate_type_of<CODE>> {
+struct BinaryOp<BinaryOpCode::EQUAL, CODE> : std::equal_to<legate::type_of<CODE>> {
   static constexpr bool valid = true;
   BinaryOp(const std::vector<legate::Scalar>&) {}
 };
 
 template <legate::Type::Code CODE>
 struct BinaryOp<BinaryOpCode::FLOAT_POWER, CODE> {
-  using T = legate::legate_type_of<CODE>;
+  using T = legate::type_of<CODE>;
   static constexpr bool valid =
     CODE == legate::Type::Code::FLOAT64 or CODE == legate::Type::Code::COMPLEX128;
   BinaryOp(const std::vector<legate::Scalar>&) {}
@@ -317,7 +317,7 @@ struct BinaryOp<BinaryOpCode::FLOAT_POWER, legate::Type::Code::COMPLEX64> {
 
 template <legate::Type::Code CODE>
 struct BinaryOp<BinaryOpCode::FMOD, CODE> {
-  using T = legate::legate_type_of<CODE>;
+  using T = legate::type_of<CODE>;
   static constexpr bool valid =
     not(CODE == legate::Type::Code::BOOL or legate::is_complex<CODE>::value);
 
@@ -374,7 +374,7 @@ static __CUDA_HD__ T _gcd(T a, T b)
 
 template <legate::Type::Code CODE>
 struct BinaryOp<BinaryOpCode::GCD, CODE> {
-  using T                     = legate::legate_type_of<CODE>;
+  using T                     = legate::type_of<CODE>;
   static constexpr bool valid = std::is_integral<T>::value;
   BinaryOp(const std::vector<legate::Scalar>&) {}
 
@@ -392,7 +392,7 @@ static constexpr T floor_divide_signed(const T& a, const T& b)
 using std::floor;
 template <legate::Type::Code CODE>
 struct BinaryOp<BinaryOpCode::FLOOR_DIVIDE, CODE> {
-  using T                     = legate::legate_type_of<CODE>;
+  using T                     = legate::type_of<CODE>;
   static constexpr bool valid = true;
   BinaryOp(const std::vector<legate::Scalar>&) {}
 
@@ -430,21 +430,20 @@ struct BinaryOp<BinaryOpCode::FLOOR_DIVIDE, legate::Type::Code::COMPLEX128> {
 };
 
 template <legate::Type::Code CODE>
-struct BinaryOp<BinaryOpCode::GREATER, CODE> : std::greater<legate::legate_type_of<CODE>> {
+struct BinaryOp<BinaryOpCode::GREATER, CODE> : std::greater<legate::type_of<CODE>> {
   static constexpr bool valid = true;
   BinaryOp(const std::vector<legate::Scalar>&) {}
 };
 
 template <legate::Type::Code CODE>
-struct BinaryOp<BinaryOpCode::GREATER_EQUAL, CODE>
-  : std::greater_equal<legate::legate_type_of<CODE>> {
+struct BinaryOp<BinaryOpCode::GREATER_EQUAL, CODE> : std::greater_equal<legate::type_of<CODE>> {
   static constexpr bool valid = true;
   BinaryOp(const std::vector<legate::Scalar>&) {}
 };
 
 template <legate::Type::Code CODE>
 struct BinaryOp<BinaryOpCode::HYPOT, CODE> {
-  using T                     = legate::legate_type_of<CODE>;
+  using T                     = legate::type_of<CODE>;
   static constexpr bool valid = legate::is_floating_point<CODE>::value;
 
   __CUDA_HD__ BinaryOp() {}
@@ -471,7 +470,7 @@ struct BinaryOp<BinaryOpCode::HYPOT, legate::Type::Code::FLOAT16> {
 
 template <legate::Type::Code CODE>
 struct BinaryOp<BinaryOpCode::ISCLOSE, CODE> {
-  using VAL                   = legate::legate_type_of<CODE>;
+  using VAL                   = legate::type_of<CODE>;
   static constexpr bool valid = true;
 
   BinaryOp(const std::vector<legate::Scalar>& args)
@@ -503,7 +502,7 @@ struct BinaryOp<BinaryOpCode::ISCLOSE, CODE> {
 
 template <legate::Type::Code CODE>
 struct BinaryOp<BinaryOpCode::LCM, CODE> {
-  using T                     = legate::legate_type_of<CODE>;
+  using T                     = legate::type_of<CODE>;
   static constexpr bool valid = std::is_integral<T>::value;
   BinaryOp(const std::vector<legate::Scalar>&) {}
 
@@ -538,7 +537,7 @@ struct BinaryOp<BinaryOpCode::LCM, CODE> {
 
 template <legate::Type::Code CODE>
 struct BinaryOp<BinaryOpCode::LDEXP, CODE> {
-  using T                     = legate::legate_type_of<CODE>;
+  using T                     = legate::type_of<CODE>;
   static constexpr bool valid = legate::is_floating_point<CODE>::value;
   BinaryOp(const std::vector<legate::Scalar>&) {}
 
@@ -564,7 +563,7 @@ struct BinaryOp<BinaryOpCode::LDEXP, legate::Type::Code::FLOAT16> {
 
 template <legate::Type::Code CODE>
 struct BinaryOp<BinaryOpCode::LEFT_SHIFT, CODE> {
-  using T                     = legate::legate_type_of<CODE>;
+  using T                     = legate::type_of<CODE>;
   static constexpr bool valid = CODE != legate::Type::Code::BOOL && std::is_integral<T>::value;
 
   BinaryOp(const std::vector<legate::Scalar>&) {}
@@ -580,20 +579,20 @@ struct BinaryOp<BinaryOpCode::LEFT_SHIFT, CODE> {
 };
 
 template <legate::Type::Code CODE>
-struct BinaryOp<BinaryOpCode::LESS, CODE> : std::less<legate::legate_type_of<CODE>> {
+struct BinaryOp<BinaryOpCode::LESS, CODE> : std::less<legate::type_of<CODE>> {
   static constexpr bool valid = true;
   BinaryOp(const std::vector<legate::Scalar>&) {}
 };
 
 template <legate::Type::Code CODE>
-struct BinaryOp<BinaryOpCode::LESS_EQUAL, CODE> : std::less_equal<legate::legate_type_of<CODE>> {
+struct BinaryOp<BinaryOpCode::LESS_EQUAL, CODE> : std::less_equal<legate::type_of<CODE>> {
   static constexpr bool valid = true;
   BinaryOp(const std::vector<legate::Scalar>&) {}
 };
 
 template <legate::Type::Code CODE>
 struct BinaryOp<BinaryOpCode::LOGADDEXP, CODE> {
-  using T                     = legate::legate_type_of<CODE>;
+  using T                     = legate::type_of<CODE>;
   static constexpr bool valid = legate::is_floating_point<CODE>::value;
 
   __CUDA_HD__ BinaryOp() {}
@@ -627,7 +626,7 @@ struct BinaryOp<BinaryOpCode::LOGADDEXP, legate::Type::Code::FLOAT16> {
 
 template <legate::Type::Code CODE>
 struct BinaryOp<BinaryOpCode::LOGADDEXP2, CODE> {
-  using T                     = legate::legate_type_of<CODE>;
+  using T                     = legate::type_of<CODE>;
   static constexpr bool valid = legate::is_floating_point<CODE>::value;
 
   __CUDA_HD__ BinaryOp() {}
@@ -660,7 +659,7 @@ struct BinaryOp<BinaryOpCode::LOGADDEXP2, legate::Type::Code::FLOAT16> {
 
 template <legate::Type::Code CODE>
 struct BinaryOp<BinaryOpCode::LOGICAL_AND, CODE> {
-  using T                     = legate::legate_type_of<CODE>;
+  using T                     = legate::type_of<CODE>;
   static constexpr bool valid = true;
   BinaryOp(const std::vector<legate::Scalar>&) {}
 
@@ -679,7 +678,7 @@ struct BinaryOp<BinaryOpCode::LOGICAL_AND, CODE> {
 
 template <legate::Type::Code CODE>
 struct BinaryOp<BinaryOpCode::LOGICAL_OR, CODE> {
-  using T                     = legate::legate_type_of<CODE>;
+  using T                     = legate::type_of<CODE>;
   static constexpr bool valid = true;
 
   BinaryOp(const std::vector<legate::Scalar>&) {}
@@ -699,7 +698,7 @@ struct BinaryOp<BinaryOpCode::LOGICAL_OR, CODE> {
 
 template <legate::Type::Code CODE>
 struct BinaryOp<BinaryOpCode::LOGICAL_XOR, CODE> {
-  using T                     = legate::legate_type_of<CODE>;
+  using T                     = legate::type_of<CODE>;
   static constexpr bool valid = true;
   BinaryOp(const std::vector<legate::Scalar>&) {}
 
@@ -718,7 +717,7 @@ struct BinaryOp<BinaryOpCode::LOGICAL_XOR, CODE> {
 
 template <legate::Type::Code CODE>
 struct BinaryOp<BinaryOpCode::MAXIMUM, CODE> {
-  using T                     = legate::legate_type_of<CODE>;
+  using T                     = legate::type_of<CODE>;
   static constexpr bool valid = true;
   BinaryOp(const std::vector<legate::Scalar>&) {}
   constexpr T operator()(const T& a, const T& b) const { return std::max<T>(a, b); }
@@ -726,7 +725,7 @@ struct BinaryOp<BinaryOpCode::MAXIMUM, CODE> {
 
 template <legate::Type::Code CODE>
 struct BinaryOp<BinaryOpCode::MINIMUM, CODE> {
-  using T                     = legate::legate_type_of<CODE>;
+  using T                     = legate::type_of<CODE>;
   static constexpr bool valid = true;
   BinaryOp(const std::vector<legate::Scalar>&) {}
   constexpr T operator()(const T& a, const T& b) const { return std::min<T>(a, b); }
@@ -746,7 +745,7 @@ constexpr T real_mod(const T& a, const T& b)
 
 template <legate::Type::Code CODE>
 struct BinaryOp<BinaryOpCode::MOD, CODE> {
-  using T                     = legate::legate_type_of<CODE>;
+  using T                     = legate::type_of<CODE>;
   static constexpr bool valid = true;
   __CUDA_HD__ BinaryOp() {}
   BinaryOp(const std::vector<legate::Scalar>&) {}
@@ -796,14 +795,14 @@ struct BinaryOp<BinaryOpCode::MOD, legate::Type::Code::COMPLEX128> {
 };
 
 template <legate::Type::Code CODE>
-struct BinaryOp<BinaryOpCode::MULTIPLY, CODE> : std::multiplies<legate::legate_type_of<CODE>> {
+struct BinaryOp<BinaryOpCode::MULTIPLY, CODE> : std::multiplies<legate::type_of<CODE>> {
   static constexpr bool valid = true;
   BinaryOp(const std::vector<legate::Scalar>&) {}
 };
 
 template <legate::Type::Code CODE>
 struct BinaryOp<BinaryOpCode::NEXTAFTER, CODE> {
-  using T                     = legate::legate_type_of<CODE>;
+  using T                     = legate::type_of<CODE>;
   static constexpr bool valid = legate::is_floating_point<CODE>::value;
   __CUDA_HD__ BinaryOp() {}
   BinaryOp(const std::vector<legate::Scalar>&) {}
@@ -828,14 +827,14 @@ struct BinaryOp<BinaryOpCode::NEXTAFTER, legate::Type::Code::FLOAT16> {
 };
 
 template <legate::Type::Code CODE>
-struct BinaryOp<BinaryOpCode::NOT_EQUAL, CODE> : std::not_equal_to<legate::legate_type_of<CODE>> {
+struct BinaryOp<BinaryOpCode::NOT_EQUAL, CODE> : std::not_equal_to<legate::type_of<CODE>> {
   static constexpr bool valid = true;
   BinaryOp(const std::vector<legate::Scalar>&) {}
 };
 
 template <legate::Type::Code CODE>
 struct BinaryOp<BinaryOpCode::POWER, CODE> {
-  using VAL                   = legate::legate_type_of<CODE>;
+  using VAL                   = legate::type_of<CODE>;
   static constexpr bool valid = true;
   BinaryOp(const std::vector<legate::Scalar>&) {}
   constexpr VAL operator()(const VAL& a, const VAL& b) const
@@ -873,7 +872,7 @@ struct BinaryOp<BinaryOpCode::POWER, legate::Type::Code::COMPLEX128> {
 
 template <legate::Type::Code CODE>
 struct BinaryOp<BinaryOpCode::RIGHT_SHIFT, CODE> {
-  using T                     = legate::legate_type_of<CODE>;
+  using T                     = legate::type_of<CODE>;
   static constexpr bool valid = CODE != legate::Type::Code::BOOL && std::is_integral<T>::value;
 
   BinaryOp(const std::vector<legate::Scalar>&) {}
@@ -882,14 +881,14 @@ struct BinaryOp<BinaryOpCode::RIGHT_SHIFT, CODE> {
 };
 
 template <legate::Type::Code CODE>
-struct BinaryOp<BinaryOpCode::SUBTRACT, CODE> : std::minus<legate::legate_type_of<CODE>> {
+struct BinaryOp<BinaryOpCode::SUBTRACT, CODE> : std::minus<legate::type_of<CODE>> {
   static constexpr bool valid = true;
   BinaryOp(const std::vector<legate::Scalar>&) {}
 };
 
 template <BinaryOpCode OP_CODE, legate::Type::Code CODE>
 struct RHS2OfBinaryOp {
-  using type = legate::legate_type_of<CODE>;
+  using type = legate::type_of<CODE>;
 };
 
 template <legate::Type::Code CODE>

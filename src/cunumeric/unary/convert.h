@@ -22,8 +22,8 @@
 namespace cunumeric {
 
 struct ConvertArgs {
-  legate::Store out;
-  legate::Store in;
+  legate::PhysicalStore out;
+  legate::PhysicalStore in;
   ConvertCode nan_op;
 };
 

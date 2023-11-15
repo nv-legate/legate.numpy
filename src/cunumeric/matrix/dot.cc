@@ -23,7 +23,7 @@ using namespace legate;
 
 template <Type::Code CODE>
 struct DotImplBody<VariantKind::CPU, CODE> {
-  using VAL = legate_type_of<CODE>;
+  using VAL = type_of<CODE>;
   using ACC = acc_type_of<VAL>;
 
   template <typename AccessorRD>

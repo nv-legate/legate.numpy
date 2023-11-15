@@ -84,7 +84,7 @@ struct generate_zero_fn {
   template <legate::Type::Code CODE>
   legate::Scalar operator()()
   {
-    using VAL = legate::legate_type_of<CODE>;
+    using VAL = legate::type_of<CODE>;
     return legate::Scalar(VAL(0));
   }
 };
@@ -93,7 +93,7 @@ struct generate_int_value_fn {
   template <legate::Type::Code CODE, std::enable_if_t<legate::is_integral<CODE>::value>* = nullptr>
   int operator()(NDArray& array)
   {
-    using VAL = legate::legate_type_of<CODE>;
+    using VAL = legate::type_of<CODE>;
     return static_cast<int>(array.get_read_accessor<VAL, 1>()[0]);
   }
 

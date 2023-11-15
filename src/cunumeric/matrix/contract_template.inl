@@ -80,7 +80,7 @@ struct ContractImpl {
   template <Type::Code CODE, int DIM, std::enable_if_t<support_contract<CODE>::value>* = nullptr>
   void operator()(ContractArgs& args) const
   {
-    using T = legate_type_of<CODE>;
+    using T = type_of<CODE>;
 
     std::vector<int64_t> lhs_shape;
     std::vector<int64_t> lhs_strides;

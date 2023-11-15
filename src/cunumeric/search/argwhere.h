@@ -21,8 +21,8 @@
 namespace cunumeric {
 
 struct ArgWhereArgs {
-  legate::Store out;
-  legate::Store in;
+  legate::PhysicalStore out;
+  legate::PhysicalStore in;
 };
 
 class ArgWhereTask : public CuNumericTask<ArgWhereTask> {

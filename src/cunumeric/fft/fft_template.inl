@@ -39,8 +39,8 @@ struct FFTImpl {
             std::enable_if_t<(FFT<FFT_TYPE, CODE_IN>::valid)>* = nullptr>
   void operator()(FFTArgs& args) const
   {
-    using INPUT_TYPE  = legate_type_of<CODE_IN>;
-    using OUTPUT_TYPE = legate_type_of<FFT<FFT_TYPE, CODE_IN>::CODE_OUT>;
+    using INPUT_TYPE  = type_of<CODE_IN>;
+    using OUTPUT_TYPE = type_of<FFT<FFT_TYPE, CODE_IN>::CODE_OUT>;
 
     auto in_rect  = args.input.shape<DIM>();
     auto out_rect = args.output.shape<DIM>();

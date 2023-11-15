@@ -21,8 +21,8 @@
 namespace cunumeric {
 
 struct NonzeroArgs {
-  legate::Store input;
-  std::vector<legate::Store> results;
+  legate::PhysicalStore input;
+  std::vector<legate::PhysicalStore> results;
 };
 
 class NonzeroTask : public CuNumericTask<NonzeroTask> {

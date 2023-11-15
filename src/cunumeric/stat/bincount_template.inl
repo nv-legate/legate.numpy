@@ -31,7 +31,7 @@ struct BincountImpl {
   template <Type::Code CODE, std::enable_if_t<is_integral<CODE>::value>* = nullptr>
   void operator()(BincountArgs& args) const
   {
-    using VAL = legate_type_of<CODE>;
+    using VAL = type_of<CODE>;
 
     auto rect     = args.rhs.shape<1>();
     auto lhs_rect = args.lhs.shape<1>();

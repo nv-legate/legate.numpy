@@ -32,7 +32,7 @@ struct RepeatImpl {
   template <Type::Code CODE, int DIM>
   void operator()(RepeatArgs& args) const
   {
-    using VAL       = legate_type_of<CODE>;
+    using VAL       = type_of<CODE>;
     auto input_rect = args.input.shape<DIM>();
     auto input_arr  = args.input.read_accessor<VAL, DIM>(input_rect);
 
@@ -59,7 +59,7 @@ static void repeat_template(TaskContext& context)
   if (scalar_repeats) {
     auto repeats = context.scalar(2).value<int64_t>();
     RepeatArgs args{
-      context.output(0), context.input(0), legate::Store(), repeats, axis, scalar_repeats};
+      context.output(0), context.input(0), legate::PhysicalStore(), repeats, axis, scalar_repeats};
     double_dispatch(args.input.dim(), args.input.code(), RepeatImpl<KIND>{}, args);
   } else {
     auto repeats = context.input(1);

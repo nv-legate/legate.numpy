@@ -21,7 +21,7 @@
 namespace cunumeric {
 
 struct EyeArgs {
-  legate::Store out;
+  legate::PhysicalStore out;
   int32_t k;
 };
 

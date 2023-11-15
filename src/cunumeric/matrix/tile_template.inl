@@ -70,7 +70,7 @@ struct TileDispatch {
   template <Type::Code CODE>
   void operator()(TileArgs& args) const
   {
-    using VAL = legate_type_of<CODE>;
+    using VAL = type_of<CODE>;
     double_dispatch(args.out.dim(), args.in.dim(), TileImpl<KIND, VAL>{}, args);
   }
 };

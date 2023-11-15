@@ -21,7 +21,7 @@
 namespace cunumeric {
 
 struct ArangeArgs {
-  legate::Store out;
+  legate::PhysicalStore out;
   legate::Scalar start;
   legate::Scalar step;
 };

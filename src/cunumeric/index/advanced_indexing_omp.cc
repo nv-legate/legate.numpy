@@ -28,7 +28,7 @@ using namespace legate;
 
 template <Type::Code CODE, int DIM, typename OUT_TYPE>
 struct AdvancedIndexingImplBody<VariantKind::OMP, CODE, DIM, OUT_TYPE> {
-  using VAL = legate_type_of<CODE>;
+  using VAL = type_of<CODE>;
 
   size_t compute_output_offsets(ThreadLocalStorage<int64_t>& offsets,
                                 const AccessorRO<bool, DIM>& index,
@@ -58,7 +58,7 @@ struct AdvancedIndexingImplBody<VariantKind::OMP, CODE, DIM, OUT_TYPE> {
     return size;
   }
 
-  void operator()(Store& out_arr,
+  void operator()(PhysicalStore& out_arr,
                   const AccessorRO<VAL, DIM>& input,
                   const AccessorRO<bool, DIM>& index,
                   const Pitches<DIM - 1>& pitches,

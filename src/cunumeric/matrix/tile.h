@@ -21,8 +21,8 @@
 namespace cunumeric {
 
 struct TileArgs {
-  legate::Store in;
-  legate::Store out;
+  legate::PhysicalStore in;
+  legate::PhysicalStore out;
 };
 
 class TileTask : public CuNumericTask<TileTask> {

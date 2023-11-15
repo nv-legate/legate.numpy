@@ -21,9 +21,9 @@
 namespace cunumeric {
 
 struct ContractArgs {
-  legate::Store lhs;
-  legate::Store rhs1;
-  legate::Store rhs2;
+  legate::PhysicalStore lhs;
+  legate::PhysicalStore rhs1;
+  legate::PhysicalStore rhs2;
   legate::Span<const bool> lhs_dim_mask;
   legate::Span<const bool> rhs1_dim_mask;
   legate::Span<const bool> rhs2_dim_mask;

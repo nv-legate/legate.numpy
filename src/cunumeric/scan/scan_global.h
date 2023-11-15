@@ -22,8 +22,8 @@
 namespace cunumeric {
 
 struct ScanGlobalArgs {
-  legate::Store sum_vals;
-  legate::Store out;
+  legate::PhysicalStore sum_vals;
+  legate::PhysicalStore out;
   ScanCode op_code;
   const legate::DomainPoint& partition_index;
 };

@@ -34,8 +34,8 @@ struct ConvertImpl {
   void operator()(ConvertArgs& args) const
   {
     using OP  = ConvertOp<NAN_OP, DST_TYPE, SRC_TYPE>;
-    using SRC = legate_type_of<SRC_TYPE>;
-    using DST = legate_type_of<DST_TYPE>;
+    using SRC = type_of<SRC_TYPE>;
+    using DST = type_of<DST_TYPE>;
 
     auto rect = args.out.shape<DIM>();
 

@@ -21,8 +21,8 @@
 namespace cunumeric {
 
 struct FlipArgs {
-  legate::Store in;
-  legate::Store out;
+  legate::PhysicalStore in;
+  legate::PhysicalStore out;
   legate::Span<const int32_t> axes;
 };
 

@@ -47,7 +47,7 @@ __global__ static void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM) cho
 
 template <Type::Code CODE, int DIM>
 struct ChooseImplBody<VariantKind::GPU, CODE, DIM> {
-  using VAL = legate_type_of<CODE>;
+  using VAL = type_of<CODE>;
 
   void operator()(const AccessorWO<VAL, DIM>& out,
                   const AccessorRO<int64_t, DIM>& index_arr,

@@ -25,11 +25,11 @@ using namespace legate;
 
 template <Type::Code CODE, int32_t DIM>
 struct SearchSortedImplBody<VariantKind::OMP, CODE, DIM> {
-  using VAL = legate_type_of<CODE>;
+  using VAL = type_of<CODE>;
 
-  void operator()(const Store& input_array,
-                  const Store& input_values,
-                  const Store& output_positions,
+  void operator()(const PhysicalStore& input_array,
+                  const PhysicalStore& input_values,
+                  const PhysicalStore& output_positions,
                   const Rect<1>& rect_base,
                   const Rect<DIM>& rect_values,
                   const Pitches<DIM - 1> pitches,

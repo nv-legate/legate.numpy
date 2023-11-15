@@ -49,7 +49,7 @@ static __global__ void __launch_bounds__(1, 1) copy_kernel(Buffer result, RedAcc
 template <BinaryOpCode OP_CODE, Type::Code CODE, int DIM>
 struct BinaryRedImplBody<VariantKind::GPU, OP_CODE, CODE, DIM> {
   using OP  = BinaryOp<OP_CODE, CODE>;
-  using ARG = legate_type_of<CODE>;
+  using ARG = type_of<CODE>;
 
   template <typename AccessorRD>
   void operator()(OP func,

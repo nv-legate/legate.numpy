@@ -21,9 +21,9 @@
 namespace cunumeric {
 
 struct PutmaskArgs {
-  legate::Store input;
-  legate::Store mask;
-  legate::Store values;
+  legate::PhysicalStore input;
+  legate::PhysicalStore mask;
+  legate::PhysicalStore values;
 };
 
 class PutmaskTask : public CuNumericTask<PutmaskTask> {

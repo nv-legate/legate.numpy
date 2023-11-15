@@ -34,7 +34,7 @@ struct BinaryOpImpl {
   void operator()(BinaryOpArgs& args) const
   {
     using OP   = BinaryOp<OP_CODE, CODE>;
-    using RHS1 = legate_type_of<CODE>;
+    using RHS1 = type_of<CODE>;
     using RHS2 = rhs2_of_binary_op<OP_CODE, CODE>;
     using LHS  = std::result_of_t<OP(RHS1, RHS2)>;
 

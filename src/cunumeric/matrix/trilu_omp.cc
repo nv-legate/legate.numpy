@@ -23,7 +23,7 @@ using namespace legate;
 
 template <Type::Code CODE, int32_t DIM, bool LOWER>
 struct TriluImplBody<VariantKind::OMP, CODE, DIM, LOWER> {
-  using VAL = legate_type_of<CODE>;
+  using VAL = type_of<CODE>;
 
   template <bool C_ORDER>
   void operator()(const AccessorWO<VAL, DIM>& out,

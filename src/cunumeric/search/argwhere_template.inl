@@ -32,7 +32,7 @@ struct ArgWhereImpl {
   template <Type::Code CODE, int DIM>
   void operator()(ArgWhereArgs& args) const
   {
-    using VAL = legate_type_of<CODE>;
+    using VAL = type_of<CODE>;
 
     auto rect_in = args.in.shape<DIM>();
 

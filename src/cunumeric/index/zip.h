@@ -21,8 +21,8 @@
 namespace cunumeric {
 
 struct ZipArgs {
-  legate::Store out;
-  std::vector<legate::Store> inputs;
+  legate::PhysicalStore out;
+  std::vector<legate::PhysicalStore> inputs;
   const int64_t N;
   const int64_t key_dim;
   const int64_t start_index;

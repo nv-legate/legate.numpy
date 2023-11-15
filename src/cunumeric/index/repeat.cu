@@ -95,9 +95,9 @@ __global__ static void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM)
 
 template <Type::Code CODE, int DIM>
 struct RepeatImplBody<VariantKind::GPU, CODE, DIM> {
-  using VAL = legate_type_of<CODE>;
+  using VAL = type_of<CODE>;
 
-  void operator()(legate::Store& out_array,
+  void operator()(legate::PhysicalStore& out_array,
                   const AccessorRO<VAL, DIM>& in,
                   const int64_t repeats,
                   const int32_t axis,
@@ -120,7 +120,7 @@ struct RepeatImplBody<VariantKind::GPU, CODE, DIM> {
     CHECK_CUDA_STREAM(stream);
   }
 
-  void operator()(legate::Store& out_array,
+  void operator()(legate::PhysicalStore& out_array,
                   const AccessorRO<VAL, DIM>& in,
                   const AccessorRO<int64_t, DIM>& repeats,
                   const int32_t axis,

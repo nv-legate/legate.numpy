@@ -22,7 +22,7 @@
 
 namespace cunumeric {
 
-using Array  = legate::Store;
+using Array  = legate::PhysicalStore;
 using Scalar = legate::Scalar;
 
 }  // namespace cunumeric

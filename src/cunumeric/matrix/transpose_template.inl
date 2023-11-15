@@ -31,7 +31,7 @@ struct TransposeImpl {
   template <Type::Code CODE>
   void operator()(TransposeArgs& args) const
   {
-    using VAL = legate_type_of<CODE>;
+    using VAL = type_of<CODE>;
 
     const auto out_rect = args.out.shape<2>();
     if (out_rect.empty()) return;

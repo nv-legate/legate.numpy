@@ -23,7 +23,7 @@ using namespace legate;
 
 template <Type::Code CODE, int32_t DIM>
 struct NonzeroImplBody<VariantKind::CPU, CODE, DIM> {
-  using VAL = legate_type_of<CODE>;
+  using VAL = type_of<CODE>;
 
   void operator()(std::vector<Array>& outputs,
                   const AccessorRO<VAL, DIM>& in,

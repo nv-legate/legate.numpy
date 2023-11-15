@@ -62,7 +62,7 @@ __global__ static void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM)
 
 template <Type::Code CODE, int DIM>
 struct DiagImplBody<VariantKind::GPU, CODE, DIM, true> {
-  using VAL = legate_type_of<CODE>;
+  using VAL = type_of<CODE>;
 
   void operator()(const AccessorRD<SumReduction<VAL>, true, DIM>& out,
                   const AccessorRO<VAL, DIM>& in,
@@ -94,7 +94,7 @@ struct DiagImplBody<VariantKind::GPU, CODE, DIM, true> {
 // not extract (create a new 2D matrix with diagonal from vector)
 template <Type::Code CODE>
 struct DiagImplBody<VariantKind::GPU, CODE, 2, false> {
-  using VAL = legate_type_of<CODE>;
+  using VAL = type_of<CODE>;
 
   void operator()(const AccessorRO<VAL, 2>& in,
                   const AccessorRW<VAL, 2>& out,

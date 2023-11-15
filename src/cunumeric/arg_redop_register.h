@@ -26,7 +26,7 @@ struct register_reduction_op_fn {
   template <legate::Type::Code CODE, std::enable_if_t<!legate::is_complex<CODE>::value>* = nullptr>
   ReductionOpIds operator()()
   {
-    using VAL = legate::legate_type_of<CODE>;
+    using VAL = legate::type_of<CODE>;
     ReductionOpIds result;
     auto runtime = legate::Runtime::get_runtime();
     auto context = runtime->find_library("cunumeric");

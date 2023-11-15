@@ -32,7 +32,7 @@ struct generate_zero_fn {
   template <legate::Type::Code CODE>
   legate::Scalar operator()()
   {
-    using VAL = legate::legate_type_of<CODE>;
+    using VAL = legate::type_of<CODE>;
     return legate::Scalar(VAL(0));
   }
 };

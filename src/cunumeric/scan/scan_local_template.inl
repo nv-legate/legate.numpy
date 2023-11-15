@@ -37,7 +37,7 @@ struct ScanLocalImpl {
   void operator()(ScanLocalArgs& args) const
   {
     using OP  = ScanOp<OP_CODE, CODE>;
-    using VAL = legate_type_of<CODE>;
+    using VAL = type_of<CODE>;
 
     auto rect = args.out.shape<DIM>();
 
@@ -63,7 +63,7 @@ struct ScanLocalImpl {
   void operator()(ScanLocalArgs& args) const
   {
     using OP  = ScanOp<OP_CODE, CODE>;
-    using VAL = legate_type_of<CODE>;
+    using VAL = type_of<CODE>;
 
     auto rect = args.out.shape<DIM>();
 

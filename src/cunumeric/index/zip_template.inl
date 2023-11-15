@@ -92,7 +92,7 @@ static void zip_template(TaskContext& context)
   int64_t key_dim     = context.scalar(1).value<int64_t>();
   int64_t start_index = context.scalar(2).value<int64_t>();
   auto shape          = context.scalar(3).value<DomainPoint>();
-  std::vector<legate::Store> inputs;
+  std::vector<legate::PhysicalStore> inputs;
   for (auto& input : context.inputs()) { inputs.emplace_back(input); }
   ZipArgs args{context.output(0), std::move(inputs), N, key_dim, start_index, shape};
   int dim = args.inputs[0].dim();

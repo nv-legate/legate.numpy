@@ -40,9 +40,11 @@ struct support_gemm<Type::Code::COMPLEX128> : std::true_type {};
 template <VariantKind KIND>
 struct GemmImpl {
   template <Type::Code CODE, std::enable_if_t<support_gemm<CODE>::value>* = nullptr>
-  void operator()(legate::Store lhs_array, legate::Store rhs1_array, legate::Store rhs2_array) const
+  void operator()(legate::PhysicalStore lhs_array,
+                  legate::PhysicalStore rhs1_array,
+                  legate::PhysicalStore rhs2_array) const
   {
-    using VAL = legate_type_of<CODE>;
+    using VAL = type_of<CODE>;
 
     auto lhs_shape  = lhs_array.shape<2>();
     auto rhs1_shape = rhs1_array.shape<2>();
@@ -68,7 +70,9 @@ struct GemmImpl {
   }
 
   template <Type::Code CODE, std::enable_if_t<!support_gemm<CODE>::value>* = nullptr>
-  void operator()(legate::Store lhs_array, legate::Store rhs1_array, legate::Store rhs2_array) const
+  void operator()(legate::PhysicalStore lhs_array,
+                  legate::PhysicalStore rhs1_array,
+                  legate::PhysicalStore rhs2_array) const
   {
     assert(false);
   }

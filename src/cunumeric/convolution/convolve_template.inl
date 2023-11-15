@@ -34,7 +34,7 @@ struct ConvolveImpl {
   template <Type::Code CODE, int DIM, std::enable_if_t<(DIM <= 3)>* = nullptr>
   void operator()(ConvolveArgs& args) const
   {
-    using VAL        = legate_type_of<CODE>;
+    using VAL        = type_of<CODE>;
     auto subrect     = args.out.shape<DIM>();
     auto filter_rect = args.filter.shape<DIM>();
 

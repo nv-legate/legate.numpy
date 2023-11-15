@@ -43,7 +43,7 @@ static __global__ void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM)
 
 template <Type::Code CODE, int32_t DIM>
 struct FlipImplBody<VariantKind::GPU, CODE, DIM> {
-  using VAL = legate_type_of<CODE>;
+  using VAL = type_of<CODE>;
 
   void operator()(AccessorWO<VAL, DIM> out,
                   AccessorRO<VAL, DIM> in,

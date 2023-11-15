@@ -21,8 +21,8 @@
 namespace cunumeric {
 
 struct FillArgs {
-  legate::Store out;
-  legate::Store fill_value;
+  legate::PhysicalStore out;
+  legate::PhysicalStore fill_value;
   bool is_argval;
 };
 

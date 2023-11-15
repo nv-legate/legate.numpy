@@ -23,8 +23,8 @@ namespace cunumeric {
 struct TriluArgs {
   bool lower;
   int32_t k;
-  legate::Store output;
-  legate::Store input;
+  legate::PhysicalStore output;
+  legate::PhysicalStore input;
 };
 
 class TriluTask : public CuNumericTask<TriluTask> {

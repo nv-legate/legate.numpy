@@ -145,7 +145,7 @@ static __global__ void weighted_bincount_kernel_rd_global(
 
 template <Type::Code CODE>
 struct BincountImplBody<VariantKind::GPU, CODE> {
-  using VAL = legate_type_of<CODE>;
+  using VAL = type_of<CODE>;
 
   void operator()(AccessorRD<SumReduction<int64_t>, false, 1> lhs,
                   const AccessorRO<VAL, 1>& rhs,

@@ -21,9 +21,9 @@
 namespace cunumeric {
 
 struct DotArgs {
-  legate::Store lhs;
-  legate::Store rhs1;
-  legate::Store rhs2;
+  legate::PhysicalStore lhs;
+  legate::PhysicalStore rhs1;
+  legate::PhysicalStore rhs2;
 };
 
 class DotTask : public CuNumericTask<DotTask> {

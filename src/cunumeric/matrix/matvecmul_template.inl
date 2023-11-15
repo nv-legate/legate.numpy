@@ -55,7 +55,7 @@ struct MatVecMulImpl {
   template <Type::Code CODE, std::enable_if_t<support_matvecmul<CODE>::value>* = nullptr>
   void operator()(MatVecMulArgs& args) const
   {
-    using VAL = legate_type_of<CODE>;
+    using VAL = type_of<CODE>;
     using ACC = typename support_matvecmul<CODE>::ACC_TYPE;
 
     auto shape = args.rhs1.shape<2>().intersection(args.rhs2.shape<2>());

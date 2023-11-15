@@ -22,7 +22,7 @@
 namespace cunumeric {
 
 struct RandArgs {
-  legate::Store out;
+  legate::PhysicalStore out;
   RandGenCode gen_code;
   uint32_t epoch;
   legate::DomainPoint strides;

@@ -34,7 +34,7 @@ struct ArangeImpl {
   template <Type::Code CODE>
   void operator()(ArangeArgs& args) const
   {
-    using VAL = legate_type_of<CODE>;
+    using VAL = type_of<CODE>;
 
     const auto rect = args.out.shape<1>();
 

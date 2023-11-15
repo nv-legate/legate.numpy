@@ -40,9 +40,9 @@ struct support_trsm<Type::Code::COMPLEX128> : std::true_type {};
 template <VariantKind KIND>
 struct TrsmImpl {
   template <Type::Code CODE, std::enable_if_t<support_trsm<CODE>::value>* = nullptr>
-  void operator()(legate::Store lhs_array, legate::Store rhs_array) const
+  void operator()(legate::PhysicalStore lhs_array, legate::PhysicalStore rhs_array) const
   {
-    using VAL = legate_type_of<CODE>;
+    using VAL = type_of<CODE>;
 
     auto lhs_shape = lhs_array.shape<2>();
     auto rhs_shape = rhs_array.shape<2>();
@@ -63,7 +63,7 @@ struct TrsmImpl {
   }
 
   template <Type::Code CODE, std::enable_if_t<!support_trsm<CODE>::value>* = nullptr>
-  void operator()(legate::Store lhs_array, legate::Store rhs_array) const
+  void operator()(legate::PhysicalStore lhs_array, legate::PhysicalStore rhs_array) const
   {
     assert(false);
   }

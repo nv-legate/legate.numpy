@@ -34,7 +34,7 @@ struct EyeImpl {
   template <Type::Code CODE>
   void operator()(EyeArgs& args) const
   {
-    using VAL = legate_type_of<CODE>;
+    using VAL = type_of<CODE>;
 
     const auto rect = args.out.shape<2>();
     auto out        = args.out.write_accessor<VAL, 2>();

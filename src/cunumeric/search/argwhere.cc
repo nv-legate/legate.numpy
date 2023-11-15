@@ -23,9 +23,9 @@ using namespace legate;
 
 template <Type::Code CODE, int DIM>
 struct ArgWhereImplBody<VariantKind::CPU, CODE, DIM> {
-  using VAL = legate_type_of<CODE>;
+  using VAL = type_of<CODE>;
 
-  void operator()(legate::Store& out_array,
+  void operator()(legate::PhysicalStore& out_array,
                   AccessorRO<VAL, DIM> input,
                   const Pitches<DIM - 1>& pitches,
                   const Rect<DIM>& rect,

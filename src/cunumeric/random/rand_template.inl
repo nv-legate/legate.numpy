@@ -36,7 +36,7 @@ struct RandImpl {
             std::enable_if_t<RandomGenerator<GEN_CODE, CODE>::valid>* = nullptr>
   void operator()(RandArgs& args) const
   {
-    using VAL = legate_type_of<CODE>;
+    using VAL = type_of<CODE>;
     using RNG = RandomGenerator<GEN_CODE, CODE>;
 
     auto rect = args.out.shape<DIM>();

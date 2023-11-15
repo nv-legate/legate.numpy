@@ -76,7 +76,7 @@ template <UnaryRedCode OP_CODE, Type::Code CODE, int DIM>
 struct UnaryRedImplBody<VariantKind::OMP, OP_CODE, CODE, DIM> {
   using OP    = UnaryRedOp<OP_CODE, CODE>;
   using LG_OP = typename OP::OP;
-  using RHS   = legate_type_of<CODE>;
+  using RHS   = type_of<CODE>;
 
   void operator()(AccessorRD<LG_OP, true, DIM> lhs,
                   AccessorRO<RHS, DIM> rhs,

@@ -443,25 +443,26 @@ void rebalance_data(SegmentMergePiece<VAL>& merge_buffer,
 }
 
 template <Type::Code CODE, typename DerivedPolicy>
-void sample_sort_nd(SortPiece<legate_type_of<CODE>> local_sorted,
-                    legate::Store output_array_unbound,  // only for unbound usage when !rebalance
-                    void* output_ptr,
-                    /* global domain information */
-                    size_t my_rank,  // global rank
-                    size_t num_ranks,
-                    size_t segment_size_g,
-                    /* domain information in sort dimension */
-                    size_t my_sort_rank,    // local rank id in sort dimension
-                    size_t num_sort_ranks,  // #ranks that share a sort dimension
-                    size_t* sort_ranks,     // rank ids that share a sort dimension with us
-                    size_t segment_size_l,  // (local) segment size
-                    /* other */
-                    bool rebalance,
-                    bool argsort,
-                    const DerivedPolicy& exec,
-                    comm::coll::CollComm comm)
+void sample_sort_nd(
+  SortPiece<type_of<CODE>> local_sorted,
+  legate::PhysicalStore output_array_unbound,  // only for unbound usage when !rebalance
+  void* output_ptr,
+  /* global domain information */
+  size_t my_rank,  // global rank
+  size_t num_ranks,
+  size_t segment_size_g,
+  /* domain information in sort dimension */
+  size_t my_sort_rank,    // local rank id in sort dimension
+  size_t num_sort_ranks,  // #ranks that share a sort dimension
+  size_t* sort_ranks,     // rank ids that share a sort dimension with us
+  size_t segment_size_l,  // (local) segment size
+  /* other */
+  bool rebalance,
+  bool argsort,
+  const DerivedPolicy& exec,
+  comm::coll::CollComm comm)
 {
-  using VAL = legate_type_of<CODE>;
+  using VAL = type_of<CODE>;
 
   size_t volume              = local_sorted.size;
   bool is_unbound_1d_storage = output_array_unbound.is_unbound_store();
@@ -895,11 +896,11 @@ void sample_sort_nd(SortPiece<legate_type_of<CODE>> local_sorted,
 
 template <Type::Code CODE, int32_t DIM>
 struct SortImplBodyCpu {
-  using VAL = legate_type_of<CODE>;
+  using VAL = type_of<CODE>;
 
   template <typename DerivedPolicy>
-  void operator()(legate::Store input_array,
-                  legate::Store output_array,
+  void operator()(legate::PhysicalStore input_array,
+                  legate::PhysicalStore output_array,
                   const Pitches<DIM - 1>& pitches,
                   const Rect<DIM>& rect,
                   const size_t volume,

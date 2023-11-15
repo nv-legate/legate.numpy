@@ -330,8 +330,8 @@ __host__ static inline void cufft_over_axes(AccessorWO<OUTPUT_TYPE, DIM> out,
 
 template <CuNumericFFTType FFT_TYPE, Type::Code CODE_OUT, Type::Code CODE_IN, int32_t DIM>
 struct FFTImplBody<VariantKind::GPU, FFT_TYPE, CODE_OUT, CODE_IN, DIM> {
-  using INPUT_TYPE  = legate_type_of<CODE_IN>;
-  using OUTPUT_TYPE = legate_type_of<CODE_OUT>;
+  using INPUT_TYPE  = type_of<CODE_IN>;
+  using OUTPUT_TYPE = type_of<CODE_OUT>;
 
   __host__ void operator()(AccessorWO<OUTPUT_TYPE, DIM> out,
                            AccessorRO<INPUT_TYPE, DIM> in,

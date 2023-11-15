@@ -38,7 +38,7 @@ struct UnaryRedImpl {
   void operator()(UnaryRedArgs& args) const
   {
     using OP  = UnaryRedOp<OP_CODE, CODE>;
-    using RHS = legate_type_of<CODE>;
+    using RHS = type_of<CODE>;
 
     Pitches<DIM - 1> pitches;
     auto rect   = args.rhs.shape<DIM>();

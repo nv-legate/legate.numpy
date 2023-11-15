@@ -122,7 +122,7 @@ struct UnaryCopyImpl {
   template <Type::Code CODE, int DIM>
   void operator()(UnaryOpArgs& args) const
   {
-    using VAL = legate_type_of<CODE>;
+    using VAL = type_of<CODE>;
     execute_copy<VAL, DIM>(args);
   }
 

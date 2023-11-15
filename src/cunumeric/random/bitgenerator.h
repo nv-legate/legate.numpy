@@ -35,8 +35,8 @@ struct BitGeneratorArgs {
   std::vector<float> floatparams;
   std::vector<double> doubleparams;
 
-  std::vector<legate::Store> output;  // size 0 or 1
-  std::vector<legate::Store> args;
+  std::vector<legate::PhysicalStore> output;  // size 0 or 1
+  std::vector<legate::PhysicalStore> args;
 
   BitGeneratorArgs() {}
   static BitGeneratorArgs destroy(int32_t id)
@@ -60,8 +60,8 @@ struct BitGeneratorArgs {
                    std::vector<float>&& floatparams,
                    std::vector<double>&& doubleparams,
 
-                   std::vector<legate::Store>&& output,  // size 0 or 1
-                   std::vector<legate::Store>&& args)
+                   std::vector<legate::PhysicalStore>&& output,  // size 0 or 1
+                   std::vector<legate::PhysicalStore>&& args)
     : bitgen_op(bitgen_op),
       generatorID(generatorID),
       generatorType(generatorType),

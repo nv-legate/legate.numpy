@@ -25,9 +25,9 @@ using namespace legate;
 
 template <Type::Code CODE, int32_t DIM>
 struct UniqueImplBody<VariantKind::OMP, CODE, DIM> {
-  using VAL = legate_type_of<CODE>;
+  using VAL = type_of<CODE>;
 
-  void operator()(legate::Store& output,
+  void operator()(legate::PhysicalStore& output,
                   const AccessorRO<VAL, DIM>& in,
                   const Pitches<DIM - 1>& pitches,
                   const Rect<DIM>& rect,

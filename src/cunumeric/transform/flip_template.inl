@@ -32,7 +32,7 @@ struct FlipImpl {
   template <Type::Code CODE, int DIM>
   void operator()(FlipArgs& args) const
   {
-    using VAL = legate_type_of<CODE>;
+    using VAL = type_of<CODE>;
 
     auto rect = args.out.shape<DIM>().intersection(args.in.shape<DIM>());
 

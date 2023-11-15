@@ -23,8 +23,8 @@
 namespace cunumeric {
 
 struct SortArgs {
-  legate::Store input;
-  legate::Store output;
+  legate::PhysicalStore input;
+  legate::PhysicalStore output;
   bool argsort;
   bool stable;
   size_t segment_size_g;

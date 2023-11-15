@@ -22,9 +22,9 @@
 namespace cunumeric {
 
 struct ScanLocalArgs {
-  legate::Store out;
-  legate::Store in;
-  legate::Store sum_vals;
+  legate::PhysicalStore out;
+  legate::PhysicalStore in;
+  legate::PhysicalStore sum_vals;
   ScanCode op_code;
   bool nan_to_identity;
 };

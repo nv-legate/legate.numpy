@@ -48,7 +48,7 @@ using Piece = std::pair<Buffer<VAL>, size_t>;
 auto get_aligned_size = [](auto size) { return std::max<size_t>(16, (size + 15) / 16 * 16); };
 
 template <typename VAL>
-static Piece<VAL> tree_reduce(legate::Store& output,
+static Piece<VAL> tree_reduce(legate::PhysicalStore& output,
                               Piece<VAL> my_piece,
                               size_t my_id,
                               size_t num_ranks,
@@ -141,9 +141,9 @@ static Piece<VAL> tree_reduce(legate::Store& output,
 
 template <Type::Code CODE, int32_t DIM>
 struct UniqueImplBody<VariantKind::GPU, CODE, DIM> {
-  using VAL = legate_type_of<CODE>;
+  using VAL = type_of<CODE>;
 
-  void operator()(legate::Store& output,
+  void operator()(legate::PhysicalStore& output,
                   const AccessorRO<VAL, DIM>& in,
                   const Pitches<DIM - 1>& pitches,
                   const Rect<DIM>& rect,

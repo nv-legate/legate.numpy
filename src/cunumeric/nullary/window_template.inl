@@ -30,7 +30,7 @@ struct WindowImplBody;
 template <VariantKind KIND>
 struct WindowImpl {
   template <WindowOpCode OP_CODE>
-  void operator()(legate::Store output, int64_t M, double beta) const
+  void operator()(legate::PhysicalStore output, int64_t M, double beta) const
   {
     auto rect = output.shape<1>();
 

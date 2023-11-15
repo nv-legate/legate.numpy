@@ -299,7 +299,7 @@ template <UnaryRedCode OP_CODE, Type::Code CODE, int DIM>
 struct UnaryRedImplBody<VariantKind::GPU, OP_CODE, CODE, DIM> {
   using OP    = UnaryRedOp<OP_CODE, CODE>;
   using LG_OP = typename OP::OP;
-  using RHS   = legate_type_of<CODE>;
+  using RHS   = type_of<CODE>;
   using LHS   = typename OP::VAL;
 
   void operator()(AccessorRD<LG_OP, false, DIM> lhs,

@@ -30,13 +30,13 @@ struct UniqueImplBody;
 template <VariantKind KIND>
 struct UniqueImpl {
   template <Type::Code CODE, int32_t DIM>
-  void operator()(legate::Store output,
-                  legate::Store input,
+  void operator()(legate::PhysicalStore output,
+                  legate::PhysicalStore input,
                   std::vector<comm::Communicator>& comms,
                   const DomainPoint& point,
                   const Domain& launch_domain) const
   {
-    using VAL = legate_type_of<CODE>;
+    using VAL = type_of<CODE>;
 
     auto rect = input.shape<DIM>();
     Pitches<DIM - 1> pitches;

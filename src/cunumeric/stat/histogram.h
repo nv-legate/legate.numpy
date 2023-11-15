@@ -21,10 +21,10 @@
 namespace cunumeric {
 
 struct HistogramArgs {
-  legate::Store result;
-  legate::Store src;
-  legate::Store bins;
-  legate::Store weights;
+  legate::PhysicalStore result;
+  legate::PhysicalStore src;
+  legate::PhysicalStore bins;
+  legate::PhysicalStore weights;
 };
 
 class HistogramTask : public CuNumericTask<HistogramTask> {

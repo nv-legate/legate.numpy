@@ -28,7 +28,7 @@ using namespace legate;
 
 template <VariantKind KIND, Type::Code CODE, int DIM>
 struct Putmask {
-  using T      = legate_type_of<CODE>;
+  using T      = type_of<CODE>;
   using IN     = AccessorRW<T, DIM>;
   using MASK   = AccessorRO<bool, DIM>;
   using VALUES = AccessorRO<T, DIM>;

@@ -23,8 +23,8 @@ namespace cunumeric {
 struct DiagArgs {
   int naxes;
   bool extract;
-  legate::Store matrix;
-  legate::Store diag;
+  legate::PhysicalStore matrix;
+  legate::PhysicalStore diag;
 };
 
 class DiagTask : public CuNumericTask<DiagTask> {

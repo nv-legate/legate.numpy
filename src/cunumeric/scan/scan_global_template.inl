@@ -30,7 +30,7 @@ struct ScanGlobalImpl {
   void operator()(ScanGlobalArgs& args) const
   {
     using OP  = ScanOp<OP_CODE, CODE>;
-    using VAL = legate_type_of<CODE>;
+    using VAL = type_of<CODE>;
 
     auto out_rect      = args.out.shape<DIM>();
     auto sum_vals_rect = args.sum_vals.shape<DIM>();

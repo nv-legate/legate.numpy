@@ -23,7 +23,7 @@ using namespace legate;
 
 template <Type::Code CODE, int DIM, typename OUT_TYPE>
 struct AdvancedIndexingImplBody<VariantKind::CPU, CODE, DIM, OUT_TYPE> {
-  using VAL = legate_type_of<CODE>;
+  using VAL = type_of<CODE>;
 
   template <typename OUT_T>
   void compute_output(Buffer<OUT_T, DIM>& out,
@@ -56,7 +56,7 @@ struct AdvancedIndexingImplBody<VariantKind::CPU, CODE, DIM, OUT_TYPE> {
     }
   }
 
-  void operator()(legate::Store& out_arr,
+  void operator()(legate::PhysicalStore& out_arr,
                   const AccessorRO<VAL, DIM>& input,
                   const AccessorRO<bool, DIM>& index,
                   const Pitches<DIM - 1>& pitches,

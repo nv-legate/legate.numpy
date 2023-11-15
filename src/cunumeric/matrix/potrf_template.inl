@@ -40,9 +40,9 @@ struct support_potrf<Type::Code::COMPLEX128> : std::true_type {};
 template <VariantKind KIND>
 struct PotrfImpl {
   template <Type::Code CODE, std::enable_if_t<support_potrf<CODE>::value>* = nullptr>
-  void operator()(legate::Store array) const
+  void operator()(legate::PhysicalStore array) const
   {
-    using VAL = legate_type_of<CODE>;
+    using VAL = type_of<CODE>;
 
     auto shape = array.shape<2>();
 
@@ -59,7 +59,7 @@ struct PotrfImpl {
   }
 
   template <Type::Code CODE, std::enable_if_t<!support_potrf<CODE>::value>* = nullptr>
-  void operator()(legate::Store array) const
+  void operator()(legate::PhysicalStore array) const
   {
     assert(false);
   }

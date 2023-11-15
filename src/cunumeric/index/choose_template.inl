@@ -32,7 +32,7 @@ struct ChooseImpl {
   template <Type::Code CODE, int DIM>
   void operator()(ChooseArgs& args) const
   {
-    using VAL     = legate_type_of<CODE>;
+    using VAL     = type_of<CODE>;
     auto out_rect = args.out.shape<DIM>();
 
     Pitches<DIM - 1> pitches;
@@ -64,7 +64,7 @@ struct ChooseImpl {
 template <VariantKind KIND>
 static void choose_template(TaskContext& context)
 {
-  std::vector<legate::Store> inputs;
+  std::vector<legate::PhysicalStore> inputs;
   for (auto& input : context.inputs()) { inputs.emplace_back(input); }
   ChooseArgs args{context.output(0), std::move(inputs)};
   double_dispatch(args.inputs[0].dim(), args.inputs[0].code(), ChooseImpl<KIND>{}, args);

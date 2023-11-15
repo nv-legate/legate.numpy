@@ -21,9 +21,9 @@
 namespace cunumeric {
 
 struct SearchSortedArgs {
-  legate::Store input_base;
-  legate::Store input_values;
-  legate::Store output_reduction;
+  legate::PhysicalStore input_base;
+  legate::PhysicalStore input_values;
+  legate::PhysicalStore output_reduction;
   bool left;
   int64_t global_volume;
   bool is_index_space;

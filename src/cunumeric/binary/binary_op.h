@@ -22,9 +22,9 @@
 namespace cunumeric {
 
 struct BinaryOpArgs {
-  legate::Store in1;
-  legate::Store in2;
-  legate::Store out;
+  legate::PhysicalStore in1;
+  legate::PhysicalStore in2;
+  legate::PhysicalStore out;
   BinaryOpCode op_code;
   std::vector<legate::Scalar> args;
 };

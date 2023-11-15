@@ -77,7 +77,7 @@ static __global__ void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM)
 
 template <Type::Code CODE, int DIM, typename OUT_TYPE>
 struct AdvancedIndexingImplBody<VariantKind::GPU, CODE, DIM, OUT_TYPE> {
-  using VAL = legate_type_of<CODE>;
+  using VAL = type_of<CODE>;
 
   int64_t compute_size(const AccessorRO<bool, DIM>& in,
                        const Pitches<DIM - 1>& pitches,
@@ -110,7 +110,7 @@ struct AdvancedIndexingImplBody<VariantKind::GPU, CODE, DIM, OUT_TYPE> {
     return size.read(stream);
   }
 
-  void operator()(Store& out_arr,
+  void operator()(PhysicalStore& out_arr,
                   const AccessorRO<VAL, DIM>& input,
                   const AccessorRO<bool, DIM>& index,
                   const Pitches<DIM - 1>& pitches,

@@ -23,7 +23,7 @@ using namespace legate;
 
 template <Type::Code CODE>
 struct BincountImplBody<VariantKind::CPU, CODE> {
-  using VAL = legate_type_of<CODE>;
+  using VAL = type_of<CODE>;
 
   void operator()(AccessorRD<SumReduction<int64_t>, true, 1> lhs,
                   const AccessorRO<VAL, 1>& rhs,

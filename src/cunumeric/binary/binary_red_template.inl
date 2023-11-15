@@ -34,7 +34,7 @@ struct BinaryRedImpl {
   void operator()(BinaryRedArgs& args) const
   {
     using OP  = BinaryOp<OP_CODE, CODE>;
-    using ARG = legate_type_of<CODE>;
+    using ARG = type_of<CODE>;
 
     // A technical note: unlike region-backed stores that are partitionable, future-backed stores
     // are not partitionable and replicated to all point tasks, including their metadata.

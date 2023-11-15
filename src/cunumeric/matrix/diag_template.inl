@@ -32,7 +32,7 @@ struct DiagImpl {
   template <Type::Code CODE, int DIM>
   void operator()(DiagArgs& args) const
   {
-    using VAL = legate_type_of<CODE>;
+    using VAL = type_of<CODE>;
 
     if (args.extract) {
       auto shape_in = args.matrix.shape<DIM>();
@@ -101,10 +101,10 @@ struct DiagImpl {
 template <VariantKind KIND>
 static void diag_template(TaskContext& context)
 {
-  int naxes            = context.scalar(0).value<int>();
-  bool extract         = context.scalar(1).value<bool>();
-  legate::Store matrix = extract ? context.input(0) : context.output(0);
-  legate::Store diag   = extract ? context.reduction(0) : context.input(0);
+  int naxes                    = context.scalar(0).value<int>();
+  bool extract                 = context.scalar(1).value<bool>();
+  legate::PhysicalStore matrix = extract ? context.input(0) : context.output(0);
+  legate::PhysicalStore diag   = extract ? context.reduction(0) : context.input(0);
   DiagArgs args{naxes, extract, matrix, diag};
   double_dispatch(matrix.dim(), matrix.code(), DiagImpl<KIND>{}, args);
 }

@@ -177,7 +177,7 @@ struct RandomGenerator<RandGenCode::NORMAL, CODE> {
 template <legate::Type::Code CODE>
 struct RandomGenerator<RandGenCode::INTEGER, CODE> {
   using RNG = Philox_2x32<10>;
-  using VAL = legate::legate_type_of<CODE>;
+  using VAL = legate::type_of<CODE>;
 
   static constexpr bool valid = legate::is_integral<CODE>::value;
 

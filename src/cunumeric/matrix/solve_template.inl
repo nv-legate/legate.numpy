@@ -42,9 +42,9 @@ struct support_solve<Type::Code::COMPLEX128> : std::true_type {};
 template <VariantKind KIND>
 struct SolveImpl {
   template <Type::Code CODE, std::enable_if_t<support_solve<CODE>::value>* = nullptr>
-  void operator()(legate::Store a_array, legate::Store b_array) const
+  void operator()(legate::PhysicalStore a_array, legate::PhysicalStore b_array) const
   {
-    using VAL = legate_type_of<CODE>;
+    using VAL = type_of<CODE>;
 
 #ifdef DEBUG_CUNUMERIC
     assert(a_array.dim() == 2);
@@ -96,7 +96,7 @@ struct SolveImpl {
   }
 
   template <Type::Code CODE, std::enable_if_t<!support_solve<CODE>::value>* = nullptr>
-  void operator()(legate::Store a_array, legate::Store b_array) const
+  void operator()(legate::PhysicalStore a_array, legate::PhysicalStore b_array) const
   {
     assert(false);
   }

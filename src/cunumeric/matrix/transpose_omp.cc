@@ -26,7 +26,7 @@ using namespace legate;
 
 template <Type::Code CODE>
 struct TransposeImplBody<VariantKind::OMP, CODE> {
-  using VAL = legate_type_of<CODE>;
+  using VAL = type_of<CODE>;
 
   void operator()(const Rect<2>& out_rect,
                   const Rect<2>& in_rect,

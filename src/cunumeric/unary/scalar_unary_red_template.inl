@@ -33,7 +33,7 @@ struct ScalarUnaryRed {
   using OP    = UnaryRedOp<OP_CODE, CODE>;
   using LG_OP = typename OP::OP;
   using LHS   = typename OP::VAL;
-  using RHS   = legate_type_of<CODE>;
+  using RHS   = type_of<CODE>;
   using OUT   = AccessorRD<LG_OP, true, 1>;
   using IN    = AccessorRO<RHS, DIM>;
 

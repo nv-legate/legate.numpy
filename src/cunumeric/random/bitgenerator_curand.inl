@@ -271,7 +271,7 @@ struct CURANDGenerator {
 
 struct generate_fn {
   template <int32_t DIM>
-  size_t operator()(CURANDGenerator& gen, legate::Store output)
+  size_t operator()(CURANDGenerator& gen, legate::PhysicalStore output)
   {
     auto rect       = output.shape<DIM>();
     uint64_t volume = rect.volume();
@@ -1236,7 +1236,7 @@ struct generate_distribution {
   generate_distribution(const generator_t& generator) : generator_(generator) {}
 
   template <int32_t DIM>
-  size_t operator()(CURANDGenerator& gen, legate::Store output)
+  size_t operator()(CURANDGenerator& gen, legate::PhysicalStore output)
   {
     auto rect       = output.shape<DIM>();
     uint64_t volume = rect.volume();
@@ -1255,7 +1255,7 @@ struct generate_distribution {
     return volume;
   }
 
-  static void generate(legate::Store res,
+  static void generate(legate::PhysicalStore res,
                        CURANDGenerator& cugen,
                        const std::vector<int64_t>& intparams,
                        const std::vector<float>& floatparams,
@@ -1361,8 +1361,8 @@ struct BitGeneratorImplBody {
                   std::vector<int64_t> intparams,
                   std::vector<float> floatparams,
                   std::vector<double> doubleparams,
-                  std::vector<legate::Store>& output,
-                  std::vector<legate::Store>& args)
+                  std::vector<legate::PhysicalStore>& output,
+                  std::vector<legate::PhysicalStore>& args)
   {
     generator_map_t& genmap = get_generator_map();
     switch (op) {
@@ -1384,8 +1384,8 @@ struct BitGeneratorImplBody {
         // get the generator
         CURANDGenerator* genptr = genmap.get(generatorID);
         if (output.size() != 0) {
-          legate::Store& res     = output[0];
-          CURANDGenerator& cugen = *genptr;
+          legate::PhysicalStore& res = output[0];
+          CURANDGenerator& cugen     = *genptr;
           dim_dispatch(res.dim(), generate_fn{}, cugen, res);
         }
         break;
@@ -1396,8 +1396,8 @@ struct BitGeneratorImplBody {
         // get the generator
         CURANDGenerator* genptr = genmap.get(generatorID);
         if (output.size() != 0) {
-          legate::Store& res     = output[0];
-          CURANDGenerator& cugen = *genptr;
+          legate::PhysicalStore& res = output[0];
+          CURANDGenerator& cugen     = *genptr;
           switch (distribution) {
             case BitGeneratorDistribution::INTEGERS_16:
               generate_distribution<int16_t, integer_generator<int16_t>>::generate(

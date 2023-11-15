@@ -50,8 +50,8 @@ template <>
 struct support_cub<Type::Code::COMPLEX128> : std::false_type {};
 
 template <Type::Code CODE, std::enable_if_t<support_cub<CODE>::value>* = nullptr>
-void local_sort(const legate_type_of<CODE>* values_in,
-                legate_type_of<CODE>* values_out,
+void local_sort(const type_of<CODE>* values_in,
+                type_of<CODE>* values_out,
                 const int64_t* indices_in,
                 int64_t* indices_out,
                 const size_t volume,
@@ -59,7 +59,7 @@ void local_sort(const legate_type_of<CODE>* values_in,
                 const bool stable,  // cub sort is always stable
                 cudaStream_t stream)
 {
-  using VAL = legate_type_of<CODE>;
+  using VAL = type_of<CODE>;
   // fallback to thrust approach as segmented radix sort is not suited for small segments
   if (volume == sort_dim_size || sort_dim_size > SEGMENT_THRESHOLD_RADIX_SORT) {
     cub_local_sort(values_in, values_out, indices_in, indices_out, volume, sort_dim_size, stream);
@@ -70,8 +70,8 @@ void local_sort(const legate_type_of<CODE>* values_in,
 }
 
 template <Type::Code CODE, std::enable_if_t<!support_cub<CODE>::value>* = nullptr>
-void local_sort(const legate_type_of<CODE>* values_in,
-                legate_type_of<CODE>* values_out,
+void local_sort(const type_of<CODE>* values_in,
+                type_of<CODE>* values_out,
                 const int64_t* indices_in,
                 int64_t* indices_out,
                 const size_t volume,
@@ -79,7 +79,7 @@ void local_sort(const legate_type_of<CODE>* values_in,
                 const bool stable,
                 cudaStream_t stream)
 {
-  using VAL = legate_type_of<CODE>;
+  using VAL = type_of<CODE>;
   thrust_local_sort(
     values_in, values_out, indices_in, indices_out, volume, sort_dim_size, stable, stream);
 }
@@ -567,14 +567,14 @@ struct negative_plus : public thrust::binary_function<int64_t, int64_t, int64_t>
 /////////////////////////////////////////////////////////////////////////////////////////////////
 
 template <Type::Code CODE>
-SegmentMergePiece<legate_type_of<CODE>> merge_all_buffers(
-  std::vector<SegmentMergePiece<legate_type_of<CODE>>>& merge_buffers,
+SegmentMergePiece<type_of<CODE>> merge_all_buffers(
+  std::vector<SegmentMergePiece<type_of<CODE>>>& merge_buffers,
   bool segmented,
   bool argsort,
   ThrustAllocator& alloc,
   cudaStream_t stream)
 {
-  using VAL = legate_type_of<CODE>;
+  using VAL = type_of<CODE>;
 
   // fallback to full sort for 1D and > 64 parts
   if (!segmented && merge_buffers.size() > 64) {
@@ -1189,8 +1189,8 @@ void rebalance_data(SegmentMergePiece<VAL>& merge_buffer,
 
 template <Type::Code CODE>
 void sample_sort_nccl_nd(
-  SortPiece<legate_type_of<CODE>> local_sorted,
-  legate::Store& output_array_unbound,  // only for unbound usage when !rebalance
+  SortPiece<type_of<CODE>> local_sorted,
+  legate::PhysicalStore& output_array_unbound,  // only for unbound usage when !rebalance
   void* output_ptr,
   /* global domain information */
   size_t my_rank,  // global NCCL rank
@@ -1207,7 +1207,7 @@ void sample_sort_nccl_nd(
   cudaStream_t stream,
   ncclComm_t* comm)
 {
-  using VAL = legate_type_of<CODE>;
+  using VAL = type_of<CODE>;
 
   size_t volume              = local_sorted.size;
   bool is_unbound_1d_storage = output_array_unbound.is_unbound_store();
@@ -1661,10 +1661,10 @@ void sample_sort_nccl_nd(
 
 template <Type::Code CODE, int32_t DIM>
 struct SortImplBody<VariantKind::GPU, CODE, DIM> {
-  using VAL = legate_type_of<CODE>;
+  using VAL = type_of<CODE>;
 
-  void operator()(const legate::Store& input_array,
-                  legate::Store& output_array,
+  void operator()(const legate::PhysicalStore& input_array,
+                  legate::PhysicalStore& output_array,
                   const Pitches<DIM - 1>& pitches,
                   const Rect<DIM>& rect,
                   const size_t volume,

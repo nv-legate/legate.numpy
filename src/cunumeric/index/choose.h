@@ -21,8 +21,8 @@
 namespace cunumeric {
 
 struct ChooseArgs {
-  legate::Store out;
-  std::vector<legate::Store> inputs;
+  legate::PhysicalStore out;
+  std::vector<legate::PhysicalStore> inputs;
 };
 
 class ChooseTask : public CuNumericTask<ChooseTask> {

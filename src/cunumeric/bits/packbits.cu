@@ -41,7 +41,7 @@ static __global__ void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM)
 
 template <Type::Code CODE, int32_t DIM, Bitorder BITORDER>
 struct PackbitsImplBody<VariantKind::GPU, CODE, DIM, BITORDER> {
-  using VAL = legate_type_of<CODE>;
+  using VAL = type_of<CODE>;
 
   void operator()(const AccessorWO<uint8_t, DIM>& out,
                   const AccessorRO<VAL, DIM>& in,

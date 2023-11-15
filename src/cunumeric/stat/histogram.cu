@@ -40,7 +40,7 @@ namespace cunumeric {
 
 template <Type::Code CODE>
 struct HistogramImplBody<VariantKind::GPU, CODE> {
-  using VAL = legate_type_of<CODE>;
+  using VAL = type_of<CODE>;
 
   // for now, it has been decided to hardcode these types:
   //

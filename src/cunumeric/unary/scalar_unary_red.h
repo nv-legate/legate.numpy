@@ -22,8 +22,8 @@
 namespace cunumeric {
 
 struct ScalarUnaryRedArgs {
-  legate::Store out;
-  legate::Store in;
+  legate::PhysicalStore out;
+  legate::PhysicalStore in;
   UnaryRedCode op_code;
   legate::DomainPoint shape;
   std::vector<legate::Scalar> args;

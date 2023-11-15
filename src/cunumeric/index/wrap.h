@@ -21,13 +21,13 @@
 namespace cunumeric {
 
 struct WrapArgs {
-  legate::Store out;                // Array with Point<N> type that is used to
+  legate::PhysicalStore out;        // Array with Point<N> type that is used to
                                     // copy information from original array to the
                                     //  `wrapped` one
   const legate::DomainPoint shape;  // shape of the original array
   const bool has_input;
   const bool check_bounds;
-  legate::Store in = legate::Store();
+  legate::PhysicalStore in = legate::PhysicalStore();
 };
 
 class WrapTask : public CuNumericTask<WrapTask> {

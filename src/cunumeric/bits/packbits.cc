@@ -23,7 +23,7 @@ using namespace legate;
 
 template <Type::Code CODE, int32_t DIM, Bitorder BITORDER>
 struct PackbitsImplBody<VariantKind::CPU, CODE, DIM, BITORDER> {
-  using VAL = legate_type_of<CODE>;
+  using VAL = type_of<CODE>;
 
   void operator()(const AccessorWO<uint8_t, DIM>& out,
                   const AccessorRO<VAL, DIM>& in,

@@ -21,10 +21,10 @@
 namespace cunumeric {
 
 struct WhereArgs {
-  legate::Store out;
-  legate::Store mask;
-  legate::Store in1;
-  legate::Store in2;
+  legate::PhysicalStore out;
+  legate::PhysicalStore mask;
+  legate::PhysicalStore in1;
+  legate::PhysicalStore in2;
 };
 
 class WhereTask : public CuNumericTask<WhereTask> {

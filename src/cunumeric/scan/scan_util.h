@@ -69,14 +69,14 @@ template <ScanCode OP_CODE, legate::Type::Code CODE>
 struct ScanOp;
 
 template <legate::Type::Code CODE>
-struct ScanOp<ScanCode::SUM, CODE> : thrust::plus<legate::legate_type_of<CODE>> {
-  using T                           = legate::legate_type_of<CODE>;
+struct ScanOp<ScanCode::SUM, CODE> : thrust::plus<legate::type_of<CODE>> {
+  using T                           = legate::type_of<CODE>;
   static constexpr int nan_identity = 0;
 };
 
 template <legate::Type::Code CODE>
-struct ScanOp<ScanCode::PROD, CODE> : thrust::multiplies<legate::legate_type_of<CODE>> {
-  using T                           = legate::legate_type_of<CODE>;
+struct ScanOp<ScanCode::PROD, CODE> : thrust::multiplies<legate::type_of<CODE>> {
+  using T                           = legate::type_of<CODE>;
   static constexpr int nan_identity = 1;
 };
 

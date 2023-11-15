@@ -22,8 +22,8 @@
 namespace cunumeric {
 
 struct UnaryRedArgs {
-  legate::Store lhs;
-  legate::Store rhs;
+  legate::PhysicalStore lhs;
+  legate::PhysicalStore rhs;
   int32_t collapsed_dim;
   UnaryRedCode op_code;
 };

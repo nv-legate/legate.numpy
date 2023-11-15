@@ -21,9 +21,9 @@
 namespace cunumeric {
 
 struct RepeatArgs {
-  legate::Store output;
-  legate::Store input;
-  legate::Store repeats_arr;
+  legate::PhysicalStore output;
+  legate::PhysicalStore input;
+  legate::PhysicalStore repeats_arr;
   int64_t repeats;
   int32_t axis;
   const bool scalar_repeats;

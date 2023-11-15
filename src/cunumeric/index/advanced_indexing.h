@@ -21,9 +21,9 @@
 namespace cunumeric {
 
 struct AdvancedIndexingArgs {
-  legate::Store output;
-  legate::Store input_array;
-  legate::Store indexing_array;
+  legate::PhysicalStore output;
+  legate::PhysicalStore input_array;
+  legate::PhysicalStore indexing_array;
   const bool is_set;
   const int64_t key_dim;
 };

@@ -8,11 +8,11 @@
       "git_tag" : "8997f997be02936304b3ac23fe785f1de7a3424b"
     },
     "legate_core_internal" : {
-      "version": "23.11.00",
+      "version": "24.01.00",
       "git_url" : "https://github.com/nv-legate/legate.core.internal.git",
       "git_shallow": false,
       "always_download": false,
-      "git_tag" : "fb57a49dd6ae6b5bfc936be2f8b730c301f1564d"
+      "git_tag" : "63a5541366542e765693e340c2b851f126dea9f2"
     }
   }
 }

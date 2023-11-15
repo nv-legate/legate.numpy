@@ -44,7 +44,7 @@ struct DotImpl {
   template <Type::Code CODE>
   void operator()(DotArgs& args) const
   {
-    using VAL = legate_type_of<CODE>;
+    using VAL = type_of<CODE>;
     using ACC = acc_type_of<VAL>;
 
     assert(args.rhs1.dim() == 1);

@@ -1408,7 +1408,7 @@ struct UseCUFFT {
 
 template <Type::Code CODE, int DIM>
 struct ConvolveImplBody<VariantKind::GPU, CODE, DIM> {
-  using VAL = legate_type_of<CODE>;
+  using VAL = type_of<CODE>;
 
   template <typename _VAL, int32_t _DIM, std::enable_if_t<UseCUFFT<_VAL, _DIM>::value>* = nullptr>
   __host__ void dispatch(AccessorWO<_VAL, _DIM> out,

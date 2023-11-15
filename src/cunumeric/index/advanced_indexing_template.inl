@@ -34,7 +34,7 @@ struct AdvancedIndexingImpl {
   template <Type::Code CODE, int DIM>
   void operator()(AdvancedIndexingArgs& args) const
   {
-    using VAL       = legate_type_of<CODE>;
+    using VAL       = type_of<CODE>;
     auto input_rect = args.input_array.shape<DIM>();
     auto input_arr  = args.input_array.read_accessor<VAL, DIM>(input_rect);
     Pitches<DIM - 1> input_pitches;

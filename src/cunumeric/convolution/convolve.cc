@@ -26,7 +26,7 @@ namespace cunumeric {
 #if 0
 template <Type::Code CODE, int DIM>
 struct ConvolveImplBody<VariantKind::CPU, CODE, DIM> {
-  using VAL = legate_type_of<CODE>;
+  using VAL = type_of<CODE>;
 
   void operator()(AccessorWO<VAL, DIM> out,
                   AccessorRO<VAL, DIM> filter,
@@ -75,7 +75,7 @@ struct ConvolveImplBody<VariantKind::CPU, CODE, DIM> {
 
 template <Type::Code CODE, int DIM>
 struct ConvolveImplBody<VariantKind::CPU, CODE, DIM> {
-  using VAL = legate_type_of<CODE>;
+  using VAL = type_of<CODE>;
 
   void operator()(AccessorWO<VAL, DIM> out,
                   AccessorRO<VAL, DIM> filter,

@@ -32,11 +32,11 @@ using namespace legate;
 template <typename exe_pol_t>
 struct UniqueReduceImpl {
   template <Type::Code CODE>
-  void operator()(legate::Store output,
-                  const std::vector<legate::Array>& input_arrs,
+  void operator()(legate::PhysicalStore output,
+                  const std::vector<legate::PhysicalArray>& input_arrs,
                   exe_pol_t exe_pol)
   {
-    using VAL = legate_type_of<CODE>;
+    using VAL = type_of<CODE>;
 
     size_t res_size = 0;
     for (auto& input_arr : input_arrs) {

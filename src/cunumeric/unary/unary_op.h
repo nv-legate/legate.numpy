@@ -22,16 +22,16 @@
 namespace cunumeric {
 
 struct UnaryOpArgs {
-  legate::Store in;
-  legate::Store out;
+  legate::PhysicalStore in;
+  legate::PhysicalStore out;
   UnaryOpCode op_code;
   std::vector<legate::Scalar> args;
 };
 
 struct MultiOutUnaryOpArgs {
-  legate::Store in;
-  legate::Store out1;
-  legate::Store out2;
+  legate::PhysicalStore in;
+  legate::PhysicalStore out1;
+  legate::PhysicalStore out2;
   UnaryOpCode op_code;
 };
 
