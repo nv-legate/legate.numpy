@@ -30,12 +30,16 @@ static __global__ void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM)
                  Buffer<int64_t*> p_results)
 {
   const size_t tid = blockIdx.x * blockDim.x + threadIdx.x;
-  if (tid >= volume) return;
+  if (tid >= volume) {
+    return;
+  }
 
   auto point = pitches.unflatten(tid, origin);
   if (in[point] != VAL(0)) {
     auto offset = offsets[tid];
-    for (int32_t dim = 0; dim < DIM; ++dim) p_results[dim][offset] = point[dim];
+    for (int32_t dim = 0; dim < DIM; ++dim) {
+      p_results[dim][offset] = point[dim];
+    }
   }
 }
 
@@ -53,7 +57,9 @@ struct NonzeroImplBody<VariantKind::GPU, CODE, DIM> {
   {
     auto ndims     = static_cast<int32_t>(results.size());
     auto p_results = create_buffer<int64_t*>(ndims, legate::Memory::Kind::Z_COPY_MEM);
-    for (int32_t dim = 0; dim < ndims; ++dim) p_results[dim] = results[dim].ptr(0);
+    for (int32_t dim = 0; dim < ndims; ++dim) {
+      p_results[dim] = results[dim].ptr(0);
+    }
 
     const size_t blocks = (volume + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
     nonzero_kernel<<<blocks, THREADS_PER_BLOCK, 0, stream>>>(
@@ -72,10 +78,13 @@ struct NonzeroImplBody<VariantKind::GPU, CODE, DIM> {
     auto size    = compute_offsets(in, pitches, rect, volume, offsets, stream);
 
     std::vector<Buffer<int64_t>> results;
-    for (auto& output : outputs)
+    for (auto& output : outputs) {
       results.push_back(output.create_output_buffer<int64_t, 1>(Point<1>(size), true));
+    }
 
-    if (size > 0) populate_nonzeros(in, pitches, rect, volume, results, offsets, stream);
+    if (size > 0) {
+      populate_nonzeros(in, pitches, rect, volume, results, offsets, stream);
+    }
     CHECK_CUDA_STREAM(stream);
   }
 };

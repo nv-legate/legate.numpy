@@ -35,7 +35,9 @@ struct BincountImpl {
 
     auto rect     = args.rhs.shape<1>();
     auto lhs_rect = args.lhs.shape<1>();
-    if (rect.empty()) return;
+    if (rect.empty()) {
+      return;
+    }
 
     auto rhs = args.rhs.read_accessor<VAL, 1>(rect);
     if (args.has_weights) {

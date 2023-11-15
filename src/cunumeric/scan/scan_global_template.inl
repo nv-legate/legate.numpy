@@ -39,7 +39,9 @@ struct ScanGlobalImpl {
     size_t volume = out_pitches.flatten(out_rect);
     Pitches<DIM - 1> sum_vals_pitches;
 
-    if (volume == 0) return;
+    if (volume == 0) {
+      return;
+    }
 
     auto out      = args.out.read_write_accessor<VAL, DIM>(out_rect);
     auto sum_vals = args.sum_vals.read_accessor<VAL, DIM>(sum_vals_rect);

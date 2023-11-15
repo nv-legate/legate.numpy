@@ -51,7 +51,9 @@ __global__ void __launch_bounds__(blockDimX, blocksPerMultiProcessor)
   assert(id < ngenerators);
   // TODO: improve load
   gen_t gen = gens[id];
-  for (size_t k = id; k < N; k += blockDim.x * gridDim.x) { draws[k] = func(gen); }
+  for (size_t k = id; k < N; k += blockDim.x * gridDim.x) {
+    draws[k] = func(gen);
+  }
   // save state
   gens[id] = gen;
 }
@@ -91,8 +93,9 @@ struct inner_generator<gen_t, randutilimpl::execlocation::DEVICE> : basegenerato
 #else
       CHECK_CUDA(::cudaMalloc(&generators, ngenerators * sizeof(gen_t)));
 #endif
-    } else
+    } else {
       CHECK_CUDA(::cudaMalloc(&generators, ngenerators * sizeof(gen_t)));
+    }
 
     // initialize generators
     initgenerators<<<blocksPerMultiProcessor * multiProcessorCount, blockDimX, 0, stream>>>(
@@ -109,8 +112,9 @@ struct inner_generator<gen_t, randutilimpl::execlocation::DEVICE> : basegenerato
 #else
       CHECK_CUDA(::cudaFree(generators));
 #endif
-    } else
+    } else {
       CHECK_CUDA(::cudaFree(generators));
+    }
 
     generators = nullptr;
   }
@@ -127,8 +131,9 @@ struct inner_generator<gen_t, randutilimpl::execlocation::DEVICE> : basegenerato
   template <typename func_t, typename out_t>
   curandStatus_t draw(func_t func, size_t N, out_t* out)
   {
-    if (generators == nullptr)  // destroyed was called
+    if (generators == nullptr) {  // destroyed was called
       return CURAND_STATUS_NOT_INITIALIZED;
+    }
     gpu_draw<gen_t, func_t, out_t><<<multiProcessorCount * blocksPerMultiProcessor, blockDimX>>>(
       ngenerators, generators, func, N, out);
     return ::cudaPeekAtLastError() == cudaSuccess ? CURAND_STATUS_SUCCESS

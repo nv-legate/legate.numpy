@@ -39,7 +39,9 @@ struct FillImplBody<VariantKind::OMP, VAL, DIM> {
     if (dense) {
       auto outptr = out.ptr(rect);
 #pragma omp parallel for schedule(static)
-      for (size_t idx = 0; idx < volume; ++idx) outptr[idx] = fill_value;
+      for (size_t idx = 0; idx < volume; ++idx) {
+        outptr[idx] = fill_value;
+      }
     } else {
 #pragma omp parallel for schedule(static)
       for (size_t idx = 0; idx < volume; ++idx) {

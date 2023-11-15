@@ -38,22 +38,25 @@ struct lower_bound_op_t {
       // upcast to bin_t:
       //
       bin_t left_up = static_cast<bin_t>(left);
-      if (right == sentinel)
+      if (right == sentinel) {
         return left_up <= right;
-      else
+      } else {
         return left_up < right;
+      }
     } else if constexpr (std::is_same_v<elem_t, __half> && std::is_integral_v<bin_t>) {
       // upcast to elem_t:
       //
-      if (right == sentinel)
+      if (right == sentinel) {
         return left <= static_cast<elem_t>(right);
-      else
+      } else {
         return left < right;
+      }
     } else {
-      if (right == sentinel)
+      if (right == sentinel) {
         return left <= right;
-      else
+      } else {
         return left < right;
+      }
     }
   }
 
@@ -90,7 +93,9 @@ void histogram_weights(exe_policy_t exe_pol,
 
   alloc_t<weight_t, exe_policy_t> alloc_w;
 
-  if (!ptr_w) { ptr_w = alloc_w(exe_pol, n_samples, 1); }
+  if (!ptr_w) {
+    ptr_w = alloc_w(exe_pol, n_samples, 1);
+  }
 
   // in-place src sort + corresponding weights shuffle:
   //

@@ -22,7 +22,9 @@ std::string to_string_1d(legate::AccessorRO<T, 1> acc, const std::vector<size_t>
 
   ss << "[";
   for (auto i = 0; i < shape[0]; ++i) {
-    if (i > 0) ss << ", ";
+    if (i > 0) {
+      ss << ", ";
+    }
     ss << std::setw(9) << std::setprecision(6) << acc[i];
   }
   ss << "]";
@@ -37,10 +39,14 @@ std::string to_string_2d(legate::AccessorRO<T, 2> acc, const std::vector<size_t>
 
   ss << "[";
   for (auto i = 0; i < shape[0]; ++i) {
-    if (i > 0) ss << ",\n ";
+    if (i > 0) {
+      ss << ",\n ";
+    }
     ss << "[";
     for (auto j = 0; j < shape[1]; ++j) {
-      if (j > 0) ss << ", ";
+      if (j > 0) {
+        ss << ", ";
+      }
       ss << std::setw(9) << std::setprecision(3) << acc[i][j];
     }
     ss << "]";
@@ -56,13 +62,19 @@ std::string to_string_3d(legate::AccessorRO<T, 3> acc, const std::vector<size_t>
 
   ss << "[";
   for (auto k = 0; k < shape[0]; ++k) {
-    if (k > 0) ss << ",\n ";
+    if (k > 0) {
+      ss << ",\n ";
+    }
     ss << "[";
     for (auto i = 0; i < shape[1]; ++i) {
-      if (i > 0) ss << ",\n ";
+      if (i > 0) {
+        ss << ",\n ";
+      }
       ss << "[";
       for (auto j = 0; j < shape[2]; ++j) {
-        if (j > 0) ss << ", ";
+        if (j > 0) {
+          ss << ", ";
+        }
         ss << std::setw(9) << std::setprecision(3) << acc[k][i][j];
       }
       ss << "]";
@@ -83,7 +95,9 @@ std::string check_array_eq_1d(legate::AccessorRO<T, 1> acc,
 
   ss << "[";
   for (auto i = 0; i < shape[0]; ++i) {
-    if (i > 0) ss << ", ";
+    if (i > 0) {
+      ss << ", ";
+    }
     ss << std::setw(9) << std::setprecision(6) << acc[i];
     EXPECT_EQ(acc[i], values_ptr[i]);
   }
@@ -101,10 +115,14 @@ std::string check_array_eq_2d(legate::AccessorRO<T, 2> acc,
 
   ss << "[";
   for (auto i = 0; i < shape[0]; ++i) {
-    if (i > 0) ss << ",\n ";
+    if (i > 0) {
+      ss << ",\n ";
+    }
     ss << "[";
     for (auto j = 0; j < shape[1]; ++j) {
-      if (j > 0) ss << ", ";
+      if (j > 0) {
+        ss << ", ";
+      }
       ss << std::setw(9) << std::setprecision(3) << acc[i][j];
       EXPECT_EQ(acc[i][j], values_ptr[i * shape[1] + j]);
     }
@@ -124,13 +142,19 @@ std::string check_array_eq_3d(legate::AccessorRO<T, 3> acc,
 
   ss << "[";
   for (auto k = 0; k < shape[0]; ++k) {
-    if (k > 0) ss << ",\n ";
+    if (k > 0) {
+      ss << ",\n ";
+    }
     ss << "[";
     for (auto i = 0; i < shape[1]; ++i) {
-      if (i > 0) ss << ",\n ";
+      if (i > 0) {
+        ss << ",\n ";
+      }
       ss << "[";
       for (auto j = 0; j < shape[2]; ++j) {
-        if (j > 0) ss << ", ";
+        if (j > 0) {
+          ss << ", ";
+        }
         ss << std::setw(9) << std::setprecision(3) << acc[k][i][j];
         EXPECT_EQ(acc[k][i][j], values_ptr[k * shape[1] * shape[2] + i * shape[2] + j]);
       }
@@ -204,7 +228,9 @@ template <typename T>
 struct assign_array_fn<T, 1> {
   void operator()(legate::AccessorWO<T, 1> acc, T* values_ptr, const std::vector<size_t>& shape)
   {
-    for (auto i = 0; i < shape[0]; ++i) { acc[i] = values_ptr[i]; }
+    for (auto i = 0; i < shape[0]; ++i) {
+      acc[i] = values_ptr[i];
+    }
   }
 };
 
@@ -213,7 +239,9 @@ struct assign_array_fn<T, 2> {
   void operator()(legate::AccessorWO<T, 2> acc, T* values_ptr, const std::vector<size_t>& shape)
   {
     for (auto i = 0; i < shape[0]; ++i) {
-      for (auto j = 0; j < shape[1]; ++j) { acc[i][j] = values_ptr[i * shape[1] + j]; }
+      for (auto j = 0; j < shape[1]; ++j) {
+        acc[i][j] = values_ptr[i * shape[1] + j];
+      }
     }
   }
 };

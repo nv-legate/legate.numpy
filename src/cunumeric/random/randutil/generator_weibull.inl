@@ -29,7 +29,9 @@ struct weibull_t<float> {
     float y = curand_uniform(&gen);  // y cannot be 0
     // log(y) can be zero !
     float lny = ::logf(y);
-    if (lny == 0.0f) return 0.0f;
+    if (lny == 0.0f) {
+      return 0.0f;
+    }
     return lambda * ::expf(::logf(-lny) * invk);
   }
 };
@@ -44,7 +46,9 @@ struct weibull_t<double> {
     double y = curand_uniform_double(&gen);  // y cannot be 0
     // log(y) can be zero !
     float lny = ::log(y);
-    if (lny == 0.0f) return 0.0f;
+    if (lny == 0.0f) {
+      return 0.0f;
+    }
     return lambda * ::exp(::log(-lny) * invk);
   }
 };

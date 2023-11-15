@@ -55,7 +55,9 @@ struct DotImpl {
     auto rhs1 = args.rhs1.read_accessor<VAL, 1>(rect);
     auto rhs2 = args.rhs2.read_accessor<VAL, 1>(rect);
 
-    if (rect.empty()) return;
+    if (rect.empty()) {
+      return;
+    }
 
 #if !LegateDefined(LEGATE_BOUNDS_CHECKS)
     // Check to see if this is dense or not

@@ -39,7 +39,9 @@ struct AdvancedIndexingImplBody<VariantKind::OMP, CODE, DIM, OUT_TYPE> {
                                 const size_t max_threads) const
   {
     ThreadLocalStorage<int64_t> sizes(max_threads);
-    for (size_t idx = 0; idx < max_threads; ++idx) sizes[idx] = 0;
+    for (size_t idx = 0; idx < max_threads; ++idx) {
+      sizes[idx] = 0;
+    }
 #pragma omp parallel
     {
       const int tid = omp_get_thread_num();
@@ -68,7 +70,9 @@ struct AdvancedIndexingImplBody<VariantKind::OMP, CODE, DIM, OUT_TYPE> {
     size_t skip_size = 1;
     for (int i = key_dim; i < DIM; i++) {
       auto diff = 1 + rect.hi[i] - rect.lo[i];
-      if (diff != 0) skip_size *= diff;
+      if (diff != 0) {
+        skip_size *= diff;
+      }
     }
 
     const auto max_threads = omp_get_max_threads();
@@ -84,7 +88,9 @@ struct AdvancedIndexingImplBody<VariantKind::OMP, CODE, DIM, OUT_TYPE> {
       size_t j       = key_dim + i;
       extents[i + 1] = 1 + rect.hi[j] - rect.lo[j];
     }
-    for (size_t i = DIM - key_dim + 1; i < DIM; i++) extents[i] = 1;
+    for (size_t i = DIM - key_dim + 1; i < DIM; i++) {
+      extents[i] = 1;
+    }
 
     auto out = out_arr.create_output_buffer<OUT_TYPE, DIM>(extents, true);
     if (size > 0)
@@ -102,9 +108,13 @@ struct AdvancedIndexingImplBody<VariantKind::OMP, CODE, DIM, OUT_TYPE> {
             size_t j     = key_dim + i;
             out_p[i + 1] = p[j];
           }
-          for (int32_t i = DIM - key_dim + 1; i < DIM; i++) out_p[i] = 0;
+          for (int32_t i = DIM - key_dim + 1; i < DIM; i++) {
+            out_p[i] = 0;
+          }
           fill_out(out[out_p], p, input[p]);
-          if ((idx + 1) % skip_size == 0) out_idx++;
+          if ((idx + 1) % skip_size == 0) {
+            out_idx++;
+          }
         }
       }
 

@@ -96,7 +96,9 @@ Scalar CuNumericRuntime::get_reduction_identity(UnaryRedCode op, const legate::T
 {
   auto key    = std::make_pair(op, type.code());
   auto finder = identities.find(key);
-  if (identities.end() != finder) return finder->second;
+  if (identities.end() != finder) {
+    return finder->second;
+  }
 
   auto identity = op_dispatch(op, generate_identity_fn{}, type);
   identities.insert({key, identity});
@@ -106,7 +108,9 @@ Scalar CuNumericRuntime::get_reduction_identity(UnaryRedCode op, const legate::T
 legate::Type CuNumericRuntime::get_argred_type(const legate::Type& value_type)
 {
   auto finder = argred_types_.find(value_type.code());
-  if (finder != argred_types_.end()) return finder->second;
+  if (finder != argred_types_.end()) {
+    return finder->second;
+  }
 
   auto argred_type = legate::struct_type({legate::int64(), value_type}, true /*align*/);
   argred_types_.insert({value_type.code(), argred_type});

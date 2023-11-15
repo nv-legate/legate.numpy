@@ -37,7 +37,9 @@ struct DiagImplBody<VariantKind::OMP, CODE, DIM, true> {
 
     for (size_t i = 0; i < naxes; i++) {
       auto diff = 1 + m_shape.hi[DIM - i - 1] - m_shape.lo[DIM - i - 1];
-      if (diff != 0) skip_size *= diff;
+      if (diff != 0) {
+        skip_size *= diff;
+      }
     }
     const size_t volume = m_shape.volume();
 #pragma omp parallel for schedule(static)

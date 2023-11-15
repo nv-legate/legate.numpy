@@ -32,12 +32,16 @@ static __global__ void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM)
                   Buffer<int64_t, 2> output)
 {
   const size_t tid = blockIdx.x * blockDim.x + threadIdx.x;
-  if (tid >= volume) return;
+  if (tid >= volume) {
+    return;
+  }
 
   auto in_p = pitches.unflatten(tid, origin);
   if (in[in_p] != VAL(0)) {
     auto offset = offsets[tid];
-    for (int32_t dim = 0; dim < DIM; ++dim) output[Point<2>(offset, dim)] = in_p[dim];
+    for (int32_t dim = 0; dim < DIM; ++dim) {
+      output[Point<2>(offset, dim)] = in_p[dim];
+    }
   }
 }
 

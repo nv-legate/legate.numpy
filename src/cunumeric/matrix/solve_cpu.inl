@@ -32,7 +32,9 @@ struct SolveImplBody<KIND, Type::Code::FLOAT32> {
     int32_t info = 0;
     LAPACK_sgesv(&n, &nrhs, a, &m, ipiv.ptr(0), b, &n, &info);
 
-    if (info != 0) throw legate::TaskException(SolveTask::ERROR_MESSAGE);
+    if (info != 0) {
+      throw legate::TaskException(SolveTask::ERROR_MESSAGE);
+    }
   }
 };
 
@@ -45,7 +47,9 @@ struct SolveImplBody<KIND, Type::Code::FLOAT64> {
     int32_t info = 0;
     LAPACK_dgesv(&n, &nrhs, a, &m, ipiv.ptr(0), b, &n, &info);
 
-    if (info != 0) throw legate::TaskException(SolveTask::ERROR_MESSAGE);
+    if (info != 0) {
+      throw legate::TaskException(SolveTask::ERROR_MESSAGE);
+    }
   }
 };
 
@@ -61,7 +65,9 @@ struct SolveImplBody<KIND, Type::Code::COMPLEX64> {
     int32_t info = 0;
     LAPACK_cgesv(&n, &nrhs, a, &m, ipiv.ptr(0), b, &n, &info);
 
-    if (info != 0) throw legate::TaskException(SolveTask::ERROR_MESSAGE);
+    if (info != 0) {
+      throw legate::TaskException(SolveTask::ERROR_MESSAGE);
+    }
   }
 };
 
@@ -77,7 +83,9 @@ struct SolveImplBody<KIND, Type::Code::COMPLEX128> {
     int32_t info = 0;
     LAPACK_zgesv(&n, &nrhs, a, &m, ipiv.ptr(0), b, &n, &info);
 
-    if (info != 0) throw legate::TaskException(SolveTask::ERROR_MESSAGE);
+    if (info != 0) {
+      throw legate::TaskException(SolveTask::ERROR_MESSAGE);
+    }
   }
 };
 

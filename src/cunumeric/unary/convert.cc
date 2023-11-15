@@ -38,7 +38,9 @@ struct ConvertImplBody<VariantKind::CPU, NAN_OP, DST_TYPE, SRC_TYPE, DIM> {
     if (dense) {
       auto outptr = out.ptr(rect);
       auto inptr  = in.ptr(rect);
-      for (size_t idx = 0; idx < volume; ++idx) outptr[idx] = func(inptr[idx]);
+      for (size_t idx = 0; idx < volume; ++idx) {
+        outptr[idx] = func(inptr[idx]);
+      }
     } else {
       for (size_t idx = 0; idx < volume; ++idx) {
         auto p = pitches.unflatten(idx, rect.lo);

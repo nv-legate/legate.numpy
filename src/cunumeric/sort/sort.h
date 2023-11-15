@@ -66,7 +66,9 @@ struct SegmentSampleComparator
       return lhs.segment < rhs.segment;
     } else {
       // special case for unused samples
-      if (lhs.rank < 0 || rhs.rank < 0) { return rhs.rank < 0 && lhs.rank >= 0; }
+      if (lhs.rank < 0 || rhs.rank < 0) {
+        return rhs.rank < 0 && lhs.rank >= 0;
+      }
 
       if (lhs.value != rhs.value) {
         return lhs.value < rhs.value;

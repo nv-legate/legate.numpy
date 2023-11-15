@@ -116,7 +116,9 @@ void rebalance_data(SegmentMergePiece<VAL>& merge_buffer,
     }
 
     merge_buffer.segments.destroy();
-    if (argsort) { merge_buffer.values.destroy(); }
+    if (argsort) {
+      merge_buffer.values.destroy();
+    }
 
 #ifdef DEBUG_CUNUMERIC
     {
@@ -230,14 +232,16 @@ void rebalance_data(SegmentMergePiece<VAL>& merge_buffer,
     size_t send_right_size = 0;
     size_t recv_right_size = 0;
     for (size_t segment = 0; segment < num_segments_l; ++segment) {
-      if (send_left[segment] > 0)
+      if (send_left[segment] > 0) {
         send_left_size += send_left[segment];
-      else
+      } else {
         recv_left_size -= send_left[segment];
-      if (send_right[segment] > 0)
+      }
+      if (send_right[segment] > 0) {
         send_right_size += send_right[segment];
-      else
+      } else {
         recv_right_size -= send_right[segment];
+      }
     }
 
     SortPiece<VAL> send_leftright_data, recv_leftright_data;
@@ -261,14 +265,15 @@ void rebalance_data(SegmentMergePiece<VAL>& merge_buffer,
         // copy left
         if (send_left[segment] > 0) {
           size_t size = send_left[segment];
-          if (argsort)
+          if (argsort) {
             std::memcpy(send_leftright_data.indices.ptr(send_left_pos),
                         merge_buffer.indices.ptr(segment_start),
                         size * sizeof(int64_t));
-          else
+          } else {
             std::memcpy(send_leftright_data.values.ptr(send_left_pos),
                         merge_buffer.values.ptr(segment_start),
                         size * sizeof(VAL));
+          }
           send_left_pos += size;
         }
 
@@ -277,14 +282,15 @@ void rebalance_data(SegmentMergePiece<VAL>& merge_buffer,
         // copy right
         if (send_right[segment] > 0) {
           size_t size = send_right[segment];
-          if (argsort)
+          if (argsort) {
             std::memcpy(send_leftright_data.indices.ptr(send_right_pos),
                         merge_buffer.indices.ptr(segment_start - size),
                         size * sizeof(int64_t));
-          else
+          } else {
             std::memcpy(send_leftright_data.values.ptr(send_right_pos),
                         merge_buffer.values.ptr(segment_start - size),
                         size * sizeof(VAL));
+          }
           send_right_pos += size;
         }
       }
@@ -390,7 +396,9 @@ void rebalance_data(SegmentMergePiece<VAL>& merge_buffer,
             offset_src = send_left[segment];
             copy_size -= offset_src;
           }
-          if (send_right[segment] > 0) copy_size -= send_right[segment];
+          if (send_right[segment] > 0) {
+            copy_size -= send_right[segment];
+          }
 
           if (argsort) {
             std::memcpy(output_indices + target_pos,
@@ -602,10 +610,11 @@ void sample_sort_nd(
   // check whether we have invalid samples (in case one participant did not have enough)
   int32_t num_usable_samples_per_segment = num_samples_per_segment_g;
   for (int32_t i = num_samples_per_segment_g - 1; i >= 0; i--) {
-    if (p_samples[i].rank != -1)
+    if (p_samples[i].rank != -1) {
       break;
-    else
+    } else {
       num_usable_samples_per_segment--;
+    }
   }
 
   // segment_blocks[r][segment]->global position in data for segment and r
@@ -736,7 +745,9 @@ void sample_sort_nd(
   }
 
   local_sorted.values.destroy();
-  if (argsort) local_sorted.indices.destroy();
+  if (argsort) {
+    local_sorted.indices.destroy();
+  }
   segment_blocks.destroy();
   positions.destroy();
 
@@ -832,7 +843,9 @@ void sample_sort_nd(
   size_send.destroy();
   size_recv.destroy();
   val_send_buffer.destroy();
-  if (argsort) idc_send_buffer.destroy();
+  if (argsort) {
+    idc_send_buffer.destroy();
+  }
 
   /////////////////////////////////////////////////////////////////////////////////////////////////
   /////////////// Part 4: merge data
@@ -977,7 +990,9 @@ struct SortImplBodyCpu {
     if (volume > 0) {
       // sort data (locally)
       auto* src = input.ptr(rect.lo);
-      if (src != values_ptr) std::copy(src, src + volume, values_ptr);
+      if (src != values_ptr) {
+        std::copy(src, src + volume, values_ptr);
+      }
       thrust_local_sort_inplace(values_ptr, indices_ptr, volume, segment_size_l, stable, exec);
     }
 
@@ -986,7 +1001,9 @@ struct SortImplBodyCpu {
         assert(is_index_space || is_unbound_1d_storage);
         std::vector<size_t> sort_ranks(num_sort_ranks);
         size_t rank_group = local_rank / num_sort_ranks;
-        for (size_t r = 0; r < num_sort_ranks; ++r) sort_ranks[r] = rank_group * num_sort_ranks + r;
+        for (size_t r = 0; r < num_sort_ranks; ++r) {
+          sort_ranks[r] = rank_group * num_sort_ranks + r;
+        }
 
         void* output_ptr = nullptr;
         // in case the storage *is NOT* unbound -- we provide a target pointer

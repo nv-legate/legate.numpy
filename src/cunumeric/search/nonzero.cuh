@@ -69,9 +69,10 @@ int64_t compute_offsets(const AccessorRO<VAL, DIM>& in,
     const size_t iters = (blocks + MAX_REDUCTION_CTAS - 1) / MAX_REDUCTION_CTAS;
     count_nonzero_kernel<<<MAX_REDUCTION_CTAS, THREADS_PER_BLOCK, shmem_size, stream>>>(
       volume, size, in, pitches, rect.lo, iters, offsets);
-  } else
+  } else {
     count_nonzero_kernel<<<blocks, THREADS_PER_BLOCK, shmem_size, stream>>>(
       volume, size, in, pitches, rect.lo, 1, offsets);
+  }
 
   auto p_offsets = offsets.ptr(0);
 

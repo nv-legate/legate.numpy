@@ -41,13 +41,18 @@ struct BinaryRedImplBody<VariantKind::OMP, OP_CODE, CODE, DIM> {
       auto in1ptr = in1.ptr(rect);
       auto in2ptr = in2.ptr(rect);
 #pragma omp parallel for schedule(static)
-      for (size_t idx = 0; idx < volume; ++idx)
-        if (!func(in1ptr[idx], in2ptr[idx])) result = false;
+      for (size_t idx = 0; idx < volume; ++idx) {
+        if (!func(in1ptr[idx], in2ptr[idx])) {
+          result = false;
+        }
+      }
     } else {
 #pragma omp parallel for schedule(static)
       for (size_t idx = 0; idx < volume; ++idx) {
         auto point = pitches.unflatten(idx, rect.lo);
-        if (!func(in1[point], in2[point])) result = false;
+        if (!func(in1[point], in2[point])) {
+          result = false;
+        }
       }
     }
 

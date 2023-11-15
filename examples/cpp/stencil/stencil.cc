@@ -39,7 +39,9 @@ void print_array(cunumeric::NDArray array)
   std::stringstream ss;
   for (uint32_t i = 0; i < shape[0]; ++i) {
     for (uint32_t j = 0; j < shape[0]; ++j) {
-      if (j > 0) ss << " ";
+      if (j > 0) {
+        ss << " ";
+      }
       ss << std::setw(8) << std::setprecision(5) << acc[i][j];
     }
     ss << std::endl;

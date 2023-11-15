@@ -56,7 +56,9 @@ struct Putmask {
     mask   = args.mask.read_accessor<bool, DIM>(rect);
     values = args.values.read_accessor<T, DIM>(rect);
     volume = pitches.flatten(rect);
-    if (volume == 0) return;
+    if (volume == 0) {
+      return;
+    }
 #if !LegateDefined(LEGATE_BOUNDS_CHECKS)
     dense = input.accessor.is_dense_row_major(rect) && mask.accessor.is_dense_row_major(rect);
     dense = dense && values.accessor.is_dense_row_major(rect);
@@ -70,19 +72,25 @@ struct Putmask {
 
   __CUDA_HD__ void operator()(const size_t idx, DenseTag) const noexcept
   {
-    if (maskptr[idx]) inputptr[idx] = valptr[idx];
+    if (maskptr[idx]) {
+      inputptr[idx] = valptr[idx];
+    }
   }
 
   __CUDA_HD__ void operator()(const size_t idx, SparseTag) const noexcept
   {
     auto p = pitches.unflatten(idx, rect.lo);
-    if (mask[p]) input[p] = values[p];
+    if (mask[p]) {
+      input[p] = values[p];
+    }
   }
 
   void execute() const noexcept
   {
 #if !LegateDefined(LEGATE_BOUNDS_CHECKS)
-    if (dense) { return ParallelLoopPolicy<KIND, DenseTag>()(rect, *this); }
+    if (dense) {
+      return ParallelLoopPolicy<KIND, DenseTag>()(rect, *this);
+    }
 #endif
     return ParallelLoopPolicy<KIND, SparseTag>()(rect, *this);
   }

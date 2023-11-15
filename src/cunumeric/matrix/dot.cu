@@ -66,9 +66,10 @@ struct DotImplBody<VariantKind::GPU, CODE> {
       const size_t iters = (blocks + MAX_REDUCTION_CTAS - 1) / MAX_REDUCTION_CTAS;
       reduction_kernel<<<MAX_REDUCTION_CTAS, THREADS_PER_BLOCK, shmem_size, stream>>>(
         volume, result, rhs1, rhs2, rect.lo, iters, SumReduction<ACC>::identity);
-    } else
+    } else {
       reduction_kernel<<<blocks, THREADS_PER_BLOCK, shmem_size, stream>>>(
         volume, result, rhs1, rhs2, rect.lo, 1, SumReduction<ACC>::identity);
+    }
 
     copy_kernel<<<1, 1, 0, stream>>>(result, out);
     CHECK_CUDA_STREAM(stream);

@@ -68,7 +68,9 @@ struct RepeatImplBody<VariantKind::CPU, CODE, DIM> {
     int64_t out_idx = 0;
     for (size_t in_idx = 0; in_idx < volume; ++in_idx) {
       auto p = in_pitches.unflatten(in_idx, in_rect.lo);
-      for (int64_t r = 0; r < repeats[p]; r++) out[out_idx++] = in[p];
+      for (int64_t r = 0; r < repeats[p]; r++) {
+        out[out_idx++] = in[p];
+      }
     }
   }
 

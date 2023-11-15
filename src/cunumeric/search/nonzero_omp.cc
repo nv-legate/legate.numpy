@@ -41,7 +41,9 @@ struct NonzeroImplBody<VariantKind::OMP, CODE, DIM> {
 
     {
       ThreadLocalStorage<int64_t> sizes(max_threads);
-      for (auto idx = 0; idx < max_threads; ++idx) sizes[idx] = 0;
+      for (auto idx = 0; idx < max_threads; ++idx) {
+        sizes[idx] = 0;
+      }
 #pragma omp parallel
       {
         const int tid = omp_get_thread_num();
@@ -52,15 +54,20 @@ struct NonzeroImplBody<VariantKind::OMP, CODE, DIM> {
         }
       }
 
-      for (auto idx = 0; idx < max_threads; ++idx) size += sizes[idx];
+      for (auto idx = 0; idx < max_threads; ++idx) {
+        size += sizes[idx];
+      }
 
       offsets[0] = 0;
-      for (auto idx = 1; idx < max_threads; ++idx) offsets[idx] = offsets[idx - 1] + sizes[idx - 1];
+      for (auto idx = 1; idx < max_threads; ++idx) {
+        offsets[idx] = offsets[idx - 1] + sizes[idx - 1];
+      }
     }
 
     std::vector<Buffer<int64_t>> results;
-    for (auto& output : outputs)
+    for (auto& output : outputs) {
       results.push_back(output.create_output_buffer<int64_t, 1>(Point<1>(size), true));
+    }
 
 #pragma omp parallel
     {
@@ -69,8 +76,12 @@ struct NonzeroImplBody<VariantKind::OMP, CODE, DIM> {
 #pragma omp for schedule(static)
       for (size_t idx = 0; idx < volume; ++idx) {
         auto point = pitches.unflatten(idx, rect.lo);
-        if (in[point] == VAL(0)) continue;
-        for (int32_t dim = 0; dim < DIM; ++dim) results[dim][out_idx] = point[dim];
+        if (in[point] == VAL(0)) {
+          continue;
+        }
+        for (int32_t dim = 0; dim < DIM; ++dim) {
+          results[dim][out_idx] = point[dim];
+        }
         ++out_idx;
       }
     }

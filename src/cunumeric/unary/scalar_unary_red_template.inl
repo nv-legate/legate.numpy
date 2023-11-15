@@ -60,7 +60,9 @@ struct ScalarUnaryRed {
     shape  = args.shape;
 
     out = args.out.reduce_accessor<LG_OP, true, 1>();
-    if constexpr (OP_CODE == UnaryRedCode::CONTAINS) { to_find = args.args.front().value<RHS>(); }
+    if constexpr (OP_CODE == UnaryRedCode::CONTAINS) {
+      to_find = args.args.front().value<RHS>();
+    }
 
 #if !LegateDefined(LEGATE_BOUNDS_CHECKS)
     // Check to see if this is dense or not
@@ -74,7 +76,9 @@ struct ScalarUnaryRed {
   __CUDA_HD__ void operator()(LHS& lhs, size_t idx, LHS identity, DenseReduction) const noexcept
   {
     if constexpr (OP_CODE == UnaryRedCode::CONTAINS) {
-      if (inptr[idx] == to_find) { lhs = true; }
+      if (inptr[idx] == to_find) {
+        lhs = true;
+      }
     } else if constexpr (OP_CODE == UnaryRedCode::ARGMAX || OP_CODE == UnaryRedCode::ARGMIN ||
                          OP_CODE == UnaryRedCode::NANARGMAX || OP_CODE == UnaryRedCode::NANARGMIN) {
       auto p = pitches.unflatten(idx, origin);
@@ -88,7 +92,9 @@ struct ScalarUnaryRed {
   {
     if constexpr (OP_CODE == UnaryRedCode::CONTAINS) {
       auto point = pitches.unflatten(idx, origin);
-      if (in[point] == to_find) { lhs = true; }
+      if (in[point] == to_find) {
+        lhs = true;
+      }
     } else if constexpr (OP_CODE == UnaryRedCode::ARGMAX || OP_CODE == UnaryRedCode::ARGMIN ||
                          OP_CODE == UnaryRedCode::NANARGMAX || OP_CODE == UnaryRedCode::NANARGMIN) {
       auto p = pitches.unflatten(idx, origin);
@@ -145,7 +151,9 @@ static void scalar_unary_red_template(TaskContext& context)
   auto& scalars = context.scalars();
 
   std::vector<Scalar> extra_args;
-  for (size_t idx = 2; idx < scalars.size(); ++idx) extra_args.push_back(scalars[idx]);
+  for (size_t idx = 2; idx < scalars.size(); ++idx) {
+    extra_args.push_back(scalars[idx]);
+  }
 
   auto op_code = scalars[0].value<UnaryRedCode>();
   auto shape   = scalars[1].value<DomainPoint>();

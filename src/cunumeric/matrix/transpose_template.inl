@@ -34,14 +34,17 @@ struct TransposeImpl {
     using VAL = type_of<CODE>;
 
     const auto out_rect = args.out.shape<2>();
-    if (out_rect.empty()) return;
+    if (out_rect.empty()) {
+      return;
+    }
 
     Rect<2> in_rect;
     if (args.logical) {
       in_rect.lo = Point<2>(out_rect.lo[1], out_rect.lo[0]);
       in_rect.hi = Point<2>(out_rect.hi[1], out_rect.hi[0]);
-    } else
+    } else {
       in_rect = out_rect;
+    }
 
     auto out = args.out.write_accessor<VAL, 2>();
     auto in  = args.in.read_accessor<VAL, 2>();

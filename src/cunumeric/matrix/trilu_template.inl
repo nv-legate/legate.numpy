@@ -35,7 +35,9 @@ struct TriluImpl {
     using VAL = type_of<CODE>;
 
     auto shape = args.output.shape<DIM>();
-    if (shape.empty()) return;
+    if (shape.empty()) {
+      return;
+    }
 
     auto out = args.output.write_accessor<VAL, DIM>(shape);
     auto in  = args.input.read_accessor<VAL, DIM>(shape);
@@ -44,18 +46,20 @@ struct TriluImpl {
       Pitches<DIM - 1, false /*C_ORDER*/> pitches;
       size_t volume = pitches.flatten(shape);
 
-      if (args.lower)
+      if (args.lower) {
         TriluImplBody<KIND, CODE, DIM, true>()(out, in, pitches, shape.lo, volume, args.k);
-      else
+      } else {
         TriluImplBody<KIND, CODE, DIM, false>()(out, in, pitches, shape.lo, volume, args.k);
+      }
     } else {
       Pitches<DIM - 1> pitches;
       size_t volume = pitches.flatten(shape);
 
-      if (args.lower)
+      if (args.lower) {
         TriluImplBody<KIND, CODE, DIM, true>()(out, in, pitches, shape.lo, volume, args.k);
-      else
+      } else {
         TriluImplBody<KIND, CODE, DIM, false>()(out, in, pitches, shape.lo, volume, args.k);
+      }
     }
   }
 

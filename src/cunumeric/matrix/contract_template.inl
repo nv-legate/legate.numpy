@@ -91,7 +91,9 @@ struct ContractImpl {
       args.lhs.reduce_accessor<SumReduction<T>, true, DIM>(lhs_bloated_shape);
     T* lhs_data = lhs_acc.ptr(lhs_bloated_shape, lhs_bloated_strides);
     for (int i = 0; i < DIM; ++i) {
-      if (!args.lhs_dim_mask[i]) { continue; }
+      if (!args.lhs_dim_mask[i]) {
+        continue;
+      }
       lhs_shape.push_back(lhs_bloated_shape.hi[i] - lhs_bloated_shape.lo[i] + 1);
       lhs_strides.push_back(lhs_bloated_strides[i]);
       lhs_modes.push_back(i + 'a');
@@ -105,7 +107,9 @@ struct ContractImpl {
     AccessorRO<T, DIM> rhs1_acc = args.rhs1.read_accessor<T, DIM>(rhs1_bloated_shape);
     const T* rhs1_data          = rhs1_acc.ptr(rhs1_bloated_shape, rhs1_bloated_strides);
     for (int i = 0; i < DIM; ++i) {
-      if (!args.rhs1_dim_mask[i]) { continue; }
+      if (!args.rhs1_dim_mask[i]) {
+        continue;
+      }
       rhs1_shape.push_back(rhs1_bloated_shape.hi[i] - rhs1_bloated_shape.lo[i] + 1);
       rhs1_strides.push_back(rhs1_bloated_strides[i]);
       rhs1_modes.push_back(i + 'a');
@@ -119,7 +123,9 @@ struct ContractImpl {
     AccessorRO<T, DIM> rhs2_acc = args.rhs2.read_accessor<T, DIM>(rhs2_bloated_shape);
     const T* rhs2_data          = rhs2_acc.ptr(rhs2_bloated_shape, rhs2_bloated_strides);
     for (int i = 0; i < DIM; ++i) {
-      if (!args.rhs2_dim_mask[i]) { continue; }
+      if (!args.rhs2_dim_mask[i]) {
+        continue;
+      }
       rhs2_shape.push_back(rhs2_bloated_shape.hi[i] - rhs2_bloated_shape.lo[i] + 1);
       rhs2_strides.push_back(rhs2_bloated_strides[i]);
       rhs2_modes.push_back(i + 'a');
@@ -132,7 +138,9 @@ struct ContractImpl {
     Rect<DIM> bloated_shape =
       lhs_bloated_shape.intersection(rhs1_bloated_shape).intersection(rhs2_bloated_shape);
     // cuTensor will not work correctly with empty domains, so check this here
-    if (bloated_shape.empty()) return;
+    if (bloated_shape.empty()) {
+      return;
+    }
 
 #if 0  // debugging output
     // Stagger the debugging output from different processors

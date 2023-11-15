@@ -31,20 +31,21 @@ class Splitter {
  public:
   Split split(const Rect<DIM>& rect, int must_be_inner)
   {
-    for (int dim = 0; dim < DIM; ++dim)
+    for (int dim = 0; dim < DIM; ++dim) {
       if (dim != must_be_inner) {
         outer_dim_ = dim;
         break;
       }
+    }
 
     size_t outer = 1;
     size_t inner = 1;
     size_t pitch = 1;
     for (int dim = DIM - 1; dim >= 0; --dim) {
       auto diff = rect.hi[dim] - rect.lo[dim] + 1;
-      if (dim == outer_dim_)
+      if (dim == outer_dim_) {
         outer *= diff;
-      else {
+      } else {
         inner *= diff;
         pitches_[dim] = pitch;
         pitch *= diff;
@@ -57,9 +58,9 @@ class Splitter {
   {
     Point<DIM> point = lo;
     for (int dim = 0; dim < DIM; ++dim) {
-      if (dim == outer_dim_)
+      if (dim == outer_dim_) {
         point[dim] += outer_idx;
-      else {
+      } else {
         point[dim] += inner_idx / pitches_[dim];
         inner_idx = inner_idx % pitches_[dim];
       }
@@ -89,12 +90,13 @@ struct UnaryRedImplBody<VariantKind::OMP, OP_CODE, CODE, DIM> {
     auto split = splitter.split(rect, collapsed_dim);
 
 #pragma omp parallel for schedule(static)
-    for (size_t o_idx = 0; o_idx < split.outer; ++o_idx)
+    for (size_t o_idx = 0; o_idx < split.outer; ++o_idx) {
       for (size_t i_idx = 0; i_idx < split.inner; ++i_idx) {
         auto point    = splitter.combine(o_idx, i_idx, rect.lo);
         auto identity = LG_OP::identity;
         lhs.reduce(point, OP::convert(point, collapsed_dim, identity, rhs[point]));
       }
+    }
   }
 };
 

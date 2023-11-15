@@ -31,10 +31,11 @@ void transpose_int32_test(std::array<int32_t, SIZE> input,
 
   auto a_output = cunumeric::array(out_shape, legate::int32());
 
-  if (axes)
+  if (axes) {
     a_output = cunumeric::transpose(a_input, axes.value());
-  else
+  } else {
     a_output = cunumeric::transpose(a_input);
+  }
   check_array_eq<int32_t, DIM>(a_output, exp.data(), exp.size());
   EXPECT_EQ(a_output.shape(), out_shape);
 }

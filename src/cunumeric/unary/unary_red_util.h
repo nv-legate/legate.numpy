@@ -294,7 +294,9 @@ struct UnaryRedOp<UnaryRedCode::ARGMAX, TYPE_CODE> {
                                  const RHS& rhs)
   {
     int64_t idx = 0;
-    for (int32_t dim = 0; dim < DIM; ++dim) idx = idx * shape[dim] + point[dim];
+    for (int32_t dim = 0; dim < DIM; ++dim) {
+      idx = idx * shape[dim] + point[dim];
+    }
     return VAL(idx, rhs);
   }
 };
@@ -329,7 +331,9 @@ struct UnaryRedOp<UnaryRedCode::ARGMIN, TYPE_CODE> {
                                  const RHS& rhs)
   {
     int64_t idx = 0;
-    for (int32_t dim = 0; dim < DIM; ++dim) idx = idx * shape[dim] + point[dim];
+    for (int32_t dim = 0; dim < DIM; ++dim) {
+      idx = idx * shape[dim] + point[dim];
+    }
     return VAL(idx, rhs);
   }
 };
@@ -369,7 +373,9 @@ struct UnaryRedOp<UnaryRedCode::NANARGMAX, TYPE_CODE, enabled_for_floating<TYPE_
   {
     int64_t idx = 0;
 
-    for (int32_t dim = 0; dim < DIM; ++dim) idx = idx * shape[dim] + point[dim];
+    for (int32_t dim = 0; dim < DIM; ++dim) {
+      idx = idx * shape[dim] + point[dim];
+    }
     return is_nan(rhs) ? identity : VAL(idx, rhs);
   }
 };
@@ -405,7 +411,9 @@ struct UnaryRedOp<UnaryRedCode::NANARGMIN, TYPE_CODE, enabled_for_floating<TYPE_
   {
     int64_t idx = 0;
 
-    for (int32_t dim = 0; dim < DIM; ++dim) idx = idx * shape[dim] + point[dim];
+    for (int32_t dim = 0; dim < DIM; ++dim) {
+      idx = idx * shape[dim] + point[dim];
+    }
     return is_nan(rhs) ? identity : VAL(idx, rhs);
   }
 };

@@ -47,7 +47,9 @@ struct TrsmImpl {
     auto lhs_shape = lhs_array.shape<2>();
     auto rhs_shape = rhs_array.shape<2>();
 
-    if (lhs_shape.empty()) return;
+    if (lhs_shape.empty()) {
+      return;
+    }
 
     size_t lhs_strides[2];
     size_t rhs_strides[2];

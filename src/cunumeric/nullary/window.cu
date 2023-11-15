@@ -26,7 +26,9 @@ static __global__ void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM)
   dense_kernel(WindowOp<OP_CODE> gen, int64_t volume, double* out, int64_t lo)
 {
   const int64_t idx = blockIdx.x * blockDim.x + threadIdx.x;
-  if (idx >= volume) return;
+  if (idx >= volume) {
+    return;
+  }
   out[idx] = gen(idx + lo);
 }
 
@@ -35,7 +37,9 @@ static __global__ void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM)
   generic_kernel(WindowOp<OP_CODE> gen, int64_t volume, AccessorWO<double, 1> out, int64_t lo)
 {
   int64_t idx = blockIdx.x * blockDim.x + threadIdx.x;
-  if (idx >= volume) return;
+  if (idx >= volume) {
+    return;
+  }
   idx += lo;
   Point<1> point(idx);
   out[point] = gen(idx);

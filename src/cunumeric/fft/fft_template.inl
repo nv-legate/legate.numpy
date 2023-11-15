@@ -44,7 +44,9 @@ struct FFTImpl {
 
     auto in_rect  = args.input.shape<DIM>();
     auto out_rect = args.output.shape<DIM>();
-    if (in_rect.empty() || out_rect.empty()) return;
+    if (in_rect.empty() || out_rect.empty()) {
+      return;
+    }
 
     auto input  = args.input.read_accessor<INPUT_TYPE, DIM>(in_rect);
     auto output = args.output.write_accessor<OUTPUT_TYPE, DIM>(out_rect);
@@ -91,7 +93,9 @@ static void fft_template(TaskContext& context)
   args.direction         = scalars[1].value<CuNumericFFTDirection>();
   args.operate_over_axes = scalars[2].value<bool>();
 
-  for (size_t i = 3; i < scalars.size(); ++i) args.axes.push_back(scalars[i].value<int64_t>());
+  for (size_t i = 3; i < scalars.size(); ++i) {
+    args.axes.push_back(scalars[i].value<int64_t>());
+  }
 
   fft_dispatch(args.type, FFTDispatch<KIND>{}, args);
 }

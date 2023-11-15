@@ -38,7 +38,9 @@ static __global__ void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM)
   uint64_t value = 0;
   for (size_t i = 0; i < iters; i++) {
     size_t idx = (i * gridDim.x + blockIdx.x) * blockDim.x + threadIdx.x;
-    if (idx >= volume) break;
+    if (idx >= volume) {
+      break;
+    }
     auto point   = pitches.unflatten(idx, origin);
     bool val     = (index[point] && ((idx + 1) % skip_size == 0));
     offsets[idx] = static_cast<int64_t>(val);
@@ -61,7 +63,9 @@ static __global__ void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM)
                            const size_t key_dim)
 {
   const size_t tid = blockIdx.x * blockDim.x + threadIdx.x;
-  if (tid >= volume) return;
+  if (tid >= volume) {
+    return;
+  }
   auto point = pitches.unflatten(tid, origin);
   if (index[point] == true) {
     Point<DIM> out_p;
@@ -70,7 +74,9 @@ static __global__ void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM)
       size_t j     = key_dim + i;
       out_p[i + 1] = point[j];
     }
-    for (size_t i = DIM - key_dim + 1; i < DIM; i++) out_p[i] = 0;
+    for (size_t i = DIM - key_dim + 1; i < DIM; i++) {
+      out_p[i] = 0;
+    }
     fill_out(out[out_p], point, in[point]);
   }
 }
@@ -98,9 +104,10 @@ struct AdvancedIndexingImplBody<VariantKind::GPU, CODE, DIM, OUT_TYPE> {
       const size_t iters = (blocks + MAX_REDUCTION_CTAS - 1) / MAX_REDUCTION_CTAS;
       count_nonzero_kernel<<<MAX_REDUCTION_CTAS, THREADS_PER_BLOCK, shmem_size, stream>>>(
         volume, size, offsets, in, pitches, rect.lo, iters, skip_size, key_dim);
-    } else
+    } else {
       count_nonzero_kernel<<<blocks, THREADS_PER_BLOCK, shmem_size, stream>>>(
         volume, size, offsets, in, pitches, rect.lo, 1, skip_size, key_dim);
+    }
 
     CHECK_CUDA_STREAM(stream);
 
@@ -125,7 +132,9 @@ struct AdvancedIndexingImplBody<VariantKind::GPU, CODE, DIM, OUT_TYPE> {
     size_t skip_size = 1;
     for (int i = key_dim; i < DIM; i++) {
       auto diff = 1 + rect.hi[i] - rect.lo[i];
-      if (diff != 0) skip_size *= diff;
+      if (diff != 0) {
+        skip_size *= diff;
+      }
     }
 
     size = compute_size(index, pitches, rect, volume, stream, offsets, skip_size, key_dim);
@@ -137,7 +146,9 @@ struct AdvancedIndexingImplBody<VariantKind::GPU, CODE, DIM, OUT_TYPE> {
       size_t j       = key_dim + i;
       extents[i + 1] = 1 + rect.hi[j] - rect.lo[j];
     }
-    for (size_t i = DIM - key_dim + 1; i < DIM; i++) extents[i] = 1;
+    for (size_t i = DIM - key_dim + 1; i < DIM; i++) {
+      extents[i] = 1;
+    }
 
     auto out = out_arr.create_output_buffer<OUT_TYPE, DIM>(extents, true);
 

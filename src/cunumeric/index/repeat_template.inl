@@ -41,10 +41,10 @@ struct RepeatImpl {
       return;
     }
 
-    if (args.scalar_repeats)
+    if (args.scalar_repeats) {
       RepeatImplBody<KIND, CODE, DIM>{}(
         args.output, input_arr, args.repeats, args.axis, input_rect);
-    else {
+    } else {
       auto repeats_arr = args.repeats_arr.read_accessor<int64_t, DIM>(input_rect);
       RepeatImplBody<KIND, CODE, DIM>{}(args.output, input_arr, repeats_arr, args.axis, input_rect);
     }

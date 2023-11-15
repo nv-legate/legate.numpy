@@ -128,7 +128,9 @@ void NDArray::assign(const legate::Scalar& other)
 
 void NDArray::random(int32_t gen_code)
 {
-  if (size() == 0) return;
+  if (size() == 0) {
+    return;
+  }
 
   auto runtime = CuNumericRuntime::get_runtime();
 
@@ -145,7 +147,9 @@ void NDArray::random(int32_t gen_code)
 
 void NDArray::fill(const Scalar& value, bool argval)
 {
-  if (size() == 0) return;
+  if (size() == 0) {
+    return;
+  }
 
   auto runtime = CuNumericRuntime::get_runtime();
 
@@ -162,7 +166,9 @@ void NDArray::fill(const Scalar& value, bool argval)
 
 void NDArray::eye(int32_t k)
 {
-  if (size() == 0) return;
+  if (size() == 0) {
+    return;
+  }
 
   assert(dim() == 2);
 
@@ -182,13 +188,17 @@ void NDArray::eye(int32_t k)
 
 void NDArray::bincount(NDArray rhs, std::optional<NDArray> weights /*=std::nullopt*/)
 {
-  if (size() == 0) return;
+  if (size() == 0) {
+    return;
+  }
 
   assert(dim() == 1);
 
   auto runtime = CuNumericRuntime::get_runtime();
 
-  if (weights.has_value()) { assert(rhs.shape() == weights.value().shape()); }
+  if (weights.has_value()) {
+    assert(rhs.shape() == weights.value().shape());
+  }
 
   auto zero = legate::type_dispatch(type().code(), generate_zero_fn{});
   fill(zero, false);
@@ -224,16 +234,19 @@ void NDArray::sort_task(NDArray rhs, bool argsort, bool stable)
     task.add_constraint(align(p_lhs, p_rhs));
   }
 
-  if (machine.count(legate::mapping::TaskTarget::GPU) > 0)
+  if (machine.count(legate::mapping::TaskTarget::GPU) > 0) {
     task.add_communicator("nccl");
-  else
+  } else {
     task.add_communicator("cpu");
+  }
 
   task.add_scalar_arg(legate::Scalar(argsort));
   task.add_scalar_arg(legate::Scalar(rhs.shape()));
   task.add_scalar_arg(legate::Scalar(stable));
   runtime->submit(std::move(task));
-  if (uses_unbound_output) store_ = unbound.value().get_store();
+  if (uses_unbound_output) {
+    store_ = unbound.value().get_store();
+  }
 }
 
 void NDArray::sort_swapped(NDArray rhs, bool argsort, int32_t sort_axis, bool stable)
@@ -262,7 +275,9 @@ void NDArray::sort(NDArray rhs, bool argsort, std::optional<int32_t> axis, bool 
     assert(false);
   }
   int32_t computed_axis = 0;
-  if (axis.has_value()) computed_axis = normalize_axis_index(axis.value(), rhs.dim());
+  if (axis.has_value()) {
+    computed_axis = normalize_axis_index(axis.value(), rhs.dim());
+  }
 
   if (computed_axis == rhs.dim() - 1) {
     sort_task(rhs, argsort, stable);
@@ -276,11 +291,13 @@ void NDArray::sort(NDArray rhs,
                    std::optional<int32_t> axis /*=-1*/,
                    std::string kind /*="quicksort"*/)
 {
-  if (axis.has_value() && (axis >= rhs.dim() || axis < -rhs.dim()))
+  if (axis.has_value() && (axis >= rhs.dim() || axis < -rhs.dim())) {
     throw std::invalid_argument("invalid axis");
+  }
 
-  if (!(kind == "quicksort" || kind == "mergesort" || kind == "heapsort" || kind == "stable"))
+  if (!(kind == "quicksort" || kind == "mergesort" || kind == "heapsort" || kind == "stable")) {
     throw std::invalid_argument("invalid kind");
+  }
 
   bool stable = (kind == "stable");
   sort(rhs, argsort, axis, stable);
@@ -288,7 +305,9 @@ void NDArray::sort(NDArray rhs,
 
 void NDArray::trilu(NDArray rhs, int32_t k, bool lower)
 {
-  if (size() == 0) return;
+  if (size() == 0) {
+    return;
+  }
 
   auto runtime = CuNumericRuntime::get_runtime();
 
@@ -310,9 +329,13 @@ void NDArray::trilu(NDArray rhs, int32_t k, bool lower)
 
 void NDArray::binary_op(int32_t op_code, NDArray rhs1, NDArray rhs2)
 {
-  if (rhs1.type() != rhs2.type()) throw std::invalid_argument("Operands must have the same type");
+  if (rhs1.type() != rhs2.type()) {
+    throw std::invalid_argument("Operands must have the same type");
+  }
 
-  if (size() == 0) return;
+  if (size() == 0) {
+    return;
+  }
 
   auto runtime = CuNumericRuntime::get_runtime();
 
@@ -335,7 +358,9 @@ void NDArray::binary_op(int32_t op_code, NDArray rhs1, NDArray rhs2)
 
 void NDArray::binary_reduction(int32_t op_code, NDArray rhs1, NDArray rhs2)
 {
-  if (size() == 0) return;
+  if (size() == 0) {
+    return;
+  }
 
   auto runtime = CuNumericRuntime::get_runtime();
 
@@ -364,7 +389,9 @@ void NDArray::binary_reduction(int32_t op_code, NDArray rhs1, NDArray rhs2)
 
 void NDArray::unary_op(int32_t op_code, NDArray input)
 {
-  if (size() == 0) return;
+  if (size() == 0) {
+    return;
+  }
 
   auto runtime = CuNumericRuntime::get_runtime();
 
@@ -383,7 +410,9 @@ void NDArray::unary_op(int32_t op_code, NDArray input)
 
 void NDArray::unary_reduction(int32_t op_code_, NDArray input)
 {
-  if (size() == 0) return;
+  if (size() == 0) {
+    return;
+  }
 
   auto runtime = CuNumericRuntime::get_runtime();
 
@@ -406,7 +435,9 @@ void NDArray::unary_reduction(int32_t op_code_, NDArray input)
 
 void NDArray::dot(NDArray rhs1, NDArray rhs2)
 {
-  if (size() == 0) return;
+  if (size() == 0) {
+    return;
+  }
 
   auto runtime = CuNumericRuntime::get_runtime();
 
@@ -439,7 +470,9 @@ void NDArray::dot(NDArray rhs1, NDArray rhs2)
 
 void NDArray::arange(double start, double stop, double step)
 {
-  if (size() == 0) return;
+  if (size() == 0) {
+    return;
+  }
 
   auto runtime = CuNumericRuntime::get_runtime();
 
@@ -463,11 +496,15 @@ std::vector<NDArray> NDArray::nonzero()
 
   std::vector<NDArray> outputs;
   auto ndim = dim();
-  for (int32_t i = 0; i < ndim; ++i) outputs.emplace_back(runtime->create_array(legate::int64()));
+  for (int32_t i = 0; i < ndim; ++i) {
+    outputs.emplace_back(runtime->create_array(legate::int64()));
+  }
 
   auto task = runtime->create_task(CuNumericOpCode::CUNUMERIC_NONZERO);
 
-  for (auto& output : outputs) { task.add_output(output.store_); }
+  for (auto& output : outputs) {
+    task.add_output(output.store_);
+  }
   auto p_rhs = task.add_input(store_);
 
   task.add_constraint(legate::broadcast(p_rhs, legate::from_range<int32_t>(1, ndim)));
@@ -491,8 +528,9 @@ NDArray NDArray::unique()
   task.add_output(result.store_, part_out);
   task.add_input(store_, part_in);
   task.add_communicator("nccl");
-  if (!has_gpus)
+  if (!has_gpus) {
     task.add_constraint(legate::broadcast(part_in, legate::from_range<int32_t>(0, dim())));
+  }
   runtime->submit(std::move(task));
   return result;
 }
@@ -502,13 +540,19 @@ NDArray NDArray::swapaxes(int32_t axis1, int32_t axis2)
   axis1 = normalize_axis_index(axis1, dim());
   axis2 = normalize_axis_index(axis2, dim());
 
-  if (shape().size() == 1 || axis1 == axis2) return *this;
+  if (shape().size() == 1 || axis1 == axis2) {
+    return *this;
+  }
 
   auto ndim = dim();
   std::vector<int32_t> dims;
-  for (auto i = 0; i < ndim; ++i) dims.push_back(i);
+  for (auto i = 0; i < ndim; ++i) {
+    dims.push_back(i);
+  }
 
-  if (axis1 < 0 || axis2 < 0) throw std::out_of_range("Index is out of range");
+  if (axis1 < 0 || axis2 < 0) {
+    throw std::out_of_range("Index is out of range");
+  }
 
   std::swap(dims[axis1], dims[axis2]);
 
@@ -525,7 +569,9 @@ NDArray NDArray::as_type(const legate::Type& type)
 
   auto out = runtime->create_array(shape(), type);
 
-  if (size() == 0) return out;
+  if (size() == 0) {
+    return out;
+  }
 
   assert(store_.type() != out.store_.type());
 
@@ -544,7 +590,9 @@ NDArray NDArray::as_type(const legate::Type& type)
 
 void NDArray::create_window(int32_t op_code, int64_t M, std::vector<double> args)
 {
-  if (size() == 0) return;
+  if (size() == 0) {
+    return;
+  }
 
   auto runtime = CuNumericRuntime::get_runtime();
 
@@ -554,7 +602,9 @@ void NDArray::create_window(int32_t op_code, int64_t M, std::vector<double> args
   task.add_scalar_arg(legate::Scalar(op_code));
   task.add_scalar_arg(legate::Scalar(M));
 
-  for (double arg : args) { task.add_scalar_arg(legate::Scalar(arg)); }
+  for (double arg : args) {
+    task.add_scalar_arg(legate::Scalar(arg));
+  }
 
   runtime->submit(std::move(task));
 }
@@ -583,15 +633,21 @@ void NDArray::convolve(NDArray input, NDArray filter)
 
 NDArray NDArray::transpose()
 {
-  if (dim() == 1) return NDArray(std::move(store_));
+  if (dim() == 1) {
+    return NDArray(std::move(store_));
+  }
   std::vector<int32_t> axes;
-  for (int32_t i = dim() - 1; i > -1; --i) axes.push_back(i);
+  for (int32_t i = dim() - 1; i > -1; --i) {
+    axes.push_back(i);
+  }
   return transpose(axes);
 }
 
 NDArray NDArray::transpose(std::vector<int32_t> axes)
 {
-  if (dim() == 1) return NDArray(std::move(store_));
+  if (dim() == 1) {
+    return NDArray(std::move(store_));
+  }
   if (static_cast<int32_t>(axes.size()) != dim()) {
     throw std::invalid_argument("axes must be the same size as ndim for transpose");
   }
@@ -610,16 +666,19 @@ legate::LogicalStore NDArray::broadcast(const std::vector<size_t>& shape,
 #endif
 
   auto result = store;
-  for (int32_t dim = 0; dim < diff; ++dim) result = result.promote(dim, shape[dim]);
+  for (int32_t dim = 0; dim < diff; ++dim) {
+    result = result.promote(dim, shape[dim]);
+  }
 
   std::vector<size_t> orig_shape = result.extents().data();
-  for (uint32_t dim = 0; dim < shape.size(); ++dim)
+  for (uint32_t dim = 0; dim < shape.size(); ++dim) {
     if (orig_shape[dim] != shape[dim]) {
 #ifdef DEBUG_CUNUMERIC
       assert(orig_shape[dim] == 1);
 #endif
       result = result.project(dim, 0).promote(dim, shape[dim]);
     }
+  }
 
 #ifdef DEBUG_CUNUMERIC
   assert(static_cast<size_t>(result.dim()) == shape.size());
@@ -630,7 +689,9 @@ legate::LogicalStore NDArray::broadcast(const std::vector<size_t>& shape,
 
 legate::LogicalStore NDArray::broadcast(NDArray rhs1, NDArray rhs2)
 {
-  if (rhs1.shape() == rhs2.shape()) { return rhs1.store_; }
+  if (rhs1.shape() == rhs2.shape()) {
+    return rhs1.store_;
+  }
   auto out_shape = broadcast_shapes({rhs1, rhs2});
   return broadcast(out_shape, rhs1.store_);
 }

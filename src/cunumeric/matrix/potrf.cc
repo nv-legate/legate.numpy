@@ -31,7 +31,9 @@ struct PotrfImplBody<VariantKind::CPU, Type::Code::FLOAT32> {
     char uplo    = 'L';
     int32_t info = 0;
     LAPACK_spotrf(&uplo, &n, array, &m, &info);
-    if (info != 0) throw legate::TaskException("Matrix is not positive definite");
+    if (info != 0) {
+      throw legate::TaskException("Matrix is not positive definite");
+    }
   }
 };
 
@@ -42,7 +44,9 @@ struct PotrfImplBody<VariantKind::CPU, Type::Code::FLOAT64> {
     char uplo    = 'L';
     int32_t info = 0;
     LAPACK_dpotrf(&uplo, &n, array, &m, &info);
-    if (info != 0) throw legate::TaskException("Matrix is not positive definite");
+    if (info != 0) {
+      throw legate::TaskException("Matrix is not positive definite");
+    }
   }
 };
 
@@ -53,7 +57,9 @@ struct PotrfImplBody<VariantKind::CPU, Type::Code::COMPLEX64> {
     char uplo    = 'L';
     int32_t info = 0;
     LAPACK_cpotrf(&uplo, &n, reinterpret_cast<__complex__ float*>(array), &m, &info);
-    if (info != 0) throw legate::TaskException("Matrix is not positive definite");
+    if (info != 0) {
+      throw legate::TaskException("Matrix is not positive definite");
+    }
   }
 };
 
@@ -64,7 +70,9 @@ struct PotrfImplBody<VariantKind::CPU, Type::Code::COMPLEX128> {
     char uplo    = 'L';
     int32_t info = 0;
     LAPACK_zpotrf(&uplo, &n, reinterpret_cast<__complex__ double*>(array), &m, &info);
-    if (info != 0) throw legate::TaskException("Matrix is not positive definite");
+    if (info != 0) {
+      throw legate::TaskException("Matrix is not positive definite");
+    }
   }
 };
 

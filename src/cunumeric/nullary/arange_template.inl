@@ -38,7 +38,9 @@ struct ArangeImpl {
 
     const auto rect = args.out.shape<1>();
 
-    if (rect.empty()) return;
+    if (rect.empty()) {
+      return;
+    }
 
     auto out = args.out.write_accessor<VAL, 1>();
 

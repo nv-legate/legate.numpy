@@ -31,7 +31,9 @@ struct ParallelLoopPolicy<VariantKind::OMP, Tag> {
   {
     const size_t volume = rect.volume();
 #pragma omp for schedule(static)
-    for (size_t idx = 0; idx < volume; ++idx) { kernel(idx, Tag{}); }
+    for (size_t idx = 0; idx < volume; ++idx) {
+      kernel(idx, Tag{});
+    }
   }
 };
 

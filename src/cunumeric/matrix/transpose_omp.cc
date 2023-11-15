@@ -41,8 +41,11 @@ struct TransposeImplBody<VariantKind::OMP, CODE> {
         for (auto j1 = in_rect.lo[1]; j1 <= in_rect.hi[1]; j1 += BF) {
           const auto max_i2 = ((i1 + BF) <= in_rect.hi[0]) ? i1 + BF : in_rect.hi[0];
           const auto max_j2 = ((j1 + BF) <= in_rect.hi[1]) ? j1 + BF : in_rect.hi[1];
-          for (auto i2 = i1; i2 <= max_i2; i2++)
-            for (auto j2 = j1; j2 <= max_j2; j2++) out[j2][i2] = in[i2][j2];
+          for (auto i2 = i1; i2 <= max_i2; i2++) {
+            for (auto j2 = j1; j2 <= max_j2; j2++) {
+              out[j2][i2] = in[i2][j2];
+            }
+          }
         }
       }
     else
@@ -51,8 +54,11 @@ struct TransposeImplBody<VariantKind::OMP, CODE> {
         for (auto j1 = in_rect.lo[1]; j1 <= in_rect.hi[1]; j1 += BF) {
           const auto max_i2 = ((i1 + BF) <= in_rect.hi[0]) ? i1 + BF : in_rect.hi[0];
           const auto max_j2 = ((j1 + BF) <= in_rect.hi[1]) ? j1 + BF : in_rect.hi[1];
-          for (auto i2 = i1; i2 <= max_i2; i2++)
-            for (auto j2 = j1; j2 <= max_j2; j2++) out[i2][j2] = in[i2][j2];
+          for (auto i2 = i1; i2 <= max_i2; i2++) {
+            for (auto j2 = j1; j2 <= max_j2; j2++) {
+              out[i2][j2] = in[i2][j2];
+            }
+          }
         }
       }
   }

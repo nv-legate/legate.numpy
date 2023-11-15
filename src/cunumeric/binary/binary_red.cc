@@ -39,11 +39,12 @@ struct BinaryRedImplBody<VariantKind::CPU, OP_CODE, CODE, DIM> {
     if (dense) {
       auto in1ptr = in1.ptr(rect);
       auto in2ptr = in2.ptr(rect);
-      for (size_t idx = 0; idx < volume; ++idx)
+      for (size_t idx = 0; idx < volume; ++idx) {
         if (!func(in1ptr[idx], in2ptr[idx])) {
           out.reduce(0, false);
           return;
         }
+      }
     } else {
       for (size_t idx = 0; idx < volume; ++idx) {
         auto point = pitches.unflatten(idx, rect.lo);

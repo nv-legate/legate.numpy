@@ -262,19 +262,23 @@ __device__ __forceinline__ void reduce_output(DeviceScalarReductionBuffer<REDUCT
   const int warpid = threadIdx.x >> 5;
   for (int i = 16; i >= 1; i /= 2) {
     T shuffle_value;
-    if constexpr (HasNativeShuffle<T>::value)
+    if constexpr (HasNativeShuffle<T>::value) {
       shuffle_value = __shfl_xor_sync(0xffffffff, value, i, 32);
-    else
+    } else {
       shuffle_value = shuffle(0xffffffff, value, i, 32);
+    }
     REDUCTION::template fold<true /*exclusive*/>(value, shuffle_value);
   }
   // Write warp values into shared memory
-  if ((laneid == 0) && (warpid > 0)) trampoline[warpid] = value;
+  if ((laneid == 0) && (warpid > 0)) {
+    trampoline[warpid] = value;
+  }
   __syncthreads();
   // Output reduction
   if (threadIdx.x == 0) {
-    for (int i = 1; i < (THREADS_PER_BLOCK / 32); i++)
+    for (int i = 1; i < (THREADS_PER_BLOCK / 32); i++) {
       REDUCTION::template fold<true /*exclusive*/>(value, trampoline[i]);
+    }
     result.reduce<false /*EXCLUSIVE*/>(value);
     // Make sure the result is visible externally
     __threadfence_system();

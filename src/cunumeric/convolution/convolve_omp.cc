@@ -38,7 +38,9 @@ struct ConvolveImplBody<VariantKind::OMP, CODE, DIM> {
     const Point<DIM> one = Point<DIM>::ONES();
     Point<DIM> extents   = filter_rect.hi - filter_rect.lo + one;
     Point<DIM> centers;
-    for (int d = 0; d < DIM; d++) centers[d] = extents[d] / 2;
+    for (int d = 0; d < DIM; d++) {
+      centers[d] = extents[d] / 2;
+    }
 
     // Compute the tiles for the L2 cache
     Point<DIM> l2_output_tile, l2_filter_tile;
@@ -53,8 +55,9 @@ struct ConvolveImplBody<VariantKind::OMP, CODE, DIM> {
     compute_filter_tile<VAL, DIM>(
       l2_filter_tile, filter_bounds, l2_output_tile, 3 * L2_CACHE_SIZE / 4);
     unsigned total_l2_filters = 1;
-    for (int d = 0; d < DIM; d++)
+    for (int d = 0; d < DIM; d++) {
       total_l2_filters *= ((extents[d] + l2_filter_tile[d] - 1) / l2_filter_tile[d]);
+    }
     unsigned total_l2_outputs = 1;
     FastDivmodU64 l2_tile_pitches[DIM];
     for (int d = DIM - 1; d >= 0; d--) {
@@ -73,11 +76,13 @@ struct ConvolveImplBody<VariantKind::OMP, CODE, DIM> {
     compute_filter_tile<VAL, DIM>(
       l1_filter_tile, filter_bounds, l1_output_tile, 3 * L1_CACHE_SIZE / 4);
     unsigned total_l1_filters = 1;
-    for (int d = 0; d < DIM; d++)
+    for (int d = 0; d < DIM; d++) {
       total_l1_filters *= ((l2_filter_tile[d] + l1_filter_tile[d] - 1) / l1_filter_tile[d]);
+    }
     unsigned total_l1_outputs = 1;
-    for (int d = 0; d < DIM; d++)
+    for (int d = 0; d < DIM; d++) {
       total_l1_outputs *= ((l2_output_tile[d] + l1_output_tile[d] - 1) / l1_output_tile[d]);
+    }
 
     // Zero out the output data since we're going to be doing sum accumulations
     FastDivmodU64 output_pitches[DIM];
@@ -92,17 +97,22 @@ struct ConvolveImplBody<VariantKind::OMP, CODE, DIM> {
     for (int idx = 0; idx < threads; idx++) {
       Point<DIM> output = subrect.lo;
       uint64_t offset   = idx * blocks;
-      for (int d = 0; d < DIM; d++) output[d] += output_pitches[d].divmod(offset, offset);
+      for (int d = 0; d < DIM; d++) {
+        output[d] += output_pitches[d].divmod(offset, offset);
+      }
       for (size_t p = 0; p < blocks; p++) {
         out[output] = VAL{0};
         for (int d = DIM - 1; d >= 0; d--) {
           output[d]++;
-          if (subrect.hi[d] < output[d])
+          if (subrect.hi[d] < output[d]) {
             output[d] = subrect.lo[d];
-          else
+          } else {
             break;
+          }
         }
-        if (output == subrect.lo) break;
+        if (output == subrect.lo) {
+          break;
+        }
       }
     }
 
@@ -115,24 +125,27 @@ struct ConvolveImplBody<VariantKind::OMP, CODE, DIM> {
       if (!filter_rect.contains(l2_filter_rect)) {
         l2_filter_rect   = filter_rect.intersection(l2_filter_rect);
         local_l1_filters = 1;
-        for (int d = 0; d < DIM; d++)
+        for (int d = 0; d < DIM; d++) {
           local_l1_filters *=
             ((l2_filter_rect.hi[d] - l2_filter_rect.lo[d] + l1_filter_tile[d]) / l1_filter_tile[d]);
+        }
       }
 // Now iterate the tiles for the L2 outputs
 #pragma omp parallel for  // schedule(dynamic) // Turn this on when Realm is fixed
       for (unsigned l2_outidx = 0; l2_outidx < total_l2_outputs; l2_outidx++) {
         Point<DIM> l2_output = subrect.lo;
         uint64_t offset      = l2_outidx;
-        for (int d = 0; d < DIM; d++)
+        for (int d = 0; d < DIM; d++) {
           l2_output[d] += l2_tile_pitches[d].divmod(offset, offset) * l2_output_tile[d];
+        }
         Rect<DIM> l2_output_rect(l2_output, l2_output + l2_output_tile - one);
         unsigned local_l1_outputs = total_l1_outputs;
         if (!subrect.contains(l2_output_rect)) {
           l2_output_rect = subrect.intersection(l2_output_rect);
-          for (int d = 0; d < DIM; d++)
+          for (int d = 0; d < DIM; d++) {
             local_l1_outputs *= ((l2_output_rect.hi[d] - l2_output_rect.lo[d] + l1_output_tile[d]) /
                                  l1_output_tile[d]);
+          }
         }
         // Do a quick check here to see if all the inputs are contained for
         // this particular tile
@@ -159,43 +172,48 @@ struct ConvolveImplBody<VariantKind::OMP, CODE, DIM> {
               Point<DIM> filter_point = l1_filter_rect.lo;
               for (unsigned fidx = 0; fidx < l1_filter_points; fidx++) {
                 Point<DIM> input = output + extents - filter_point - one - centers;
-                if (input_contained || root_rect.contains(input))
+                if (input_contained || root_rect.contains(input)) {
                   acc += in[input] * filter[filter_point];
+                }
                 // Step to the next filter point
                 for (int d = DIM - 1; d >= 0; d--) {
                   filter_point[d]++;
-                  if (l1_filter_rect.hi[d] < filter_point[d])
+                  if (l1_filter_rect.hi[d] < filter_point[d]) {
                     filter_point[d] = l1_filter_rect.lo[d];
-                  else
+                  } else {
                     break;
+                  }
                 }
               }
               out[output] += acc;
               // Step to the next output point
               for (int d = DIM - 1; d >= 0; d--) {
                 output[d]++;
-                if (l1_output_rect.hi[d] < output[d])
+                if (l1_output_rect.hi[d] < output[d]) {
                   output[d] = l1_output_rect.lo[d];
-                else
+                } else {
                   break;
+                }
               }
             }
             // Step to the next L1 filter
             for (int d = DIM - 1; d >= 0; d--) {
               l1_filter[d] += l1_filter_tile[d];
-              if (l2_filter_rect.hi[d] < l1_filter[d])
+              if (l2_filter_rect.hi[d] < l1_filter[d]) {
                 l1_filter[d] = l2_filter_rect.lo[d];
-              else
+              } else {
                 break;
+              }
             }
           }
           // Step to the next L1 output tile
           for (int d = DIM - 1; d >= 0; d--) {
             l1_output[d] += l1_output_tile[d];
-            if (l2_output_rect.hi[d] < l1_output[d])
+            if (l2_output_rect.hi[d] < l1_output[d]) {
               l1_output[d] = l2_output_rect.lo[d];
-            else
+            } else {
               break;
+            }
           }
         }
         // No need to step to the next output tile, we're
@@ -204,10 +222,11 @@ struct ConvolveImplBody<VariantKind::OMP, CODE, DIM> {
       // Step to the next l2 filter
       for (int d = DIM - 1; d >= 0; d--) {
         l2_filter[d] += l2_filter_tile[d];
-        if (filter_rect.hi[d] < l2_filter[d])
+        if (filter_rect.hi[d] < l2_filter[d]) {
           l2_filter[d] = filter_rect.lo[d];
-        else
+        } else {
           break;
+        }
       }
     }
   }

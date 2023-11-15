@@ -47,7 +47,9 @@ struct EyeImpl {
     // y >= rect.lo[1]
     const Point<2> start2(rect.lo[1] - k, rect.lo[1]);
     // If we don't have a start point then there's nothing for us to do
-    if (!rect.contains(start1) && !rect.contains(start2)) return;
+    if (!rect.contains(start1) && !rect.contains(start2)) {
+      return;
+    }
     // Pick whichever one fits in our rect
     const Point<2> start = rect.contains(start1) ? start1 : start2;
     // Now do the same thing for the end

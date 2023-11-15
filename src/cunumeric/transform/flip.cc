@@ -34,8 +34,9 @@ struct FlipImplBody<VariantKind::CPU, CODE, DIM> {
   {
     for (PointInRectIterator<DIM> itr(rect); itr.valid(); ++itr) {
       auto q = *itr;
-      for (uint32_t idx = 0; idx < axes.size(); ++idx)
+      for (uint32_t idx = 0; idx < axes.size(); ++idx) {
         q[axes[idx]] = rect.hi[axes[idx]] - q[axes[idx]];
+      }
       out[*itr] = in[q];
     }
   }

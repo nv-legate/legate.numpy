@@ -37,7 +37,9 @@ __global__ static void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM)
                    const size_t volume)
 {
   size_t offset = blockIdx.x * blockDim.x + threadIdx.x;
-  if (offset >= volume) return;
+  if (offset >= volume) {
+    return;
+  }
   auto point  = pitches.unflatten(offset, lo);
   out[offset] = accessor[point];
 }
@@ -180,9 +182,10 @@ struct UniqueImplBody<VariantKind::GPU, CODE, DIM> {
     auto buf_size = (get_aligned_size(result.second * sizeof(VAL)) + sizeof(VAL) - 1) / sizeof(VAL);
     assert(end - ptr <= buf_size);
     result.first = output.create_output_buffer<VAL, 1>(buf_size);
-    if (result.second > 0)
+    if (result.second > 0) {
       CHECK_CUDA(cudaMemcpyAsync(
         result.first.ptr(0), ptr, sizeof(VAL) * result.second, cudaMemcpyDeviceToDevice, stream));
+    }
 
     if (comms.size() > 0) {
       // The launch domain is 1D because of the output region

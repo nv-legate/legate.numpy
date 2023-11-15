@@ -47,7 +47,9 @@ struct UnaryOpImpl {
     Pitches<DIM - 1> pitches;
     size_t volume = pitches.flatten(rect);
 
-    if (volume == 0) return;
+    if (volume == 0) {
+      return;
+    }
 
     auto out = args.out.write_accessor<RES, DIM>(rect);
     auto in  = args.in.read_accessor<ARG, DIM>(rect);
@@ -88,7 +90,9 @@ struct MultiOutUnaryOpImpl {
     Pitches<DIM - 1> pitches;
     size_t volume = pitches.flatten(rect);
 
-    if (volume == 0) return;
+    if (volume == 0) {
+      return;
+    }
 
     auto lhs  = args.out1.write_accessor<LHS, DIM>(rect);
     auto rhs1 = args.in.read_accessor<RHS1, DIM>(rect);
@@ -141,7 +145,9 @@ struct UnaryCopyImpl {
     Pitches<DIM - 1> pitches;
     size_t volume = pitches.flatten(rect);
 
-    if (volume == 0) return;
+    if (volume == 0) {
+      return;
+    }
 
     auto out = args.out.write_accessor<VAL, DIM>(rect);
     auto in  = args.in.read_accessor<VAL, DIM>(rect);
@@ -199,7 +205,9 @@ static void unary_op_template(TaskContext& context)
     }
     default: {
       std::vector<Scalar> extra_args;
-      for (size_t idx = 1; idx < scalars.size(); ++idx) extra_args.push_back(scalars[idx]);
+      for (size_t idx = 1; idx < scalars.size(); ++idx) {
+        extra_args.push_back(scalars[idx]);
+      }
 
       UnaryOpArgs args{inputs[0], outputs[0], op_code, std::move(extra_args)};
       op_dispatch(args.op_code, UnaryOpDispatch<KIND>{}, args);

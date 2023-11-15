@@ -31,7 +31,9 @@ static __global__ void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM)
   scalar_kernel(uint64_t volume, Function func, RES* out, RES scalar)
 {
   const size_t idx = blockIdx.x * blockDim.x + threadIdx.x;
-  if (idx >= volume) return;
+  if (idx >= volume) {
+    return;
+  }
   out[idx] = func(out[idx], scalar);
 }
 

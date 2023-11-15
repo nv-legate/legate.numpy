@@ -39,7 +39,9 @@ struct DotImplBody<VariantKind::OMP, CODE> {
     const auto volume      = rect.volume();
     const auto max_threads = omp_get_max_threads();
     ThreadLocalStorage<ACC> locals(max_threads);
-    for (auto idx = 0; idx < max_threads; ++idx) locals[idx] = SumReduction<ACC>::identity;
+    for (auto idx = 0; idx < max_threads; ++idx) {
+      locals[idx] = SumReduction<ACC>::identity;
+    }
 
     if (dense) {
       auto rhs1ptr = rhs1.ptr(rect);
@@ -65,7 +67,9 @@ struct DotImplBody<VariantKind::OMP, CODE> {
       }
     }
 
-    for (auto idx = 0; idx < max_threads; ++idx) out.reduce(0, locals[idx]);
+    for (auto idx = 0; idx < max_threads; ++idx) {
+      out.reduce(0, locals[idx]);
+    }
   }
 };
 

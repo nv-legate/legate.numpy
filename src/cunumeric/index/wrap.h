@@ -64,8 +64,9 @@ inline void check_idx(const int64_t i,
 {
   int64_t idx   = indices[i];
   int64_t index = idx < 0 ? idx + volume : idx;
-  if (index < 0 || index >= volume)
+  if (index < 0 || index >= volume) {
     throw legate::TaskException("index is out of bounds in index array");
+  }
 }
 inline void check_idx(const int64_t i, const int64_t volume, const bool&)
 {

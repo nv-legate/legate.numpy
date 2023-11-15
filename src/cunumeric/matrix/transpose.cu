@@ -45,14 +45,17 @@ __global__ static void __launch_bounds__((TILE_DIM * BLOCK_ROWS), MIN_CTAS_PER_S
     if ((lo_in[0] + (blockIdx.y + 1) * TILE_DIM - 1) <= hi_in[0]) {
 // No overflow case
 #pragma unroll
-      for (int i = 0; i < TILE_DIM; i += BLOCK_ROWS)
+      for (int i = 0; i < TILE_DIM; i += BLOCK_ROWS) {
         tile[threadIdx.y + i][threadIdx.x] = in[lo_in + Point<2>(x + i, y)];
+      }
     } else {
 // Overflow case
 #pragma unroll
-      for (int i = 0; i < TILE_DIM; i += BLOCK_ROWS)
-        if ((lo_in[0] + x + i) <= hi_in[0])
+      for (int i = 0; i < TILE_DIM; i += BLOCK_ROWS) {
+        if ((lo_in[0] + x + i) <= hi_in[0]) {
           tile[threadIdx.y + i][threadIdx.x] = in[lo_in + Point<2>(x + i, y)];
+        }
+      }
     }
   }
   // Make sure all the data is in shared memory
@@ -68,14 +71,17 @@ __global__ static void __launch_bounds__((TILE_DIM * BLOCK_ROWS), MIN_CTAS_PER_S
     if ((lo_out[0] + (blockIdx.x + 1) * TILE_DIM - 1) <= hi_out[0]) {
 // No overflow case
 #pragma unroll
-      for (int i = 0; i < TILE_DIM; i += BLOCK_ROWS)
+      for (int i = 0; i < TILE_DIM; i += BLOCK_ROWS) {
         out[lo_out + Point<2>(x + i, y)] = tile[threadIdx.x][threadIdx.y + i];
+      }
     } else {
 // Overflow case
 #pragma unroll
-      for (int i = 0; i < TILE_DIM; i += BLOCK_ROWS)
-        if ((lo_out[0] + x + i) <= hi_out[0])
+      for (int i = 0; i < TILE_DIM; i += BLOCK_ROWS) {
+        if ((lo_out[0] + x + i) <= hi_out[0]) {
           out[lo_out + Point<2>(x + i, y)] = tile[threadIdx.x][threadIdx.y + i];
+        }
+      }
     }
   }
 }
@@ -101,14 +107,17 @@ __global__ static void __launch_bounds__((TILE_DIM * BLOCK_ROWS), MIN_CTAS_PER_S
     if ((lo_in[0] + (blockIdx.y + 1) * TILE_DIM - 1) <= hi_in[0]) {
 // No overflow case
 #pragma unroll
-      for (int i = 0; i < TILE_DIM; i += BLOCK_ROWS)
+      for (int i = 0; i < TILE_DIM; i += BLOCK_ROWS) {
         tile[threadIdx.y + i][threadIdx.x] = in[lo_in + Point<2>(x + i, y)];
+      }
     } else {
 // Overflow case
 #pragma unroll
-      for (int i = 0; i < TILE_DIM; i += BLOCK_ROWS)
-        if ((lo_in[0] + x + i) <= hi_in[0])
+      for (int i = 0; i < TILE_DIM; i += BLOCK_ROWS) {
+        if ((lo_in[0] + x + i) <= hi_in[0]) {
           tile[threadIdx.y + i][threadIdx.x] = in[lo_in + Point<2>(x + i, y)];
+        }
+      }
     }
   }
 
@@ -124,14 +133,17 @@ __global__ static void __launch_bounds__((TILE_DIM * BLOCK_ROWS), MIN_CTAS_PER_S
     if ((lo_out[1] + (blockIdx.x + 1) * TILE_DIM - 1) <= hi_out[1]) {
 // No overflow case
 #pragma unroll
-      for (int i = 0; i < TILE_DIM; i += BLOCK_ROWS)
+      for (int i = 0; i < TILE_DIM; i += BLOCK_ROWS) {
         out[lo_out + Point<2>(x, y + i)] = tile[threadIdx.x][threadIdx.y + i];
+      }
     } else {
 // Overflow case
 #pragma unroll
-      for (int i = 0; i < TILE_DIM; i += BLOCK_ROWS)
-        if ((lo_out[1] + y + i) <= hi_out[1])
+      for (int i = 0; i < TILE_DIM; i += BLOCK_ROWS) {
+        if ((lo_out[1] + y + i) <= hi_out[1]) {
           out[lo_out + Point<2>(x, y + i)] = tile[threadIdx.x][threadIdx.y + i];
+        }
+      }
     }
   }
 }
@@ -152,12 +164,13 @@ struct TransposeImplBody<VariantKind::GPU, CODE> {
     const dim3 threads(TILE_DIM, BLOCK_ROWS, 1);
 
     auto stream = get_cached_stream();
-    if (logical)
+    if (logical) {
       transpose_2d_logical<VAL>
         <<<blocks, threads, 0, stream>>>(out, in, in_rect.lo, in_rect.hi, out_rect.lo, out_rect.hi);
-    else
+    } else {
       transpose_2d_physical<VAL>
         <<<blocks, threads, 0, stream>>>(out, in, in_rect.lo, in_rect.hi, out_rect.lo, out_rect.hi);
+    }
     CHECK_CUDA_STREAM(stream);
   }
 };

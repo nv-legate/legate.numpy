@@ -66,7 +66,9 @@ struct RepeatImplBody<VariantKind::OMP, CODE, DIM> {
 
     const auto max_threads = omp_get_max_threads();
     ThreadLocalStorage<int64_t> local_sums(max_threads);
-    for (auto idx = 0; idx < max_threads; ++idx) local_sums[idx] = 0;
+    for (auto idx = 0; idx < max_threads; ++idx) {
+      local_sums[idx] = 0;
+    }
 
 #pragma omp parallel
     {
@@ -86,7 +88,9 @@ struct RepeatImplBody<VariantKind::OMP, CODE, DIM> {
     thrust::exclusive_scan(thrust::omp::par, p_offsets, p_offsets + axis_extent, p_offsets);
 
     int64_t sum = 0;
-    for (auto idx = 0; idx < max_threads; ++idx) sum += local_sums[idx];
+    for (auto idx = 0; idx < max_threads; ++idx) {
+      sum += local_sums[idx];
+    }
 
     Point<DIM> extents = in_rect.hi - in_rect.lo + Point<DIM>::ONES();
     extents[axis]      = sum;

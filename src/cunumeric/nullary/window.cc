@@ -30,9 +30,13 @@ struct WindowImplBody<VariantKind::CPU, OP_CODE> {
     if (dense) {
       auto outptr = out.ptr(rect);
       size_t off  = 0;
-      for (int64_t idx = rect.lo[0]; idx <= rect.hi[0]; ++idx) outptr[off++] = gen(idx);
+      for (int64_t idx = rect.lo[0]; idx <= rect.hi[0]; ++idx) {
+        outptr[off++] = gen(idx);
+      }
     } else {
-      for (int64_t idx = rect.lo[0]; idx <= rect.hi[0]; ++idx) out[idx] = gen(idx);
+      for (int64_t idx = rect.lo[0]; idx <= rect.hi[0]; ++idx) {
+        out[idx] = gen(idx);
+      }
     }
   }
 };

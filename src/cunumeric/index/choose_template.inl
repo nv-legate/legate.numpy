@@ -37,7 +37,9 @@ struct ChooseImpl {
 
     Pitches<DIM - 1> pitches;
     size_t volume = pitches.flatten(out_rect);
-    if (volume == 0) return;
+    if (volume == 0) {
+      return;
+    }
 
     auto out        = args.out.write_accessor<VAL, DIM>(out_rect);
     auto index_rect = args.inputs[0].shape<DIM>();
@@ -65,7 +67,9 @@ template <VariantKind KIND>
 static void choose_template(TaskContext& context)
 {
   std::vector<legate::PhysicalStore> inputs;
-  for (auto& input : context.inputs()) { inputs.emplace_back(input); }
+  for (auto& input : context.inputs()) {
+    inputs.emplace_back(input);
+  }
   ChooseArgs args{context.output(0), std::move(inputs)};
   double_dispatch(args.inputs[0].dim(), args.inputs[0].code(), ChooseImpl<KIND>{}, args);
 }

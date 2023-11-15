@@ -29,7 +29,9 @@ static __device__ inline void _bincount(int32_t* bins,
                                         Point<1> origin)
 {
   // Initialize the bins to 0
-  for (int32_t bin = threadIdx.x; bin < num_bins; bin += blockDim.x) bins[bin] = 0;
+  for (int32_t bin = threadIdx.x; bin < num_bins; bin += blockDim.x) {
+    bins[bin] = 0;
+  }
   __syncthreads();
 
   // Start reading values and do atomic updates to shared
@@ -58,7 +60,9 @@ static __device__ inline void _weighted_bincount(double* bins,
                                                  Point<1> origin)
 {
   // Initialize the bins to 0
-  for (int32_t bin = threadIdx.x; bin < num_bins; bin += blockDim.x) bins[bin] = 0;
+  for (int32_t bin = threadIdx.x; bin < num_bins; bin += blockDim.x) {
+    bins[bin] = 0;
+  }
   __syncthreads();
 
   // Start reading values and do atomic updates to shared
@@ -92,7 +96,9 @@ static __global__ void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM)
   // Now do the atomics out to global memory
   for (int32_t bin = threadIdx.x; bin < num_bins; bin += blockDim.x) {
     const auto count = bins[bin];
-    if (count > 0) lhs.reduce(bin, count);
+    if (count > 0) {
+      lhs.reduce(bin, count);
+    }
   }
 }
 
@@ -104,7 +110,9 @@ static __global__ void bincount_kernel_rd_global(AccessorRD<SumReduction<int64_t
 {
   // Just blast out the atomic writes into global memory.
   auto idx = global_tid_1d();
-  if (idx >= volume) return;
+  if (idx >= volume) {
+    return;
+  }
   auto bin = rhs[idx + origin[0]];
   lhs[bin] <<= 1;
 }
@@ -138,7 +146,9 @@ static __global__ void weighted_bincount_kernel_rd_global(
 {
   // Just blast out the atomic writes into global memory.
   auto idx = global_tid_1d();
-  if (idx >= volume) return;
+  if (idx >= volume) {
+    return;
+  }
   auto bin = rhs[idx + origin[0]];
   lhs[bin] <<= weights[idx + origin[0]];
 }

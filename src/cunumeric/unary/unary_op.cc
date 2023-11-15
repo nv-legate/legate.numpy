@@ -38,7 +38,9 @@ struct UnaryOpImplBody<VariantKind::CPU, OP_CODE, CODE, DIM> {
     if (dense) {
       auto outptr = out.ptr(rect);
       auto inptr  = in.ptr(rect);
-      for (size_t idx = 0; idx < volume; ++idx) outptr[idx] = func(inptr[idx]);
+      for (size_t idx = 0; idx < volume; ++idx) {
+        outptr[idx] = func(inptr[idx]);
+      }
     } else {
       for (size_t idx = 0; idx < volume; ++idx) {
         auto p = pitches.unflatten(idx, rect.lo);
@@ -60,7 +62,9 @@ struct PointCopyImplBody<VariantKind::CPU, VAL, DIM> {
     if (dense) {
       auto outptr = out.ptr(rect);
       auto inptr  = in.ptr(rect);
-      for (size_t idx = 0; idx < volume; ++idx) outptr[idx] = inptr[idx];
+      for (size_t idx = 0; idx < volume; ++idx) {
+        outptr[idx] = inptr[idx];
+      }
     } else {
       for (size_t idx = 0; idx < volume; ++idx) {
         auto p = pitches.unflatten(idx, rect.lo);
@@ -90,7 +94,9 @@ struct MultiOutUnaryOpImplBody<VariantKind::CPU, OP_CODE, CODE, DIM> {
       auto lhsptr  = lhs.ptr(rect);
       auto rhs1ptr = rhs1.ptr(rect);
       auto rhs2ptr = rhs2.ptr(rect);
-      for (size_t idx = 0; idx < volume; ++idx) lhsptr[idx] = func(rhs1ptr[idx], &rhs2ptr[idx]);
+      for (size_t idx = 0; idx < volume; ++idx) {
+        lhsptr[idx] = func(rhs1ptr[idx], &rhs2ptr[idx]);
+      }
     } else {
       for (size_t idx = 0; idx < volume; ++idx) {
         auto p = pitches.unflatten(idx, rect.lo);

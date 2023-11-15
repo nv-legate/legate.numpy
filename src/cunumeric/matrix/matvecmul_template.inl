@@ -60,7 +60,9 @@ struct MatVecMulImpl {
 
     auto shape = args.rhs1.shape<2>().intersection(args.rhs2.shape<2>());
 
-    if (shape.empty()) return;
+    if (shape.empty()) {
+      return;
+    }
 
     auto m = static_cast<size_t>(shape.hi[0] - shape.lo[0] + 1);
     auto n = static_cast<size_t>(shape.hi[1] - shape.lo[1] + 1);
@@ -72,7 +74,9 @@ struct MatVecMulImpl {
 
     bool transpose_mat;
     size_t mat_stride = stride_for_blas(m, n, mat_strides[0], mat_strides[1], transpose_mat);
-    if (transpose_mat) std::swap(m, n);
+    if (transpose_mat) {
+      std::swap(m, n);
+    }
 
     size_t lhs_strides[2];
     auto lhs = args.lhs.reduce_accessor<SumReduction<ACC>, true, 2>().ptr(shape, lhs_strides);

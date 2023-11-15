@@ -68,7 +68,9 @@ struct UniqueImplBody<VariantKind::OMP, CODE, DIM> {
     auto& final_dedup_set = dedup_set[0];
     auto result           = output.create_output_buffer<VAL, 1>(final_dedup_set.size(), true);
     size_t pos            = 0;
-    for (auto e : final_dedup_set) result[pos++] = e;
+    for (auto e : final_dedup_set) {
+      result[pos++] = e;
+    }
   }
 };
 

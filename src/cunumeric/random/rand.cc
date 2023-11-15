@@ -33,7 +33,9 @@ struct RandImplBody<VariantKind::CPU, RNG, VAL, DIM> {
     for (size_t idx = 0; idx < volume; ++idx) {
       const auto point = pitches.unflatten(idx, rect.lo);
       size_t offset    = 0;
-      for (size_t dim = 0; dim < DIM; ++dim) offset += point[dim] * strides[dim];
+      for (size_t dim = 0; dim < DIM; ++dim) {
+        offset += point[dim] * strides[dim];
+      }
       out[point] = rng(HI_BITS(offset), LO_BITS(offset));
     }
   }

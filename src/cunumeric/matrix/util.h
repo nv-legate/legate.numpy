@@ -33,7 +33,9 @@ inline int64_t unflatten_with_strides(int64_t flat_idx,
     flat_idx /= shape[d];
   }
   int64_t idx = 0;
-  for (size_t d = 0; d < ndim; ++d) { idx += coords[d] * strides[d]; }
+  for (size_t d = 0; d < ndim; ++d) {
+    idx += coords[d] * strides[d];
+  }
   return idx;
 }
 

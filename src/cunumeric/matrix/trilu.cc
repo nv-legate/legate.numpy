@@ -33,22 +33,25 @@ struct TriluImplBody<VariantKind::CPU, CODE, DIM, LOWER> {
                   size_t volume,
                   int32_t k) const
   {
-    if (LOWER)
+    if (LOWER) {
       for (size_t idx = 0; idx < volume; ++idx) {
         auto p = pitches.unflatten(idx, lo);
-        if (p[DIM - 2] + k >= p[DIM - 1])
+        if (p[DIM - 2] + k >= p[DIM - 1]) {
           out[p] = in[p];
-        else
+        } else {
           out[p] = 0;
+        }
       }
-    else
+    } else {
       for (size_t idx = 0; idx < volume; ++idx) {
         auto p = pitches.unflatten(idx, lo);
-        if (p[DIM - 2] + k <= p[DIM - 1])
+        if (p[DIM - 2] + k <= p[DIM - 1]) {
           out[p] = in[p];
-        else
+        } else {
           out[p] = 0;
+        }
       }
+    }
   }
 };
 

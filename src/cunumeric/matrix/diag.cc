@@ -37,13 +37,17 @@ struct DiagImplBody<VariantKind::CPU, CODE, DIM, true> {
 
     for (size_t i = 0; i < naxes; i++) {
       auto diff = 1 + m_shape.hi[DIM - i - 1] - m_shape.lo[DIM - i - 1];
-      if (diff != 0) skip_size *= diff;
+      if (diff != 0) {
+        skip_size *= diff;
+      }
     }
     const size_t volume = m_shape.volume();
     for (size_t idx = 0; idx < volume; idx += skip_size) {
       Point<DIM> p = m_pitches.unflatten(idx, m_shape.lo);
       for (coord_t d = 0; d < distance; ++d) {
-        for (size_t i = DIM - naxes; i < DIM; i++) { p[i] = start + d; }
+        for (size_t i = DIM - naxes; i < DIM; i++) {
+          p[i] = start + d;
+        }
         auto v = in[p];
         out.reduce(p, v);
       }

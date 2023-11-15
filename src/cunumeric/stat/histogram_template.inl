@@ -46,7 +46,9 @@ struct HistogramImpl {
     auto bins_rect    = args.bins.shape<1>();
     auto weights_rect = args.weights.shape<1>();
 
-    if (src_rect.empty()) return;
+    if (src_rect.empty()) {
+      return;
+    }
 
     auto result  = args.result.reduce_accessor<SumReduction<WeightType>, true, 1>(result_rect);
     auto src     = args.src.read_accessor<VAL, 1>(src_rect);

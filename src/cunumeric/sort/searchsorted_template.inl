@@ -36,8 +36,12 @@ struct SearchSortedImpl {
     auto rect_values_in  = args.input_values.shape<DIM>();
     auto rect_values_out = args.output_reduction.shape<DIM>();
 
-    if (rect_base.empty()) return;
-    if (rect_values_in.empty()) return;
+    if (rect_base.empty()) {
+      return;
+    }
+    if (rect_values_in.empty()) {
+      return;
+    }
 
     Pitches<0> pitches_base;
     Pitches<DIM - 1> pitches_values;

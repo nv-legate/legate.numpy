@@ -26,7 +26,9 @@ static __global__ void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM)
   dense_kernel(size_t volume, Function func, RES* out, const ARG* in)
 {
   const size_t idx = global_tid_1d();
-  if (idx >= volume) return;
+  if (idx >= volume) {
+    return;
+  }
   out[idx] = func(in[idx]);
 }
 
@@ -35,7 +37,9 @@ static __global__ void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM)
   generic_kernel(size_t volume, Function func, WriteAcc out, ReadAcc in, Pitches pitches, Rect rect)
 {
   const size_t idx = global_tid_1d();
-  if (idx >= volume) return;
+  if (idx >= volume) {
+    return;
+  }
   auto point = pitches.unflatten(idx, rect.lo);
   out[point] = func(in[point]);
 }
@@ -45,7 +49,9 @@ static __global__ void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM)
   dense_copy_kernel(size_t volume, VAL* out, const VAL* in)
 {
   const size_t idx = global_tid_1d();
-  if (idx >= volume) return;
+  if (idx >= volume) {
+    return;
+  }
   out[idx] = in[idx];
 }
 
@@ -58,7 +64,9 @@ static __global__ void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM)
                       Rect<DIM> rect)
 {
   const size_t idx = global_tid_1d();
-  if (idx >= volume) return;
+  if (idx >= volume) {
+    return;
+  }
   auto point = pitches.unflatten(idx, rect.lo);
   out[point] = in[point];
 }
@@ -118,7 +126,9 @@ static __global__ void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM)
   dense_kernel_multiout(size_t volume, Function func, LHS* lhs, const RHS1* rhs1, RHS2* rhs2)
 {
   const size_t idx = global_tid_1d();
-  if (idx >= volume) return;
+  if (idx >= volume) {
+    return;
+  }
   lhs[idx] = func(rhs1[idx], &rhs2[idx]);
 }
 
@@ -138,7 +148,9 @@ static __global__ void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM)
                           Rect rect)
 {
   const size_t idx = global_tid_1d();
-  if (idx >= volume) return;
+  if (idx >= volume) {
+    return;
+  }
   auto point = pitches.unflatten(idx, rect.lo);
   lhs[point] = func(rhs1[point], rhs2.ptr(point));
 }

@@ -34,7 +34,9 @@ __global__ static void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM)
   bool value = false;
   for (size_t i = 0; i < iters; i++) {
     const auto idx = (i * gridDim.x + blockIdx.x) * blockDim.x + threadIdx.x;
-    if (idx >= volume) break;
+    if (idx >= volume) {
+      break;
+    }
     auto index_tmp = indices[idx + start];
     int64_t index  = index_tmp < 0 ? index_tmp + volume_base : index_tmp;
     bool val       = (index < 0 || index >= volume_base);
@@ -56,7 +58,9 @@ __global__ static void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM)
               const IND indices)
 {
   const auto idx = global_tid_1d();
-  if (idx >= volume) return;
+  if (idx >= volume) {
+    return;
+  }
   const int64_t input_idx = compute_idx((idx + start), volume_base, indices);
   auto out_p              = pitches_out.unflatten(idx, out_lo);
   auto p                  = pitches_base.unflatten(input_idx, base_lo);
@@ -74,7 +78,9 @@ __global__ static void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM)
                     const IND indices)
 {
   const auto idx = global_tid_1d();
-  if (idx >= volume) return;
+  if (idx >= volume) {
+    return;
+  }
   const int64_t input_idx = compute_idx((idx + start), volume_base, indices);
   auto p                  = pitches_base.unflatten(input_idx, base_lo);
   out[idx]                = p;
@@ -110,7 +116,9 @@ void check_out_of_bounds(const AccessorRO<int64_t, 1>& indices,
   CHECK_CUDA_STREAM(stream);
 
   bool res = out_of_bounds.read(stream);
-  if (res) throw legate::TaskException("index is out of bounds in index array");
+  if (res) {
+    throw legate::TaskException("index is out of bounds in index array");
+  }
 }
 
 template <int DIM>
@@ -131,7 +139,9 @@ struct WrapImplBody<VariantKind::GPU, DIM> {
     const auto volume_base = rect_base.volume();
     const size_t blocks    = (volume + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
 
-    if (check_bounds) check_out_of_bounds(indices, start, volume, volume_base, stream);
+    if (check_bounds) {
+      check_out_of_bounds(indices, start, volume, volume_base, stream);
+    }
 
     if (dense) {
       auto outptr = out.ptr(rect_out);

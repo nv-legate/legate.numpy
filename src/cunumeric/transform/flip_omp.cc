@@ -37,8 +37,9 @@ struct FlipImplBody<VariantKind::OMP, CODE, DIM> {
     for (size_t idx = 0; idx < volume; ++idx) {
       auto p = pitches.unflatten(idx, rect.lo);
       auto q = p;
-      for (uint32_t idx = 0; idx < axes.size(); ++idx)
+      for (uint32_t idx = 0; idx < axes.size(); ++idx) {
         q[axes[idx]] = rect.hi[axes[idx]] - q[axes[idx]];
+      }
       out[p] = in[q];
     }
   }

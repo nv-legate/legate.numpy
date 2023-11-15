@@ -50,7 +50,9 @@ struct GemmImpl {
     auto rhs1_shape = rhs1_array.shape<2>();
     auto rhs2_shape = rhs2_array.shape<2>();
 
-    if (lhs_shape.empty()) return;
+    if (lhs_shape.empty()) {
+      return;
+    }
 
     size_t lhs_strides[2];
     size_t rhs1_strides[2];

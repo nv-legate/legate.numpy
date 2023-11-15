@@ -29,8 +29,9 @@ struct ArangeImplBody<VariantKind::OMP, VAL> {
                   const VAL step) const
   {
 #pragma omp parallel for
-    for (coord_t idx = rect.lo[0]; idx <= rect.hi[0]; ++idx)
+    for (coord_t idx = rect.lo[0]; idx <= rect.hi[0]; ++idx) {
       out[idx] = static_cast<VAL>(idx) * step + start;
+    }
   }
 };
 

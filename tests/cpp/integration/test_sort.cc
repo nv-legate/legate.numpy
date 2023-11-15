@@ -500,15 +500,18 @@ void test_sort(std::array<T, SIZE>& in_array,
 {
   auto A1 = cunumeric::zeros(shape, leg_type);
   if (in_array.size() != 0) {
-    if (in_array.size() == 1)
+    if (in_array.size() == 1) {
       A1.fill(legate::Scalar(in_array[0]), false);
-    else
+    } else {
       assign_values_to_array<T, DIM>(A1, in_array.data(), in_array.size());
+    }
   }
   std::vector<std::string> algos = {"quicksort", "mergesort", "heapsort", "stable"};
   for (auto algo = algos.begin(); algo < algos.end(); ++algo) {
     auto B1 = cunumeric::sort(A1, axis, *algo);
-    if (in_array.size() != 0) check_array_eq<T, DIM>(B1, expect.data(), expect.size());
+    if (in_array.size() != 0) {
+      check_array_eq<T, DIM>(B1, expect.data(), expect.size());
+    }
   }
 }
 
@@ -524,12 +527,13 @@ void sort_basic_axis_impl(std::vector<std::vector<size_t>>& test_shapes,
     int32_t dim     = test_shape.size();
     for (int32_t axis = -dim + 1; axis < dim; ++axis) {
       auto expect_val = expect_result[i][axis];
-      if (dim == 1)
+      if (dim == 1) {
         test_sort<T, 12, 1>(in_array, expect_val, leg_type, test_shape, axis);
-      else if (dim == 2)
+      } else if (dim == 2) {
         test_sort<T, 12, 2>(in_array, expect_val, leg_type, test_shape, axis);
-      else
+      } else {
         test_sort<T, 12, 3>(in_array, expect_val, leg_type, test_shape, axis);
+      }
     }
   }
 }
@@ -577,12 +581,13 @@ void sort_empty_array()
     auto test_shape = test_shapes[i];
     int32_t dim     = test_shape.size();
     for (int32_t axis = -dim + 1; axis < dim; ++axis) {
-      if (dim == 1)
+      if (dim == 1) {
         test_sort<int32_t, 0, 1>(in_array, in_array, legate::int32(), test_shape, axis);
-      else if (dim == 2)
+      } else if (dim == 2) {
         test_sort<int32_t, 0, 2>(in_array, in_array, legate::int32(), test_shape, axis);
-      else
+      } else {
         test_sort<int32_t, 0, 3>(in_array, in_array, legate::int32(), test_shape, axis);
+      }
     }
   }
 }
@@ -597,12 +602,13 @@ void sort_single_item_array()
     auto test_shape = test_shapes[i];
     int32_t dim     = test_shape.size();
     for (int32_t axis = -dim + 1; axis < dim; ++axis) {
-      if (dim == 1)
+      if (dim == 1) {
         test_sort<int32_t, 1, 1>(in_array, in_array, legate::int32(), test_shape, axis);
-      else if (dim == 2)
+      } else if (dim == 2) {
         test_sort<int32_t, 1, 2>(in_array, in_array, legate::int32(), test_shape, axis);
-      else
+      } else {
         test_sort<int32_t, 1, 3>(in_array, in_array, legate::int32(), test_shape, axis);
+      }
     }
   }
 }

@@ -48,7 +48,9 @@ struct BinaryRedImpl {
     Pitches<DIM - 1> pitches;
     size_t volume = pitches.flatten(rect);
 
-    if (0 == volume) return;
+    if (0 == volume) {
+      return;
+    }
 
     auto out = args.out.reduce_accessor<ProdReduction<bool>, true, 1>();
     auto in1 = args.in1.read_accessor<ARG, DIM>(rect);
@@ -91,7 +93,9 @@ static void binary_red_template(TaskContext& context)
 
   std::vector<Scalar> extra_args;
   extra_args.reserve(scalars.size() - 1);
-  for (size_t idx = 1; idx < scalars.size(); ++idx) extra_args.emplace_back(scalars[idx]);
+  for (size_t idx = 1; idx < scalars.size(); ++idx) {
+    extra_args.emplace_back(scalars[idx]);
+  }
 
   BinaryRedArgs args{context.reduction(0),
                      inputs[0],

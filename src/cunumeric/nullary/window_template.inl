@@ -34,7 +34,9 @@ struct WindowImpl {
   {
     auto rect = output.shape<1>();
 
-    if (rect.empty()) return;
+    if (rect.empty()) {
+      return;
+    }
 
     auto out = output.write_accessor<double, 1>(rect);
 

@@ -245,7 +245,9 @@ struct FastDivmod {
   __CUDA_HD__ static inline value_t clz(value_t x)
   {
     for (int i = 31; i >= 0; --i) {
-      if ((1 << i) & x) return 31 - i;
+      if ((1 << i) & x) {
+        return 31 - i;
+      }
     }
     return 32;
   }
@@ -385,7 +387,9 @@ struct FastDivmodU64 {
   static inline uint32_t integer_log2(uint64_t x)
   {
     uint32_t n = 0;
-    while (x >>= 1) { ++n; }
+    while (x >>= 1) {
+      ++n;
+    }
     return n;
   }
 
@@ -422,7 +426,9 @@ struct FastDivmodU64 {
 
 #ifdef __CUDA_ARCH__
     uint64_t x = dividend;
-    if (multiplier) { x = __umul64hi(dividend + round_up, multiplier); }
+    if (multiplier) {
+      x = __umul64hi(dividend + round_up, multiplier);
+    }
     quotient = (x >> shift_right);
 #else
     // TODO - use proper 'fast' division here also. No reason why x86-code

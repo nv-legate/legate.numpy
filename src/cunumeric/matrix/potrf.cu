@@ -45,7 +45,9 @@ static inline void potrf_template(
   CHECK_CUDA(cudaStreamSynchronize(stream));
   CHECK_CUDA_STREAM(stream);
 
-  if (info[0] != 0) throw legate::TaskException("Matrix is not positive definite");
+  if (info[0] != 0) {
+    throw legate::TaskException("Matrix is not positive definite");
+  }
 }
 
 template <>

@@ -66,7 +66,9 @@ int64_t calculate_volume(size_t ndim, const int64_t* shape, int64_t* strides)
 {
   int64_t volume = 1;
   for (int d = ndim - 1; d >= 0; --d) {
-    if (strides != nullptr) { strides[d] = volume; }
+    if (strides != nullptr) {
+      strides[d] = volume;
+    }
     volume *= shape[d];
   }
   return volume;
@@ -83,11 +85,15 @@ void half_vector_to_float(float* out, const __half* ptr, size_t n)
 #if LegateDefined(LEGATE_USE_OPENMP)
   if (legate::Processor::get_executing_processor().kind() == legate::Processor::OMP_PROC) {
 #pragma omp parallel for schedule(static)
-    for (size_t idx = 0; idx < n; idx++) out[idx] = ptr[idx];
+    for (size_t idx = 0; idx < n; idx++) {
+      out[idx] = ptr[idx];
+    }
     return;
   }
 #endif
-  for (size_t idx = 0; idx < n; idx++) out[idx] = ptr[idx];
+  for (size_t idx = 0; idx < n; idx++) {
+    out[idx] = ptr[idx];
+  }
 }
 
 void half_matrix_to_float(float* out, const __half* ptr, size_t m, size_t n, size_t pitch)
@@ -95,13 +101,19 @@ void half_matrix_to_float(float* out, const __half* ptr, size_t m, size_t n, siz
 #if LegateDefined(LEGATE_USE_OPENMP)
   if (legate::Processor::get_executing_processor().kind() == legate::Processor::OMP_PROC) {
 #pragma omp parallel for schedule(static)
-    for (size_t i = 0; i < m; i++)
-      for (size_t j = 0; j < n; j++) out[i * n + j] = ptr[i * pitch + j];
+    for (size_t i = 0; i < m; i++) {
+      for (size_t j = 0; j < n; j++) {
+        out[i * n + j] = ptr[i * pitch + j];
+      }
+    }
     return;
   }
 #endif
-  for (size_t i = 0; i < m; i++)
-    for (size_t j = 0; j < n; j++) out[i * n + j] = ptr[i * pitch + j];
+  for (size_t i = 0; i < m; i++) {
+    for (size_t j = 0; j < n; j++) {
+      out[i * n + j] = ptr[i * pitch + j];
+    }
+  }
 }
 
 void half_tensor_to_float(

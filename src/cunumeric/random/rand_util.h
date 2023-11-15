@@ -83,7 +83,9 @@ struct RandomGenerator<RandGenCode::NORMAL, CODE> {
     if (fa >= 1.0) {
       l = 0xfff8000000000000ull;
       memcpy(&t, &l, sizeof(double)); /* INDEFINITE */
-      if (fa == 1.0) { t = a * exp(1000.0); /* Infinity */ }
+      if (fa == 1.0) {
+        t = a * exp(1000.0); /* Infinity */
+      }
     } else if (fa >= 0.9375) {
       /* Based on: J.M. Blair, C.A. Edwards, J.H. Johnson: Rational Chebyshev
          Approximations for the Inverse of the Error Function. Mathematics of
@@ -113,7 +115,9 @@ struct RandomGenerator<RandGenCode::NORMAL, CODE> {
       q = q * t + 1.3858762165532246059e-4;
       q = q * t + 1.1738313872397777529e-6;
       t = p / (q * t);
-      if (a < 0.0) t = -t;
+      if (a < 0.0) {
+        t = -t;
+      }
     } else if (fa >= 0.75) {
       /* Based on: J.M. Blair, C.A. Edwards, J.H. Johnson: Rational Chebyshev
          Approximations for the Inverse of the Error Function. Mathematics of

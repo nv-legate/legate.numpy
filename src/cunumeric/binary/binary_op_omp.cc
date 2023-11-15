@@ -42,7 +42,9 @@ struct BinaryOpImplBody<VariantKind::OMP, OP_CODE, CODE, DIM> {
       auto in1ptr = in1.ptr(rect);
       auto in2ptr = in2.ptr(rect);
 #pragma omp parallel for schedule(static)
-      for (size_t idx = 0; idx < volume; ++idx) outptr[idx] = func(in1ptr[idx], in2ptr[idx]);
+      for (size_t idx = 0; idx < volume; ++idx) {
+        outptr[idx] = func(in1ptr[idx], in2ptr[idx]);
+      }
     } else {
 #pragma omp parallel for schedule(static)
       for (size_t idx = 0; idx < volume; ++idx) {

@@ -43,7 +43,9 @@ struct BinaryOpImpl {
     Pitches<DIM - 1> pitches;
     size_t volume = pitches.flatten(rect);
 
-    if (volume == 0) return;
+    if (volume == 0) {
+      return;
+    }
 
     auto out = args.out.write_accessor<LHS, DIM>(rect);
     auto in1 = args.in1.read_accessor<RHS1, DIM>(rect);
@@ -88,7 +90,9 @@ static void binary_op_template(TaskContext& context)
 
   std::vector<Scalar> extra_args;
   extra_args.reserve(scalars.size() - 1);
-  for (size_t idx = 1; idx < scalars.size(); ++idx) extra_args.emplace_back(scalars[idx]);
+  for (size_t idx = 1; idx < scalars.size(); ++idx) {
+    extra_args.emplace_back(scalars[idx]);
+  }
 
   BinaryOpArgs args{
     inputs[0], inputs[1], outputs[0], scalars[0].value<BinaryOpCode>(), std::move(extra_args)};

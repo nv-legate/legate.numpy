@@ -34,7 +34,9 @@ struct UnpackbitsImpl {
   {
     auto out_rect = output.shape<DIM>();
 
-    if (out_rect.empty()) return;
+    if (out_rect.empty()) {
+      return;
+    }
 
     auto in_rect = input.shape<DIM>();
 

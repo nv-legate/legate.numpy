@@ -37,19 +37,21 @@ struct TriluImplBody<VariantKind::OMP, CODE, DIM, LOWER> {
 #pragma omp parallel for schedule(static)
       for (size_t idx = 0; idx < volume; ++idx) {
         auto p = pitches.unflatten(idx, lo);
-        if (p[DIM - 2] + k >= p[DIM - 1])
+        if (p[DIM - 2] + k >= p[DIM - 1]) {
           out[p] = in[p];
-        else
+        } else {
           out[p] = 0;
+        }
       }
     else
 #pragma omp parallel for schedule(static)
       for (size_t idx = 0; idx < volume; ++idx) {
         auto p = pitches.unflatten(idx, lo);
-        if (p[DIM - 2] + k <= p[DIM - 1])
+        if (p[DIM - 2] + k <= p[DIM - 1]) {
           out[p] = in[p];
-        else
+        } else {
           out[p] = 0;
+        }
       }
   }
 };

@@ -39,7 +39,9 @@ struct ConvertImplBody<VariantKind::OMP, NAN_OP, DST_TYPE, SRC_TYPE, DIM> {
       auto outptr = out.ptr(rect);
       auto inptr  = in.ptr(rect);
 #pragma omp parallel for schedule(static)
-      for (size_t idx = 0; idx < volume; ++idx) outptr[idx] = func(inptr[idx]);
+      for (size_t idx = 0; idx < volume; ++idx) {
+        outptr[idx] = func(inptr[idx]);
+      }
     } else {
 #pragma omp parallel for schedule(static)
       for (size_t idx = 0; idx < volume; ++idx) {

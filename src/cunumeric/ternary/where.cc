@@ -40,8 +40,9 @@ struct WhereImplBody<VariantKind::CPU, CODE, DIM> {
       auto maskptr  = mask.ptr(rect);
       auto in1ptr   = in1.ptr(rect);
       auto in2ptr   = in2.ptr(rect);
-      for (size_t idx = 0; idx < volume; ++idx)
+      for (size_t idx = 0; idx < volume; ++idx) {
         outptr[idx] = maskptr[idx] ? in1ptr[idx] : in2ptr[idx];
+      }
     } else {
       for (size_t idx = 0; idx < volume; ++idx) {
         auto point = pitches.unflatten(idx, rect.lo);

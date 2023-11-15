@@ -31,7 +31,9 @@ cufftContext::cufftContext(cufftPlan* plan) : plan_(plan) {}
 cufftContext::~cufftContext()
 {
   auto& hdl = handle();
-  for (auto type : callback_types_) CHECK_CUFFT(cufftXtClearCallback(hdl, type));
+  for (auto type : callback_types_) {
+    CHECK_CUFFT(cufftXtClearCallback(hdl, type));
+  }
   CHECK_CUFFT(cufftSetWorkArea(hdl, nullptr));
 }
 
@@ -57,7 +59,9 @@ cufftPlanParams::cufftPlanParams(const DomainPoint& size)
     odist(1),
     batch(1)
 {
-  for (int dim = 0; dim < rank; ++dim) n[dim] = size[dim];
+  for (int dim = 0; dim < rank; ++dim) {
+    n[dim] = size[dim];
+  }
 }
 
 cufftPlanParams::cufftPlanParams(int rank,
@@ -87,7 +91,9 @@ bool cufftPlanParams::operator==(const cufftPlanParams& other) const
       equal = equal && (n[dim] == other.n[dim]);
       equal = equal && (inembed[dim] == other.inembed[dim]);
       equal = equal && (onembed[dim] == other.onembed[dim]);
-      if (!equal) break;
+      if (!equal) {
+        break;
+      }
     }
   }
   return equal;
@@ -97,11 +103,17 @@ std::string cufftPlanParams::to_string() const
 {
   std::ostringstream ss;
   ss << "cufftPlanParams[rank(" << rank << "), n(" << n[0];
-  for (int i = 1; i < rank; ++i) ss << "," << n[i];
+  for (int i = 1; i < rank; ++i) {
+    ss << "," << n[i];
+  }
   ss << "), inembed(" << inembed[0];
-  for (int i = 1; i < rank; ++i) ss << "," << inembed[i];
+  for (int i = 1; i < rank; ++i) {
+    ss << "," << inembed[i];
+  }
   ss << "), istride(" << istride << "), idist(" << idist << "), onembed(" << onembed[0];
-  for (int i = 1; i < rank; ++i) ss << "," << onembed[i];
+  for (int i = 1; i < rank; ++i) {
+    ss << "," << onembed[i];
+  }
   ss << "), ostride(" << ostride << "), odist(" << odist << "), batch(" << batch << ")]";
   return std::move(ss).str();
 }
@@ -135,15 +147,22 @@ struct cufftPlanCache {
 
 cufftPlanCache::cufftPlanCache(cufftType type) : type_(type)
 {
-  for (auto& cache : cache_)
-    for (auto& entry : cache) assert(0 == entry.lru_index);
+  for (auto& cache : cache_) {
+    for (auto& entry : cache) {
+      assert(0 == entry.lru_index);
+    }
+  }
 }
 
 cufftPlanCache::~cufftPlanCache()
 {
-  for (auto& cache : cache_)
-    for (auto& entry : cache)
-      if (entry.plan != nullptr) CHECK_CUFFT(cufftDestroy(entry.plan->handle));
+  for (auto& cache : cache_) {
+    for (auto& entry : cache) {
+      if (entry.plan != nullptr) {
+        CHECK_CUFFT(cufftDestroy(entry.plan->handle));
+      }
+    }
+  }
 }
 
 cufftPlan* cufftPlanCache::get_cufft_plan(const cufftPlanParams& params)
@@ -153,7 +172,9 @@ cufftPlan* cufftPlanCache::get_cufft_plan(const cufftPlanParams& params)
   auto& cache   = cache_[params.rank];
   for (int32_t idx = 0; idx < MAX_PLANS; ++idx) {
     auto& entry = cache[idx];
-    if (nullptr == entry.plan) break;
+    if (nullptr == entry.plan) {
+      break;
+    }
     if (*entry.params == params) {
       match = idx;
       cache_hits_++;
@@ -196,7 +217,9 @@ cufftPlan* cufftPlanCache::get_cufft_plan(const cufftPlanParams& params)
     if (entry.lru_index != 0) {
       for (int32_t idx = plan_index + 1; idx < MAX_PLANS; ++idx) {
         auto& other = cache[idx];
-        if (nullptr == other.plan) break;
+        if (nullptr == other.plan) {
+          break;
+        }
         ++other.lru_index;
       }
       entry.lru_index = 0;
@@ -234,7 +257,9 @@ cufftPlan* cufftPlanCache::get_cufft_plan(const cufftPlanParams& params)
     if (entry.lru_index != 0) {
       for (int32_t idx = 0; idx < MAX_PLANS; ++idx) {
         auto& other = cache[idx];
-        if (other.lru_index < entry.lru_index) ++other.lru_index;
+        if (other.lru_index < entry.lru_index) {
+          ++other.lru_index;
+        }
       }
       entry.lru_index = 0;
     }
@@ -251,11 +276,21 @@ CUDALibraries::~CUDALibraries() { finalize(); }
 
 void CUDALibraries::finalize()
 {
-  if (finalized_) return;
-  if (cublas_ != nullptr) finalize_cublas();
-  if (cusolver_ != nullptr) finalize_cusolver();
-  if (cutensor_ != nullptr) finalize_cutensor();
-  for (auto& pair : plan_caches_) delete pair.second;
+  if (finalized_) {
+    return;
+  }
+  if (cublas_ != nullptr) {
+    finalize_cublas();
+  }
+  if (cusolver_ != nullptr) {
+    finalize_cusolver();
+  }
+  if (cutensor_ != nullptr) {
+    finalize_cutensor();
+  }
+  for (auto& pair : plan_caches_) {
+    delete pair.second;
+  }
   finalized_ = true;
 }
 
@@ -285,8 +320,9 @@ cublasHandle_t CUDALibraries::get_cublas()
     if (fast_math != nullptr && atoi(fast_math) > 0) {
       // Enable acceleration of single precision routines using TF32 tensor cores.
       cublasStatus_t status = cublasSetMathMode(cublas_, CUBLAS_TF32_TENSOR_OP_MATH);
-      if (status != CUBLAS_STATUS_SUCCESS)
+      if (status != CUBLAS_STATUS_SUCCESS) {
         fprintf(stderr, "WARNING: cuBLAS does not support Tensor cores!");
+      }
     }
   }
   return cublas_;
@@ -294,7 +330,9 @@ cublasHandle_t CUDALibraries::get_cublas()
 
 cusolverDnHandle_t CUDALibraries::get_cusolver()
 {
-  if (nullptr == cusolver_) CHECK_CUSOLVER(cusolverDnCreate(&cusolver_));
+  if (nullptr == cusolver_) {
+    CHECK_CUSOLVER(cusolverDnCreate(&cusolver_));
+  }
   return cusolver_;
 }
 
@@ -315,8 +353,9 @@ cufftContext CUDALibraries::get_cufft_plan(cufftType type, const cufftPlanParams
   if (plan_caches_.end() == finder) {
     cache              = new cufftPlanCache(type);
     plan_caches_[type] = cache;
-  } else
+  } else {
     cache = finder->second;
+  }
   return cufftContext(cache->get_cufft_plan(params));
 }
 

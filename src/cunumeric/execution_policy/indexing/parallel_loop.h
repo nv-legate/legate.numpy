@@ -29,7 +29,9 @@ struct ParallelLoopPolicy<VariantKind::CPU, Tag> {
   void operator()(const RECT& rect, KERNEL&& kernel)
   {
     const size_t volume = rect.volume();
-    for (size_t idx = 0; idx < volume; ++idx) { kernel(idx, Tag{}); }
+    for (size_t idx = 0; idx < volume; ++idx) {
+      kernel(idx, Tag{});
+    }
   }
 };
 

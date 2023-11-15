@@ -33,20 +33,24 @@ static __global__ void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM)
                int32_t k)
 {
   const size_t idx = global_tid_1d();
-  if (idx >= volume) return;
+  if (idx >= volume) {
+    return;
+  }
 
   if (LOWER) {
     auto p = pitches.unflatten(idx, lo);
-    if (p[DIM - 2] + k >= p[DIM - 1])
+    if (p[DIM - 2] + k >= p[DIM - 1]) {
       out[p] = in[p];
-    else
+    } else {
       out[p] = 0;
+    }
   } else {
     auto p = pitches.unflatten(idx, lo);
-    if (p[DIM - 2] + k <= p[DIM - 1])
+    if (p[DIM - 2] + k <= p[DIM - 1]) {
       out[p] = in[p];
-    else
+    } else {
       out[p] = 0;
+    }
   }
 }
 

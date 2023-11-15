@@ -485,7 +485,9 @@ struct BinaryOp<BinaryOpCode::ISCLOSE, CODE> {
   {
     using std::fabs;
     using std::isinf;
-    if (isinf(a) || isinf(b)) return a == b;
+    if (isinf(a) || isinf(b)) {
+      return a == b;
+    }
     return fabs(static_cast<double>(a) - static_cast<double>(b)) <=
            atol_ + rtol_ * static_cast<double>(fabs(b));
   }
@@ -510,7 +512,9 @@ struct BinaryOp<BinaryOpCode::LCM, CODE> {
   __CUDA_HD__ T operator()(const T& a, const T& b) const
   {
     T r = _gcd(a, b);
-    if (r == 0) return 0;
+    if (r == 0) {
+      return 0;
+    }
     r = a / r * b;
     return r >= 0 ? r : -r;
   }
@@ -519,7 +523,9 @@ struct BinaryOp<BinaryOpCode::LCM, CODE> {
   __CUDA_HD__ T operator()(const T& a, const T& b) const
   {
     T r = _gcd(a, b);
-    if (r == 0) return 0;
+    if (r == 0) {
+      return 0;
+    }
     r = a / r * b;
     return r;
   }
@@ -529,7 +535,9 @@ struct BinaryOp<BinaryOpCode::LCM, CODE> {
     int32_t a = static_cast<int32_t>(_a);
     int32_t b = static_cast<int32_t>(_b);
     int32_t r = _gcd(a, b);
-    if (r == 0) return false;
+    if (r == 0) {
+      return false;
+    }
     r = a / r * b;
     return static_cast<bool>(r);
   }
@@ -605,10 +613,11 @@ struct BinaryOp<BinaryOpCode::LOGADDEXP, CODE> {
     using std::fmax;
     using std::log;
     using std::log1p;
-    if (a == b)
+    if (a == b) {
       return a + log(T{2.0});
-    else
+    } else {
       return fmax(a, b) + log1p(exp(-fabs(a - b)));
+    }
   }
 };
 
@@ -638,10 +647,11 @@ struct BinaryOp<BinaryOpCode::LOGADDEXP2, CODE> {
     using std::fabs;
     using std::fmax;
     using std::log2;
-    if (a == b)
+    if (a == b) {
       return a + T{1.0};
-    else
+    } else {
       return fmax(a, b) + log2(T{1} + exp2(-fabs(a - b)));
+    }
   }
 };
 
@@ -736,7 +746,9 @@ constexpr T real_mod(const T& a, const T& b)
 {
   T res = std::fmod(a, b);
   if (res) {
-    if ((b < static_cast<T>(0)) != (res < static_cast<T>(0))) res += b;
+    if ((b < static_cast<T>(0)) != (res < static_cast<T>(0))) {
+      res += b;
+    }
   } else {
     res = std::copysign(static_cast<T>(0), b);
   }

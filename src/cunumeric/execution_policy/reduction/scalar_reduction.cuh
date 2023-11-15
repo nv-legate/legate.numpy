@@ -30,7 +30,9 @@ static __global__ void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM)
   auto value = identity;
   for (size_t idx = 0; idx < iters; idx++) {
     const size_t offset = (idx * gridDim.x + blockIdx.x) * blockDim.x + threadIdx.x;
-    if (offset < volume) { kernel(value, offset, identity, tag); }
+    if (offset < volume) {
+      kernel(value, offset, identity, tag);
+    }
   }
   // Every thread in the thread block must participate in the exchange to get correct results
   reduce_output(out, value);
@@ -52,7 +54,9 @@ struct ScalarReductionPolicy<VariantKind::GPU, LG_OP, Tag> {
                                                         const LHS& identity,
                                                         Kernel&& kernel)
   {
-    if (0 == volume) return;
+    if (0 == volume) {
+      return;
+    }
 
     auto stream = get_cached_stream();
 

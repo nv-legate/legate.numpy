@@ -45,13 +45,17 @@ struct AdvancedIndexingImplBody<VariantKind::CPU, CODE, DIM, OUT_TYPE> {
           size_t j     = key_dim + i;
           out_p[i + 1] = p[j];
         }
-        for (int32_t i = DIM - key_dim + 1; i < DIM; i++) out_p[i] = 0;
+        for (int32_t i = DIM - key_dim + 1; i < DIM; i++) {
+          out_p[i] = 0;
+        }
         fill_out(out[out_p], p, input[p]);
         // The logic below is based on the assumtion that
         // pitches enumerate points in C-order, but this might
         // change in the future
         // TODO: replace with the order-aware interator when available
-        if ((idx + 1) % skip_size == 0) out_idx++;
+        if ((idx + 1) % skip_size == 0) {
+          out_idx++;
+        }
       }
     }
   }
@@ -67,7 +71,9 @@ struct AdvancedIndexingImplBody<VariantKind::CPU, CODE, DIM, OUT_TYPE> {
     size_t skip_size = 1;
     for (size_t i = key_dim; i < DIM; i++) {
       auto diff = 1 + rect.hi[i] - rect.lo[i];
-      if (diff != 0) skip_size *= diff;
+      if (diff != 0) {
+        skip_size *= diff;
+      }
     }
 
     // calculate size of the key_dim-1 extend in output region
@@ -75,7 +81,9 @@ struct AdvancedIndexingImplBody<VariantKind::CPU, CODE, DIM, OUT_TYPE> {
     size_t size         = 0;
     for (size_t idx = 0; idx < volume; idx += skip_size) {
       auto p = pitches.unflatten(idx, rect.lo);
-      if (index[p] == true) { size++; }
+      if (index[p] == true) {
+        size++;
+      }
     }
 
     // calculating the shape of the output region for this sub-task
@@ -85,10 +93,14 @@ struct AdvancedIndexingImplBody<VariantKind::CPU, CODE, DIM, OUT_TYPE> {
       size_t j       = key_dim + i;
       extents[i + 1] = 1 + rect.hi[j] - rect.lo[j];
     }
-    for (int32_t i = DIM - key_dim + 1; i < DIM; i++) extents[i] = 1;
+    for (int32_t i = DIM - key_dim + 1; i < DIM; i++) {
+      extents[i] = 1;
+    }
 
     auto out = out_arr.create_output_buffer<OUT_TYPE, DIM>(extents, true);
-    if (size > 0) compute_output(out, input, index, pitches, rect, volume, key_dim, skip_size);
+    if (size > 0) {
+      compute_output(out, input, index, pitches, rect, volume, key_dim, skip_size);
+    }
   }
 };
 

@@ -146,7 +146,9 @@ __global__ static void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM)
                                    const size_t my_sort_rank)
 {
   const size_t splitter_idx_g = blockIdx.x * blockDim.x + threadIdx.x;
-  if (splitter_idx_g >= num_splitters) return;
+  if (splitter_idx_g >= num_splitters) {
+    return;
+  }
 
   const size_t num_splitters_per_segment = num_splitters / num_segments_l;
   const size_t splitter_pos              = splitter_idx_g % num_splitters_per_segment;
@@ -182,7 +184,9 @@ __global__ static void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM)
                           const size_t num_send_parts)
 {
   const size_t send_part = blockIdx.x * blockDim.x + threadIdx.x;
-  if (send_part >= num_send_parts) return;
+  if (send_part >= num_send_parts) {
+    return;
+  }
 
   const size_t rank    = send_part / num_segments_l;
   const size_t segment = send_part % num_segments_l;
@@ -251,7 +255,9 @@ __global__ static void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM)
     }
   }
   // also store sum of all in last element
-  if (threadId == 0) { size_send[rank * num_segments_l_aligned + num_segments_l] = prefix_op(0); }
+  if (threadId == 0) {
+    size_send[rank * num_segments_l_aligned + num_segments_l] = prefix_op(0);
+  }
 }
 
 __global__ static void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM)
@@ -261,12 +267,16 @@ __global__ static void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM)
                                      const size_t num_segment_ids)
 {
   const size_t segment_idx = blockIdx.x * blockDim.x + threadIdx.x;
-  if (segment_idx >= num_segments_l) return;
+  if (segment_idx >= num_segments_l) {
+    return;
+  }
 
   unsigned long long int* ptr = (unsigned long long int*)segment_ids;
 
   const size_t position = start_positions[segment_idx];
-  if (position < num_segment_ids) atomicAdd(&(ptr[position]), (unsigned long long int)1l);
+  if (position < num_segment_ids) {
+    atomicAdd(&(ptr[position]), (unsigned long long int)1l);
+  }
 }
 
 __global__ static void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM)
@@ -277,7 +287,9 @@ __global__ static void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM)
                         const size_t segments_size_l)
 {
   const size_t segment_idx = blockIdx.x * blockDim.x + threadIdx.x;
-  if (segment_idx >= num_segments_l) return;
+  if (segment_idx >= num_segments_l) {
+    return;
+  }
 
   if (num_segments_l == 1) {
     segments_diff[segment_idx] = size - segments_size_l;
@@ -306,7 +318,9 @@ __global__ static void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM)
   const size_t thread_offset    = blockIdx.x * blockDim.x + threadIdx.x;
   const size_t threadgroup_size = blockDim.x * gridDim.x;
   const size_t segment_id       = blockIdx.y * blockDim.y + threadIdx.y;
-  if (segment_id >= num_segments_l) return;
+  if (segment_id >= num_segments_l) {
+    return;
+  }
 
   size_t source_offset = segment_size_l * segment_id;
   for (int r = 0; r < num_sort_ranks; ++r) {
@@ -331,7 +345,9 @@ __global__ static void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM)
   const size_t thread_offset    = blockIdx.x * blockDim.x + threadIdx.x;
   const size_t threadgroup_size = blockDim.x * gridDim.x;
   const size_t rank_id          = blockIdx.y * blockDim.y + threadIdx.y;
-  if (rank_id >= num_sort_ranks) return;
+  if (rank_id >= num_sort_ranks) {
+    return;
+  }
 
   size_t target_offset = target_offsets[rank_id];
   size_t local_size    = (rank_id == num_sort_ranks - 1)
@@ -362,7 +378,9 @@ __global__ static void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM)
   const size_t thread_offset    = blockIdx.x * blockDim.x + threadIdx.x;
   const size_t threadgroup_size = blockDim.x * gridDim.x;
   const size_t segment_id       = blockIdx.y * blockDim.y + threadIdx.y;
-  if (segment_id >= num_segments_l) return;
+  if (segment_id >= num_segments_l) {
+    return;
+  }
 
   // copy left
   {
@@ -411,7 +429,9 @@ __global__ static void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM)
   const size_t thread_offset    = blockIdx.x * blockDim.x + threadIdx.x;
   const size_t threadgroup_size = blockDim.x * gridDim.x;
   const size_t segment_id       = blockIdx.y * blockDim.y + threadIdx.y;
-  if (segment_id >= num_segments_l) return;
+  if (segment_id >= num_segments_l) {
+    return;
+  }
 
   size_t target_offset = segment_id * segment_size_l;
   size_t source_start  = segment_size_l * segment_id + segment_diff_pos[segment_id];
@@ -422,8 +442,12 @@ __global__ static void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM)
   int64_t recv_left_size  = send_left[segment_id] * -1;
   int64_t recv_right_size = send_right[segment_id] * -1;
 
-  if (recv_left_size < 0) source_start -= recv_left_size;
-  if (recv_right_size < 0) source_end += recv_right_size;
+  if (recv_left_size < 0) {
+    source_start -= recv_left_size;
+  }
+  if (recv_right_size < 0) {
+    source_end += recv_right_size;
+  }
 
   // copy from left
   {
@@ -476,7 +500,9 @@ __global__ static void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM)
 {
   const size_t sample_idx    = blockIdx.x * blockDim.x + threadIdx.x;
   const size_t num_samples_l = num_samples_per_segment_l * num_segments_l;
-  if (sample_idx >= num_samples_l) return;
+  if (sample_idx >= num_samples_l) {
+    return;
+  }
 
   const size_t segment_id_l       = sample_idx / num_samples_per_segment_l;
   const size_t segment_sample_idx = sample_idx % num_samples_per_segment_l;
@@ -631,7 +657,9 @@ SegmentMergePiece<type_of<CODE>> merge_all_buffers(
       for (size_t i = 0; i < num_sort_ranks; ++i) {
         SegmentMergePiece<VAL> piece = merge_buffers[i];
         piece.values.destroy();
-        if (argsort) { piece.indices.destroy(); }
+        if (argsort) {
+          piece.indices.destroy();
+        }
       }
       merge_buffers.clear();
     }
@@ -732,8 +760,12 @@ SegmentMergePiece<type_of<CODE>> merge_all_buffers(
       for (size_t i = 0; i < destroy_queue.size(); ++i) {
         SegmentMergePiece<VAL> piece = destroy_queue[i];
         piece.values.destroy();
-        if (segmented) { piece.segments.destroy(); }
-        if (argsort) { piece.indices.destroy(); }
+        if (segmented) {
+          piece.segments.destroy();
+        }
+        if (argsort) {
+          piece.indices.destroy();
+        }
       }
       destroy_queue.clear();
     }
@@ -795,7 +827,9 @@ void rebalance_data(SegmentMergePiece<VAL>& merge_buffer,
     }
 
     merge_buffer.segments.destroy();
-    if (argsort) { merge_buffer.values.destroy(); }
+    if (argsort) {
+      merge_buffer.values.destroy();
+    }
 
 #ifdef DEBUG_CUNUMERIC
     {
@@ -1511,7 +1545,9 @@ void sample_sort_nccl_nd(
     }
 
     local_sorted.values.destroy();
-    if (argsort) local_sorted.indices.destroy();
+    if (argsort) {
+      local_sorted.indices.destroy();
+    }
     segment_blocks.destroy();
   }
 
@@ -1565,36 +1601,40 @@ void sample_sort_nccl_nd(
   // communicate all2all (in sort dimension)
   CHECK_NCCL(ncclGroupStart());
   for (size_t r = 0; r < num_sort_ranks; r++) {
-    if (size_send_total[r] > 0)
+    if (size_send_total[r] > 0) {
       CHECK_NCCL(ncclSend(val_send_buffers[r].ptr(0),
                           size_send_total[r] * sizeof(VAL),
                           ncclInt8,
                           sort_ranks[r],
                           *comm,
                           stream));
-    if (merge_buffers[r].size > 0)
+    }
+    if (merge_buffers[r].size > 0) {
       CHECK_NCCL(ncclRecv(merge_buffers[r].values.ptr(0),
                           merge_buffers[r].size * sizeof(VAL),
                           ncclInt8,
                           sort_ranks[r],
                           *comm,
                           stream));
+    }
   }
   CHECK_NCCL(ncclGroupEnd());
 
   if (argsort) {
     CHECK_NCCL(ncclGroupStart());
     for (size_t r = 0; r < num_sort_ranks; r++) {
-      if (size_send_total[r] > 0)
+      if (size_send_total[r] > 0) {
         CHECK_NCCL(ncclSend(
           idc_send_buffers[r].ptr(0), size_send_total[r], ncclInt64, sort_ranks[r], *comm, stream));
-      if (merge_buffers[r].size > 0)
+      }
+      if (merge_buffers[r].size > 0) {
         CHECK_NCCL(ncclRecv(merge_buffers[r].indices.ptr(0),
                             merge_buffers[r].size,
                             ncclInt64,
                             sort_ranks[r],
                             *comm,
                             stream));
+      }
     }
     CHECK_NCCL(ncclGroupEnd());
   }
@@ -1606,7 +1646,9 @@ void sample_sort_nccl_nd(
   size_recv_total.destroy();
   for (size_t r = 0; r < num_sort_ranks; r++) {
     val_send_buffers[r].destroy();
-    if (argsort) idc_send_buffers[r].destroy();
+    if (argsort) {
+      idc_send_buffers[r].destroy();
+    }
   }
   CHECK_CUDA_STREAM(stream);
 
@@ -1758,7 +1800,9 @@ struct SortImplBody<VariantKind::GPU, CODE, DIM> {
         assert(is_index_space || is_unbound_1d_storage);
         std::vector<size_t> sort_ranks(num_sort_ranks);
         size_t rank_group = local_rank / num_sort_ranks;
-        for (size_t r = 0; r < num_sort_ranks; ++r) sort_ranks[r] = rank_group * num_sort_ranks + r;
+        for (size_t r = 0; r < num_sort_ranks; ++r) {
+          sort_ranks[r] = rank_group * num_sort_ranks + r;
+        }
 
         void* output_ptr = nullptr;
         // in case the storage *is NOT* unbound -- we provide a target pointer

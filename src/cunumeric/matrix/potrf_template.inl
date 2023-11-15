@@ -46,7 +46,9 @@ struct PotrfImpl {
 
     auto shape = array.shape<2>();
 
-    if (shape.empty()) return;
+    if (shape.empty()) {
+      return;
+    }
 
     size_t strides[2];
 

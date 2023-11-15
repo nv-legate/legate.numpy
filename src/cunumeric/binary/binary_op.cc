@@ -41,7 +41,9 @@ struct BinaryOpImplBody<VariantKind::CPU, OP_CODE, CODE, DIM> {
       auto outptr = out.ptr(rect);
       auto in1ptr = in1.ptr(rect);
       auto in2ptr = in2.ptr(rect);
-      for (size_t idx = 0; idx < volume; ++idx) outptr[idx] = func(in1ptr[idx], in2ptr[idx]);
+      for (size_t idx = 0; idx < volume; ++idx) {
+        outptr[idx] = func(in1ptr[idx], in2ptr[idx]);
+      }
     } else {
       for (size_t idx = 0; idx < volume; ++idx) {
         auto p = pitches.unflatten(idx, rect.lo);
@@ -62,7 +64,9 @@ std::vector<size_t> broadcast_shapes(std::vector<NDArray> arrays)
   assert(!arrays.empty());
 #endif
   int32_t dim = 0;
-  for (auto& array : arrays) dim = std::max(dim, array.dim());
+  for (auto& array : arrays) {
+    dim = std::max(dim, array.dim());
+  }
 
   std::vector<size_t> result(dim, 1);
 
@@ -72,10 +76,11 @@ std::vector<size_t> broadcast_shapes(std::vector<NDArray> arrays)
     auto in_it  = shape.rbegin();
     auto out_it = result.rbegin();
     for (; in_it != shape.rend() && out_it != result.rend(); ++in_it, ++out_it) {
-      if (1 == *out_it)
+      if (1 == *out_it) {
         *out_it = *in_it;
-      else if (*in_it != 1 && *out_it != *in_it)
+      } else if (*in_it != 1 && *out_it != *in_it) {
         throw std::exception();
+      }
     }
   }
   return result;

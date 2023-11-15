@@ -48,23 +48,25 @@ Scalar CuNumericMapper::tunable_value(TunableID tunable_id)
     }
     case CUNUMERIC_TUNABLE_NUM_PROCS: {
       int32_t num_procs = 0;
-      if (!machine->gpus().empty())
+      if (!machine->gpus().empty()) {
         num_procs = machine->gpus().size() * machine->total_nodes();
-      else if (!machine->omps().empty())
+      } else if (!machine->omps().empty()) {
         num_procs = machine->omps().size() * machine->total_nodes();
-      else
+      } else {
         num_procs = machine->cpus().size() * machine->total_nodes();
+      }
       return Scalar(num_procs);
     }
     case CUNUMERIC_TUNABLE_MAX_EAGER_VOLUME: {
       int32_t eager_volume = 0;
       // TODO: make these profile guided
-      if (!machine->gpus().empty())
+      if (!machine->gpus().empty()) {
         eager_volume = min_gpu_chunk;
-      else if (!machine->omps().empty())
+      } else if (!machine->omps().empty()) {
         eager_volume = min_omp_chunk;
-      else
+      } else {
         eager_volume = min_cpu_chunk;
+      }
       return Scalar(eager_volume);
     }
     default: break;
@@ -82,8 +84,9 @@ std::vector<StoreMapping> CuNumericMapper::store_mappings(
       mappings.push_back(StoreMapping::default_mapping(inputs[0].data(), options.front()));
       mappings.push_back(StoreMapping::default_mapping(inputs[1].data(), options.front()));
       auto& input_mapping = mappings.back();
-      for (uint32_t idx = 2; idx < inputs.size(); ++idx)
+      for (uint32_t idx = 2; idx < inputs.size(); ++idx) {
         input_mapping.add_store(inputs[idx].data());
+      }
       return mappings;
     }
     case CUNUMERIC_FFT: {
@@ -104,8 +107,9 @@ std::vector<StoreMapping> CuNumericMapper::store_mappings(
           StoreMapping::default_mapping(outputs[0].data(), options.front(), true /*exact*/));
         mappings.back().policy().ordering.set_fortran_order();
         return mappings;
-      } else
+      } else {
         return {};
+      }
     }
     case CUNUMERIC_MATMUL:
     case CUNUMERIC_MATVECMUL:
@@ -146,7 +150,9 @@ std::vector<StoreMapping> CuNumericMapper::store_mappings(
       return mappings;
     }
     case CUNUMERIC_TRILU: {
-      if (task.scalars().size() == 2) return {};
+      if (task.scalars().size() == 2) {
+        return {};
+      }
       // If we're here, this task was the post-processing for Cholesky.
       // So we will request fortran ordering
       std::vector<StoreMapping> mappings;

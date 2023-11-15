@@ -40,7 +40,9 @@ struct NonzeroImpl {
     size_t volume = pitches.flatten(rect);
 
     if (volume == 0) {
-      for (auto& store : args.results) store.bind_empty_data();
+      for (auto& store : args.results) {
+        store.bind_empty_data();
+      }
       return;
     }
 
@@ -53,7 +55,9 @@ template <VariantKind KIND>
 static void nonzero_template(TaskContext& context)
 {
   std::vector<legate::PhysicalStore> outputs;
-  for (auto& output : context.outputs()) { outputs.emplace_back(output); }
+  for (auto& output : context.outputs()) {
+    outputs.emplace_back(output);
+  }
   NonzeroArgs args{context.input(0), std::move(outputs)};
   double_dispatch(args.input.dim(), args.input.code(), NonzeroImpl<KIND>{}, args);
 }

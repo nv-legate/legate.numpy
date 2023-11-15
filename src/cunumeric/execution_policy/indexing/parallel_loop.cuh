@@ -27,7 +27,9 @@ static __global__ void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM)
   parallel_loop_kernel(const size_t volume, KERNEL kernel, Tag tag)
 {
   const size_t idx = global_tid_1d();
-  if (idx >= volume) return;
+  if (idx >= volume) {
+    return;
+  }
   kernel(idx, tag);
 }
 
@@ -37,7 +39,9 @@ struct ParallelLoopPolicy<VariantKind::GPU, Tag> {
   void operator()(const RECT& rect, KERNEL&& kernel)
   {
     const size_t volume = rect.volume();
-    if (0 == volume) return;
+    if (0 == volume) {
+      return;
+    }
     auto stream         = get_cached_stream();
     const size_t blocks = (volume + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
 

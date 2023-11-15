@@ -110,8 +110,9 @@ struct generate_int_value_fn {
 NDArray zeros(std::vector<size_t> shape, std::optional<legate::Type> type)
 {
   auto code = type.has_value() ? type.value().code() : legate::Type::Code::FLOAT64;
-  if (static_cast<int32_t>(code) >= static_cast<int32_t>(legate::Type::Code::FIXED_ARRAY))
+  if (static_cast<int32_t>(code) >= static_cast<int32_t>(legate::Type::Code::FIXED_ARRAY)) {
     throw std::invalid_argument("Type must be a primitive type");
+  }
   auto zero = legate::type_dispatch(code, generate_zero_fn{});
   return full(shape, zero);
 }
@@ -126,8 +127,9 @@ NDArray full(std::vector<size_t> shape, const Scalar& value)
 
 NDArray eye(size_t n, std::optional<size_t> m, int32_t k, const legate::Type& type)
 {
-  if (static_cast<int32_t>(type.code()) >= static_cast<int32_t>(legate::Type::Code::FIXED_ARRAY))
+  if (static_cast<int32_t>(type.code()) >= static_cast<int32_t>(legate::Type::Code::FIXED_ARRAY)) {
     throw std::invalid_argument("Type must be a primitive type");
+  }
 
   auto runtime = CuNumericRuntime::get_runtime();
   auto out     = runtime->create_array({n, m.value_or(n)}, type);
@@ -139,13 +141,18 @@ NDArray bincount(NDArray x,
                  std::optional<NDArray> weights /*=std::nullopt*/,
                  uint32_t min_length /*=0*/)
 {
-  if (x.dim() != 1) throw std::invalid_argument("The input array must be 1-dimensional");
-  if (x.size() == 0) throw std::invalid_argument("The input array must be non-empty");
+  if (x.dim() != 1) {
+    throw std::invalid_argument("The input array must be 1-dimensional");
+  }
+  if (x.size() == 0) {
+    throw std::invalid_argument("The input array must be non-empty");
+  }
 
   int32_t x_type_code = static_cast<int32_t>(x.type().code());
   if (x_type_code < static_cast<int32_t>(legate::Type::Code::INT8) ||
-      x_type_code > static_cast<int32_t>(legate::Type::Code::UINT64))
+      x_type_code > static_cast<int32_t>(legate::Type::Code::UINT64)) {
     throw std::invalid_argument("input array for bincount must be integer type");
+  }
 
   auto max_val_arr = amax(x);
   auto max_val =
@@ -153,8 +160,12 @@ NDArray bincount(NDArray x,
   auto min_val_arr = amin(x);
   auto min_val =
     legate::type_dispatch(min_val_arr.type().code(), generate_int_value_fn{}, min_val_arr);
-  if (min_val < 0) throw std::invalid_argument("the input array must have no negative elements");
-  if (static_cast<int32_t>(min_length) < max_val + 1) min_length = max_val + 1;
+  if (min_val < 0) {
+    throw std::invalid_argument("the input array must have no negative elements");
+  }
+  if (static_cast<int32_t>(min_length) < max_val + 1) {
+    min_length = max_val + 1;
+  }
 
   auto runtime = CuNumericRuntime::get_runtime();
   if (!weights.has_value()) {
@@ -163,13 +174,16 @@ NDArray bincount(NDArray x,
     return out;
   } else {
     auto weight_array = weights.value();
-    if (weight_array.shape() != x.shape())
+    if (weight_array.shape() != x.shape()) {
       throw std::invalid_argument("weights array must have the same shape as the input array");
+    }
     auto weight_code = weight_array.type().code();
-    if (static_cast<int32_t>(weight_code) >= static_cast<int32_t>(legate::Type::Code::COMPLEX64))
+    if (static_cast<int32_t>(weight_code) >= static_cast<int32_t>(legate::Type::Code::COMPLEX64)) {
       throw std::invalid_argument("weights must be convertible to float64");
-    if (weight_code != legate::Type::Code::FLOAT64)
+    }
+    if (weight_code != legate::Type::Code::FLOAT64) {
       weight_array = weight_array.as_type(legate::float64());
+    }
 
     auto out = runtime->create_array({min_length}, weight_array.type());
     out.bincount(x, weight_array);
@@ -182,8 +196,12 @@ NDArray trilu(NDArray rhs, int32_t k, bool lower)
   auto dim    = rhs.dim();
   auto& shape = rhs.shape();
   std::vector<size_t> out_shape(shape);
-  if (dim == 0) throw std::invalid_argument("Dim of input array must be > 0");
-  if (dim == 1) out_shape.emplace_back(shape[0]);
+  if (dim == 0) {
+    throw std::invalid_argument("Dim of input array must be > 0");
+  }
+  if (dim == 1) {
+    out_shape.emplace_back(shape[0]);
+  }
 
   auto runtime = CuNumericRuntime::get_runtime();
   auto out     = runtime->create_array(std::move(out_shape), rhs.type());
@@ -303,12 +321,16 @@ NDArray kaiser(int64_t M, double beta) { return create_window(M, WindowOpCode::K
 
 NDArray convolve(NDArray a, NDArray v)
 {
-  if (a.dim() != v.dim()) { throw std::invalid_argument("Arrays should have the same dimensions"); }
+  if (a.dim() != v.dim()) {
+    throw std::invalid_argument("Arrays should have the same dimensions");
+  }
   if (a.dim() > 3) {
     throw std::runtime_error(std::to_string(a.dim()) + "-D arrays are not yet supported");
   }
   auto out = CuNumericRuntime::get_runtime()->create_array(a.shape(), a.type());
-  if (a.type() != v.type()) { v = v.as_type(a.type()); }
+  if (a.type() != v.type()) {
+    v = v.as_type(a.type());
+  }
   out.convolve(std::move(a), std::move(v));
   return out;
 }
@@ -342,7 +364,9 @@ std::vector<int32_t> normalize_axis_vector(std::vector<int32_t> axis,
                                            bool allow_duplicate)
 {
   std::vector<int32_t> new_axis;
-  for (auto ax : axis) { new_axis.emplace_back(normalize_axis_index(ax, ndim)); }
+  for (auto ax : axis) {
+    new_axis.emplace_back(normalize_axis_index(ax, ndim));
+  }
   std::set<int32_t> s(new_axis.begin(), new_axis.end());
   if (!allow_duplicate && s.size() != new_axis.size()) {
     throw std::invalid_argument("repeated axis");
@@ -363,12 +387,18 @@ NDArray moveaxis(NDArray a, std::vector<int32_t> source, std::vector<int32_t> de
   std::vector<int32_t> order;
   std::set<int32_t> set_src(src.begin(), src.end());
   for (auto i = 0; i < ndim; ++i) {
-    if (set_src.find(i) == set_src.end()) order.emplace_back(i);
+    if (set_src.find(i) == set_src.end()) {
+      order.emplace_back(i);
+    }
   }
   std::vector<std::pair<int32_t, int32_t>> vp;
-  for (size_t i = 0; i < src.size(); ++i) { vp.push_back(std::make_pair(dst[i], src[i])); }
+  for (size_t i = 0; i < src.size(); ++i) {
+    vp.push_back(std::make_pair(dst[i], src[i]));
+  }
   std::sort(vp.begin(), vp.end());
-  for (auto p : vp) { order.emplace(order.begin() + p.first, p.second); }
+  for (auto p : vp) {
+    order.emplace(order.begin() + p.first, p.second);
+  }
   return a.transpose(order);
 }
 

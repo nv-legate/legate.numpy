@@ -33,7 +33,9 @@ static int get_rank(Domain domain, DomainPoint index_point)
   auto hi          = domain.hi();
   auto lo          = domain.lo();
   for (int i = 0; i < domain.get_dim(); ++i) {
-    if (i > 0) domain_index *= hi[i] - lo[i] + 1;
+    if (i > 0) {
+      domain_index *= hi[i] - lo[i] + 1;
+    }
     domain_index += index_point[i];
   }
   return domain_index;
@@ -62,7 +64,9 @@ struct SortImpl {
     // we shall not return on empty rectangle in case of distributed sort data
     // as the process needs to participate in collective communication
     // to identify rank-index to sort participant mapping
-    if ((segment_size_l == args.segment_size_g || !args.is_index_space) && rect.empty()) return;
+    if ((segment_size_l == args.segment_size_g || !args.is_index_space) && rect.empty()) {
+      return;
+    }
 
     SortImplBody<KIND, CODE, DIM>()(args.input,
                                     args.output,

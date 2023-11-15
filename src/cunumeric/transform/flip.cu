@@ -34,10 +34,14 @@ static __global__ void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM)
               const uint32_t num_axes)
 {
   const size_t idx = global_tid_1d();
-  if (idx >= volume) return;
+  if (idx >= volume) {
+    return;
+  }
   auto p = pitches.unflatten(idx, rect.lo);
   auto q = p;
-  for (uint32_t idx = 0; idx < num_axes; ++idx) q[axes[idx]] = rect.hi[axes[idx]] - q[axes[idx]];
+  for (uint32_t idx = 0; idx < num_axes; ++idx) {
+    q[axes[idx]] = rect.hi[axes[idx]] - q[axes[idx]];
+  }
   out[p] = in[q];
 }
 
@@ -56,7 +60,9 @@ struct FlipImplBody<VariantKind::GPU, CODE, DIM> {
     const size_t blocks = (volume + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
     auto num_axes       = axes.size();
     auto gpu_axes       = create_buffer<int32_t>(num_axes, Memory::Kind::Z_COPY_MEM);
-    for (uint32_t idx = 0; idx < num_axes; ++idx) gpu_axes[idx] = axes[idx];
+    for (uint32_t idx = 0; idx < num_axes; ++idx) {
+      gpu_axes[idx] = axes[idx];
+    }
     auto stream = get_cached_stream();
     flip_kernel<<<blocks, THREADS_PER_BLOCK, 0, stream>>>(
       volume, out, in, pitches, rect, gpu_axes, num_axes);

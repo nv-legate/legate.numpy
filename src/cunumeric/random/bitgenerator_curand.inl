@@ -1321,9 +1321,10 @@ struct generator_map {
       if (m_generators.find(generatorID) != m_generators.end()) {
         cugenptr = m_generators[generatorID];
         m_generators.erase(generatorID);
-      } else
+      } else {
         // in some cases, destroy is forced, but processor never created the instance
         return;
+      }
     }
 
     CURANDGeneratorBuilder<kind>::destroy(cugenptr);
@@ -1380,7 +1381,9 @@ struct BitGeneratorImplBody {
       }
       case BitGeneratorOperation::RAND_RAW: {
         // allow for lazy initialization
-        if (!genmap.has(generatorID)) genmap.create(generatorID, generatorType, seed, flags);
+        if (!genmap.has(generatorID)) {
+          genmap.create(generatorID, generatorType, seed, flags);
+        }
         // get the generator
         CURANDGenerator* genptr = genmap.get(generatorID);
         if (output.size() != 0) {
@@ -1392,7 +1395,9 @@ struct BitGeneratorImplBody {
       }
       case BitGeneratorOperation::DISTRIBUTION: {
         // allow for lazy initialization
-        if (!genmap.has(generatorID)) genmap.create(generatorID, generatorType, seed, flags);
+        if (!genmap.has(generatorID)) {
+          genmap.create(generatorID, generatorType, seed, flags);
+        }
         // get the generator
         CURANDGenerator* genptr = genmap.get(generatorID);
         if (output.size() != 0) {

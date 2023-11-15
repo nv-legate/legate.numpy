@@ -44,7 +44,9 @@ struct ArgWhereImplBody<VariantKind::CPU, CODE, DIM> {
       auto in_p = pitches.unflatten(idx, rect.lo);
 
       if (input[in_p] != VAL(0)) {
-        for (int i = 0; i < DIM; ++i) { out[Point<2>(out_idx, i)] = in_p[i]; }
+        for (int i = 0; i < DIM; ++i) {
+          out[Point<2>(out_idx, i)] = in_p[i];
+        }
         out_idx++;
       }
     }

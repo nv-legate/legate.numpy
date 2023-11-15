@@ -34,7 +34,9 @@ static __global__ void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM)
                  uint32_t axis)
 {
   const size_t idx = global_tid_1d();
-  if (idx >= volume) return;
+  if (idx >= volume) {
+    return;
+  }
   auto out_p = pitches.unflatten(idx, lo);
   out[out_p] = pack(in, out_p, in_hi_axis, axis);
 }

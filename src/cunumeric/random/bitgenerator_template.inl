@@ -69,11 +69,15 @@ static void bitgenerator_template(TaskContext& context)
   switch (bitgen_op) {
     case BitGeneratorOperation::DESTROY:  // gather same parameters as CREATE
     case BitGeneratorOperation::CREATE: {
-      if (scalars.size() > 5) todestroy = scalars[5].values<int32_t>();
+      if (scalars.size() > 5) {
+        todestroy = scalars[5].values<int32_t>();
+      }
       break;
     }
     case BitGeneratorOperation::RAND_RAW: {
-      if (scalars.size() > 5) strides = scalars[5].value<DomainPoint>();
+      if (scalars.size() > 5) {
+        strides = scalars[5].value<DomainPoint>();
+      }
       break;
     }
     case BitGeneratorOperation::DISTRIBUTION: {
@@ -94,10 +98,14 @@ static void bitgenerator_template(TaskContext& context)
   }
 
   std::vector<PhysicalStore> extra_args;
-  for (auto& input : inputs) extra_args.push_back(std::move(input));
+  for (auto& input : inputs) {
+    extra_args.push_back(std::move(input));
+  }
 
   std::vector<PhysicalStore> optional_output;
-  for (auto& output : outputs) optional_output.push_back(std::move(output));
+  for (auto& output : outputs) {
+    optional_output.push_back(std::move(output));
+  }
 
   // destroy ?
   for (auto& idx : todestroy) {

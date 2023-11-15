@@ -41,8 +41,11 @@ struct WrapImplBody<VariantKind::OMP, DIM> {
       auto outptr = out.ptr(rect_out);
 #pragma omp parallel for schedule(static)
       for (int64_t i = start; i <= end; i++) {
-        if (check_bounds)
-          if (check_idx_omp(i, volume_base, indices)) is_out_of_bounds = true;
+        if (check_bounds) {
+          if (check_idx_omp(i, volume_base, indices)) {
+            is_out_of_bounds = true;
+          }
+        }
         const int64_t input_idx = compute_idx(i, volume_base, indices);
         auto point              = pitches_base.unflatten(input_idx, rect_base.lo);
         outptr[i - start]       = point;
@@ -50,15 +53,20 @@ struct WrapImplBody<VariantKind::OMP, DIM> {
     } else {
 #pragma omp parallel for schedule(static)
       for (int64_t i = start; i <= end; i++) {
-        if (check_bounds)
-          if (check_idx_omp(i, volume_base, indices)) is_out_of_bounds = true;
+        if (check_bounds) {
+          if (check_idx_omp(i, volume_base, indices)) {
+            is_out_of_bounds = true;
+          }
+        }
         const int64_t input_idx = compute_idx(i, volume_base, indices);
         auto point              = pitches_base.unflatten(input_idx, rect_base.lo);
         out[i]                  = point;
       }
     }  // else
 
-    if (is_out_of_bounds) throw legate::TaskException("index is out of bounds in index array");
+    if (is_out_of_bounds) {
+      throw legate::TaskException("index is out of bounds in index array");
+    }
   }
 };
 

@@ -26,7 +26,9 @@ std::vector<size_t> broadcast_shapes(std::vector<NDArray> arrays)
   assert(!arrays.empty());
 #endif
   int32_t dim = 0;
-  for (auto& array : arrays) dim = std::max(dim, array.dim());
+  for (auto& array : arrays) {
+    dim = std::max(dim, array.dim());
+  }
 
   std::vector<size_t> result(dim, 1);
 
@@ -36,10 +38,11 @@ std::vector<size_t> broadcast_shapes(std::vector<NDArray> arrays)
     auto in_it  = shape.rbegin();
     auto out_it = result.rbegin();
     for (; in_it != shape.rend() && out_it != result.rend(); ++in_it, ++out_it) {
-      if (1 == *out_it)
+      if (1 == *out_it) {
         *out_it = *in_it;
-      else if (*in_it != 1 && *out_it != *in_it)
+      } else if (*in_it != 1 && *out_it != *in_it) {
         throw std::exception();
+      }
     }
   }
   return result;

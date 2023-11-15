@@ -37,7 +37,9 @@ struct ZipImpl {
     auto out      = args.out.write_accessor<Point<N>, DIM>(out_rect);
     Pitches<DIM - 1> pitches;
     size_t volume = pitches.flatten(out_rect);
-    if (volume == 0) return;
+    if (volume == 0) {
+      return;
+    }
 
 #if !LegateDefined(LEGATE_BOUNDS_CHECKS)
     bool dense = out.accessor.is_dense_row_major(out_rect);
@@ -93,11 +95,15 @@ static void zip_template(TaskContext& context)
   int64_t start_index = context.scalar(2).value<int64_t>();
   auto shape          = context.scalar(3).value<DomainPoint>();
   std::vector<legate::PhysicalStore> inputs;
-  for (auto& input : context.inputs()) { inputs.emplace_back(input); }
+  for (auto& input : context.inputs()) {
+    inputs.emplace_back(input);
+  }
   ZipArgs args{context.output(0), std::move(inputs), N, key_dim, start_index, shape};
   int dim = args.inputs[0].dim();
   // if scalar passed as an input, convert it to the array size 1
-  if (dim == 0) { dim = 1; }
+  if (dim == 0) {
+    dim = 1;
+  }
 
   double_dispatch(dim, N, ZipImpl<KIND>{}, args);
 }

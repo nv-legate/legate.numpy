@@ -64,10 +64,11 @@ struct ConvertOp<ConvertCode::NOOP, DST_TYPE, SRC_TYPE> {
                              !legate::is_complex_type<DST>::value>* = nullptr>
   constexpr DST operator()(const _SRC& src) const
   {
-    if constexpr (DST_TYPE == legate::Type::Code::BOOL)
+    if constexpr (DST_TYPE == legate::Type::Code::BOOL) {
       return static_cast<DST>(src.real()) || static_cast<DST>(src.imag());
-    else
+    } else {
       return static_cast<DST>(src.real());
+    }
     // Unreachable
     assert(false);
     return DST{};

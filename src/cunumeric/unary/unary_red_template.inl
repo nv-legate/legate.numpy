@@ -44,7 +44,9 @@ struct UnaryRedImpl {
     auto rect   = args.rhs.shape<DIM>();
     auto volume = pitches.flatten(rect);
 
-    if (volume == 0) return;
+    if (volume == 0) {
+      return;
+    }
 
     auto rhs = args.rhs.read_accessor<RHS, DIM>(rect);
 

@@ -39,14 +39,19 @@ struct NonzeroImplBody<VariantKind::CPU, CODE, DIM> {
     }
 
     std::vector<Buffer<int64_t>> results;
-    for (auto& output : outputs)
+    for (auto& output : outputs) {
       results.push_back(output.create_output_buffer<int64_t, 1>(Point<1>(size), true));
+    }
 
     int64_t out_idx = 0;
     for (size_t idx = 0; idx < volume; ++idx) {
       auto point = pitches.unflatten(idx, rect.lo);
-      if (in[point] == VAL(0)) continue;
-      for (int32_t dim = 0; dim < DIM; ++dim) results[dim][out_idx] = point[dim];
+      if (in[point] == VAL(0)) {
+        continue;
+      }
+      for (int32_t dim = 0; dim < DIM; ++dim) {
+        results[dim][out_idx] = point[dim];
+      }
       ++out_idx;
     }
     assert(size == out_idx);

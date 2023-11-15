@@ -33,7 +33,9 @@ static __global__ void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM)
   lazy_kernel(RES* out, RES* sum_val)
 {
   const size_t idx = blockIdx.x * blockDim.x + threadIdx.x;
-  if (idx >= 1) return;
+  if (idx >= 1) {
+    return;
+  }
   sum_val[0] = out[0];
 }
 
