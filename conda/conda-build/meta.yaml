@@ -147,7 +147,6 @@ requirements:
 
   run_constrained:
     - __glibc >=2.17  # [linux]
-    - python != 3.9.7
 {% if gpu_enabled_bool %}
     - __cuda >={{ cuda_version }}
 {% endif %}

@@ -7,7 +7,7 @@ cd $(dirname "$(realpath "$0")")/..
 mkdir -p /tmp/conda-build/cunumeric
 rm -rf /tmp/conda-build/cunumeric/*
 
-PYTHON_VERSION="${PYTHON_VERSION:-3.9}"
+PYTHON_VERSION="${PYTHON_VERSION:-3.10}"
 
 CUDA="$(nvcc --version | head -n4 | tail -n1 | cut -d' ' -f5 | cut -d',' -f1).*" \
 conda mambabuild \
