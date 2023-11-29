@@ -55,10 +55,10 @@ NDArray unique(NDArray input);
 
 NDArray swapaxes(NDArray input, int32_t axis1, int32_t axis2);
 
-NDArray arange(std::optional<double> start = 0,
-               std::optional<double> stop  = std::nullopt,
-               std::optional<double> step  = 1,
-               const legate::Type& type    = legate::float64());
+template <typename T>
+NDArray arange(T start, std::optional<T> stop = std::nullopt, T step = 1);
+
+NDArray arange(Scalar start, Scalar stop = legate::Scalar{}, Scalar step = legate::Scalar{});
 
 NDArray as_array(legate::LogicalStore store);
 
@@ -105,3 +105,4 @@ std::vector<int32_t> normalize_axis_vector(std::vector<int32_t> axis,
                                            bool allow_duplicate = false);
 
 }  // namespace cunumeric
+#include "cunumeric/operators.inl"

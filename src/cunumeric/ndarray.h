@@ -77,7 +77,7 @@ class NDArray {
   void eye(int32_t k);
   void trilu(NDArray rhs, int32_t k, bool lower);
   void dot(NDArray rhs1, NDArray rhs2);
-  void arange(double start, double stop, double step);
+  void arange(Scalar start, Scalar stop, Scalar step);
   std::vector<NDArray> nonzero();
   NDArray unique();
   NDArray swapaxes(int32_t axis1, int32_t axis2);

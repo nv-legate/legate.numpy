@@ -15,6 +15,7 @@
  */
 
 #include "cunumeric/ndarray.h"
+#include <stdexcept>
 
 #include "cunumeric/binary/binary_op_util.h"
 #include "cunumeric/operators.h"
@@ -468,13 +469,16 @@ void NDArray::dot(NDArray rhs1, NDArray rhs2)
   runtime->submit(std::move(task));
 }
 
-void NDArray::arange(double start, double stop, double step)
+void NDArray::arange(Scalar start, Scalar stop, Scalar step)
 {
   if (size() == 0) {
     return;
   }
 
   auto runtime = CuNumericRuntime::get_runtime();
+
+  if (start.type() != type() || stop.type() != type() || step.type() != type())
+    throw std::invalid_argument("start/stop/step should have the same type as the array");
 
   assert(dim() == 1);
 
@@ -484,8 +488,8 @@ void NDArray::arange(double start, double stop, double step)
 
   task.add_output(store_);
 
-  task.add_scalar_arg(Scalar(start));
-  task.add_scalar_arg(Scalar(step));
+  task.add_scalar_arg(start);
+  task.add_scalar_arg(step);
 
   runtime->submit(std::move(task));
 }

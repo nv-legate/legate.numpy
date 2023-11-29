@@ -89,6 +89,34 @@ struct generate_zero_fn {
   }
 };
 
+struct generate_arange_shape_fn {
+  template <legate::Type::Code CODE,
+            std::enable_if_t<legate::is_integral<CODE>::value ||
+                             legate::is_floating_point<CODE>::value>* = nullptr>
+  size_t operator()(Scalar& start, Scalar& stop, Scalar& step)
+  {
+    using VAL = legate::type_of<CODE>;
+    if (stop.type().code() == legate::Type::Code::NIL) {
+      stop  = start;
+      start = legate::Scalar(VAL(0));
+    }
+
+    if (step.type().code() == legate::Type::Code::NIL) {
+      step = legate::Scalar(VAL(1));
+    }
+
+    return static_cast<size_t>(ceil((stop.value<VAL>() - start.value<VAL>()) / step.value<VAL>()));
+  }
+
+  template <legate::Type::Code CODE,
+            std::enable_if_t<!(legate::is_integral<CODE>::value ||
+                               legate::is_floating_point<CODE>::value)>* = nullptr>
+  size_t operator()(Scalar& start, Scalar& stop, Scalar& step)
+  {
+    throw std::invalid_argument("arange input should be integer or real");
+  }
+};
+
 struct generate_int_value_fn {
   template <legate::Type::Code CODE, std::enable_if_t<legate::is_integral<CODE>::value>* = nullptr>
   int operator()(NDArray& array)
@@ -256,19 +284,17 @@ NDArray swapaxes(NDArray input, int32_t axis1, int32_t axis2)
   return input.swapaxes(axis1, axis2);
 }
 
-NDArray arange(std::optional<double> start,
-               std::optional<double> stop,
-               std::optional<double> step,
-               const legate::Type& type)
+NDArray arange(Scalar start, Scalar stop, Scalar step)
 {
-  if (!stop.has_value()) {
-    stop  = start;
-    start = 0;
+  size_t N =
+    legate::type_dispatch(start.type().code(), generate_arange_shape_fn{}, start, stop, step);
+
+  if (start.type() != stop.type() || start.type() != step.type()) {
+    throw std::invalid_argument("start/stop/step should be of the same type");
   }
 
-  size_t N = ceil((stop.value() - start.value()) / step.value());
-  auto out = CuNumericRuntime::get_runtime()->create_array({N}, type);
-  out.arange(start.value(), stop.value(), step.value());
+  auto out = CuNumericRuntime::get_runtime()->create_array({N}, start.type());
+  out.arange(start, stop, step);
   return out;
 }
 
