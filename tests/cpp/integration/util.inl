@@ -15,247 +15,119 @@
  */
 
 namespace {
-template <typename T>
-std::string to_string_1d(legate::AccessorRO<T, 1> acc, const std::vector<size_t>& shape)
+template <typename T, int32_t DIM>
+std::string to_string(legate::AccessorRO<T, DIM> acc,
+                      const std::vector<size_t>& shape,
+                      legate::Rect<DIM> rect)
 {
   std::stringstream ss;
+  auto size = static_cast<int32_t>(shape.size());
 
-  ss << "[";
-  for (auto i = 0; i < shape[0]; ++i) {
-    if (i > 0) {
-      ss << ", ";
-    }
-    ss << std::setw(9) << std::setprecision(6) << acc[i];
-  }
-  ss << "]";
-
-  return ss.str();
-}
-
-template <typename T>
-std::string to_string_2d(legate::AccessorRO<T, 2> acc, const std::vector<size_t>& shape)
-{
-  std::stringstream ss;
-
-  ss << "[";
-  for (auto i = 0; i < shape[0]; ++i) {
-    if (i > 0) {
-      ss << ",\n ";
-    }
-    ss << "[";
-    for (auto j = 0; j < shape[1]; ++j) {
-      if (j > 0) {
-        ss << ", ";
-      }
-      ss << std::setw(9) << std::setprecision(3) << acc[i][j];
-    }
-    ss << "]";
+  auto count = 0;
+  auto pro   = 1;
+  std::vector<size_t> item_count;
+  for (int32_t i = size - 1; i >= 0; --i) {
+    pro *= shape[i];
+    item_count.push_back(pro);
   }
 
-  return ss.str();
-}
-
-template <typename T>
-std::string to_string_3d(legate::AccessorRO<T, 3> acc, const std::vector<size_t>& shape)
-{
-  std::stringstream ss;
-
-  ss << "[";
-  for (auto k = 0; k < shape[0]; ++k) {
-    if (k > 0) {
-      ss << ",\n ";
-    }
-    ss << "[";
-    for (auto i = 0; i < shape[1]; ++i) {
-      if (i > 0) {
-        ss << ",\n ";
+  auto print_brackets_in_start_end = [&](bool start) {
+    if (start) {
+      for (int32_t i = 0; i < size; ++i) {
+        ss << "[";
       }
-      ss << "[";
-      for (auto j = 0; j < shape[2]; ++j) {
-        if (j > 0) {
-          ss << ", ";
+    } else {
+      for (int32_t i = 0; i < size; ++i) {
+        ss << "]";
+      }
+    }
+  };
+
+  auto print_brackets_in_middle = [&]() -> bool {
+    for (int32_t i = size - 1; i >= 0; --i) {
+      if ((count % item_count[i]) == 0) {
+        for (int32_t j = i; j >= 0; --j) {
+          ss << "]";
         }
-        ss << std::setw(9) << std::setprecision(3) << acc[k][i][j];
-      }
-      ss << "]";
-    }
-    ss << "]";
-  }
-  ss << "]";
-
-  return ss.str();
-}
-
-template <typename T>
-std::string check_array_eq_1d(legate::AccessorRO<T, 1> acc,
-                              T* values_ptr,
-                              const std::vector<size_t>& shape)
-{
-  std::stringstream ss;
-
-  ss << "[";
-  for (auto i = 0; i < shape[0]; ++i) {
-    if (i > 0) {
-      ss << ", ";
-    }
-    ss << std::setw(9) << std::setprecision(6) << acc[i];
-    EXPECT_EQ(acc[i], values_ptr[i]);
-  }
-  ss << "]";
-
-  return ss.str();
-}
-
-template <typename T>
-std::string check_array_eq_2d(legate::AccessorRO<T, 2> acc,
-                              T* values_ptr,
-                              const std::vector<size_t>& shape)
-{
-  std::stringstream ss;
-
-  ss << "[";
-  for (auto i = 0; i < shape[0]; ++i) {
-    if (i > 0) {
-      ss << ",\n ";
-    }
-    ss << "[";
-    for (auto j = 0; j < shape[1]; ++j) {
-      if (j > 0) {
-        ss << ", ";
-      }
-      ss << std::setw(9) << std::setprecision(3) << acc[i][j];
-      EXPECT_EQ(acc[i][j], values_ptr[i * shape[1] + j]);
-    }
-    ss << "]";
-  }
-  ss << "]";
-
-  return ss.str();
-}
-
-template <typename T>
-std::string check_array_eq_3d(legate::AccessorRO<T, 3> acc,
-                              T* values_ptr,
-                              const std::vector<size_t>& shape)
-{
-  std::stringstream ss;
-
-  ss << "[";
-  for (auto k = 0; k < shape[0]; ++k) {
-    if (k > 0) {
-      ss << ",\n ";
-    }
-    ss << "[";
-    for (auto i = 0; i < shape[1]; ++i) {
-      if (i > 0) {
-        ss << ",\n ";
-      }
-      ss << "[";
-      for (auto j = 0; j < shape[2]; ++j) {
-        if (j > 0) {
-          ss << ", ";
+        ss << ",\n";
+        for (int32_t j = i; j >= 0; --j) {
+          ss << "[";
         }
-        ss << std::setw(9) << std::setprecision(3) << acc[k][i][j];
-        EXPECT_EQ(acc[k][i][j], values_ptr[k * shape[1] * shape[2] + i * shape[2] + j]);
+        return true;
       }
-      ss << "]";
     }
-    ss << "]";
+    return false;
+  };
+
+  print_brackets_in_start_end(true);
+  for (legate::PointInRectIterator<DIM> itr(rect, false); itr.valid(); ++itr) {
+    if (count > 0) {
+      if (!print_brackets_in_middle()) {
+        ss << ",";
+      }
+    }
+    ss << std::setw(9) << std::setprecision(3) << acc[*itr];
+    count += 1;
   }
-  ss << "]";
+  print_brackets_in_start_end(false);
 
   return ss.str();
 }
 
 template <typename T, int32_t DIM>
-struct print_fn;
+std::string check_array_eq(legate::AccessorRO<T, DIM> acc,
+                           T* values_ptr,
+                           const std::vector<size_t>& shape,
+                           legate::Rect<DIM> rect)
+{
+  std::stringstream ss;
 
-template <typename T>
-struct print_fn<T, 1> {
-  void operator()(legate::AccessorRO<T, 1> acc, const std::vector<size_t>& shape)
-  {
-    std::cerr << to_string_1d<T>(acc, shape) << std::endl;
+  auto index = 0;
+  auto size  = shape.size();
+  for (legate::PointInRectIterator<DIM> itr(rect, false); itr.valid(); ++itr) {
+    auto q = *itr;
+    ss << std::left << std::setprecision(3);
+    ss << std::setw(13) << "Array value: " << std::setw(10) << acc[q] << ", ";
+    ss << std::setw(16) << "Expected value: " << std::setw(10) << values_ptr[index] << ", ";
+    ss << std::setw(8) << "index: [";
+    for (uint32_t i = 0; i < size - 1; ++i) {
+      ss << q[i] << ",";
+    }
+    ss << q[size - 1] << "]\n";
+    EXPECT_EQ(acc[q], values_ptr[index++]);
   }
-};
 
-template <typename T>
-struct print_fn<T, 2> {
-  void operator()(legate::AccessorRO<T, 2> acc, const std::vector<size_t>& shape)
-  {
-    std::cerr << to_string_2d<T>(acc, shape) << std::endl;
-  }
-};
+  return ss.str();
+}
 
-template <typename T>
-struct print_fn<T, 3> {
-  void operator()(legate::AccessorRO<T, 3> acc, const std::vector<size_t>& shape)
+template <typename T, int32_t DIM>
+struct print_fn {
+  void operator()(legate::AccessorRO<T, DIM> acc,
+                  const std::vector<size_t>& shape,
+                  legate::Rect<DIM> rect)
   {
-    std::cerr << to_string_3d<T>(acc, shape) << std::endl;
+    std::cerr << to_string<T, DIM>(acc, shape, rect) << std::endl;
   }
 };
 
 template <typename T, int32_t DIM>
-struct check_array_eq_fn;
-
-template <typename T>
-struct check_array_eq_fn<T, 1> {
-  void operator()(legate::AccessorRO<T, 1> acc, T* values_ptr, const std::vector<size_t>& shape)
+struct check_array_eq_fn {
+  void operator()(legate::AccessorRO<T, DIM> acc,
+                  T* values_ptr,
+                  const std::vector<size_t>& shape,
+                  legate::Rect<DIM> rect)
   {
-    std::cerr << check_array_eq_1d<T>(acc, values_ptr, shape) << std::endl;
-  }
-};
-
-template <typename T>
-struct check_array_eq_fn<T, 2> {
-  void operator()(legate::AccessorRO<T, 2> acc, T* values_ptr, const std::vector<size_t>& shape)
-  {
-    std::cerr << check_array_eq_2d<T>(acc, values_ptr, shape) << std::endl;
-  }
-};
-
-template <typename T>
-struct check_array_eq_fn<T, 3> {
-  void operator()(legate::AccessorRO<T, 3> acc, T* values_ptr, const std::vector<size_t>& shape)
-  {
-    std::cerr << check_array_eq_3d<T>(acc, values_ptr, shape) << std::endl;
+    std::cerr << check_array_eq<T, DIM>(acc, values_ptr, shape, rect) << std::endl;
   }
 };
 
 template <typename T, int32_t DIM>
-struct assign_array_fn;
-
-template <typename T>
-struct assign_array_fn<T, 1> {
-  void operator()(legate::AccessorWO<T, 1> acc, T* values_ptr, const std::vector<size_t>& shape)
+struct assign_array_fn {
+  void operator()(legate::AccessorWO<T, DIM> acc, T* values_ptr, legate::Rect<DIM> rect)
   {
-    for (auto i = 0; i < shape[0]; ++i) {
-      acc[i] = values_ptr[i];
-    }
-  }
-};
-
-template <typename T>
-struct assign_array_fn<T, 2> {
-  void operator()(legate::AccessorWO<T, 2> acc, T* values_ptr, const std::vector<size_t>& shape)
-  {
-    for (auto i = 0; i < shape[0]; ++i) {
-      for (auto j = 0; j < shape[1]; ++j) {
-        acc[i][j] = values_ptr[i * shape[1] + j];
-      }
-    }
-  }
-};
-
-template <typename T>
-struct assign_array_fn<T, 3> {
-  void operator()(legate::AccessorWO<T, 3> acc, T* values_ptr, const std::vector<size_t>& shape)
-  {
-    for (auto i = 0; i < shape[0]; ++i) {
-      for (auto j = 0; j < shape[1]; ++j) {
-        for (auto k = 0; k < shape[2]; ++k) {
-          acc[i][j][k] = values_ptr[i * shape[1] * shape[2] + j * shape[2] + k];
-        }
-      }
+    auto index = 0;
+    for (legate::PointInRectIterator<DIM> itr(rect, false); itr.valid(); ++itr) {
+      acc[*itr] = values_ptr[index++];
     }
   }
 };
@@ -263,26 +135,43 @@ struct assign_array_fn<T, 3> {
 template <typename T, int32_t DIM>
 void print_array(cunumeric::NDArray array)
 {
-  auto acc    = array.get_read_accessor<T, DIM>();
-  auto& shape = array.shape();
-  print_fn<T, DIM>()(acc, shape);
+  auto acc            = array.get_read_accessor<T, DIM>();
+  auto& shape         = array.shape();
+  auto logical_store  = array.get_store();
+  auto physical_store = logical_store.get_physical_store();
+  auto rect           = physical_store.shape<DIM>();
+  print_fn<T, DIM>()(acc, shape, rect);
 }
 
 template <typename T, int32_t DIM>
 void check_array_eq(cunumeric::NDArray array, T* values_ptr, size_t length)
 {
   assert(array.size() == length);
-  auto acc    = array.get_read_accessor<T, DIM>();
-  auto& shape = array.shape();
-  check_array_eq_fn<T, DIM>()(acc, values_ptr, shape);
+  if (length == 0) {
+    return;
+  }
+  assert(values_ptr != nullptr);
+  auto acc            = array.get_read_accessor<T, DIM>();
+  auto& shape         = array.shape();
+  auto logical_store  = array.get_store();
+  auto physical_store = logical_store.get_physical_store();
+  auto rect           = physical_store.shape<DIM>();
+  check_array_eq_fn<T, DIM>()(acc, values_ptr, shape, rect);
 }
 
 template <typename T, int32_t DIM>
 void assign_values_to_array(cunumeric::NDArray array, T* values_ptr, size_t length)
 {
   assert(array.size() == length);
-  auto acc    = array.get_write_accessor<T, DIM>();
-  auto& shape = array.shape();
-  assign_array_fn<T, DIM>()(acc, values_ptr, shape);
+  if (length == 0) {
+    return;
+  }
+  assert(values_ptr != nullptr);
+  auto acc            = array.get_write_accessor<T, DIM>();
+  auto logical_store  = array.get_store();
+  auto physical_store = logical_store.get_physical_store();
+  auto rect           = physical_store.shape<DIM>();
+  assign_array_fn<T, DIM>()(acc, values_ptr, rect);
 }
+
 }  // namespace
