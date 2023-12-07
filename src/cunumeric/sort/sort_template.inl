@@ -65,6 +65,9 @@ struct SortImpl {
     // as the process needs to participate in collective communication
     // to identify rank-index to sort participant mapping
     if ((segment_size_l == args.segment_size_g || !args.is_index_space) && rect.empty()) {
+      if (args.output.is_unbound_store()) {
+        args.output.bind_empty_data();
+      }
       return;
     }
 
