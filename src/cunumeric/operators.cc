@@ -381,6 +381,21 @@ NDArray argsort(NDArray input,
 
 NDArray msort(NDArray input) { return sort(input, 0); }
 
+NDArray sort_complex(NDArray input)
+{
+  auto result = sort(input);
+
+  auto type = result.type();
+  if (type == legate::complex64() || type == legate::complex128()) {
+    return result;
+  } else if (type == legate::int8() || type == legate::int16() || type == legate::uint8() ||
+             type == legate::uint16()) {
+    return result.as_type(legate::complex64());
+  } else {
+    return result.as_type(legate::complex128());
+  }
+}
+
 NDArray transpose(NDArray a) { return a.transpose(); }
 
 NDArray transpose(NDArray a, std::vector<int32_t> axes) { return a.transpose(axes); }

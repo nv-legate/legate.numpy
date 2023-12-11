@@ -95,6 +95,8 @@ NDArray argsort(NDArray input, std::optional<int32_t> axis = -1, std::string kin
 
 NDArray msort(NDArray input);
 
+NDArray sort_complex(NDArray input);
+
 NDArray transpose(NDArray a);
 
 NDArray transpose(NDArray a, std::vector<int32_t> axes);
