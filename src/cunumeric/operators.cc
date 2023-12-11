@@ -379,6 +379,8 @@ NDArray argsort(NDArray input,
   return result;
 }
 
+NDArray msort(NDArray input) { return sort(input, 0); }
+
 NDArray transpose(NDArray a) { return a.transpose(); }
 
 NDArray transpose(NDArray a, std::vector<int32_t> axes) { return a.transpose(axes); }
