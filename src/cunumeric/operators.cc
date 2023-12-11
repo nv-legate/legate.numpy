@@ -369,6 +369,16 @@ NDArray sort(NDArray input, std::optional<int32_t> axis /*=-1*/, std::string kin
   return result;
 }
 
+NDArray argsort(NDArray input,
+                std::optional<int32_t> axis /*=-1*/,
+                std::string kind /*="quicksort"*/)
+{
+  auto runtime = CuNumericRuntime::get_runtime();
+  auto result  = runtime->create_array(input.shape(), legate::int64());
+  result.sort(input, true, axis, kind);
+  return result;
+}
+
 NDArray transpose(NDArray a) { return a.transpose(); }
 
 NDArray transpose(NDArray a, std::vector<int32_t> axes) { return a.transpose(axes); }

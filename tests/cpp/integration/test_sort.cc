@@ -549,9 +549,9 @@ void sort_basic_axis()
   sort_basic_axis_impl<int32_t>(test_shapes, in_array1, expect_result1, legate::int32());
 
   // Test float type
-  std::array<double, 12> int_array2 = {1.5, 3.66, 6, 5.98, 2.2, 10.5, 8, 11, 7.9, 12, 9, 4};
-  auto expect_result2               = get_expect_result_double();
-  sort_basic_axis_impl<double>(test_shapes, int_array2, expect_result2, legate::float64());
+  std::array<double, 12> in_array2 = {1.5, 3.66, 6, 5.98, 2.2, 10.5, 8, 11, 7.9, 12, 9, 4};
+  auto expect_result2              = get_expect_result_double();
+  sort_basic_axis_impl<double>(test_shapes, in_array2, expect_result2, legate::float64());
 
   // Test complex type
   std::array<complex<float>, 12> in_array3 = {complex<float>(10, 3),
