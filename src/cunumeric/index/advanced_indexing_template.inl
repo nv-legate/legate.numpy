@@ -37,7 +37,7 @@ struct AdvancedIndexingImpl {
     using VAL       = type_of<CODE>;
     auto input_rect = args.input_array.shape<DIM>();
     auto input_arr  = args.input_array.read_accessor<VAL, DIM>(input_rect);
-    Pitches<DIM - 1> input_pitches;
+    Pitches<DIM - 1> input_pitches{};
     size_t volume = input_pitches.flatten(input_rect);
 
     auto index_rect = args.indexing_array.shape<DIM>();

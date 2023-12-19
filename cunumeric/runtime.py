@@ -99,14 +99,6 @@ class Runtime(object):
         task.execute()
         legate_runtime.issue_execution_fence(block=True)
 
-    def _unload_cudalibs(self) -> None:
-        task = legate_runtime.create_manual_task(
-            self.library,
-            CuNumericOpCode.UNLOAD_CUDALIBS,
-            [self.num_gpus],
-        )
-        task.execute()
-
     def get_argred_type(self, value_dtype: ty.Type) -> ty.Type:
         cached = self._cached_argred_types.get(value_dtype)
         if cached is not None:
@@ -144,8 +136,6 @@ class Runtime(object):
 
     def destroy(self) -> None:
         assert not self.destroyed
-        if self.num_gpus > 0:
-            self._unload_cudalibs()
         if settings.report_coverage():
             self._report_coverage()
         self.destroyed = True

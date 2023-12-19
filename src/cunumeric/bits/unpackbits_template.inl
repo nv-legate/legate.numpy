@@ -43,7 +43,7 @@ struct UnpackbitsImpl {
     auto out = output.write_accessor<uint8_t, DIM>(out_rect);
     auto in  = input.read_accessor<uint8_t, DIM>(in_rect);
 
-    Pitches<DIM - 1> in_pitches;
+    Pitches<DIM - 1> in_pitches{};
     auto in_volume = in_pitches.flatten(in_rect);
 
     UnpackbitsImplBody<KIND, DIM, BITORDER>{}(out, in, in_rect, in_pitches, in_volume, axis);

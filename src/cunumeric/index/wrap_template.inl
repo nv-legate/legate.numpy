@@ -54,10 +54,12 @@ struct WrapImpl {
     }
     Rect<DIM> rect_base(point_lo, point_hi);
 
-    Pitches<DIM - 1> pitches_base;
+    Pitches<DIM - 1> pitches_base{};
     size_t volume_base = pitches_base.flatten(rect_base);
 #ifdef DEBUG_CUNUMERIC
     assert(volume_base != 0);
+#else
+    static_cast<void>(volume_base);
 #endif
 
     if (args.has_input) {

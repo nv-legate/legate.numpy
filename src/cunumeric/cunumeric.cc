@@ -14,6 +14,7 @@
  *
  */
 
+#include "cunumeric/cunumeric_c.h"
 #include "cunumeric/cunumeric_task.h"
 #include "cunumeric/mapper.h"
 #include "cunumeric/runtime.h"
@@ -31,6 +32,22 @@ static const char* const cunumeric_library_name = "cunumeric";
   return registrar;
 }
 
+void unload_cudalibs() noexcept
+{
+  auto machine = legate::get_machine();
+
+  auto num_gpus = machine.count(legate::mapping::TaskTarget::GPU);
+  if (0 == num_gpus) {
+    return;
+  }
+
+  auto runtime = legate::Runtime::get_runtime();
+  auto library = runtime->find_library(cunumeric_library_name);
+
+  runtime->submit(runtime->create_task(
+    library, CuNumericOpCode::CUNUMERIC_UNLOAD_CUDALIBS, legate::Shape{num_gpus}));
+}
+
 void registration_callback()
 {
   ResourceConfig config;
@@ -43,6 +60,8 @@ void registration_callback()
 
   CuNumericRegistrar::get_registrar().register_all_tasks(library);
   CuNumericRuntime::initialize(runtime, library);
+
+  legate::register_shutdown_callback(unload_cudalibs);
 }
 
 }  // namespace cunumeric

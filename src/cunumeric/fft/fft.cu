@@ -49,7 +49,7 @@ __host__ static inline void copy_into_buffer(TYPE* target,
     CHECK_CUDA(cudaMemcpyAsync(
       target, acc.ptr(rect.lo), volume * sizeof(TYPE), cudaMemcpyDeviceToDevice, stream));
   } else {
-    Pitches<DIM - 1> pitches;
+    Pitches<DIM - 1> pitches{};
     pitches.flatten(rect);
 
     const size_t num_blocks = (volume + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;

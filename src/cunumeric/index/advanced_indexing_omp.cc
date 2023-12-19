@@ -65,10 +65,10 @@ struct AdvancedIndexingImplBody<VariantKind::OMP, CODE, DIM, OUT_TYPE> {
                   const AccessorRO<bool, DIM>& index,
                   const Pitches<DIM - 1>& pitches,
                   const Rect<DIM>& rect,
-                  const int key_dim) const
+                  const size_t key_dim) const
   {
     size_t skip_size = 1;
-    for (int i = key_dim; i < DIM; i++) {
+    for (size_t i = key_dim; i < DIM; i++) {
       auto diff = 1 + rect.hi[i] - rect.lo[i];
       if (diff != 0) {
         skip_size *= diff;
@@ -84,7 +84,7 @@ struct AdvancedIndexingImplBody<VariantKind::OMP, CODE, DIM, OUT_TYPE> {
     // calculating the shape of the output region for this sub-task
     Point<DIM> extents;
     extents[0] = size;
-    for (int32_t i = 0; i < DIM - key_dim; i++) {
+    for (size_t i = 0; i < DIM - key_dim; i++) {
       size_t j       = key_dim + i;
       extents[i + 1] = 1 + rect.hi[j] - rect.lo[j];
     }
@@ -104,11 +104,11 @@ struct AdvancedIndexingImplBody<VariantKind::OMP, CODE, DIM, OUT_TYPE> {
         if (index[p] == true) {
           Point<DIM> out_p;
           out_p[0] = out_idx;
-          for (int32_t i = 0; i < DIM - key_dim; i++) {
+          for (size_t i = 0; i < DIM - key_dim; i++) {
             size_t j     = key_dim + i;
             out_p[i + 1] = p[j];
           }
-          for (int32_t i = DIM - key_dim + 1; i < DIM; i++) {
+          for (size_t i = DIM - key_dim + 1; i < DIM; i++) {
             out_p[i] = 0;
           }
           fill_out(out[out_p], p, input[p]);

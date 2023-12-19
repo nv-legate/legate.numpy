@@ -60,7 +60,7 @@ struct PackbitsImpl {
     assert(unaligned_rect.union_bbox(aligned_rect) == out_rect);
 #endif
 
-    Pitches<DIM - 1> aligned_pitches, unaligned_pitches;
+    Pitches<DIM - 1> aligned_pitches{}, unaligned_pitches{};
     auto aligned_volume   = aligned_pitches.flatten(aligned_rect);
     auto unaligned_volume = unaligned_pitches.flatten(unaligned_rect);
 

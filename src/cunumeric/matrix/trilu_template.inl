@@ -43,7 +43,7 @@ struct TriluImpl {
     auto in  = args.input.read_accessor<VAL, DIM>(shape);
 
     if (out.accessor.is_dense_col_major(shape)) {
-      Pitches<DIM - 1, false /*C_ORDER*/> pitches;
+      Pitches<DIM - 1, false /*C_ORDER*/> pitches{};
       size_t volume = pitches.flatten(shape);
 
       if (args.lower) {
@@ -52,7 +52,7 @@ struct TriluImpl {
         TriluImplBody<KIND, CODE, DIM, false>()(out, in, pitches, shape.lo, volume, args.k);
       }
     } else {
-      Pitches<DIM - 1> pitches;
+      Pitches<DIM - 1> pitches{};
       size_t volume = pitches.flatten(shape);
 
       if (args.lower) {

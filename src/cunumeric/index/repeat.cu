@@ -113,7 +113,7 @@ struct RepeatImplBody<VariantKind::GPU, CODE, DIM> {
     auto out = out_array.create_output_buffer<VAL, DIM>(extents, true);
 
     Rect<DIM> out_rect(Point<DIM>::ZEROES(), extents - Point<DIM>::ONES());
-    Pitches<DIM - 1> pitches;
+    Pitches<DIM - 1> pitches{};
 
     auto out_volume   = pitches.flatten(out_rect);
     const auto blocks = (out_volume + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
@@ -132,7 +132,7 @@ struct RepeatImplBody<VariantKind::GPU, CODE, DIM> {
   {
     auto stream = get_cached_stream();
 
-    Pitches<DIM - 1> pitches;
+    Pitches<DIM - 1> pitches{};
     const auto volume = pitches.flatten(in_rect);
 
     // Compute offsets

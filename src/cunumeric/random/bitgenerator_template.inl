@@ -59,7 +59,7 @@ static void bitgenerator_template(TaskContext& context)
   auto seed          = scalars[3].value<uint64_t>();
   auto flags         = scalars[4].value<uint32_t>();
 
-  BitGeneratorDistribution distribution;
+  BitGeneratorDistribution distribution{};
   std::vector<int64_t> intparams;
   std::vector<float> floatparams;
   std::vector<double> doubleparams;
