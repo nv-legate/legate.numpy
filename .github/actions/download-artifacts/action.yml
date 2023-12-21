@@ -31,7 +31,7 @@ runs:
         search_artifacts: true
         commit: ${{ inputs.git_sha }}
         workflow_conclusion: success
-        workflow: "ci-gh-${{ inputs.device }}-build-and-test.yml"
+        workflow: "ci-gh.yml"
         name: "legate.core.internal-${{ inputs.device }}-release-gcc-[0-9a-z]{40}"
         name_is_regexp: true
 
@@ -40,9 +40,9 @@ runs:
       shell: bash --noprofile --norc -xeo pipefail {0}
       run: |
         mkdir -p .artifacts;
-        find .artifacts-dl/legate.core.internal-${{ inputs.device }}-release-gcc-*/ \
+        find .artifacts-dl/linux-legate.core.internal-${{ inputs.device }}-release-gcc-*/ \
           -maxdepth 2 -type d -name legate_core -exec mv {} .artifacts/ \;
-        find .artifacts-dl/legate.core.internal-${{ inputs.device }}-release-gcc-*/ \
+        find .artifacts-dl/linux-legate.core.internal-${{ inputs.device }}-release-gcc-*/ \
           -maxdepth 2 -type f -name "environment*.yaml" -exec mv {} .artifacts/ \;
 
     - name: Copy and change cache dir ownership
