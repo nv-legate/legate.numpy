@@ -381,13 +381,12 @@ class Runtime(object):
                 dtype,
                 array.shape,
                 array,
-                share,
+                not share,  # read_only
             )
             return DeferredArray(
                 self,
                 store,
                 numpy_array=array if share else None,
-                needs_detach=share,
             )
 
         # Make this into an eager evaluated thunk

@@ -238,7 +238,6 @@ class DeferredArray(NumPyThunk):
         runtime: Runtime,
         base: LogicalStore,
         numpy_array: Optional[npt.NDArray[Any]] = None,
-        needs_detach: bool = False,
     ) -> None:
         super().__init__(runtime, base.type.to_numpy_dtype())
         assert base is not None
@@ -247,11 +246,6 @@ class DeferredArray(NumPyThunk):
         self.numpy_array = (
             None if numpy_array is None else weakref.ref(numpy_array)
         )
-        self.needs_detach = needs_detach
-
-    def __del__(self) -> None:
-        if self.needs_detach:
-            self.base.detach()
 
     def __str__(self) -> str:
         return f"DeferredArray(base: {self.base})"
