@@ -39,7 +39,7 @@ jobs:
     runs-on: ${{ inputs.runs-on }}
 
     container:
-      options: -u root
+      options: -u root --security-opt seccomp=unconfined
       image: "${{ inputs.image }}"
       env:
         # CUDA_VERSION: "${{ inputs.CUDA }}"
@@ -59,7 +59,7 @@ jobs:
         run: |
           export DEBIAN_FRONTEND=noninteractive && \
             sudo apt-get update && \
-            sudo apt-get install -y numactl
+            sudo apt-get install -y numactl libhwloc15
 
       - name: Checkout ${{ inputs.repos-name }}
         uses: actions/checkout@v3

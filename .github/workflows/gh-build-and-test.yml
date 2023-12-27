@@ -20,7 +20,7 @@ jobs:
       device: ${{ inputs.device }}
       repos-name: ${{ inputs.repos-name }}
       image: ${{ inputs.image }}
-      runs-on: ${{ github.repository_owner == 'nv-legate' && 'linux-amd64-32cpu' || 'ubuntu-latest' }}
+      runs-on: ${{ github.repository_owner == 'nv-legate' && 'linux-amd64-cpu32' || 'ubuntu-latest' }}
     secrets: inherit
 
   test:
