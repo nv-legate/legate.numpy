@@ -6,7 +6,7 @@ inputs:
   device: {type: string, required: true}
   git_sha: {type: string, required: true}
   repos-name: {type: string, required: true}
-  workflow_token: {required: true}
+  inter_repos_ro_access_token: {required: true}
 
 
 runs:
@@ -24,7 +24,7 @@ runs:
       name: Download conda artifacts
       uses: dawidd6/action-download-artifact@v2
       with:
-        github_token: ${{ inputs.workflow_token }}
+        github_token: ${{ inputs.inter_repos_ro_access_token }}
         path: .artifacts-dl
         repo: nv-legate/legate.core.internal
         check_artifacts: true

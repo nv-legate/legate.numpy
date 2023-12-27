@@ -81,7 +81,7 @@ jobs:
           device: "${{ inputs.device }}"
           git_sha: "${{ steps.legate_core_info.outputs.git_tag }}"
           repos-name: "${{ inputs.repos-name }}"
-          workflow_token: ${{ secrets.workflow_token }}
+          inter_repos_ro_access_token: ${{ secrets.NV_LEGATE_INTER_REPOS_ACCESS_RO }}
 
       - if: github.repository_owner == 'nv-legate'
         name: Get AWS credentials for sccache bucket

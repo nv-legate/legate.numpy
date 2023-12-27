@@ -13,7 +13,7 @@ jobs:
     - name: Cunumeric Internal repository
       uses: actions/checkout@v3
       with:
-        token: ${{ secrets.WORKFLOW_TOKEN }}
+        token: ${{ secrets.NV_LEGATE_INTER_REPOS_ACCESS }}
 
     - name: Merge the branches
       run: |
