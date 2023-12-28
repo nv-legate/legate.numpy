@@ -477,8 +477,9 @@ void NDArray::arange(Scalar start, Scalar stop, Scalar step)
 
   auto runtime = CuNumericRuntime::get_runtime();
 
-  if (start.type() != type() || stop.type() != type() || step.type() != type())
+  if (start.type() != type() || stop.type() != type() || step.type() != type()) {
     throw std::invalid_argument("start/stop/step should have the same type as the array");
+  }
 
   assert(dim() == 1);
 
@@ -577,18 +578,7 @@ NDArray NDArray::as_type(const legate::Type& type)
     return out;
   }
 
-  assert(store_.type() != out.store_.type());
-
-  auto task = runtime->create_task(CuNumericOpCode::CUNUMERIC_CONVERT);
-
-  auto p_lhs = task.add_output(out.store_);
-  auto p_rhs = task.add_input(store_);
-  task.add_scalar_arg(legate::Scalar((int32_t)ConvertCode::NOOP));
-
-  task.add_constraint(align(p_lhs, p_rhs));
-
-  runtime->submit(std::move(task));
-
+  out.convert(*this);
   return out;
 }
 
@@ -656,6 +646,254 @@ NDArray NDArray::transpose(std::vector<int32_t> axes)
     throw std::invalid_argument("axes must be the same size as ndim for transpose");
   }
   return NDArray(store_.transpose(std::move(axes)));
+}
+
+NDArray NDArray::all(std::optional<std::vector<int32_t>> axis,
+                     std::optional<NDArray> out,
+                     std::optional<bool> keepdims,
+                     std::optional<Scalar> initial,
+                     std::optional<NDArray> where)
+{
+  return _perform_unary_reduction(static_cast<int32_t>(UnaryRedCode::ALL),
+                                  *this,
+                                  axis,
+                                  std::nullopt,
+                                  legate::bool_(),
+                                  out,
+                                  keepdims,
+                                  std::nullopt,
+                                  initial,
+                                  where);
+}
+
+NDArray NDArray::_perform_unary_reduction(int32_t op,
+                                          NDArray src,
+                                          std::optional<std::vector<int32_t>> axis,
+                                          std::optional<legate::Type> dtype,
+                                          std::optional<legate::Type> res_dtype,
+                                          std::optional<NDArray> out,
+                                          std::optional<bool> keepdims,
+                                          std::optional<std::vector<NDArray>> args,
+                                          std::optional<Scalar> initial,
+                                          std::optional<NDArray> where)
+{
+  if (res_dtype.has_value()) {
+    assert(!dtype.has_value());
+    dtype = src.type();
+  } else {
+    if (dtype.has_value()) {
+      res_dtype = dtype;
+    } else if (out.has_value()) {
+      dtype     = out.value().type();
+      res_dtype = out.value().type();
+    } else {
+      dtype     = src.type();
+      res_dtype = src.type();
+    }
+  }
+
+  if (src.type() == legate::complex64() || src.type() == legate::complex128()) {
+    auto ops = {UnaryRedCode::ARGMAX, UnaryRedCode::ARGMIN, UnaryRedCode::MAX, UnaryRedCode::MIN};
+    if (std::find(ops.begin(), ops.end(), static_cast<UnaryRedCode>(op)) != ops.end()) {
+      throw std::runtime_error("(arg)max/min not supported for complex-type arrays");
+    }
+  }
+
+  if (where.has_value()) {
+    if (where.value().type() != legate::bool_()) {
+      throw std::invalid_argument("where array should be bool");
+    }
+  }
+
+  std::vector<int32_t> axes;
+  if (!axis.has_value()) {
+    for (auto i = 0; i < src.dim(); ++i) {
+      axes.push_back(i);
+    }
+  } else {
+    axes = normalize_axis_vector(axis.value(), src.dim());
+  }
+
+  std::vector<size_t> out_shape;
+  for (auto i = 0; i < src.dim(); ++i) {
+    if (std::find(axes.begin(), axes.end(), i) == axes.end()) {
+      out_shape.push_back(src.shape()[i]);
+    } else if (keepdims.value_or(false)) {
+      out_shape.push_back(1);
+    }
+  }
+
+  auto runtime = CuNumericRuntime::get_runtime();
+  if (!out.has_value()) {
+    out = runtime->create_array(out_shape, res_dtype.value());
+  } else if (out.value().shape() != out_shape) {
+    std::string err_msg = "the output shapes do not match: expected" +
+                          std::string(out_shape.begin(), out_shape.end()) + "but got " +
+                          std::string(out.value().shape().begin(), out.value().shape().end());
+    throw std::invalid_argument(std::move(err_msg));
+  }
+
+  if (dtype.value() != src.type()) {
+    src = src.as_type(dtype.value());
+  }
+
+  NDArray result(out.value());
+  if (out.value().type() != res_dtype.value()) {
+    result = runtime->create_array(out_shape, res_dtype.value());
+  }
+
+  std::optional<NDArray> where_array = std::nullopt;
+  if (where.has_value()) {
+    where_array = broadcast_where(where.value(), src);
+  }
+
+  std::vector<UnaryRedCode> ops = {
+    UnaryRedCode::ARGMAX, UnaryRedCode::ARGMIN, UnaryRedCode::NANARGMAX, UnaryRedCode::NANARGMIN};
+  auto argred = std::find(ops.begin(), ops.end(), static_cast<UnaryRedCode>(op)) != ops.end();
+  if (argred) {
+    assert(!initial.has_value());
+    auto argred_dtype = runtime->get_argred_type(src.type());
+    result            = runtime->create_array(result.shape(), argred_dtype);
+  }
+
+  result.unary_reduction(op, src, where_array, axis, axes, keepdims, args, initial);
+
+  if (argred) {
+    unary_op(static_cast<int32_t>(UnaryOpCode::GETARG), result);
+  }
+
+  if (out.value().type() != result.type()) {
+    out.value().convert(result);
+  }
+  return out.value();
+}
+
+void NDArray::unary_reduction(int32_t op,
+                              NDArray src,
+                              std::optional<NDArray> where,
+                              std::optional<std::vector<int32_t>> orig_axis,
+                              std::optional<std::vector<int32_t>> axes,
+                              std::optional<bool> keepdims,
+                              std::optional<std::vector<NDArray>> args,
+                              std::optional<Scalar> initial)
+{
+  auto lhs_array = *this;
+  auto rhs_array = src;
+  assert(lhs_array.dim() <= rhs_array.dim());
+
+  auto runtime = CuNumericRuntime::get_runtime();
+  auto op_code = static_cast<UnaryRedCode>(op);
+
+  if (initial.has_value()) {
+    lhs_array.fill(initial.value(), false);
+  } else {
+    auto identity = runtime->get_reduction_identity(op_code, lhs_array.type());
+    lhs_array.fill(identity, false);
+  }
+
+  auto is_where    = where.has_value();
+  bool is_keepdims = keepdims.value_or(false);
+  if (lhs_array.size() == 1) {
+    assert(!axes.has_value() ||
+           lhs_array.dim() ==
+             (rhs_array.dim() - (is_keepdims ? 0 : static_cast<int32_t>(axes.value().size()))));
+
+    auto p_lhs = lhs_array.store_;
+    while (p_lhs.dim() > 1) {
+      p_lhs = p_lhs.project(0, 0);
+    }
+
+    auto task = runtime->create_task(CuNumericOpCode::CUNUMERIC_SCALAR_UNARY_RED);
+
+    auto redop = runtime->get_reduction_op(op_code);
+    task.add_reduction(p_lhs, redop);
+    auto p_rhs = task.add_input(rhs_array.store_);
+    task.add_scalar_arg(legate::Scalar(op));
+    task.add_scalar_arg(legate::Scalar(rhs_array.shape()));
+    task.add_scalar_arg(legate::Scalar(is_where));
+    if (is_where) {
+      auto p_where = task.add_input(where.value().store_);
+      task.add_constraint(align(p_rhs, p_where));
+    }
+    if (args.has_value()) {
+      auto arg_array = args.value();
+      for (auto& arg : arg_array) {
+        task.add_input(arg.store_);
+      }
+    }
+
+    runtime->submit(std::move(task));
+  } else {
+    assert(axes.has_value());
+    auto result = lhs_array.store_;
+    if (is_keepdims) {
+      for (auto axis : axes.value()) {
+        result = result.project(axis, 0);
+      }
+    }
+    auto rhs_shape = rhs_array.shape();
+    for (auto axis : axes.value()) {
+      result = result.promote(axis, rhs_shape[axis]);
+    }
+
+    if (axes.value().size() > 1) {
+      throw std::runtime_error("Need support for reducing multiple dimensions");
+    }
+
+    auto task = runtime->create_task(CuNumericOpCode::CUNUMERIC_UNARY_RED);
+
+    auto redop = runtime->get_reduction_op(op_code);
+    auto p_lhs = task.add_reduction(result, redop);
+    auto p_rhs = task.add_input(rhs_array.store_);
+    task.add_scalar_arg(legate::Scalar(axes.value()[0]));
+    task.add_scalar_arg(legate::Scalar(op));
+    task.add_scalar_arg(legate::Scalar(is_where));
+    if (is_where) {
+      auto p_where = task.add_input(where.value().store_);
+      task.add_constraint(align(p_rhs, p_where));
+    }
+    if (args != std::nullopt) {
+      auto arg_array = args.value();
+      for (auto& arg : arg_array) {
+        task.add_input(arg.store_);
+      }
+    }
+    task.add_constraint(align(p_lhs, p_rhs));
+
+    runtime->submit(std::move(task));
+  }
+}
+
+NDArray NDArray::broadcast_where(NDArray where, NDArray source)
+{
+  if (where.shape() == source.shape()) {
+    return where;
+  }
+
+  auto where_shape = broadcast_shapes({where, source});
+  auto where_store = broadcast(where_shape, where.store_);
+
+  auto runtime = CuNumericRuntime::get_runtime();
+  return runtime->create_array(std::move(where_store));
+}
+
+void NDArray::convert(NDArray rhs, int32_t nan_op)
+{
+  NDArray lhs_array(*this);
+  NDArray rhs_array(rhs);
+  assert(lhs_array.type() != rhs_array.type());
+
+  auto lhs_s = lhs_array.store_;
+  auto rhs_s = rhs_array.store_;
+
+  auto runtime = CuNumericRuntime::get_runtime();
+  auto task    = runtime->create_task(CuNumericOpCode::CUNUMERIC_CONVERT);
+  auto p_lhs   = task.add_output(lhs_s);
+  auto p_rhs   = task.add_input(rhs_s);
+  task.add_scalar_arg(legate::Scalar(nan_op));
+  task.add_constraint(legate::align(p_lhs, p_rhs));
+
+  runtime->submit(std::move(task));
 }
 
 legate::LogicalStore NDArray::get_store() { return store_; }

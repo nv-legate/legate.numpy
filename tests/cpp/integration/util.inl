@@ -84,16 +84,19 @@ std::string check_array_eq(legate::AccessorRO<T, DIM> acc,
 
   auto index = 0;
   auto size  = shape.size();
+  ss << "size: " << size << "\n";
   for (legate::PointInRectIterator<DIM> itr(rect, false); itr.valid(); ++itr) {
     auto q = *itr;
     ss << std::left << std::setprecision(3);
     ss << std::setw(13) << "Array value: " << std::setw(10) << acc[q] << ", ";
     ss << std::setw(16) << "Expected value: " << std::setw(10) << values_ptr[index] << ", ";
-    ss << std::setw(8) << "index: [";
-    for (uint32_t i = 0; i < size - 1; ++i) {
-      ss << q[i] << ",";
+    if (size > 0) {
+      ss << std::setw(8) << "index: [";
+      for (uint32_t i = 0; i < size - 1; ++i) {
+        ss << q[i] << ",";
+      }
+      ss << q[size - 1] << "]\n";
     }
-    ss << q[size - 1] << "]\n";
     EXPECT_EQ(acc[q], values_ptr[index++]);
   }
 

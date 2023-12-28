@@ -271,6 +271,15 @@ NDArray dot(NDArray rhs1, NDArray rhs2)
   return out;
 }
 
+NDArray all(NDArray input,
+            std::optional<std::vector<int32_t>> axis,
+            std::optional<NDArray> out,
+            std::optional<bool> keepdims,
+            std::optional<NDArray> where)
+{
+  return input.all(axis, out, keepdims, std::nullopt, where);
+}
+
 NDArray sum(NDArray input) { return unary_reduction(UnaryRedCode::SUM, std::move(input)); }
 
 NDArray amax(NDArray input) { return unary_reduction(UnaryRedCode::MAX, std::move(input)); }

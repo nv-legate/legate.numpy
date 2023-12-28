@@ -90,6 +90,11 @@ class NDArray {
             std::string kind            = "quicksort");
   NDArray transpose();
   NDArray transpose(std::vector<int32_t> axes);
+  NDArray all(std::optional<std::vector<int32_t>> axis = std::nullopt,
+              std::optional<NDArray> out               = std::nullopt,
+              std::optional<bool> keepdims             = std::nullopt,
+              std::optional<Scalar> initial            = std::nullopt,
+              std::optional<NDArray> where             = std::nullopt);
 
  public:
   NDArray as_type(const legate::Type& type);
@@ -101,6 +106,26 @@ class NDArray {
   legate::LogicalStore broadcast(NDArray rhs1, NDArray rhs2);
   void sort_task(NDArray rhs, bool argsort, bool stable);
   void sort_swapped(NDArray rhs, bool argsort, int32_t sort_axis, bool stable);
+  void convert(NDArray rhs, int32_t nan_op = 1);
+  void unary_reduction(int32_t op,
+                       NDArray src,
+                       std::optional<NDArray> where,
+                       std::optional<std::vector<int32_t>> orig_axis,
+                       std::optional<std::vector<int32_t>> axes,
+                       std::optional<bool> keepdims,
+                       std::optional<std::vector<NDArray>> args,
+                       std::optional<Scalar> initial);
+  NDArray broadcast_where(NDArray where, NDArray source);
+  NDArray _perform_unary_reduction(int32_t op,
+                                   NDArray src,
+                                   std::optional<std::vector<int32_t>> axis = std::nullopt,
+                                   std::optional<legate::Type> dtype        = std::nullopt,
+                                   std::optional<legate::Type> res_dtype    = std::nullopt,
+                                   std::optional<NDArray> out               = std::nullopt,
+                                   std::optional<bool> keepdims             = std::nullopt,
+                                   std::optional<std::vector<NDArray>> args = std::nullopt,
+                                   std::optional<Scalar> initial            = std::nullopt,
+                                   std::optional<NDArray> where             = std::nullopt);
 
  public:
   static legate::Library get_library();

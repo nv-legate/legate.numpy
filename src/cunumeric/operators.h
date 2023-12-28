@@ -45,6 +45,12 @@ NDArray zeros(std::vector<size_t> shape, std::optional<legate::Type> type = std:
 
 NDArray full(std::vector<size_t> shape, const Scalar& value);
 
+NDArray all(NDArray input,
+            std::optional<std::vector<int32_t>> axis = std::nullopt,
+            std::optional<NDArray> out               = std::nullopt,
+            std::optional<bool> keepdims             = std::nullopt,
+            std::optional<NDArray> where             = std::nullopt);
+
 NDArray sum(NDArray input);
 
 NDArray amax(NDArray input);
