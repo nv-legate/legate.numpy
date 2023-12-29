@@ -72,8 +72,8 @@ NDArray array_equal(NDArray input0, NDArray input1);
 
 std::vector<NDArray> nonzero(NDArray input);
 
-NDArray eye(size_t n,
-            std::optional<size_t> m,
+NDArray eye(int32_t n,
+            std::optional<int32_t> m = std::nullopt,
             int32_t k                = 0,
             const legate::Type& type = legate::float64());
 

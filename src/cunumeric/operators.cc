@@ -153,14 +153,19 @@ NDArray full(std::vector<size_t> shape, const Scalar& value)
   return out;
 }
 
-NDArray eye(size_t n, std::optional<size_t> m, int32_t k, const legate::Type& type)
+NDArray eye(int32_t n, std::optional<int32_t> m, int32_t k, const legate::Type& type)
 {
-  if (static_cast<int32_t>(type.code()) >= static_cast<int32_t>(legate::Type::Code::FIXED_ARRAY)) {
+  if (n < 0 || (m.has_value() && m.value() < 0)) {
+    throw std::invalid_argument("eye input n and m should not less then zero");
+  }
+
+  if (!type.is_primitive()) {
     throw std::invalid_argument("Type must be a primitive type");
   }
 
   auto runtime = CuNumericRuntime::get_runtime();
-  auto out     = runtime->create_array({n, m.value_or(n)}, type);
+  auto out =
+    runtime->create_array({static_cast<size_t>(n), static_cast<size_t>(m.value_or(n))}, type);
   out.eye(k);
   return out;
 }

@@ -204,9 +204,7 @@ void test_msort(std::array<T, SIZE>& in_array,
   }
 
   auto B1 = cunumeric::msort(A1);
-  // if (in_array.size() != 0) {
-  //   check_array_eq<T, DIM>(B1, expect.data(), expect.size());
-  // }
+  check_array_eq<T, DIM>(B1, expect.data(), expect.size());
 }
 
 template <typename T, int32_t SIZE>
