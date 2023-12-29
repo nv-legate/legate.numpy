@@ -469,4 +469,6 @@ NDArray moveaxis(NDArray a, std::vector<int32_t> source, std::vector<int32_t> de
   return a.transpose(order);
 }
 
+NDArray flip(NDArray input, std::optional<std::vector<int32_t>> axis) { return input.flip(axis); }
+
 }  // namespace cunumeric

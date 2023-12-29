@@ -90,6 +90,7 @@ class NDArray {
             std::string kind            = "quicksort");
   NDArray transpose();
   NDArray transpose(std::vector<int32_t> axes);
+  NDArray flip(std::optional<std::vector<int32_t>> axis = std::nullopt);
   NDArray all(std::optional<std::vector<int32_t>> axis = std::nullopt,
               std::optional<NDArray> out               = std::nullopt,
               std::optional<bool> keepdims             = std::nullopt,
@@ -126,6 +127,7 @@ class NDArray {
                                    std::optional<std::vector<NDArray>> args = std::nullopt,
                                    std::optional<Scalar> initial            = std::nullopt,
                                    std::optional<NDArray> where             = std::nullopt);
+  void flip(NDArray rhs, std::optional<std::vector<int32_t>> axis);
 
  public:
   static legate::Library get_library();

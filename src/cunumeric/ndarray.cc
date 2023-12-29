@@ -648,6 +648,41 @@ NDArray NDArray::transpose(std::vector<int32_t> axes)
   return NDArray(store_.transpose(std::move(axes)));
 }
 
+NDArray NDArray::flip(std::optional<std::vector<int32_t>> axis)
+{
+  auto runtime = CuNumericRuntime::get_runtime();
+  auto result  = runtime->create_array(shape(), type());
+
+  result.flip(*this, axis);
+
+  return result;
+}
+
+void NDArray::flip(NDArray rhs, std::optional<std::vector<int32_t>> axis)
+{
+  auto input  = rhs.store_;
+  auto output = (*this).store_;
+
+  std::vector<int32_t> axes;
+  if (!axis.has_value()) {
+    for (int32_t i = 0; i < dim(); ++i) {
+      axes.push_back(i);
+    }
+  } else {
+    axes = normalize_axis_vector(axis.value(), dim());
+  }
+
+  auto runtime = CuNumericRuntime::get_runtime();
+  auto task    = runtime->create_task(CuNumericOpCode::CUNUMERIC_FLIP);
+  auto p_out   = task.add_output(output);
+  auto p_in    = task.add_input(input);
+  task.add_scalar_arg(legate::Scalar(axes));
+  task.add_constraint(legate::broadcast(p_in, legate::from_range<int32_t>(dim())));
+  task.add_constraint(legate::align(p_in, p_out));
+
+  runtime->submit(std::move(task));
+}
+
 NDArray NDArray::all(std::optional<std::vector<int32_t>> axis,
                      std::optional<NDArray> out,
                      std::optional<bool> keepdims,

@@ -109,6 +109,8 @@ NDArray transpose(NDArray a, std::vector<int32_t> axes);
 
 NDArray moveaxis(NDArray a, std::vector<int32_t> source, std::vector<int32_t> destination);
 
+NDArray flip(NDArray input, std::optional<std::vector<int32_t>> axis = std::nullopt);
+
 // helper methods
 int32_t normalize_axis_index(int32_t axis, int32_t ndim);
 
