@@ -34,7 +34,9 @@ class CuNumericRuntime {
 
  public:
   NDArray create_array(const legate::Type& type);
-  NDArray create_array(std::vector<size_t> shape, const legate::Type& type);
+  NDArray create_array(std::vector<size_t> shape,
+                       const legate::Type& type,
+                       bool optimize_scalar = true);
   NDArray create_array(legate::LogicalStore&& store);
   legate::LogicalStore create_scalar_store(const Scalar& value);
 

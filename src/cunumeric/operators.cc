@@ -24,6 +24,10 @@
 
 namespace cunumeric {
 
+static legate::Logger log_cunumeric("cunumeric");
+
+legate::Logger& cunumeric_log() { return log_cunumeric; }
+
 NDArray array(std::vector<size_t> shape, const legate::Type& type)
 {
   return CuNumericRuntime::get_runtime()->create_array(std::move(shape), type);
@@ -470,5 +474,10 @@ NDArray moveaxis(NDArray a, std::vector<int32_t> source, std::vector<int32_t> de
 }
 
 NDArray flip(NDArray input, std::optional<std::vector<int32_t>> axis) { return input.flip(axis); }
+
+void put(NDArray& a, NDArray indices, NDArray values, std::string mode)
+{
+  a.put(indices, values, mode);
+}
 
 }  // namespace cunumeric

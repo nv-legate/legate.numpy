@@ -96,11 +96,17 @@ class NDArray {
               std::optional<bool> keepdims             = std::nullopt,
               std::optional<Scalar> initial            = std::nullopt,
               std::optional<NDArray> where             = std::nullopt);
+  void put(NDArray indices, NDArray values, std::string mode = "raise");
 
  public:
   NDArray as_type(const legate::Type& type);
   legate::LogicalStore get_store();
   void sort(NDArray rhs, bool argsort, std::optional<int32_t> axis = -1, bool stable = false);
+  NDArray _convert_future_to_regionfield(bool change_shape = false);
+  NDArray _wrap(size_t new_len);
+  NDArray _warn_and_convert(legate::Type const& type);
+  NDArray wrap_indices(Scalar const& n);
+  NDArray clip_indices(Scalar const& min, Scalar const& max);
 
  private:
   legate::LogicalStore broadcast(const std::vector<size_t>& shape, legate::LogicalStore& store);

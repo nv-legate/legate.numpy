@@ -931,6 +931,167 @@ void NDArray::convert(NDArray rhs, int32_t nan_op)
   runtime->submit(std::move(task));
 }
 
+void NDArray::put(NDArray indices, NDArray values, std::string mode)
+{
+  if (values.size() == 0 || indices.size() == 0 || size() == 0) {
+    return;
+  }
+
+  if (mode != "raise" && mode != "wrap" && mode != "clip") {
+    std::stringstream ss;
+    ss << "mode must be one of 'clip', 'raise', or 'wrap' (got  " << mode << ")";
+    throw std::invalid_argument(ss.str());
+  }
+
+  // type conversion
+  indices = indices._warn_and_convert(legate::int64());
+  values  = values._warn_and_convert(type());
+
+  // reshape indices
+  if (indices.dim() > 1) {
+    // When reshape is ready, reshape can be used.
+    indices = indices._wrap(indices.size());
+  }
+
+  // call _wrap on the values if they need to be wrapped
+  if (values.dim() != indices.dim() || values.size() != indices.size()) {
+    values = values._wrap(indices.size());
+  }
+
+  if (mode == "wrap") {
+    indices = indices.wrap_indices(Scalar(int64_t(size())));
+  } else if (mode == "clip") {
+    indices = indices.clip_indices(Scalar(int64_t(0)), Scalar(int64_t(size() - 1)));
+  }
+
+  if (indices.store_.has_scalar_storage() || indices.store_.transformed()) {
+    bool change_shape = indices.store_.has_scalar_storage();
+    indices           = indices._convert_future_to_regionfield(change_shape);
+  }
+  if (values.store_.has_scalar_storage() || values.store_.transformed()) {
+    bool change_shape = values.store_.has_scalar_storage();
+    values            = values._convert_future_to_regionfield(change_shape);
+  }
+  bool need_copy = false;
+  auto self_tmp  = *this;
+  if (self_tmp.store_.has_scalar_storage() || self_tmp.store_.transformed()) {
+    need_copy         = true;
+    bool change_shape = self_tmp.store_.has_scalar_storage();
+    self_tmp          = self_tmp._convert_future_to_regionfield(change_shape);
+  }
+
+  auto runtime      = CuNumericRuntime::get_runtime();
+  bool check_bounds = (mode == "raise");
+  auto task         = runtime->create_task(CuNumericOpCode::CUNUMERIC_WRAP);
+  auto indirect = runtime->create_array(indices.shape(), legate::point_type(self_tmp.dim()), false);
+  auto p_indirect = task.add_output(indirect.store_);
+  auto p_indices  = task.add_input(indices.store_);
+  task.add_scalar_arg(legate::Scalar(self_tmp.shape()));
+  task.add_scalar_arg(legate::Scalar(true));  // has_input
+  task.add_scalar_arg(legate::Scalar(check_bounds));
+  task.add_constraint(legate::align(p_indices, p_indirect));
+  task.throws_exception(true);
+  runtime->submit(std::move(task));
+
+  auto legate_runtime = legate::Runtime::get_runtime();
+  legate_runtime->issue_scatter(self_tmp.store_, indirect.store_, values.store_);
+
+  if (need_copy) {
+    assign(self_tmp);
+  }
+}
+
+NDArray NDArray::_convert_future_to_regionfield(bool change_shape)
+{
+  auto runtime = CuNumericRuntime::get_runtime();
+  if (change_shape && dim() == 0) {
+    auto out = runtime->create_array({1}, type(), false);
+    out.assign(*this);
+    return out;
+  }
+  auto out = runtime->create_array(shape(), type(), false);
+  out.assign(*this);
+  return out;
+}
+
+NDArray NDArray::_wrap(size_t new_len)
+{
+  auto runtime = CuNumericRuntime::get_runtime();
+
+  if (0 == new_len) {
+    return runtime->create_array({0}, type());
+  }
+  if (size() == 0) {
+    throw std::invalid_argument("Unable to wrap an empty array to a length greater than 0.");
+  }
+  if (1 == new_len) {
+    auto tmp_store = store_;
+    for (int32_t i = 0; i < dim(); ++i) {
+      tmp_store = tmp_store.project(0, 0);
+    }
+    NDArray tmp_arr(std::move(tmp_store));
+    auto out = runtime->create_array(tmp_arr.shape(), tmp_arr.type());
+    out.assign(tmp_arr);
+    return out;
+  }
+
+  auto src = *this;
+  if (src.store_.has_scalar_storage() || src.store_.transformed()) {
+    bool change_shape = src.store_.has_scalar_storage();
+    src               = src._convert_future_to_regionfield(change_shape);
+  }
+
+  auto task     = runtime->create_task(CuNumericOpCode::CUNUMERIC_WRAP);
+  auto indirect = runtime->create_array({new_len}, legate::point_type(src.dim()), false);
+  task.add_output(indirect.store_);
+  task.add_scalar_arg(legate::Scalar(src.shape()));
+  task.add_scalar_arg(legate::Scalar(false));  // has_input
+  task.add_scalar_arg(legate::Scalar(false));  // check bounds
+  runtime->submit(std::move(task));
+
+  auto legate_runtime = legate::Runtime::get_runtime();
+  auto out            = runtime->create_array({new_len}, src.type(), false);
+  legate_runtime->issue_gather(out.store_, src.store_, indirect.store_);
+
+  return out;
+}
+
+NDArray NDArray::_warn_and_convert(legate::Type const& type)
+{
+  if (this->type() != type) {
+    std::stringstream ss;
+    ss << "converting array to " << type.to_string() << " type";
+    cunumeric_log().warning() << ss.str();
+    return as_type(type);
+  }
+  return *this;
+}
+
+NDArray NDArray::wrap_indices(Scalar const& n)
+{
+  auto runtime       = CuNumericRuntime::get_runtime();
+  auto out           = runtime->create_array(shape(), type());
+  auto divisor_store = runtime->create_scalar_store(n);
+  auto divisor       = runtime->create_array(std::move(divisor_store));
+  out.binary_op(static_cast<int32_t>(cunumeric::BinaryOpCode::MOD), *this, divisor);
+  return out;
+}
+
+NDArray NDArray::clip_indices(Scalar const& min, Scalar const& max)
+{
+  auto runtime = CuNumericRuntime::get_runtime();
+  auto out     = runtime->create_array(shape(), type());
+  auto task    = runtime->create_task(CuNumericOpCode::CUNUMERIC_UNARY_OP);
+  auto p_out   = task.add_output(out.store_);
+  auto p_in    = task.add_input(store_);
+  task.add_scalar_arg(legate::Scalar(static_cast<int32_t>(UnaryOpCode::CLIP)));
+  task.add_scalar_arg(min);
+  task.add_scalar_arg(max);
+  task.add_constraint(align(p_out, p_in));
+  runtime->submit(std::move(task));
+  return out;
+}
+
 legate::LogicalStore NDArray::get_store() { return store_; }
 
 legate::LogicalStore NDArray::broadcast(const std::vector<size_t>& shape,

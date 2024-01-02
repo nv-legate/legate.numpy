@@ -25,6 +25,8 @@
 
 namespace cunumeric {
 
+legate::Logger& cunumeric_log();
+
 void initialize(int32_t argc, char** argv);
 
 NDArray array(std::vector<size_t> shape, const legate::Type& type);
@@ -110,6 +112,8 @@ NDArray transpose(NDArray a, std::vector<int32_t> axes);
 NDArray moveaxis(NDArray a, std::vector<int32_t> source, std::vector<int32_t> destination);
 
 NDArray flip(NDArray input, std::optional<std::vector<int32_t>> axis = std::nullopt);
+
+void put(NDArray& a, NDArray indices, NDArray values, std::string mode = "raise");
 
 // helper methods
 int32_t normalize_axis_index(int32_t axis, int32_t ndim);
