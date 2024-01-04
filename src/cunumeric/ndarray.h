@@ -97,6 +97,15 @@ class NDArray {
               std::optional<Scalar> initial            = std::nullopt,
               std::optional<NDArray> where             = std::nullopt);
   void put(NDArray indices, NDArray values, std::string mode = "raise");
+  NDArray diagonal(int32_t offset               = 0,
+                   std::optional<int32_t> axis1 = std::nullopt,
+                   std::optional<int32_t> axis2 = std::nullopt,
+                   std::optional<bool> extract  = std::nullopt);
+  NDArray trace(int32_t offset                   = 0,
+                int32_t axis1                    = 0,
+                int32_t axis2                    = 1,
+                std::optional<legate::Type> type = std::nullopt,
+                std::optional<NDArray> out       = std::nullopt);
 
  public:
   NDArray as_type(const legate::Type& type);
@@ -134,6 +143,13 @@ class NDArray {
                                    std::optional<Scalar> initial            = std::nullopt,
                                    std::optional<NDArray> where             = std::nullopt);
   void flip(NDArray rhs, std::optional<std::vector<int32_t>> axis);
+  void diag_task(NDArray rhs, int32_t offset, int32_t naxes, bool extract, bool trace);
+  NDArray diag_helper(int32_t offset,
+                      std::vector<int32_t> axes,
+                      bool extract                            = true,
+                      bool trace                              = false,
+                      const std::optional<legate::Type>& type = std::nullopt,
+                      std::optional<NDArray> out              = std::nullopt);
 
  public:
   static legate::Library get_library();

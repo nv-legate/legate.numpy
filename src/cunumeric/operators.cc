@@ -473,11 +473,41 @@ NDArray moveaxis(NDArray a, std::vector<int32_t> source, std::vector<int32_t> de
   return a.transpose(order);
 }
 
+NDArray diag(NDArray v, int32_t k)
+{
+  int32_t dim = v.dim();
+  switch (dim) {
+    case 0: throw std::invalid_argument("Input must be 1- or 2-d");
+    case 1: return v.diagonal(k, 0, 1, false);
+    case 2: return v.diagonal(k, 0, 1, true);
+    default: throw std::invalid_argument("diag requires 1- or 2-D array, use diagonal instead");
+  }
+}
+
+NDArray diagonal(NDArray a,
+                 int32_t offset,
+                 std::optional<int32_t> axis1,
+                 std::optional<int32_t> axis2,
+                 std::optional<bool> extract)
+{
+  return a.diagonal(offset, axis1, axis2, extract);
+}
+
 NDArray flip(NDArray input, std::optional<std::vector<int32_t>> axis) { return input.flip(axis); }
 
 void put(NDArray& a, NDArray indices, NDArray values, std::string mode)
 {
   a.put(indices, values, mode);
+}
+
+NDArray trace(NDArray a,
+              int32_t offset,
+              int32_t axis1,
+              int32_t axis2,
+              std::optional<legate::Type> type,
+              std::optional<NDArray> out)
+{
+  return a.trace(offset, axis1, axis2, type, out);
 }
 
 }  // namespace cunumeric

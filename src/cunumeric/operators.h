@@ -122,5 +122,19 @@ std::vector<int32_t> normalize_axis_vector(std::vector<int32_t> axis,
                                            int32_t ndim,
                                            bool allow_duplicate = false);
 
+NDArray diag(NDArray v, int32_t k = 0);
+
+NDArray diagonal(NDArray a,
+                 int32_t offset               = 0,
+                 std::optional<int32_t> axis1 = std::nullopt,
+                 std::optional<int32_t> axis2 = std::nullopt,
+                 std::optional<bool> extract  = std::nullopt);
+
+NDArray trace(NDArray a,
+              int32_t offset                   = 0,
+              int32_t axis1                    = 0,
+              int32_t axis2                    = 1,
+              std::optional<legate::Type> type = std::nullopt,
+              std::optional<NDArray> out       = std::nullopt);
 }  // namespace cunumeric
 #include "cunumeric/operators.inl"

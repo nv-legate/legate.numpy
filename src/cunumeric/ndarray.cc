@@ -927,6 +927,201 @@ void NDArray::convert(NDArray rhs, int32_t nan_op)
   auto p_rhs   = task.add_input(rhs_s);
   task.add_scalar_arg(legate::Scalar(nan_op));
   task.add_constraint(legate::align(p_lhs, p_rhs));
+  runtime->submit(std::move(task));
+}
+
+NDArray NDArray::diag_helper(int32_t offset,
+                             std::vector<int32_t> axes,
+                             bool extract,
+                             bool trace,
+                             const std::optional<legate::Type>& type,
+                             std::optional<NDArray> out)
+{
+  auto runtime = CuNumericRuntime::get_runtime();
+
+  if (dim() <= 1) {
+    throw std::invalid_argument("diag_helper is implemented for dim > 1");
+  }
+  if (out.has_value() && !trace) {
+    throw std::invalid_argument("diag_helper supports out only for trace=true");
+  }
+  if (type.has_value() && !trace) {
+    throw std::invalid_argument("diag_helper supports type only for trace=true");
+  }
+
+  auto N = axes.size();
+  assert(N > 0);
+
+  std::set<size_t> s_axes(axes.begin(), axes.end());
+  if (N != s_axes.size()) {
+    throw std::invalid_argument("axes passed to diag_helper should be all different");
+  }
+  if (dim() < N) {
+    throw std::invalid_argument("Dimension of input array shouldn't be less than number of axes");
+  }
+  std::vector<int32_t> transpose_axes;
+  for (int32_t ax = 0; ax < dim(); ++ax) {
+    if (std::find(axes.begin(), axes.end(), ax) == axes.end()) {
+      transpose_axes.push_back(ax);
+    }
+  }
+
+  NDArray a = runtime->create_array(store_.type());
+
+  size_t diag_size;
+  if (N == 2) {
+    if (offset >= 0) {
+      transpose_axes.push_back(axes[0]);
+      transpose_axes.push_back(axes[1]);
+    } else {
+      transpose_axes.push_back(axes[1]);
+      transpose_axes.push_back(axes[0]);
+      offset = -offset;
+    }
+    a = transpose(transpose_axes);
+    if (offset >= a.shape()[dim() - 1]) {
+      throw std::invalid_argument("'offset' for diag or diagonal must be in range");
+    }
+    diag_size = std::max((size_t)0, std::min(a.shape().end()[-2], a.shape().end()[-1] - offset));
+  } else if (N > 2) {
+    if (offset != 0) {
+      throw std::invalid_argument("offset supported for number of axes == 2");
+    }
+    auto sort_axes = [this](size_t i, size_t j) { return (shape()[i] < shape()[j]); };
+    std::sort(axes.begin(), axes.end(), sort_axes);
+    std::reverse(axes.begin(), axes.end());
+    transpose_axes.insert(transpose_axes.end(), axes.begin(), axes.end());
+    a         = transpose(transpose_axes);
+    diag_size = a.shape()[a.dim() - 1];
+  } else if (N < 2) {
+    throw std::invalid_argument("number of axes should be more than 1");
+  }
+
+  std::vector<size_t> tr_shape;
+  for (size_t i = 0; i < a.dim() - N; ++i) {
+    tr_shape.push_back(a.shape()[i]);
+  }
+
+  std::vector<size_t> out_shape;
+  if (trace) {
+    if (N != 2) {
+      throw std::invalid_argument("exactly 2 axes should be passed to trace");
+    }
+    if (dim() == 2) {
+      out_shape = {1};
+    } else if (dim() > 2) {
+      out_shape = tr_shape;
+    } else {
+      throw std::invalid_argument("dimension of the array for trace operation should be >=2");
+    }
+  } else {
+    tr_shape.push_back(diag_size);
+    out_shape = tr_shape;
+  }
+
+  if (out && out->shape() != out_shape) {
+    throw std::invalid_argument("output array has the wrong shape");
+  }
+
+  legate::Type res_type;
+  if (type) {
+    res_type = type.value();
+  } else if (out) {
+    res_type = out->type();
+  } else {
+    res_type = store_.type();
+  }
+
+  if (store_.type() != res_type) {
+    a = a.as_type(res_type);
+  }
+
+  if (out && out->type() == res_type) {
+    out->diag_task(a, offset, N, extract, trace);
+    return out.value();
+  } else {
+    auto res = runtime->create_array(out_shape, res_type);
+    res.diag_task(a, offset, N, extract, trace);
+    if (out) {
+      out->assign(res);
+    }
+    return res;
+  }
+}
+
+void NDArray::diag_task(NDArray rhs, int32_t offset, int32_t naxes, bool extract, bool trace)
+{
+  auto runtime = CuNumericRuntime::get_runtime();
+
+  legate::LogicalStore diag   = get_store();
+  legate::LogicalStore matrix = get_store();
+
+  auto zero = legate::type_dispatch(type().code(), generate_zero_fn{});
+  fill(zero, false);
+
+  if (extract) {
+    diag       = store_;
+    matrix     = rhs.store_;
+    auto ndim  = rhs.dim();
+    auto start = matrix.dim() - naxes;
+    auto n     = ndim - 1;
+    if (naxes == 2) {
+      if (offset > 0) {
+        matrix = matrix.slice(start + 1, legate::Slice(offset));
+      }
+      if (trace) {
+        if (ndim == 2) {
+          diag = diag.promote(0, matrix.extents().data()[0]);
+          diag = diag.project(1, 0).promote(1, matrix.extents().data()[1]);
+        } else {
+          for (int32_t i = 0; i < naxes; ++i) {
+            diag = diag.promote(start, matrix.extents().data().end()[-i - 1]);
+          }
+        }
+      } else {
+        if (matrix.extents().data()[n - 1] < matrix.extents().data()[n]) {
+          diag = diag.promote(start + 1, matrix.extents().data()[ndim - 1]);
+        } else {
+          diag = diag.promote(start, matrix.extents().data()[ndim - 2]);
+        }
+      }
+    } else {
+      for (int32_t i = 1; i < naxes; ++i) {
+        diag = diag.promote(start, matrix.extents().data().end()[-i - 1]);
+      }
+    }
+  } else {
+    matrix    = store_;
+    diag      = rhs.store_;
+    auto ndim = dim();
+    if (offset > 0) {
+      matrix = matrix.slice(1, slice(offset));
+    } else if (offset < 0) {
+      matrix = matrix.slice(0, slice(-offset));
+    }
+
+    if (shape()[0] < shape()[1]) {
+      diag = diag.promote(1, shape()[1]);
+    } else {
+      diag = diag.promote(0, shape()[0]);
+    }
+  }
+
+  auto task = runtime->create_task(CuNumericOpCode::CUNUMERIC_DIAG);
+  if (extract) {
+    auto redop    = runtime->get_reduction_op(UnaryRedCode::SUM);
+    auto p_diag   = task.add_reduction(diag, redop);
+    auto p_matrix = task.add_input(matrix);
+    task.add_constraint(legate::align(p_matrix, p_diag));
+  } else {
+    auto p_matrix = task.add_output(matrix);
+    auto p_diag   = task.add_input(diag);
+    task.add_input(matrix, p_matrix);
+    task.add_constraint(legate::align(p_diag, p_matrix));
+  }
+
+  task.add_scalar_arg(legate::Scalar(naxes));
+  task.add_scalar_arg(legate::Scalar(extract));
 
   runtime->submit(std::move(task));
 }
@@ -1090,6 +1285,49 @@ NDArray NDArray::clip_indices(Scalar const& min, Scalar const& max)
   task.add_constraint(align(p_out, p_in));
   runtime->submit(std::move(task));
   return out;
+}
+
+NDArray NDArray::diagonal(int32_t offset,
+                          std::optional<int32_t> axis1,
+                          std::optional<int32_t> axis2,
+                          std::optional<bool> extract)
+{
+  if (dim() == 1) {
+    if (extract.has_value() && extract.value()) {
+      throw std::invalid_argument("extract can be true only for dim >=2");
+    }
+    if (axis1 || axis2) {
+      throw std::invalid_argument("Axes shouldn't be specified when getting diagonal for 1D array");
+    }
+    auto runtime = CuNumericRuntime::get_runtime();
+    auto m       = shape()[0] + std::abs(offset);
+    auto res     = runtime->create_array({m, m}, store_.type());
+    res.diag_task(NDArray(std::move(store_)), offset, 0, false, false);
+    return res;
+  } else {
+    if (!axis1) {
+      axis1 = 0;
+    }
+    if (!axis2) {
+      axis2 = 1;
+    }
+    if (!extract.has_value()) {
+      extract = true;
+    }
+    return diag_helper(offset, {axis1.value(), axis2.value()}, extract.value());
+  }
+}
+
+NDArray NDArray::trace(int32_t offset,
+                       int32_t axis1,
+                       int32_t axis2,
+                       std::optional<legate::Type> type,
+                       std::optional<NDArray> out)
+{
+  if (dim() < 2) {
+    throw std::invalid_argument("trace operation can't be called on a array with DIM<2");
+  }
+  return diag_helper(offset, {axis1, axis2}, true, true, type, out);
 }
 
 legate::LogicalStore NDArray::get_store() { return store_; }
