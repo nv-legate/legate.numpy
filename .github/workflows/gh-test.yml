@@ -59,7 +59,7 @@ jobs:
         run: |
           export DEBIAN_FRONTEND=noninteractive && \
             sudo apt-get update && \
-            sudo apt-get install -y numactl libhwloc15
+            sudo apt-get install -y numactl
 
       - name: Checkout ${{ inputs.repos-name }}
         uses: actions/checkout@v3
