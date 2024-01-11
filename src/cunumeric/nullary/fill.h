@@ -23,7 +23,6 @@ namespace cunumeric {
 struct FillArgs {
   legate::PhysicalStore out;
   legate::PhysicalStore fill_value;
-  bool is_argval;
 };
 
 class FillTask : public CuNumericTask<FillTask> {

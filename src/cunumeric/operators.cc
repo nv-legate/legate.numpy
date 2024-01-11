@@ -153,7 +153,7 @@ NDArray full(std::vector<size_t> shape, const Scalar& value)
 {
   auto runtime = CuNumericRuntime::get_runtime();
   auto out     = runtime->create_array(std::move(shape), value.type());
-  out.fill(value, false);
+  out.fill(value);
   return out;
 }
 
@@ -326,7 +326,7 @@ NDArray array_equal(NDArray input0, NDArray input1)
   auto dst = CuNumericRuntime::get_runtime()->create_array({1}, legate::bool_());
 
   if (input0.shape() != input1.shape()) {
-    dst.fill(legate::Scalar(false), false);
+    dst.fill(legate::Scalar(false));
   } else {
     dst.binary_reduction(static_cast<int32_t>(BinaryOpCode::EQUAL), input0, input1);
   }
@@ -345,7 +345,7 @@ NDArray create_window(int64_t M, WindowOpCode op_code, std::vector<double> args)
   } else if (M == 1) {
     auto out = runtime->create_array({1}, std::move(type));
     auto one = legate::Scalar(static_cast<double>(1));
-    out.fill(one, false);
+    out.fill(one);
     return out;
   }
   auto out = runtime->create_array({static_cast<size_t>(M)}, std::move(type));

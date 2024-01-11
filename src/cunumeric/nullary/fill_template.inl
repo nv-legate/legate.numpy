@@ -59,29 +59,16 @@ struct FillImpl {
   template <Type::Code CODE, int DIM>
   void operator()(FillArgs& args) const
   {
-    if (args.is_argval) {
-      using VAL = Argval<type_of<CODE>>;
-      fill<VAL, DIM>(args);
-    } else {
-      using VAL = type_of<CODE>;
-      fill<VAL, DIM>(args);
-    }
+    using VAL = type_of<CODE>;
+    fill<VAL, DIM>(args);
   }
 };
 
 template <VariantKind KIND>
 static void fill_template(TaskContext& context)
 {
-  FillArgs args{context.output(0), context.input(0), context.scalar(0).value<bool>()};
-  Type::Code code{args.out.code()};
-  if (Type::Code::STRUCT == code) {
-#ifdef DEBUG_CUNUMERIC
-    assert(args.is_argval);
-#endif
-    auto field_type = args.out.type().as_struct_type().field_type(1);
-    code            = field_type.code();
-  }
-  double_dispatch(std::max<int32_t>(args.out.dim(), 1), code, FillImpl<KIND>{}, args);
+  FillArgs args{context.output(0), context.input(0)};
+  double_dispatch(std::max<int32_t>(args.out.dim(), 1), args.out.code(), FillImpl<KIND>{}, args);
 }
 
 }  // namespace cunumeric

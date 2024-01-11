@@ -146,7 +146,7 @@ void NDArray::random(int32_t gen_code)
   runtime->submit(std::move(task));
 }
 
-void NDArray::fill(const Scalar& value, bool argval)
+void NDArray::fill(const Scalar& value)
 {
   if (size() == 0) {
     return;
@@ -154,13 +154,17 @@ void NDArray::fill(const Scalar& value, bool argval)
 
   auto runtime = CuNumericRuntime::get_runtime();
 
+  if (!store_.transformed()) {
+    legate::Runtime::get_runtime()->issue_fill(store_, value);
+    return;
+  }
+
   auto fill_value = runtime->create_scalar_store(value);
 
   auto task = runtime->create_task(CuNumericOpCode::CUNUMERIC_FILL);
 
   task.add_output(store_);
   task.add_input(fill_value);
-  task.add_scalar_arg(legate::Scalar(argval));
 
   runtime->submit(std::move(task));
 }
@@ -174,7 +178,7 @@ void NDArray::eye(int32_t k)
   assert(dim() == 2);
 
   auto zero = legate::type_dispatch(type().code(), generate_zero_fn{});
-  fill(zero, false);
+  fill(zero);
 
   auto runtime = CuNumericRuntime::get_runtime();
 
@@ -202,7 +206,7 @@ void NDArray::bincount(NDArray rhs, std::optional<NDArray> weights /*=std::nullo
   }
 
   auto zero = legate::type_dispatch(type().code(), generate_zero_fn{});
-  fill(zero, false);
+  fill(zero);
 
   auto task                     = runtime->create_task(CuNumericOpCode::CUNUMERIC_BINCOUNT);
   legate::ReductionOpKind redop = legate::ReductionOpKind::ADD;
@@ -371,10 +375,10 @@ void NDArray::binary_reduction(int32_t op_code, NDArray rhs1, NDArray rhs2)
   legate::ReductionOpKind redop;
   if (op_code == static_cast<int32_t>(BinaryOpCode::NOT_EQUAL)) {
     redop = runtime->get_reduction_op(UnaryRedCode::SUM);
-    fill(legate::Scalar(false), false);
+    fill(legate::Scalar(false));
   } else {
     redop = runtime->get_reduction_op(UnaryRedCode::PROD);
-    fill(legate::Scalar(true), false);
+    fill(legate::Scalar(true));
   }
   auto task = runtime->create_task(CuNumericOpCode::CUNUMERIC_BINARY_RED);
 
@@ -420,7 +424,7 @@ void NDArray::unary_reduction(int32_t op_code_, NDArray input)
   auto op_code = static_cast<UnaryRedCode>(op_code_);
 
   auto identity = runtime->get_reduction_identity(op_code, type());
-  fill(identity, false);
+  fill(identity);
 
   auto task = runtime->create_task(CuNumericOpCode::CUNUMERIC_SCALAR_UNARY_RED);
 
@@ -443,7 +447,7 @@ void NDArray::dot(NDArray rhs1, NDArray rhs2)
   auto runtime = CuNumericRuntime::get_runtime();
 
   auto identity = runtime->get_reduction_identity(UnaryRedCode::SUM, type());
-  fill(identity, false);
+  fill(identity);
 
   assert(dim() == 2 && rhs1.dim() == 2 && rhs2.dim() == 2);
 
@@ -820,10 +824,10 @@ void NDArray::unary_reduction(int32_t op,
   auto op_code = static_cast<UnaryRedCode>(op);
 
   if (initial.has_value()) {
-    lhs_array.fill(initial.value(), false);
+    lhs_array.fill(initial.value());
   } else {
     auto identity = runtime->get_reduction_identity(op_code, lhs_array.type());
-    lhs_array.fill(identity, false);
+    lhs_array.fill(identity);
   }
 
   auto is_where    = where.has_value();
@@ -1057,7 +1061,7 @@ void NDArray::diag_task(NDArray rhs, int32_t offset, int32_t naxes, bool extract
   legate::LogicalStore matrix = get_store();
 
   auto zero = legate::type_dispatch(type().code(), generate_zero_fn{});
-  fill(zero, false);
+  fill(zero);
 
   if (extract) {
     diag       = store_;

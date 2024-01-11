@@ -1390,10 +1390,12 @@ class DeferredArray(NumPyThunk):
     def _fill(self, value: Any) -> None:
         assert self.base is not None
 
-        if self.dtype.kind != "V":
+        if not self.base.transformed:
             # Emit a Legate fill
             legate_runtime.issue_fill(self.base, value)
         else:
+            # Arg reductions would never fill transformed stores
+            assert self.dtype.kind != "V"
             # Perform the fill using a task
             # If this is a fill for an arg value, make sure to pass
             # the value dtype so that we get it packed correctly
@@ -1402,7 +1404,6 @@ class DeferredArray(NumPyThunk):
             )
             task.add_output(self.base)
             task.add_input(value)
-            task.add_scalar_arg(True, ty.bool_)
             task.execute()
 
     def fill(self, numpy_array: Any) -> None:
