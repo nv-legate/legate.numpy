@@ -10,7 +10,7 @@ build_cunumeric_conda_package() {
     fi
 
     mkdir -p /tmp/conda-build /tmp/out
-    cp -r ~/.artifacts/legate_core /tmp/conda-build/
+    cp -r "${ARTIFACTS_DIR}/conda-build/legate_core" /tmp/conda-build/
 
     local conda_build_args=();
     conda_build_args+=(--override-channels);
@@ -37,7 +37,7 @@ build_cunumeric_conda_package() {
 
     # Synthesize new cunumeric conda-build build.sh script
 
-    cat <<EOF > ~/cunumeric/conda/conda-build/conda_build_config.yaml
+    cat <<EOF > "${REPO_DIR}/conda/conda-build/conda_build_config.yaml"
 gpu_enabled:
   - "${GPU_ENABLED}"
 
@@ -60,10 +60,10 @@ gpu_enabled:
   - ${GPU_ENABLED}
 
 package_version:
-  - "$(git -C ~/cunumeric describe --abbrev=0 --tags | sed 's/[a-zA-Z]//g' | cut -d '.' -f -2).00"
+  - "$(git -C "${REPO_DIR}" describe --abbrev=0 --tags | sed 's/[a-zA-Z]//g' | cut -d '.' -f -2).00"
 EOF
 
-    cat <<"EOF" > ~/cunumeric/conda/conda-build/build.sh
+    cat <<"EOF" > "${REPO_DIR}/conda/conda-build/build.sh"
 # Install cunumeric C++ libs
 tar -C "$PREFIX" --exclude="*.a" --strip-components=1 -xvf /tmp/out/cunumeric-*-Linux.tar.gz;
 
@@ -71,14 +71,14 @@ tar -C "$PREFIX" --exclude="*.a" --strip-components=1 -xvf /tmp/out/cunumeric-*-
 pip install --no-deps --root / --prefix "$PREFIX" /tmp/out/cunumeric-*.whl;
 EOF
 
-    git -C ~/cunumeric add .;
-    git -C ~/cunumeric commit --allow-empty --allow-empty-message -n -m "";
+    git -C "${REPO_DIR}" add .;
+    git -C "${REPO_DIR}" commit --allow-empty --allow-empty-message -n -m "";
 
     # Build cuNumeric conda package
     CUDA=${CUDA_VERSION_MAJOR}.${CUDA_VERSION_MINOR} \
-    conda mambabuild ${conda_build_args[@]} ~/cunumeric/conda/conda-build;
+    conda mambabuild ${conda_build_args[@]} "${REPO_DIR}/conda/conda-build";
 
-    git -C ~/cunumeric reset --hard HEAD~1;
+    git -C "${REPO_DIR}" reset --hard HEAD~1;
 
     cp /tmp/conda-build/cunumeric/linux-64/cunumeric-*.tar.bz2 /tmp/out/;
 

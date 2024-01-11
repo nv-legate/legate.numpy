@@ -1,4 +1,4 @@
-name: Build cunumeric.internal on GH
+name: Build and test
 
 concurrency:
   group: ci-build-and-test-on-${{ github.event_name }}-from-${{ github.ref_name }}
@@ -8,26 +8,19 @@ on:
   push:
     branches:
       - "pull-request/[0-9]+"
-      - "*branch-*"
+      - "cpp-branch-*"
 
 jobs:
   build-and-test:
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - device: "gpu"
-            image: "rapidsai/devcontainers:23.06-cpp-mambaforge-ubuntu22.04"
-
-          - device: "cpu"
-            image: "rapidsai/devcontainers:23.06-cpp-mambaforge-ubuntu22.04"
+        target-device:
+          - gpu
+          - cpu
     uses:
       ./.github/workflows/gh-build-and-test.yml
     with:
-      image: ${{ matrix.image }}
-      device: ${{ matrix.device }}
-      repos-name: ${{ github.event.repository.name }}
+      target-device: ${{ matrix.target-device }}
+      platform: linux
     secrets: inherit
-
-
-  

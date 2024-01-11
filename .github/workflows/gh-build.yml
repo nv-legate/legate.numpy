@@ -3,85 +3,79 @@ name: Build
 on:
   workflow_call:
     inputs:
-      image:
-        type: string
-        required: true
-      device:
-        required: true
-        type: string
-      repos-name:
+      target-device:
         required: true
         type: string
       runs-on:
         required: true
-        type: string    
-
+        type: string
+      build-type:
+        required: true
+        type: string
+        description: One of ci / release
+      use-container:
+        required: true
+        type: boolean
+      platform:
+        required: true
+        type: string
+env:
+  ARTIFACTS_DIR: "${{ github.workspace }}/artifacts"
+  ARTIFACT_NAME: "${{ inputs.platform }}-${{ github.event.repository.name }}-${{ inputs.target-device }}-${{ github.sha }}"
+  USE_CUDA: ${{ (inputs.target-device == 'cpu' && 'OFF') || 'ON' }}
+  DOCKER_IMAGE: "condaforge/miniforge3:latest"
 jobs:
   build:
-    name: build-${{ inputs.device }}-sub-workflow
+    name: Build (${{ inputs.platform }}, ${{ inputs.target-device }}, ${{ inputs.build-type }}, Use container=${{ inputs.use-container }} )
 
     permissions:
       id-token: write # This is required for configure-aws-credentials
       contents: read  # This is required for actions/checkout
-      
+
     runs-on: ${{ inputs.runs-on }}
 
-    container:
-      options: -u root
-      image: "${{ inputs.image }}"
-      env:
-        CUDA_VERSION: "12.2"
-        CUDA_VERSION_MAJOR: "12"
-        CUDA_VERSION_MINOR: "2"
-        SCCACHE_REGION: "us-east-2"
-        SCCACHE_BUCKET: "rapids-sccache-devs"
-        SCCACHE_S3_KEY_PREFIX: "legate-cunumeric-dev"
-        USE_CUDA: "${{ inputs.device == 'gpu' && 'ON' || 'OFF' }}"
-        GH_TOKEN: "${{ env.GH_TOKEN }}"
-        GITHUB_TOKEN: "${{ env.GITHUB_TOKEN }}"
-        VAULT_HOST: "${{ github.repository_owner != 'nv-legate' && 'https://vault.ops.k8s.rapids.ai' || '' }}"
     defaults:
       run:
-        shell: su coder {0}
-        working-directory: /home/coder
+        shell: bash --noprofile --norc -xeuo pipefail {0}
 
     steps:
-      - name: Checkout ${{ inputs.repos-name }} (= this repo)
+      - name: Checkout ${{ github.event.repository.name }}
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
-          path: cunumeric
-          persist-credentials: false
+          path: cunumeric.internal
 
       - name: Dump environment
         run: |
           env
 
-      - name: Copy source folder
+      - name: Dump CPU info
         run: |
-          set -x
-          pwd
-          cp -r $GITHUB_WORKSPACE/cunumeric .
-          chown -R coder:coder cunumeric;
-          ls -R
+          cat /proc/cpuinfo
 
       - name: Copy .gitconfig
-        run: cp ~/cunumeric/continuous_integration/dot-gitconfig ~/.gitconfig
+        run: cp cunumeric.internal/continuous_integration/dot-gitconfig ~/.gitconfig
 
       - id: legate_core_info
         name: Read legate.core SHA
         shell: bash --noprofile --norc -xeo pipefail {0}
         run: |
-          git_tag="$(jq -r '.packages.legate_core_internal.git_tag' cunumeric/cmake/versions.json)";
+          git_tag="$(jq -r '.packages.legate_core_internal.git_tag' cunumeric.internal/cmake/versions.json)";
           echo "git_tag=$git_tag" | tee -a "${GITHUB_OUTPUT}";
 
       - name: Download dependencies (artifacts)
-        uses: ./cunumeric/.github/actions/download-artifacts
+        uses: ./cunumeric.internal/.github/actions/download-artifacts
         with:
-          device: "${{ inputs.device }}"
+          target-device: "${{ inputs.target-device }}"
           git_sha: "${{ steps.legate_core_info.outputs.git_tag }}"
-          repos-name: "${{ inputs.repos-name }}"
           inter_repos_ro_access_token: ${{ secrets.NV_LEGATE_INTER_REPOS_ACCESS_RO }}
+          platform: ${{ inputs.platform }}
+          dest-dir: ${{ env.ARTIFACTS_DIR }}
+
+      - name: Display structure of downloaded artifacts
+        run: |
+          pwd
+          ls -lahR $ARTIFACTS_DIR
 
       - if: github.repository_owner == 'nv-legate'
         name: Get AWS credentials for sccache bucket
@@ -91,15 +85,38 @@ jobs:
           role-duration-seconds: 28800 # 8 hours
           role-to-assume: arn:aws:iam::279114543810:role/gha-oidc-nv-legate
 
-      - name: Build ${{ inputs.repos-name }}
+      - if: ${{ inputs.use-container }}
+        name: Build (in container)
         run: |
-          export PATH="/home/coder/cunumeric/continuous_integration/scripts:$PATH"
-          build-cunumeric-all
+          cd cunumeric.internal
+
+          docker run \
+            -e AWS_REGION \
+            -e AWS_SESSION_TOKEN \
+            -e AWS_ACCESS_KEY_ID \
+            -e AWS_SECRET_ACCESS_KEY \
+            -e GITHUB_TOKEN \
+            -e ARTIFACTS_DIR \
+            -e USE_CUDA \
+            -v "$(pwd):$(pwd)" \
+            -v "$ARTIFACTS_DIR:$(pwd)/../artifacts" \
+            --rm "${{ env.DOCKER_IMAGE }}" \
+            /bin/bash -c "cd $(pwd) && continuous_integration/scripts/entrypoint build-cunumeric ${{ inputs.build-type}} ${{ inputs.target-device }}"
+
+      - if: ${{ !inputs.use-container }}
+        name: Build (without container)
+        run: |
+          cd cunumeric.internal
+
+          continuous_integration/scripts/entrypoint build-cunumeric ${{ inputs.build-type}}
+
+      - name: Display structure of the artifacts folder (post build)
+        run: |
+          sudo chown -R $(whoami) ${{ env.ARTIFACTS_DIR }}
+          ls -lahR ${{ env.ARTIFACTS_DIR }}
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: "${{ inputs.repos-name }}-${{ inputs.device }}-${{ github.sha }}"
-          path: |
-            /tmp/out
-            /tmp/conda-build
+          name: ${{ env.ARTIFACT_NAME }}
+          path: ${{ env.ARTIFACTS_DIR }}

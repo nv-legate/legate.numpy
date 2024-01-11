@@ -1,0 +1,99 @@
+#!/usr/bin/env bash
+
+make_conda_env_from_yaml() {
+    mamba env create -n "${CONDA_ENV}" -f "${yaml_file}" --force;
+}
+
+generate_yaml_file() {
+    UCX_PKG=ucx
+    [[ "${UCX_ENABLED:-}" = "OFF" ]] && UCX_PKG=no-ucx
+
+    if [[ "$USE_CUDA" == "OFF" ]]; then
+        yaml_file="$(\
+            $REPO_DIR/scripts/generate-conda-envs.py \
+                --os "$OS_SHORT_NAME" \
+                --compilers                         \
+                --python ${PYTHON_VERSION}          \
+                --openmpi                           \
+                --${UCX_PKG}                        \
+            | head -n1 | cut -d' ' -f3              \
+        )"
+    else
+        local cuda_version="${CUDA_VERSION:-${CUDA_VERSION_MAJOR}.${CUDA_VERSION_MINOR}}";
+        cuda_version="$(echo "${cuda_version}" | cut -d'.' -f3 --complement)";
+
+        yaml_file="$(         \
+            $REPO_DIR/scripts/generate-conda-envs.py \
+                --os "$OS_SHORT_NAME"               \
+                --compilers                         \
+                --ctk ${cuda_version}               \
+                --python ${PYTHON_VERSION}          \
+                --openmpi                           \
+                --${UCX_PKG}                        \
+            | head -n1 | cut -d' ' -f3              \
+        )"
+    fi
+
+    $SED -i -re "s/legate-test/${CONDA_ENV}/g" "${yaml_file}";
+    echo "  - boa" >> "${yaml_file}";
+
+    if [[ "$LEGATE_CORE_CMAKE_PRESET" == "debug-sanitizer-gcc" ]]; then
+        echo "  - libsanitizer <=${MAX_LIBSANITIZER_VERSION}" >> "${yaml_file}";
+    fi
+
+    mkdir -p /tmp/out/
+    cp "${yaml_file}" /tmp/out/
+    mkdir -p /tmp/env_yaml
+    cp "${yaml_file}" /tmp/env_yaml
+}
+
+find_yaml_file() {
+    pattern="/tmp/env_yaml/*.yaml";
+    files=( ${pattern} );
+    yaml_file="${files[0]}";
+
+    if [[ -z "${yaml_file:-}" ]] || [[ ! -f "${yaml_file}" ]]; then
+        return 1;
+    fi
+
+    return 0;
+}
+
+get_yaml_and_make_conda_env() {
+    set -xe;
+
+    local yaml_file="";
+
+    generate_yaml_file;
+
+    echo YAML file: "${yaml_file}"
+    cat "${yaml_file}";
+
+    make_conda_env_from_yaml;
+}
+
+install_legate_core_with_war() {
+    # WAR: legate-core depends on a different version of numpy than what is already installed.
+    # The correct version will be installed when legate-core is installed below.
+    # See github issue: https://github.com/nv-legate/legate.core/issues/812
+    mamba uninstall -y -n "${CONDA_ENV}" numpy;
+
+    mamba install -y -n "${CONDA_ENV}" -c nvidia -c conda-forge -c $ARTIFACTS_DIR/conda-build/legate_core legate-core;
+}
+
+activate_conda_env() {
+    set +xu
+    eval "$(conda shell.bash hook)"
+    conda activate ${CONDA_ENV};
+    set -xu
+}
+
+conda_info() {
+    set +x
+    conda info
+    set -x
+}
+
+make_release_env() {
+    mamba create -y -n "${CONDA_ENV}" -c conda-forge boa
+}

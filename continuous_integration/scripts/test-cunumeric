@@ -1,7 +1,15 @@
 #!/usr/bin/env bash
 
 setup_env() {
-    mamba create -yn legate -c ~/.artifacts/conda-build/legate_core -c ~/.artifacts/conda-build/cunumeric -c conda-forge -c "nvidia/label/cuda-12.0.0" legate-core cunumeric
+    set -xeuo pipefail
+
+    export DEBIAN_FRONTEND=non-interactive
+
+    # Run package updates and install packages
+    apt-get update
+    apt-get install -y numactl make
+
+    mamba create -yn legate -c "${ARTIFACTS_DIR}/conda-build/legate_core" -c "${ARTIFACTS_DIR}/conda-build/cunumeric" -c conda-forge -c "nvidia/label/cuda-12.0.0" legate-core cunumeric
 }
 
 setup_test_env() {
@@ -13,7 +21,6 @@ setup_test_env() {
 setup_docs_env() {
     mamba install -y pandoc doxygen
     pip install ipython jinja2 "markdown<3.4.0" "pydata-sphinx-theme>=0.13"  myst-parser  nbsphinx  sphinx-copybutton  "sphinx>=4.4.0"
-
 }
 
 setup_mypy_env() {
@@ -23,13 +30,15 @@ setup_mypy_env() {
 test-cunumeric() {
     set -xeo pipefail
 
+    . conda-utils;
+    export CONDA_ENV=legate
+
     setup_env;
 
-    set +u
-    mamba activate legate;
-    conda info;
+    activate_conda_env;
+    conda_info;
 
-    cd ~/cunumeric;
+    cd "${REPO_DIR}";
 
     case "$1" in
         "test")
