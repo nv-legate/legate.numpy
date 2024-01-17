@@ -17,12 +17,11 @@
 #include "cunumeric/runtime.h"
 
 #include "cunumeric/ndarray.h"
+#include "cunumeric/unary/unary_red_util.h"
 
 namespace cunumeric {
 
 /*static*/ CuNumericRuntime* CuNumericRuntime::runtime_;
-
-static std::map<std::pair<UnaryRedCode, legate::Type::Code>, Scalar> identities;
 
 extern void bootstrapping_callback(Legion::Machine machine,
                                    Legion::Runtime* runtime,
@@ -59,54 +58,6 @@ legate::LogicalStore CuNumericRuntime::create_scalar_store(const Scalar& value)
   return legate_runtime_->create_store(value);
 }
 
-struct generate_identity_fn {
-  template <UnaryRedCode OP>
-  struct generator {
-    template <legate::Type::Code CODE,
-              std::enable_if_t<UnaryRedOp<OP, CODE>::valid && !is_arg_reduce<OP>::value>* = nullptr>
-    Scalar operator()(const legate::Type&)
-    {
-      auto value = UnaryRedOp<OP, CODE>::OP::identity;
-      return Scalar(value);
-    }
-
-    template <legate::Type::Code CODE,
-              std::enable_if_t<UnaryRedOp<OP, CODE>::valid && is_arg_reduce<OP>::value>* = nullptr>
-    Scalar operator()(const legate::Type& type)
-    {
-      auto value       = UnaryRedOp<OP, CODE>::OP::identity;
-      auto argred_type = CuNumericRuntime::get_runtime()->get_argred_type(type);
-      return Scalar(value, argred_type);
-    }
-
-    template <legate::Type::Code CODE, std::enable_if_t<!UnaryRedOp<OP, CODE>::valid>* = nullptr>
-    Scalar operator()(const legate::Type&)
-    {
-      assert(false);
-      return Scalar(0);
-    }
-  };
-
-  template <UnaryRedCode OP>
-  Scalar operator()(const legate::Type& type)
-  {
-    return legate::type_dispatch(type.code(), generator<OP>{}, type);
-  }
-};
-
-Scalar CuNumericRuntime::get_reduction_identity(UnaryRedCode op, const legate::Type& type)
-{
-  auto key    = std::make_pair(op, type.code());
-  auto finder = identities.find(key);
-  if (identities.end() != finder) {
-    return finder->second;
-  }
-
-  auto identity = op_dispatch(op, generate_identity_fn{}, type);
-  identities.insert({key, identity});
-  return identity;
-}
-
 legate::Type CuNumericRuntime::get_argred_type(const legate::Type& value_type)
 {
   auto finder = argred_types_.find(value_type.code());
@@ -117,28 +68,6 @@ legate::Type CuNumericRuntime::get_argred_type(const legate::Type& value_type)
   auto argred_type = legate::struct_type({legate::int64(), value_type}, true /*align*/);
   argred_types_.insert({value_type.code(), argred_type});
   return argred_type;
-}
-
-namespace {
-
-const std::unordered_map<UnaryRedCode, legate::ReductionOpKind> TO_CORE_REDOP = {
-  {UnaryRedCode::ALL, legate::ReductionOpKind::MUL},
-  {UnaryRedCode::ANY, legate::ReductionOpKind::ADD},
-  {UnaryRedCode::ARGMAX, legate::ReductionOpKind::MAX},
-  {UnaryRedCode::ARGMIN, legate::ReductionOpKind::MIN},
-  {UnaryRedCode::CONTAINS, legate::ReductionOpKind::ADD},
-  {UnaryRedCode::COUNT_NONZERO, legate::ReductionOpKind::ADD},
-  {UnaryRedCode::MAX, legate::ReductionOpKind::MAX},
-  {UnaryRedCode::MIN, legate::ReductionOpKind::MIN},
-  {UnaryRedCode::PROD, legate::ReductionOpKind::MUL},
-  {UnaryRedCode::SUM, legate::ReductionOpKind::ADD},
-};
-
-}  // namespace
-
-legate::ReductionOpKind CuNumericRuntime::get_reduction_op(UnaryRedCode op)
-{
-  return TO_CORE_REDOP.at(op);
 }
 
 legate::AutoTask CuNumericRuntime::create_task(CuNumericOpCode op_code)

@@ -22,7 +22,6 @@
 
 #include "cunumeric/cunumeric_c.h"
 #include "cunumeric/typedefs.h"
-#include "cunumeric/unary/unary_red_util.h"
 
 namespace cunumeric {
 
@@ -39,10 +38,6 @@ class CuNumericRuntime {
                        bool optimize_scalar = true);
   NDArray create_array(legate::LogicalStore&& store);
   legate::LogicalStore create_scalar_store(const Scalar& value);
-
- public:
-  Scalar get_reduction_identity(UnaryRedCode op, const legate::Type& type);
-  legate::ReductionOpKind get_reduction_op(UnaryRedCode op);
 
  public:
   legate::Type get_argred_type(const legate::Type& value_type);

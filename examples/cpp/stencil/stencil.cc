@@ -52,10 +52,10 @@ void print_array(cunumeric::NDArray array)
 cunumeric::NDArray initialize(uint64_t N)
 {
   auto grid = cunumeric::zeros({N + 2, N + 2});
-  grid[{slice(), slice(0, 1)}].assign(-273.15);
-  grid[{slice(), slice(-1, open)}].assign(-273.15);
-  grid[{slice(-1, open), slice()}].assign(-273.15);
-  grid[{slice(0, 1), slice()}].assign(40.0);
+  grid[{slice(), slice(0, 1)}].assign(legate::Scalar{-273.15});
+  grid[{slice(), slice(-1, open)}].assign(legate::Scalar{-273.15});
+  grid[{slice(-1, open), slice()}].assign(legate::Scalar{-273.15});
+  grid[{slice(0, 1), slice()}].assign(legate::Scalar{40.0});
   return grid;
 }
 
@@ -81,7 +81,8 @@ void stencil(const Config& config)
 
 int main(int argc, char** argv)
 {
-  legate::start(argc, argv);
+  auto result = legate::start(argc, argv);
+  assert(result == 0);
 
   cunumeric::initialize(argc, argv);
 

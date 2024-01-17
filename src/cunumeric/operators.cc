@@ -19,6 +19,7 @@
 #include "cunumeric/runtime.h"
 #include "cunumeric/binary/binary_op_util.h"
 #include "cunumeric/unary/unary_op_util.h"
+#include "cunumeric/unary/unary_red_util.h"
 #include "cunumeric/random/rand_util.h"
 #include "cunumeric/nullary/window_util.h"
 
