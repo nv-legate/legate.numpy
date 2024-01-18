@@ -581,7 +581,7 @@ std::vector<NDArray> NDArray::nonzero()
   }
   auto p_rhs = task.add_input(store_);
 
-  task.add_constraint(legate::broadcast(p_rhs, legate::from_range<int32_t>(1, ndim)));
+  task.add_constraint(legate::broadcast(p_rhs, legate::from_range<uint32_t>(1, ndim)));
 
   runtime->submit(std::move(task));
 
@@ -603,7 +603,7 @@ NDArray NDArray::unique()
   task.add_input(store_, part_in);
   task.add_communicator("nccl");
   if (!has_gpus) {
-    task.add_constraint(legate::broadcast(part_in, legate::from_range<int32_t>(0, dim())));
+    task.add_constraint(legate::broadcast(part_in, legate::from_range<uint32_t>(0, dim())));
   }
   runtime->submit(std::move(task));
   return result;
@@ -689,7 +689,7 @@ void NDArray::convolve(NDArray input, NDArray filter)
 
   task.add_constraint(legate::align(p_input, p_output));
   task.add_constraint(legate::bloat(p_input, p_halo, offsets, offsets));
-  task.add_constraint(legate::broadcast(p_filter, legate::from_range<int32_t>(dim())));
+  task.add_constraint(legate::broadcast(p_filter, legate::from_range<uint32_t>(dim())));
 
   runtime->submit(std::move(task));
 }
@@ -746,7 +746,7 @@ void NDArray::flip(NDArray rhs, std::optional<std::vector<int32_t>> axis)
   auto p_out   = task.add_output(output);
   auto p_in    = task.add_input(input);
   task.add_scalar_arg(legate::Scalar(axes));
-  task.add_constraint(legate::broadcast(p_in, legate::from_range<int32_t>(dim())));
+  task.add_constraint(legate::broadcast(p_in, legate::from_range<uint32_t>(dim())));
   task.add_constraint(legate::align(p_in, p_out));
 
   runtime->submit(std::move(task));

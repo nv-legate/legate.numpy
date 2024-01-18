@@ -17,7 +17,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from legate.core import (
-    Shape,
     broadcast,
     constant,
     dimension,
@@ -62,7 +61,7 @@ def transpose_copy_single(
 
 def transpose_copy(
     library: Library,
-    launch_domain: Shape,
+    launch_domain: tuple[int, ...],
     p_input: LogicalStorePartition,
     p_output: LogicalStorePartition,
 ) -> None:
@@ -161,16 +160,18 @@ MIN_CHOLESKY_MATRIX_SIZE = 8192
 
 
 # TODO: We need a better cost model
-def choose_color_shape(runtime: Runtime, shape: Shape) -> Shape:
+def choose_color_shape(
+    runtime: Runtime, shape: tuple[int, ...]
+) -> tuple[int, ...]:
     if settings.test():
         num_tiles = runtime.num_procs * 2
-        return Shape((num_tiles, num_tiles))
+        return (num_tiles, num_tiles)
 
     extent = shape[0]
     # If there's only one processor or the matrix is too small,
     # don't even bother to partition it at all
     if runtime.num_procs == 1 or extent <= MIN_CHOLESKY_MATRIX_SIZE:
-        return Shape((1, 1))
+        return (1, 1)
 
     # If the matrix is big enough to warrant partitioning,
     # pick the granularity that the tile size is greater than a threshold
@@ -182,7 +183,7 @@ def choose_color_shape(runtime: Runtime, shape: Shape) -> Shape:
     ):
         num_tiles *= 2
 
-    return Shape((num_tiles, num_tiles))
+    return (num_tiles, num_tiles)
 
 
 def tril_single(library: Library, output: LogicalStore) -> None:
@@ -212,6 +213,12 @@ def tril(library: Library, p_output: LogicalStorePartition, n: int) -> None:
     task.execute()
 
 
+def _rounding_divide(
+    lhs: tuple[int, ...], rhs: tuple[int, ...]
+) -> tuple[int, ...]:
+    return tuple((lh + rh - 1) // rh for (lh, rh) in zip(lhs, rhs))
+
+
 def cholesky(
     output: DeferredArray, input: DeferredArray, no_tril: bool
 ) -> None:
@@ -225,10 +232,10 @@ def cholesky(
             tril_single(library, output.base)
         return
 
-    shape = output.base.shape
+    shape = tuple(output.base.shape)
     initial_color_shape = choose_color_shape(runtime, shape)
-    tile_shape = (shape + initial_color_shape - 1) // initial_color_shape
-    color_shape = (shape + tile_shape - 1) // tile_shape
+    tile_shape = _rounding_divide(shape, initial_color_shape)
+    color_shape = _rounding_divide(shape, tile_shape)
     n = color_shape[0]
 
     p_input = input.base.partition_by_tiling(tile_shape)

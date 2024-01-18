@@ -45,7 +45,7 @@ void unload_cudalibs() noexcept
   auto library = runtime->find_library(cunumeric_library_name);
 
   runtime->submit(runtime->create_task(
-    library, CuNumericOpCode::CUNUMERIC_UNLOAD_CUDALIBS, legate::Shape{num_gpus}));
+    library, CuNumericOpCode::CUNUMERIC_UNLOAD_CUDALIBS, legate::tuple<uint64_t>{num_gpus}));
 }
 
 void registration_callback()

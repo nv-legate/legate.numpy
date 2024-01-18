@@ -553,7 +553,7 @@ class DeferredArray(NumPyThunk):
                     shift = 0
                     store = lhs.base
                     for dim, k in enumerate(new_key):
-                        if np.isscalar(k):
+                        if isinstance(k, int):
                             if k < 0:  # type: ignore [operator]
                                 k += store.shape[dim + key_dim + shift]
                             store = store.project(dim + key_dim + shift, k)
@@ -1322,7 +1322,7 @@ class DeferredArray(NumPyThunk):
             self.library, CuNumericOpCode.CONVOLVE
         )
 
-        offsets = tuple((filter.shape + 1) // 2)
+        offsets = tuple((ext + 1) // 2 for ext in filter.shape)
 
         p_out = task.add_output(output)
         p_filter = task.add_input(filter)
