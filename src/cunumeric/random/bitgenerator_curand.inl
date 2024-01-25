@@ -1616,12 +1616,12 @@ struct BitGeneratorImplBody {
               generate_distribution<uint32_t, negative_binomial_generator<uint32_t>>::generate(
                 res, cugen, intparams, floatparams, doubleparams);
               break;
-            default: LEGATE_ABORT;
+            default: LEGATE_ABORT("Unknown random distribution");
           }
         }
         break;
       }
-      default: LEGATE_ABORT;
+      default: LEGATE_ABORT("Unknown bitgenerator operation");
     }
   }
 };

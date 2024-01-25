@@ -40,7 +40,7 @@ struct register_reduction_op_fn {
   template <legate::Type::Code CODE, std::enable_if_t<legate::is_complex<CODE>::value>* = nullptr>
   ReductionOpIds operator()()
   {
-    LEGATE_ABORT;
+    LEGATE_ABORT("Should never get here");
     return ReductionOpIds{};
   }
 

@@ -254,21 +254,15 @@ NDArray triu(NDArray rhs, int32_t k) { return trilu(rhs, k, false); }
 NDArray dot(NDArray rhs1, NDArray rhs2)
 {
   if (rhs1.dim() != 2 || rhs2.dim() != 2) {
-    fprintf(stderr, "cunumeric::dot only supports matrices now");
-    LEGATE_ABORT;
+    LEGATE_ABORT("cunumeric::dot only supports matrices now");
   }
 
   auto& rhs1_shape = rhs1.shape();
   auto& rhs2_shape = rhs2.shape();
 
   if (rhs1_shape[1] != rhs2_shape[0]) {
-    fprintf(stderr,
-            "Incompatible matrices: (%zd, %zd) x (%zd, %zd)\n",
-            rhs1_shape[0],
-            rhs1_shape[1],
-            rhs2_shape[0],
-            rhs2_shape[1]);
-    LEGATE_ABORT;
+    LEGATE_ABORT("Incompatible matrices: (" << rhs1_shape[0] << ", " << rhs1_shape[1] << ") x ("
+                                            << rhs2_shape[0] << ", " << rhs2_shape[1] << ")");
   }
 
   auto runtime = CuNumericRuntime::get_runtime();

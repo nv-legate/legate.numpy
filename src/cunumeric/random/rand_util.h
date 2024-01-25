@@ -41,7 +41,7 @@ constexpr decltype(auto) op_dispatch(RandGenCode gen_code, Functor f, Fnargs&&..
       return f.template operator()<RandGenCode::NORMAL>(std::forward<Fnargs>(args)...);
     case RandGenCode::INTEGER:
       return f.template operator()<RandGenCode::INTEGER>(std::forward<Fnargs>(args)...);
-    default: LEGATE_ABORT;
+    default: LEGATE_ABORT("Unknown RNG generator code");
   }
   return f.template operator()<RandGenCode::UNIFORM>(std::forward<Fnargs>(args)...);
 }

@@ -94,7 +94,7 @@ static void bitgenerator_template(TaskContext& context)
       doubleparams.insert(doubleparams.end(), _doubleparams.begin(), _doubleparams.end());
       break;
     }
-    default: LEGATE_ABORT;
+    default: LEGATE_ABORT("Unknown bitgenerator op");
   }
 
   std::vector<PhysicalStore> extra_args;

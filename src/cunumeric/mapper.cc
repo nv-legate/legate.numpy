@@ -71,7 +71,7 @@ Scalar CuNumericMapper::tunable_value(TunableID tunable_id)
     }
     default: break;
   }
-  LEGATE_ABORT;  // unknown tunable value
+  LEGATE_ABORT("Unknown tunable " << tunable_id);  // unknown tunable value
 }
 
 std::vector<StoreMapping> CuNumericMapper::store_mappings(

@@ -1373,16 +1373,17 @@ class DeferredArray(NumPyThunk):
             for ax in axes:
                 task.add_scalar_arg(ax, ty.int64)
 
-            if input.ndim > len(OrderedSet(axes)):
-                task.add_constraint(broadcast(p_input, OrderedSet(axes)))
-            else:
-                task.add_constraint(broadcast(p_input))
             if input.shape == output.shape:
                 task.add_constraint(align(p_output, p_input))
+                if input.ndim > len(OrderedSet(axes)):
+                    task.add_constraint(broadcast(p_input, OrderedSet(axes)))
+                else:
+                    task.add_constraint(broadcast(p_input))
             else:
                 # TODO: We need the relaxed alignment to avoid serializing the
                 # task here. Batched FFT was relying on the relaxed alignment.
                 task.add_constraint(broadcast(p_output))
+                task.add_constraint(broadcast(p_input))
 
             task.execute()
 

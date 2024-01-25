@@ -362,8 +362,7 @@ cufftContext CUDALibraries::get_cufft_plan(cufftType type, const cufftPlanParams
 static CUDALibraries& get_cuda_libraries(legate::Processor proc)
 {
   if (proc.kind() != legate::Processor::TOC_PROC) {
-    fprintf(stderr, "Illegal request for CUDA libraries for non-GPU processor");
-    LEGATE_ABORT;
+    LEGATE_ABORT("Illegal request for CUDA libraries for non-GPU processor");
   }
 
   static CUDALibraries cuda_libraries[LEGION_MAX_NUM_PROCS];
