@@ -48,7 +48,7 @@ NDArray mk_array(std::vector<T> const& values, std::vector<size_t> shape = {})
     return out;
   }
   if (out.size() == 1) {
-    out.fill(legate::Scalar(values[0]), false);
+    out.fill(legate::Scalar(values[0]));
     return out;
   }
   auto assign_values = [](NDArray& a, std::vector<T> const& values) {

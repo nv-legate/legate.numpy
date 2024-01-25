@@ -200,7 +200,7 @@ void test_sort_complex(std::array<T_IN, SIZE>& in_array,
   auto A1 = cunumeric::zeros(shape, leg_type);
   if (in_array.size() != 0) {
     if (in_array.size() == 1) {
-      A1.fill(legate::Scalar(in_array[0]), false);
+      A1.fill(legate::Scalar(in_array[0]));
     } else {
       assign_values_to_array<T_IN, DIM>(A1, in_array.data(), in_array.size());
     }

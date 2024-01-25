@@ -67,7 +67,7 @@ TEST(MoveAxis, SpecialArrays)
   {
     std::vector<int32_t> input{99};
     auto a = cunumeric::zeros({1}, legate::int32());
-    a.fill(legate::Scalar(input[0]), false);
+    a.fill(legate::Scalar(input[0]));
     auto a_out = cunumeric::moveaxis(a, {0}, {-1});
     check_array_eq<int32_t, 1>(a_out, input.data(), input.size());
     EXPECT_EQ(a_out.shape(), a.shape());
@@ -75,7 +75,7 @@ TEST(MoveAxis, SpecialArrays)
   {
     std::vector<int32_t> input{-100};
     auto a = cunumeric::zeros({1, 1}, legate::int32());
-    a.fill(legate::Scalar(input[0]), false);
+    a.fill(legate::Scalar(input[0]));
     auto a_out = cunumeric::moveaxis(a, {0, 1}, {-1, -2});
     check_array_eq<int32_t, 2>(a_out, input.data(), input.size());
     EXPECT_EQ(a_out.shape(), a.shape());
