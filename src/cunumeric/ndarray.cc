@@ -697,7 +697,7 @@ void NDArray::convolve(NDArray input, NDArray filter)
 NDArray NDArray::transpose()
 {
   if (dim() == 1) {
-    return NDArray(std::move(store_));
+    return NDArray(legate::LogicalStore(store_));
   }
   std::vector<int32_t> axes;
   for (int32_t i = dim() - 1; i > -1; --i) {
@@ -709,7 +709,7 @@ NDArray NDArray::transpose()
 NDArray NDArray::transpose(std::vector<int32_t> axes)
 {
   if (dim() == 1) {
-    return NDArray(std::move(store_));
+    return NDArray(legate::LogicalStore(store_));
   }
   if (static_cast<int32_t>(axes.size()) != dim()) {
     throw std::invalid_argument("axes must be the same size as ndim for transpose");
@@ -1367,7 +1367,7 @@ NDArray NDArray::diagonal(int32_t offset,
     auto runtime = CuNumericRuntime::get_runtime();
     auto m       = shape()[0] + std::abs(offset);
     auto res     = runtime->create_array({m, m}, store_.type());
-    res.diag_task(NDArray(std::move(store_)), offset, 0, false, false);
+    res.diag_task(*this, offset, 0, false, false);
     return res;
   } else {
     if (!axis1) {
