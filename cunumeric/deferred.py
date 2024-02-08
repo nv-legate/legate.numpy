@@ -1388,13 +1388,15 @@ class DeferredArray(NumPyThunk):
             task.execute()
 
     # Fill the cuNumeric array with the value in the numpy array
-    def _fill(self, value: Any) -> None:
+    def _fill(self, value: LogicalStore | Scalar) -> None:
         assert self.base is not None
 
         if not self.base.transformed:
             # Emit a Legate fill
             legate_runtime.issue_fill(self.base, value)
         else:
+            if isinstance(value, Scalar):
+                value = legate_runtime.create_store_from_scalar(value)
             # Arg reductions would never fill transformed stores
             assert self.dtype.kind != "V"
             # Perform the fill using a task
@@ -1415,8 +1417,7 @@ class DeferredArray(NumPyThunk):
         # Have to copy the numpy array because this launch is asynchronous
         # and we need to make sure the application doesn't mutate the value
         # so make a future result, this is immediate so no dependence
-        value = Scalar(numpy_array.tobytes(), self.base.type)
-        self._fill(legate_runtime.create_store_from_scalar(value))
+        self._fill(Scalar(numpy_array.tobytes(), self.base.type))
 
     @auto_convert("rhs1_thunk", "rhs2_thunk")
     def contract(
