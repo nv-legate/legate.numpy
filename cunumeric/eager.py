@@ -1531,7 +1531,7 @@ class EagerArray(NumPyThunk):
         if self.deferred is not None:
             self.deferred.isclose(rhs1, rhs2, rtol, atol, equal_nan)
         else:
-            self.array[:] = np.isclose(
+            self.array[...] = np.isclose(
                 rhs1.array,
                 rhs2.array,
                 rtol=rtol,
