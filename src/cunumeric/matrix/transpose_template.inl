@@ -33,34 +33,25 @@ struct TransposeImpl {
   {
     using VAL = type_of<CODE>;
 
-    const auto out_rect = args.out.shape<2>();
-    if (out_rect.empty()) {
+    const auto rect = args.out.shape<2>();
+    if (rect.empty()) {
       return;
-    }
-
-    Rect<2> in_rect;
-    if (args.logical) {
-      in_rect.lo = Point<2>(out_rect.lo[1], out_rect.lo[0]);
-      in_rect.hi = Point<2>(out_rect.hi[1], out_rect.hi[0]);
-    } else {
-      in_rect = out_rect;
     }
 
     auto out = args.out.write_accessor<VAL, 2>();
     auto in  = args.in.read_accessor<VAL, 2>();
 
-    TransposeImplBody<KIND, CODE>{}(out_rect, in_rect, out, in, args.logical);
+    TransposeImplBody<KIND, CODE>{}(rect, out, in);
   }
 };
 
 template <VariantKind KIND>
 static void transpose_template(TaskContext& context)
 {
-  auto output  = context.output(0);
-  auto input   = context.input(0);
-  auto logical = context.scalar(0).value<bool>();
+  auto output = context.output(0);
+  auto input  = context.input(0);
 
-  TransposeArgs args{output, input, logical};
+  TransposeArgs args{output, input};
   type_dispatch(input.type().code(), TransposeImpl<KIND>{}, args);
 }
 

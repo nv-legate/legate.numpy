@@ -1,4 +1,4 @@
-# Copyright 2021-2022 NVIDIA Corporation
+# Copyright 2021-2023 NVIDIA Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ from typing import (
     Any,
     Callable,
     Dict,
+    Iterable,
     Optional,
     Sequence,
     Union,
@@ -616,6 +617,26 @@ class EagerArray(NumPyThunk):
         else:
             choices = tuple(c.array for c in args)
             self.array[:] = np.choose(rhs.array, choices, mode="raise")
+
+    def select(
+        self,
+        condlist: Iterable[Any],
+        choicelist: Iterable[Any],
+        default: npt.NDArray[Any],
+    ) -> None:
+        self.check_eager_args(*condlist, *choicelist)
+        if self.deferred is not None:
+            self.deferred.select(
+                condlist,
+                choicelist,
+                default,
+            )
+        else:
+            self.array[...] = np.select(
+                tuple(c.array for c in condlist),
+                tuple(c.array for c in choicelist),
+                default,
+            )
 
     def _diag_helper(
         self, rhs: Any, offset: int, naxes: int, extract: bool, trace: bool
@@ -1492,6 +1513,8 @@ class EagerArray(NumPyThunk):
                 initial,
             )
             return
+        if where is None:
+            where = True
         if op in _UNARY_RED_OPS_WITH_ARG:
             fn = _UNARY_RED_OPS_WITH_ARG[op]
             # arg based APIs don't have the following arguments: where, initial
@@ -1516,6 +1539,30 @@ class EagerArray(NumPyThunk):
                 if not isinstance(where, EagerArray)
                 else where.array,
                 **kws,
+            )
+        elif op == UnaryRedCode.SUM_SQUARES:
+            squared = np.square(rhs.array)
+            np.sum(
+                squared,
+                out=self.array,
+                axis=orig_axis,
+                where=where
+                if not isinstance(where, EagerArray)
+                else where.array,
+                keepdims=keepdims,
+            )
+        elif op == UnaryRedCode.VARIANCE:
+            (mu,) = args
+            centered = np.subtract(rhs.array, np.asarray(mu))
+            squares = np.square(centered)
+            np.sum(
+                squares,
+                axis=orig_axis,
+                where=where
+                if not isinstance(where, EagerArray)
+                else where.array,
+                keepdims=keepdims,
+                out=self.array,
             )
         elif op == UnaryRedCode.CONTAINS:
             self.array.fill(args[0].value() in rhs.array)
@@ -1596,7 +1643,7 @@ class EagerArray(NumPyThunk):
         if self.deferred is not None:
             self.deferred.where(rhs1, rhs2, rhs3)
         else:
-            self.array[:] = np.where(rhs1.array, rhs2.array, rhs3.array)
+            self.array[...] = np.where(rhs1.array, rhs2.array, rhs3.array)
 
     def argwhere(self) -> NumPyThunk:
         if self.deferred is not None:

@@ -1,4 +1,4 @@
-# Copyright 2021-2022 NVIDIA Corporation
+# Copyright 2021-2023 NVIDIA Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ from collections.abc import Iterable
 from enum import IntEnum, unique
 from functools import reduce, wraps
 from inspect import signature
+from itertools import chain
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -66,7 +67,7 @@ from .linalg.cholesky import cholesky
 from .linalg.solve import solve
 from .sort import sort
 from .thunk import NumPyThunk
-from .utils import is_advanced_indexing
+from .utils import is_advanced_indexing, to_core_dtype
 
 if TYPE_CHECKING:
     import numpy.typing as npt
@@ -144,6 +145,8 @@ def auto_convert(
 
 _UNARY_RED_TO_REDUCTION_OPS: Dict[int, int] = {
     UnaryRedCode.SUM: ReductionOp.ADD,
+    UnaryRedCode.SUM_SQUARES: ReductionOp.ADD,
+    UnaryRedCode.VARIANCE: ReductionOp.ADD,
     UnaryRedCode.PROD: ReductionOp.MUL,
     UnaryRedCode.MAX: ReductionOp.MAX,
     UnaryRedCode.MIN: ReductionOp.MIN,
@@ -194,6 +197,8 @@ def min_identity(
 
 _UNARY_RED_IDENTITIES: Dict[UnaryRedCode, Callable[[Any], Any]] = {
     UnaryRedCode.SUM: lambda _: 0,
+    UnaryRedCode.SUM_SQUARES: lambda _: 0,
+    UnaryRedCode.VARIANCE: lambda _: 0,
     UnaryRedCode.PROD: lambda _: 1,
     UnaryRedCode.MIN: min_identity,
     UnaryRedCode.MAX: max_identity,
@@ -266,6 +271,7 @@ class DeferredArray(NumPyThunk):
             self.runtime.create_empty_thunk(
                 self.shape,
                 self.base.type,
+                inputs=[self],
             ),
         )
         copy.copy(self, deep=True)
@@ -717,10 +723,13 @@ class DeferredArray(NumPyThunk):
 
         store = self.base
         rhs = self
+        computed_key: tuple[Any, ...]
         if isinstance(key, NumPyThunk):
-            key = (key,)
-        assert isinstance(key, tuple)
-        key = self._unpack_ellipsis(key, self.ndim)
+            computed_key = (key,)
+        else:
+            computed_key = key
+        assert isinstance(computed_key, tuple)
+        computed_key = self._unpack_ellipsis(computed_key, self.ndim)
 
         # the index where the first index_array is passed to the [] operator
         start_index = -1
@@ -735,7 +744,7 @@ class DeferredArray(NumPyThunk):
         tuple_of_arrays: tuple[Any, ...] = ()
 
         # First, we need to check if transpose is needed
-        for dim, k in enumerate(key):
+        for dim, k in enumerate(computed_key):
             if np.isscalar(k) or isinstance(k, NumPyThunk):
                 if start_index == -1:
                     start_index = dim
@@ -760,14 +769,18 @@ class DeferredArray(NumPyThunk):
             )
             transpose_indices += post_indices
             post_indices = tuple(
-                i for i in range(len(key)) if i not in key_transpose_indices
+                i
+                for i in range(len(computed_key))
+                if i not in key_transpose_indices
             )
             key_transpose_indices += post_indices
             store = store.transpose(transpose_indices)
-            key = tuple(key[i] for i in key_transpose_indices)
+            computed_key = tuple(
+                computed_key[i] for i in key_transpose_indices
+            )
 
         shift = 0
-        for dim, k in enumerate(key):
+        for dim, k in enumerate(computed_key):
             if np.isscalar(k):
                 if k < 0:  # type: ignore [operator]
                     k += store.shape[dim + shift]  # type: ignore [operator]
@@ -778,7 +791,7 @@ class DeferredArray(NumPyThunk):
             elif isinstance(k, slice):
                 k, store = self._slice_store(k, store, dim + shift)
             elif isinstance(k, NumPyThunk):
-                if not isinstance(key, DeferredArray):
+                if not isinstance(computed_key, DeferredArray):
                     k = self.runtime.to_deferred_array(k)
                 if k.dtype == bool:
                     for i in range(k.ndim):
@@ -1031,21 +1044,15 @@ class DeferredArray(NumPyThunk):
                 # to set the result back. In cuNumeric, the object we
                 # return in step (1) is actually a subview to the array arr
                 # through which we make updates in place, so after step (2) is
-                # done, # the effect of inplace update is already reflected
+                # done, the effect of inplace update is already reflected
                 # to the arr. Therefore, we skip the copy to avoid redundant
                 # copies if we know that we hit such a scenario.
                 # TODO: We should make this work for the advanced indexing case
+                # NOTE: Neither Store nor Storage have an __eq__, so we can
+                # only check that the underlying RegionField/Future corresponds
+                # to the same Legion handle.
                 if view.base == rhs.base:
                     return
-
-                if view.base.overlaps(rhs.base):
-                    rhs_copy = self.runtime.create_empty_thunk(
-                        rhs.shape,
-                        rhs.base.type,
-                        inputs=[rhs],
-                    )
-                    rhs_copy.copy(rhs, deep=False)
-                    rhs = rhs_copy
 
                 view.copy(rhs, deep=False)
 
@@ -1694,6 +1701,29 @@ class DeferredArray(NumPyThunk):
             task.add_constraint(align(p_ind, p_c))
         task.execute()
 
+    def select(
+        self,
+        condlist: Iterable[Any],
+        choicelist: Iterable[Any],
+        default: npt.NDArray[Any],
+    ) -> None:
+        condlist_ = tuple(self.runtime.to_deferred_array(c) for c in condlist)
+        choicelist_ = tuple(
+            self.runtime.to_deferred_array(c) for c in choicelist
+        )
+
+        task = legate_runtime.create_auto_task(
+            self.library, CuNumericOpCode.SELECT
+        )
+        out_arr = self.base
+        task.add_output(out_arr)
+        for c in chain(condlist_, choicelist_):
+            c_arr = c._broadcast(self.shape)
+            task.add_input(c_arr)
+            task.add_alignment(c_arr, out_arr)
+        task.add_scalar_arg(default, to_core_dtype(default.dtype))
+        task.execute()
+
     # Create or extract a diagonal from a matrix
     @auto_convert("rhs")
     def _diag_helper(
@@ -1783,6 +1813,9 @@ class DeferredArray(NumPyThunk):
 
         assert indices.size == values.size
 
+        # Handle store overlap
+        values = values._copy_if_overlapping(self_tmp)
+
         # first, we create indirect array with PointN type that
         # (indices.size,) shape and is used to copy data from values
         # to the target ND array (self)
@@ -1820,7 +1853,7 @@ class DeferredArray(NumPyThunk):
     @auto_convert("mask", "values")
     def putmask(self, mask: Any, values: Any) -> None:
         assert self.shape == mask.shape
-
+        values = values._copy_if_overlapping(self)
         if values.shape != self.shape:
             values_new = values._broadcast(self.shape)
         else:
@@ -1900,9 +1933,10 @@ class DeferredArray(NumPyThunk):
 
     # Transpose the matrix dimensions
     def transpose(
-        self, axes: Union[tuple[int, ...], list[int]]
+        self, axes: Union[None, tuple[int, ...], list[int]]
     ) -> DeferredArray:
-        result = self.base.transpose(tuple(axes))
+        computed_axes = tuple(axes) if axes is not None else ()
+        result = self.base.transpose(computed_axes)
         return DeferredArray(self.runtime, result)
 
     @auto_convert("rhs")
@@ -3058,6 +3092,7 @@ class DeferredArray(NumPyThunk):
         multiout: Optional[Any] = None,
     ) -> None:
         lhs = self.base
+        src = src._copy_if_overlapping(self)
         rhs = src._broadcast(lhs.shape)
 
         with Annotation({"OpCode": op.name}):
@@ -3081,7 +3116,7 @@ class DeferredArray(NumPyThunk):
 
     # Perform a unary reduction operation from one set of dimensions down to
     # fewer
-    @auto_convert("src")
+    @auto_convert("src", "where")
     def unary_reduction(
         self,
         op: UnaryRedCode,
@@ -3112,6 +3147,7 @@ class DeferredArray(NumPyThunk):
                 inputs=[self],
             )
 
+        is_where = bool(where is not None)
         # See if we are doing reduction to a point or another region
         if lhs_array.size == 1:
             assert axes is None or lhs_array.ndim == rhs_array.ndim - (
@@ -3139,6 +3175,10 @@ class DeferredArray(NumPyThunk):
                 task.add_input(rhs_array.base)
                 task.add_scalar_arg(op, ty.int32)
                 task.add_scalar_arg(rhs_array.shape, (ty.int64,))
+                task.add_scalar_arg(is_where, ty.bool_)
+                if is_where:
+                    task.add_input(where.base)
+                    task.add_alignment(rhs_array.base, where.base)
 
                 for arg in args:
                     task.add_scalar_arg(arg)
@@ -3183,6 +3223,10 @@ class DeferredArray(NumPyThunk):
                 )
                 task.add_scalar_arg(axis, ty.int32)
                 task.add_scalar_arg(op, ty.int32)
+                task.add_scalar_arg(is_where, ty.bool_)
+                if is_where:
+                    task.add_input(where.base)
+                    task.add_alignment(rhs_array.base, where.base)
 
                 for arg in args:
                     task.add_scalar_arg(arg)
@@ -3219,7 +3263,9 @@ class DeferredArray(NumPyThunk):
         args: tuple[Scalar, ...],
     ) -> None:
         lhs = self.base
+        src1 = src1._copy_if_overlapping(self)
         rhs1 = src1._broadcast(lhs.shape)
+        src2 = src2._copy_if_overlapping(self)
         rhs2 = src2._broadcast(lhs.shape)
 
         with Annotation({"OpCode": op_code.name}):

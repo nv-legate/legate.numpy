@@ -23,7 +23,6 @@ namespace cunumeric {
 struct TransposeArgs {
   legate::PhysicalStore out;
   legate::PhysicalStore in;
-  bool logical;
 };
 
 class TransposeTask : public CuNumericTask<TransposeTask> {

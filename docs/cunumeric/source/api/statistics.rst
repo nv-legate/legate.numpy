@@ -10,6 +10,8 @@ Averages and variances
    :toctree: generated/
 
    mean
+   nanmean
+   var
 
 
 Histograms
