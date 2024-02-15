@@ -24,7 +24,7 @@ NDArray arange(T start, std::optional<T> stop, T step)
     start = 0;
   }
 
-  size_t N     = ceil((stop.value() - start) / step);
+  uint64_t N   = ceil((stop.value() - start) / step);
   auto s_start = Scalar(start);
   auto s_stop  = Scalar(stop.value());
   auto s_step  = Scalar(step);

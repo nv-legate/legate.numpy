@@ -117,13 +117,13 @@ NDArray::NDArray(legate::LogicalStore&& store) : store_(std::forward<legate::Log
 
 int32_t NDArray::dim() const { return store_.dim(); }
 
-const std::vector<size_t>& NDArray::shape() const { return store_.extents().data(); }
+const std::vector<uint64_t>& NDArray::shape() const { return store_.extents().data(); }
 
 size_t NDArray::size() const { return store_.volume(); }
 
 legate::Type NDArray::type() const { return store_.type(); }
 
-static std::vector<int64_t> compute_strides(const std::vector<size_t>& shape)
+static std::vector<int64_t> compute_strides(const std::vector<uint64_t>& shape)
 {
   std::vector<int64_t> strides(shape.size());
   if (shape.size() > 0) {
@@ -685,7 +685,7 @@ void NDArray::convolve(NDArray input, NDArray filter)
   auto p_output = task.add_output(store_);
   task.add_scalar_arg(legate::Scalar(shape()));
 
-  auto offsets = (filter.store_.extents() + size_t{1}) / size_t{2};
+  auto offsets = (filter.store_.extents() + 1) / 2;
 
   task.add_constraint(legate::align(p_input, p_output));
   task.add_constraint(legate::bloat(p_input, p_halo, offsets, offsets));
@@ -818,7 +818,7 @@ NDArray NDArray::_perform_unary_reduction(int32_t op,
     axes = normalize_axis_vector(axis.value(), src.dim());
   }
 
-  std::vector<size_t> out_shape;
+  std::vector<uint64_t> out_shape;
   for (auto i = 0; i < src.dim(); ++i) {
     if (std::find(axes.begin(), axes.end(), i) == axes.end()) {
       out_shape.push_back(src.shape()[i]);
@@ -1034,7 +1034,7 @@ NDArray NDArray::diag_helper(int32_t offset,
 
   NDArray a = runtime->create_array(store_.type());
 
-  size_t diag_size;
+  uint64_t diag_size;
   if (N == 2) {
     if (offset >= 0) {
       transpose_axes.push_back(axes[0]);
@@ -1048,7 +1048,8 @@ NDArray NDArray::diag_helper(int32_t offset,
     if (offset >= a.shape()[dim() - 1]) {
       throw std::invalid_argument("'offset' for diag or diagonal must be in range");
     }
-    diag_size = std::max((size_t)0, std::min(a.shape().end()[-2], a.shape().end()[-1] - offset));
+    diag_size = std::max(static_cast<uint64_t>(0),
+                         std::min(a.shape().end()[-2], a.shape().end()[-1] - offset));
   } else if (N > 2) {
     if (offset != 0) {
       throw std::invalid_argument("offset supported for number of axes == 2");
@@ -1063,12 +1064,12 @@ NDArray NDArray::diag_helper(int32_t offset,
     throw std::invalid_argument("number of axes should be more than 1");
   }
 
-  std::vector<size_t> tr_shape;
+  std::vector<uint64_t> tr_shape;
   for (size_t i = 0; i < a.dim() - N; ++i) {
     tr_shape.push_back(a.shape()[i]);
   }
 
-  std::vector<size_t> out_shape;
+  std::vector<uint64_t> out_shape;
   if (trace) {
     if (N != 2) {
       throw std::invalid_argument("exactly 2 axes should be passed to trace");
@@ -1397,7 +1398,7 @@ NDArray NDArray::trace(int32_t offset,
 
 legate::LogicalStore NDArray::get_store() { return store_; }
 
-legate::LogicalStore NDArray::broadcast(const std::vector<size_t>& shape,
+legate::LogicalStore NDArray::broadcast(const std::vector<uint64_t>& shape,
                                         legate::LogicalStore& store)
 {
   int32_t diff = static_cast<int32_t>(shape.size()) - store.dim();
@@ -1411,7 +1412,7 @@ legate::LogicalStore NDArray::broadcast(const std::vector<size_t>& shape,
     result = result.promote(dim, shape[dim]);
   }
 
-  std::vector<size_t> orig_shape = result.extents().data();
+  std::vector<uint64_t> orig_shape = result.extents().data();
   for (uint32_t dim = 0; dim < shape.size(); ++dim) {
     if (orig_shape[dim] != shape[dim]) {
 #ifdef DEBUG_CUNUMERIC

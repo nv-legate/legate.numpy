@@ -29,7 +29,7 @@ legate::Logger& cunumeric_log();
 
 void initialize(int32_t argc, char** argv);
 
-NDArray array(std::vector<size_t> shape, const legate::Type& type);
+NDArray array(std::vector<uint64_t> shape, const legate::Type& type);
 
 NDArray abs(NDArray input);
 
@@ -41,11 +41,11 @@ NDArray dot(NDArray rhs1, NDArray rhs2);
 
 NDArray negative(NDArray input);
 
-NDArray random(std::vector<size_t> shape);
+NDArray random(std::vector<uint64_t> shape);
 
-NDArray zeros(std::vector<size_t> shape, std::optional<legate::Type> type = std::nullopt);
+NDArray zeros(std::vector<uint64_t> shape, std::optional<legate::Type> type = std::nullopt);
 
-NDArray full(std::vector<size_t> shape, const Scalar& value);
+NDArray full(std::vector<uint64_t> shape, const Scalar& value);
 
 NDArray all(NDArray input,
             std::optional<std::vector<int32_t>> axis = std::nullopt,

@@ -29,7 +29,7 @@ static legate::Logger log_cunumeric("cunumeric");
 
 legate::Logger& cunumeric_log() { return log_cunumeric; }
 
-NDArray array(std::vector<size_t> shape, const legate::Type& type)
+NDArray array(std::vector<uint64_t> shape, const legate::Type& type)
 {
   return CuNumericRuntime::get_runtime()->create_array(std::move(shape), type);
 }
@@ -75,7 +75,7 @@ NDArray multiply(NDArray rhs1, NDArray rhs2, std::optional<NDArray> out)
 
 NDArray negative(NDArray input) { return unary_op(UnaryOpCode::NEGATIVE, std::move(input)); }
 
-NDArray random(std::vector<size_t> shape)
+NDArray random(std::vector<uint64_t> shape)
 {
   auto runtime = CuNumericRuntime::get_runtime();
   auto out     = runtime->create_array(std::move(shape), legate::float64());
@@ -140,7 +140,7 @@ struct generate_int_value_fn {
 
 }  // namespace
 
-NDArray zeros(std::vector<size_t> shape, std::optional<legate::Type> type)
+NDArray zeros(std::vector<uint64_t> shape, std::optional<legate::Type> type)
 {
   auto code = type.has_value() ? type.value().code() : legate::Type::Code::FLOAT64;
   if (static_cast<int32_t>(code) >= static_cast<int32_t>(legate::Type::Code::FIXED_ARRAY)) {
@@ -150,7 +150,7 @@ NDArray zeros(std::vector<size_t> shape, std::optional<legate::Type> type)
   return full(shape, zero);
 }
 
-NDArray full(std::vector<size_t> shape, const Scalar& value)
+NDArray full(std::vector<uint64_t> shape, const Scalar& value)
 {
   auto runtime = CuNumericRuntime::get_runtime();
   auto out     = runtime->create_array(std::move(shape), value.type());
@@ -233,7 +233,7 @@ NDArray trilu(NDArray rhs, int32_t k, bool lower)
 {
   auto dim    = rhs.dim();
   auto& shape = rhs.shape();
-  std::vector<size_t> out_shape(shape);
+  std::vector<uint64_t> out_shape(shape);
   if (dim == 0) {
     throw std::invalid_argument("Dim of input array must be > 0");
   }
@@ -266,7 +266,7 @@ NDArray dot(NDArray rhs1, NDArray rhs2)
   }
 
   auto runtime = CuNumericRuntime::get_runtime();
-  std::vector<size_t> shape;
+  std::vector<uint64_t> shape;
   shape.push_back(rhs1_shape[0]);
   shape.push_back(rhs2_shape[1]);
 

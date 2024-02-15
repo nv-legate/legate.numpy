@@ -41,7 +41,7 @@ class NDArray {
 
  public:
   int32_t dim() const;
-  const std::vector<size_t>& shape() const;
+  const std::vector<uint64_t>& shape() const;
   size_t size() const;
   legate::Type type() const;
 
@@ -117,7 +117,7 @@ class NDArray {
   NDArray clip_indices(Scalar const& min, Scalar const& max);
 
  private:
-  legate::LogicalStore broadcast(const std::vector<size_t>& shape, legate::LogicalStore& store);
+  legate::LogicalStore broadcast(const std::vector<uint64_t>& shape, legate::LogicalStore& store);
   legate::LogicalStore broadcast(NDArray rhs1, NDArray rhs2);
   void sort_task(NDArray rhs, bool argsort, bool stable);
   void sort_swapped(NDArray rhs, bool argsort, int32_t sort_axis, bool stable);

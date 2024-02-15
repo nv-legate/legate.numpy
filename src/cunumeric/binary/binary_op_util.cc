@@ -14,13 +14,11 @@
  *
  */
 
-namespace cunumeric {
-
-using namespace legate;
-
 #include "cunumeric/binary/binary_op_util.h"
 
-std::vector<size_t> broadcast_shapes(std::vector<NDArray> arrays)
+namespace cunumeric {
+
+std::vector<uint64_t> broadcast_shapes(std::vector<NDArray> arrays)
 {
 #ifdef DEBUG_CUNUMERIC
   assert(!arrays.empty());
@@ -30,7 +28,7 @@ std::vector<size_t> broadcast_shapes(std::vector<NDArray> arrays)
     dim = std::max(dim, array.dim());
   }
 
-  std::vector<size_t> result(dim, 1);
+  std::vector<uint64_t> result(dim, 1);
 
   for (auto& array : arrays) {
     auto& shape = array.shape();

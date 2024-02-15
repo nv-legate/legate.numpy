@@ -58,34 +58,6 @@ struct BinaryOpImplBody<VariantKind::CPU, OP_CODE, CODE, DIM> {
   binary_op_template<VariantKind::CPU>(context);
 }
 
-std::vector<size_t> broadcast_shapes(std::vector<NDArray> arrays)
-{
-#ifdef DEBUG_CUNUMERIC
-  assert(!arrays.empty());
-#endif
-  int32_t dim = 0;
-  for (auto& array : arrays) {
-    dim = std::max(dim, array.dim());
-  }
-
-  std::vector<size_t> result(dim, 1);
-
-  for (auto& array : arrays) {
-    auto& shape = array.shape();
-
-    auto in_it  = shape.rbegin();
-    auto out_it = result.rbegin();
-    for (; in_it != shape.rend() && out_it != result.rend(); ++in_it, ++out_it) {
-      if (1 == *out_it) {
-        *out_it = *in_it;
-      } else if (*in_it != 1 && *out_it != *in_it) {
-        throw std::exception();
-      }
-    }
-  }
-  return result;
-}
-
 namespace  // unnamed
 {
 static void __attribute__((constructor)) register_tasks(void) { BinaryOpTask::register_variants(); }

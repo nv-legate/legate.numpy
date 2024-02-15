@@ -124,6 +124,7 @@ list(APPEND cunumeric_SOURCES
   src/cunumeric/scan/scan_global.cc
   src/cunumeric/scan/scan_local.cc
   src/cunumeric/binary/binary_op.cc
+  src/cunumeric/binary/binary_op_util.cc
   src/cunumeric/binary/binary_red.cc
   src/cunumeric/bits/packbits.cc
   src/cunumeric/bits/unpackbits.cc
