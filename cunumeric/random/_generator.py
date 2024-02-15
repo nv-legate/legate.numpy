@@ -18,7 +18,7 @@ from typing import TYPE_CHECKING, Union
 
 import numpy as np
 
-from cunumeric.random.bitgenerator import XORWOW, BitGenerator
+from ._bitgenerator import XORWOW, BitGenerator
 
 if TYPE_CHECKING:
     import numpy.typing as npt

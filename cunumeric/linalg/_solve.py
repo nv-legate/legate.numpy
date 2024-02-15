@@ -19,10 +19,10 @@ from typing import TYPE_CHECKING, cast
 import legate.core.types as ty
 from legate.core import broadcast, get_legate_runtime
 
-from cunumeric.config import CuNumericOpCode
-
-from .cholesky import transpose_copy_single
-from .exception import LinAlgError
+from ..config import CuNumericOpCode
+from ..runtime import runtime
+from ._cholesky import transpose_copy_single
+from ._exception import LinAlgError
 
 if TYPE_CHECKING:
     from legate.core import Library, LogicalStore
@@ -75,10 +75,11 @@ def mp_solve(
     task.execute()
 
 
-def solve(output: DeferredArray, a: DeferredArray, b: DeferredArray) -> None:
+def solve_deferred(
+    output: DeferredArray, a: DeferredArray, b: DeferredArray
+) -> None:
     from ..deferred import DeferredArray
 
-    runtime = output.runtime
     library = output.library
 
     if (

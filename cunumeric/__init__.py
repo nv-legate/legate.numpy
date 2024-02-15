@@ -28,14 +28,14 @@ import os
 
 import numpy as _np
 
-from cunumeric import linalg, random, fft, ma
-from cunumeric.array import maybe_convert_to_np_ndarray, ndarray
-from cunumeric.bits import packbits, unpackbits
-from cunumeric.module import *
-from cunumeric._ufunc import *
-from cunumeric.logic import *
-from cunumeric.window import bartlett, blackman, hamming, hanning, kaiser
-from cunumeric.coverage import clone_module
+from . import linalg, random, fft, ma
+from .array import maybe_convert_to_np_ndarray, ndarray
+from .bits import packbits, unpackbits
+from .module import *
+from ._ufunc import *
+from .logic import *
+from .window import bartlett, blackman, hamming, hanning, kaiser
+from .coverage import clone_module
 
 clone_module(_np, globals(), maybe_convert_to_np_ndarray)
 

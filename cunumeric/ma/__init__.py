@@ -16,9 +16,9 @@ from __future__ import annotations
 
 import numpy.ma as _ma
 
-from cunumeric.array import maybe_convert_to_np_ndarray
-from cunumeric.coverage import clone_module
-from cunumeric.ma._masked_array import MaskedArray
+from ..array import maybe_convert_to_np_ndarray
+from ..coverage import clone_module
+from ._masked_array import MaskedArray
 
 masked_array = MaskedArray
 

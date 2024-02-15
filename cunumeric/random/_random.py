@@ -18,18 +18,15 @@ from typing import TYPE_CHECKING, Any, Union
 
 import numpy as np
 
-from cunumeric.array import ndarray
-from cunumeric.coverage import clone_class
-from cunumeric.random import generator
-from cunumeric.runtime import runtime
+from ..array import ndarray
+from ..coverage import clone_class
+from ..runtime import runtime
+from ._generator import default_rng, get_static_generator  # NOQA
 
 if TYPE_CHECKING:
     import numpy.typing as npt
 
     from ..types import NdShapeLike
-
-
-default_rng = generator.default_rng
 
 
 def seed(init: Union[int, None] = None) -> None:
@@ -100,7 +97,7 @@ def beta(
     --------
     Multiple GPUs, Multiple CPUs
     """
-    return generator.get_static_generator().beta(a, b, size, dtype)
+    return get_static_generator().beta(a, b, size, dtype)
 
 
 def binomial(
@@ -145,7 +142,7 @@ def binomial(
     --------
     Multiple GPUs, Multiple CPUs
     """
-    return generator.get_static_generator().binomial(ntrials, p, size, dtype)
+    return get_static_generator().binomial(ntrials, p, size, dtype)
 
 
 def bytes(length: int) -> ndarray:
@@ -172,7 +169,7 @@ def bytes(length: int) -> ndarray:
     --------
     Multiple GPUs, Multiple CPUs
     """
-    return generator.get_static_generator().bytes(length)
+    return get_static_generator().bytes(length)
 
 
 def chisquare(
@@ -218,7 +215,7 @@ def chisquare(
     --------
     Multiple GPUs, Multiple CPUs
     """
-    return generator.get_static_generator().chisquare(df, size, dtype)
+    return get_static_generator().chisquare(df, size, dtype)
 
 
 def exponential(
@@ -278,7 +275,7 @@ def exponential(
     --------
     Multiple GPUs, Multiple CPUs
     """
-    return generator.get_static_generator().exponential(scale, size, dtype)
+    return get_static_generator().exponential(scale, size, dtype)
 
 
 def f(
@@ -326,7 +323,7 @@ def f(
     --------
     Multiple GPUs, Multiple CPUs
     """
-    return generator.get_static_generator().f(dfnum, dfden, size, dtype)
+    return get_static_generator().f(dfnum, dfden, size, dtype)
 
 
 def gamma(
@@ -369,7 +366,7 @@ def gamma(
     --------
     Multiple GPUs, Multiple CPUs
     """
-    return generator.get_static_generator().gamma(shape, scale, size, dtype)
+    return get_static_generator().gamma(shape, scale, size, dtype)
 
 
 def geometric(
@@ -416,7 +413,7 @@ def geometric(
     --------
     Multiple GPUs, Multiple CPUs
     """
-    return generator.get_static_generator().geometric(p, size, dtype)
+    return get_static_generator().geometric(p, size, dtype)
 
 
 def gumbel(
@@ -458,7 +455,7 @@ def gumbel(
     --------
     Multiple GPUs, Multiple CPUs
     """
-    return generator.get_static_generator().gumbel(loc, scale, size, dtype)
+    return get_static_generator().gumbel(loc, scale, size, dtype)
 
 
 def hypergeometric(
@@ -508,7 +505,7 @@ def hypergeometric(
     --------
     Multiple GPUs, Multiple CPUs
     """
-    return generator.get_static_generator().hypergeometric(
+    return get_static_generator().hypergeometric(
         ngood, nbad, nsample, size, dtype
     )
 
@@ -555,7 +552,7 @@ def laplace(
     --------
     Multiple GPUs, Multiple CPUs
     """
-    return generator.get_static_generator().laplace(loc, scale, size, dtype)
+    return get_static_generator().laplace(loc, scale, size, dtype)
 
 
 def logistic(
@@ -597,7 +594,7 @@ def logistic(
     --------
     Multiple GPUs, Multiple CPUs
     """
-    return generator.get_static_generator().logistic(loc, scale, size, dtype)
+    return get_static_generator().logistic(loc, scale, size, dtype)
 
 
 def lognormal(
@@ -641,7 +638,7 @@ def lognormal(
     --------
     Multiple GPUs, Multiple CPUs
     """
-    return generator.get_static_generator().lognormal(mean, sigma, size, dtype)
+    return get_static_generator().lognormal(mean, sigma, size, dtype)
 
 
 def logseries(
@@ -679,7 +676,7 @@ def logseries(
     --------
     Multiple GPUs, Multiple CPUs
     """
-    return generator.get_static_generator().logseries(p, size, dtype)
+    return get_static_generator().logseries(p, size, dtype)
 
 
 def negative_binomial(
@@ -723,9 +720,7 @@ def negative_binomial(
     --------
     Multiple GPUs, Multiple CPUs
     """
-    return generator.get_static_generator().negative_binomial(
-        n, p, size, dtype
-    )
+    return get_static_generator().negative_binomial(n, p, size, dtype)
 
 
 def noncentral_chisquare(
@@ -767,9 +762,7 @@ def noncentral_chisquare(
     --------
     Multiple GPUs, Multiple CPUs
     """
-    return generator.get_static_generator().noncentral_chisquare(
-        df, nonc, size, dtype
-    )
+    return get_static_generator().noncentral_chisquare(df, nonc, size, dtype)
 
 
 def noncentral_f(
@@ -816,9 +809,7 @@ def noncentral_f(
     --------
     Multiple GPUs, Multiple CPUs
     """
-    return generator.get_static_generator().noncentral_f(
-        dfnum, dfden, nonc, size, dtype
-    )
+    return get_static_generator().noncentral_f(dfnum, dfden, nonc, size, dtype)
 
 
 def normal(
@@ -873,7 +864,7 @@ def normal(
     --------
     Multiple GPUs, Multiple CPUs
     """
-    return generator.get_static_generator().normal(loc, scale, size, dtype)
+    return get_static_generator().normal(loc, scale, size, dtype)
 
 
 def pareto(
@@ -926,7 +917,7 @@ def pareto(
     --------
     Multiple GPUs, Multiple CPUs
     """
-    return generator.get_static_generator().pareto(a, size, dtype)
+    return get_static_generator().pareto(a, size, dtype)
 
 
 def poisson(
@@ -964,7 +955,7 @@ def poisson(
     --------
     Multiple GPUs, Multiple CPUs
     """
-    return generator.get_static_generator().poisson(lam, size)
+    return get_static_generator().poisson(lam, size)
 
 
 def power(
@@ -1007,7 +998,7 @@ def power(
     --------
     Multiple GPUs, Multiple CPUs
     """
-    return generator.get_static_generator().power(a, size, dtype)
+    return get_static_generator().power(a, size, dtype)
 
 
 def rand(*shapeargs: int) -> Union[float, ndarray]:
@@ -1100,7 +1091,7 @@ def randint(
     elif low >= high:
         raise ValueError("low >= high")
 
-    return generator.get_static_generator().integers(low, high, size, dtype)
+    return get_static_generator().integers(low, high, size, dtype)
 
 
 def randn(*shapeargs: int) -> Union[float, ndarray]:
@@ -1156,7 +1147,7 @@ def random(
     --------
     Multiple GPUs, Multiple CPUs
     """
-    return generator.get_static_generator().random(size)
+    return get_static_generator().random(size)
 
 
 # deprecated in numpy from version 1.11.0
@@ -1289,7 +1280,7 @@ def rayleigh(
     --------
     Multiple GPUs, Multiple CPUs
     """
-    return generator.get_static_generator().rayleigh(scale, size, dtype)
+    return get_static_generator().rayleigh(scale, size, dtype)
 
 
 sample = random_sample
@@ -1326,7 +1317,7 @@ def standard_cauchy(
     --------
     Multiple GPUs, Multiple CPUs
     """
-    return generator.get_static_generator().standard_cauchy(size, dtype)
+    return get_static_generator().standard_cauchy(size, dtype)
 
 
 def standard_exponential(
@@ -1361,7 +1352,7 @@ def standard_exponential(
     --------
     Multiple GPUs, Multiple CPUs
     """
-    return generator.get_static_generator().standard_exponential(size, dtype)
+    return get_static_generator().standard_exponential(size, dtype)
 
 
 def standard_gamma(
@@ -1399,7 +1390,7 @@ def standard_gamma(
     --------
     Multiple GPUs, Multiple CPUs
     """
-    return generator.get_static_generator().standard_gamma(shape, size, dtype)
+    return get_static_generator().standard_gamma(shape, size, dtype)
 
 
 def standard_t(
@@ -1439,7 +1430,7 @@ def standard_t(
     --------
     Multiple GPUs, Multiple CPUs
     """
-    return generator.get_static_generator().standard_t(df, size, dtype)
+    return get_static_generator().standard_t(df, size, dtype)
 
 
 def triangular(
@@ -1487,9 +1478,7 @@ def triangular(
     --------
     Multiple GPUs, Multiple CPUs
     """
-    return generator.get_static_generator().triangular(
-        left, mode, right, size, dtype
-    )
+    return get_static_generator().triangular(left, mode, right, size, dtype)
 
 
 def uniform(
@@ -1537,7 +1526,7 @@ def uniform(
     --------
     Multiple GPUs, Multiple CPUs
     """
-    return generator.get_static_generator().uniform(low, high, size, dtype)
+    return get_static_generator().uniform(low, high, size, dtype)
 
 
 def vonmises(
@@ -1583,7 +1572,7 @@ def vonmises(
     --------
     Multiple GPUs, Multiple CPUs
     """
-    return generator.get_static_generator().vonmises(mu, kappa, size, dtype)
+    return get_static_generator().vonmises(mu, kappa, size, dtype)
 
 
 def wald(
@@ -1630,7 +1619,7 @@ def wald(
     --------
     Multiple GPUs, Multiple CPUs
     """
-    return generator.get_static_generator().wald(mean, scale, size, dtype)
+    return get_static_generator().wald(mean, scale, size, dtype)
 
 
 def weibull(
@@ -1675,7 +1664,7 @@ def weibull(
     --------
     Multiple GPUs, Multiple CPUs
     """
-    return generator.get_static_generator().weibull(a, size, dtype)
+    return get_static_generator().weibull(a, size, dtype)
 
 
 def zipf(
@@ -1718,7 +1707,7 @@ def zipf(
     --------
     Multiple GPUs, Multiple CPUs
     """
-    return generator.get_static_generator().zipf(a, size, dtype)
+    return get_static_generator().zipf(a, size, dtype)
 
 
 def _random_state_fallback(obj: Any) -> Any:

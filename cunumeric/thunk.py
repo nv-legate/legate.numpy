@@ -18,6 +18,7 @@ from abc import ABC, abstractmethod, abstractproperty
 from typing import TYPE_CHECKING, Any, Iterable, Optional, Sequence, Union
 
 from .config import ConvertCode
+from .runtime import runtime
 
 if TYPE_CHECKING:
     import numpy as np
@@ -33,7 +34,6 @@ if TYPE_CHECKING:
         UnaryRedCode,
         WindowOpCode,
     )
-    from .runtime import Runtime
     from .types import (
         BitOrder,
         ConvolveMode,
@@ -53,8 +53,7 @@ class NumPyThunk(ABC):
     :meta private:
     """
 
-    def __init__(self, runtime: Runtime, dtype: np.dtype[Any]) -> None:
-        self.runtime = runtime
+    def __init__(self, dtype: np.dtype[Any]) -> None:
         self.library = runtime.library
         self.dtype = dtype
 

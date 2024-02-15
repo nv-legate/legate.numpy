@@ -24,11 +24,10 @@ from numpy.core.numeric import (  # type: ignore [attr-defined]
     normalize_axis_tuple,
 )
 
-from cunumeric._ufunc.math import add, sqrt as _sqrt
-from cunumeric.array import add_boilerplate, convert_to_cunumeric_ndarray
-from cunumeric.module import dot, empty_like, eye, matmul, ndarray
-
-from .exception import LinAlgError
+from .._ufunc.math import add, sqrt as _sqrt
+from ..array import add_boilerplate, convert_to_cunumeric_ndarray
+from ..module import dot, empty_like, eye, matmul, ndarray
+from ._exception import LinAlgError
 
 if TYPE_CHECKING:
     from typing import Optional
@@ -82,7 +81,7 @@ def cholesky(a: ndarray) -> ndarray:
     elif shape[-1] != shape[-2]:
         raise ValueError("Last 2 dimensions of the array must be square")
 
-    return _cholesky(a)
+    return _thunk_cholesky(a)
 
 
 @add_boilerplate("a", "b")
@@ -158,7 +157,7 @@ def solve(a: ndarray, b: ndarray, out: Optional[ndarray] = None) -> ndarray:
     if a.size == 0 or b.size == 0:
         return empty_like(b)
 
-    return _solve(a, b, out)
+    return _thunk_solve(a, b, out)
 
 
 # This implementation is adapted closely from NumPy
@@ -587,7 +586,7 @@ def norm(
         raise ValueError("Improper number of dimensions to norm")
 
 
-def _cholesky(a: ndarray, no_tril: bool = False) -> ndarray:
+def _thunk_cholesky(a: ndarray, no_tril: bool = False) -> ndarray:
     """Cholesky decomposition.
 
     Return the Cholesky decomposition, `L * L.H`, of the square matrix `a`,
@@ -635,7 +634,7 @@ def _cholesky(a: ndarray, no_tril: bool = False) -> ndarray:
     return output
 
 
-def _solve(
+def _thunk_solve(
     a: ndarray, b: ndarray, output: Optional[ndarray] = None
 ) -> ndarray:
     if a.dtype.kind not in ("f", "c"):

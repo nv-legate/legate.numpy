@@ -41,8 +41,6 @@ from numpy.core.numeric import (  # type: ignore [attr-defined]
     normalize_axis_tuple,
 )
 
-from cunumeric.coverage import is_implemented
-
 from ._ufunc.comparison import maximum, minimum
 from ._ufunc.floating import floor, isnan
 from ._ufunc.math import add, multiply
@@ -54,6 +52,7 @@ from .array import (
     ndarray,
 )
 from .config import BinaryOpCode, ScanCode, UnaryRedCode
+from .coverage import is_implemented
 from .runtime import runtime
 from .settings import settings as cunumeric_settings
 from .types import NdShape, NdShapeLike, OrderType, SortSide

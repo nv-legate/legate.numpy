@@ -25,9 +25,9 @@ from legate.core import (
 )
 from legate.settings import settings
 
-from cunumeric.config import CuNumericOpCode
-
-from .exception import LinAlgError
+from ..config import CuNumericOpCode
+from ..runtime import runtime
+from ._exception import LinAlgError
 
 legate_runtime = get_legate_runtime()
 
@@ -254,10 +254,9 @@ def _batched_cholesky(
     task.execute()
 
 
-def cholesky(
+def cholesky_deferred(
     output: DeferredArray, input: DeferredArray, no_tril: bool
 ) -> None:
-    runtime = output.runtime
     library = runtime.library
     if len(input.base.shape) > 2:
         if no_tril:

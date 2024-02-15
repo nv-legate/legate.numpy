@@ -22,6 +22,7 @@ from numpy.core.multiarray import (  # type: ignore [attr-defined]
 )
 
 from .config import CuNumericOpCode
+from .runtime import runtime
 
 if TYPE_CHECKING:
     from .deferred import DeferredArray
@@ -35,11 +36,11 @@ def sort_flattened(
     # run sort flattened -- return 1D solution
     sort_result = cast(
         "DeferredArray",
-        output.runtime.create_empty_thunk(
+        runtime.create_empty_thunk(
             flattened.shape, dtype=output.base.type, inputs=(flattened,)
         ),
     )
-    sort(sort_result, flattened, argsort, stable=stable)
+    sort_deferred(sort_result, flattened, argsort, stable=stable)
     output.base = sort_result.base
     output.numpy_array = None
 
@@ -58,7 +59,7 @@ def sort_swapped(
 
     swapped_copy = cast(
         "DeferredArray",
-        output.runtime.create_empty_thunk(
+        runtime.create_empty_thunk(
             swapped.shape, dtype=input.base.type, inputs=(input, swapped)
         ),
     )
@@ -68,17 +69,17 @@ def sort_swapped(
     if argsort is True:
         sort_result = cast(
             "DeferredArray",
-            output.runtime.create_empty_thunk(
+            runtime.create_empty_thunk(
                 swapped_copy.shape,
                 dtype=output.base.type,
                 inputs=(swapped_copy,),
             ),
         )
-        sort(sort_result, swapped_copy, argsort, stable=stable)
+        sort_deferred(sort_result, swapped_copy, argsort, stable=stable)
         output.base = sort_result.swapaxes(input.ndim - 1, sort_axis).base
         output.numpy_array = None
     else:
-        sort(swapped_copy, swapped_copy, argsort, stable=stable)
+        sort_deferred(swapped_copy, swapped_copy, argsort, stable=stable)
         output.base = swapped_copy.swapaxes(input.ndim - 1, sort_axis).base
         output.numpy_array = None
 
@@ -86,24 +87,24 @@ def sort_swapped(
 def sort_task(
     output: DeferredArray, input: DeferredArray, argsort: bool, stable: bool
 ) -> None:
-    runtime = get_legate_runtime()
-    task = runtime.create_auto_task(output.library, CuNumericOpCode.SORT)
+    legate_runtime = get_legate_runtime()
+    task = legate_runtime.create_auto_task(
+        output.library, CuNumericOpCode.SORT
+    )
 
-    uses_unbound_output = output.runtime.num_procs > 1 and input.ndim == 1
+    uses_unbound_output = runtime.num_procs > 1 and input.ndim == 1
 
     task.add_input(input.base)
     if uses_unbound_output:
-        unbound = output.runtime.create_unbound_thunk(
-            dtype=output.base.type, ndim=1
-        )
+        unbound = runtime.create_unbound_thunk(dtype=output.base.type, ndim=1)
         task.add_output(unbound.base)
     else:
         task.add_output(output.base)
         task.add_alignment(output.base, input.base)
 
-    if output.runtime.num_gpus > 1:
+    if runtime.num_gpus > 1:
         task.add_nccl_communicator()
-    elif output.runtime.num_gpus == 0 and output.runtime.num_procs > 1:
+    elif runtime.num_gpus == 0 and runtime.num_procs > 1:
         task.add_cpu_communicator()
 
     task.add_scalar_arg(argsort, ty.bool_)  # return indices flag
@@ -116,7 +117,7 @@ def sort_task(
         output.numpy_array = None
 
 
-def sort(
+def sort_deferred(
     output: DeferredArray,
     input: DeferredArray,
     argsort: bool,

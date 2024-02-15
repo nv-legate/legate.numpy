@@ -327,14 +327,14 @@ class CuNumericLib:
         callback()
 
     def get_shared_library(self) -> str:
-        from cunumeric.install_info import libpath
+        from .install_info import libpath
 
         return os.path.join(
             libpath, "libcunumeric" + self.get_library_extension()
         )
 
     def get_c_header(self) -> str:
-        from cunumeric.install_info import header
+        from .install_info import header
 
         return header
 

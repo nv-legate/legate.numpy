@@ -30,19 +30,23 @@ from .config import (
     CuNumericTunable,
     cunumeric_lib,
 )
-from .deferred import DeferredArray
-from .eager import EagerArray
-from .settings import settings
-from .thunk import NumPyThunk
-from .types import NdShape
 from .utils import calculate_volume, find_last_user_stacklevel, to_core_dtype
+
+# We need to be careful about importing from other cunumeric modules here. The
+# runtime is global and used in many places, but also depends on many of the
+# other modules. Things like config and utils are OK, but imports for thunks,
+# array types, etc. need to be deferred in order to avoid circular imports.
+
 
 if TYPE_CHECKING:
     import numpy.typing as npt
     from legate.core import AutoTask, ManualTask
 
     from .array import ndarray
-
+    from .deferred import DeferredArray
+    from .eager import EagerArray
+    from .thunk import NumPyThunk
+    from .types import NdShape
 
 DIMENSION = int
 
@@ -71,6 +75,8 @@ class Runtime(object):
             cunumeric_lib.shared_object.cunumeric_has_cusolvermp()
         )
 
+        from .settings import settings
+
         settings.warn = settings.warn() or legate_settings.test()
 
         if self.num_gpus > 0 and settings.preload_cudalibs():
@@ -90,6 +96,8 @@ class Runtime(object):
     def record_api_call(
         self, name: str, location: str, implemented: bool
     ) -> None:
+        from .settings import settings
+
         assert settings.report_coverage()
         self.api_calls.append((name, location, implemented))
 
@@ -131,6 +139,8 @@ class Runtime(object):
                 f"({implemented / total * 100}%)"
             )
 
+        from .settings import settings
+
         if (dump_csv := settings.report_dump_csv()) is not None:
             with open(dump_csv, "w") as f:
                 print("function_name,location,implemented", file=f)
@@ -138,6 +148,8 @@ class Runtime(object):
                     print(f"{func_name},{loc},{impl}", file=f)
 
     def destroy(self) -> None:
+        from .settings import settings
+
         assert not self.destroyed
         if settings.report_coverage():
             self._report_coverage()
@@ -241,7 +253,10 @@ class Runtime(object):
                 raise NotImplementedError(
                     "Array must be non-nullable and not nested"
                 )
-            return DeferredArray(self, array.data)
+
+            from .deferred import DeferredArray
+
+            return DeferredArray(array.data)
         # See if this is a normal numpy array
         # Make sure to convert numpy matrices to numpy arrays here
         # as the former doesn't behave quite like the latter
@@ -334,6 +349,8 @@ class Runtime(object):
     def find_or_create_array_thunk(
         self, array: npt.NDArray[Any], share: bool = False, defer: bool = False
     ) -> NumPyThunk:
+        from .deferred import DeferredArray
+
         assert isinstance(array, np.ndarray)
         # We have to be really careful here to handle the case of
         # aliased numpy arrays that are passed in from the application
@@ -377,7 +394,7 @@ class Runtime(object):
                     Scalar(array.tobytes(), dtype),
                     shape=array.shape,
                 )
-                return DeferredArray(self, store)
+                return DeferredArray(store)
 
             # This is not a scalar so make a field
             store = legate_runtime.create_store_from_buffer(
@@ -387,13 +404,14 @@ class Runtime(object):
                 not share,  # read_only
             )
             return DeferredArray(
-                self,
                 store,
                 numpy_array=array if share else None,
             )
 
+        from .eager import EagerArray
+
         # Make this into an eager evaluated thunk
-        return EagerArray(self, array)
+        return EagerArray(array)
 
     def create_empty_thunk(
         self,
@@ -401,26 +419,32 @@ class Runtime(object):
         dtype: ty.Type,
         inputs: Optional[Sequence[NumPyThunk]] = None,
     ) -> NumPyThunk:
+        from .deferred import DeferredArray
+
         if self.is_eager_shape(shape) and self.are_all_eager_inputs(inputs):
             return self.create_eager_thunk(shape, dtype.to_numpy_dtype())
 
         store = legate_runtime.create_store(
             dtype, shape=shape, optimize_scalar=True
         )
-        return DeferredArray(self, store)
+        return DeferredArray(store)
 
     def create_eager_thunk(
         self,
         shape: NdShape,
         dtype: np.dtype[Any],
     ) -> NumPyThunk:
-        return EagerArray(self, np.empty(shape, dtype=dtype))
+        from .eager import EagerArray
+
+        return EagerArray(np.empty(shape, dtype=dtype))
 
     def create_unbound_thunk(
         self, dtype: ty.Type, ndim: int = 1
     ) -> DeferredArray:
+        from .deferred import DeferredArray
+
         store = legate_runtime.create_store(dtype, ndim=ndim)
-        return DeferredArray(self, store)
+        return DeferredArray(store)
 
     def is_eager_shape(self, shape: NdShape) -> bool:
         volume = calculate_volume(shape)
@@ -434,6 +458,8 @@ class Runtime(object):
         # Arrays with more dimensions than what Legion was compiled for
         if len(shape) > LEGATE_MAX_DIM:
             return True
+
+        from .settings import settings
 
         # CUNUMERIC_FORCE_THUNK == "eager"
         if settings.force_thunk() == "eager":
@@ -451,6 +477,9 @@ class Runtime(object):
 
     @staticmethod
     def are_all_eager_inputs(inputs: Optional[Sequence[NumPyThunk]]) -> bool:
+        from .eager import EagerArray
+        from .thunk import NumPyThunk
+
         if inputs is None:
             return True
         for inp in inputs:
@@ -461,19 +490,25 @@ class Runtime(object):
 
     @staticmethod
     def is_eager_array(array: NumPyThunk) -> TypeGuard[EagerArray]:
+        from .eager import EagerArray
+
         return isinstance(array, EagerArray)
 
     @staticmethod
     def is_deferred_array(
         array: Optional[NumPyThunk],
     ) -> TypeGuard[DeferredArray]:
+        from .deferred import DeferredArray
+
         return isinstance(array, DeferredArray)
 
     def to_eager_array(self, array: NumPyThunk) -> EagerArray:
+        from .eager import EagerArray
+
         if self.is_eager_array(array):
             return array
         elif self.is_deferred_array(array):
-            return EagerArray(self, array.__numpy_array__())
+            return EagerArray(array.__numpy_array__())
         else:
             raise RuntimeError("invalid array type")
 
@@ -486,6 +521,8 @@ class Runtime(object):
             raise RuntimeError("invalid array type")
 
     def warn(self, msg: str, category: type = UserWarning) -> None:
+        from .settings import settings
+
         if not settings.warn():
             return
         stacklevel = find_last_user_stacklevel()
