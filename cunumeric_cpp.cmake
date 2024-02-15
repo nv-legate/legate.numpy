@@ -167,6 +167,7 @@ list(APPEND cunumeric_SOURCES
   src/cunumeric/stat/bincount.cc
   src/cunumeric/convolution/convolve.cc
   src/cunumeric/transform/flip.cc
+  src/cunumeric/utilities/repartition.cc
   src/cunumeric/arg_redop_register.cc
   src/cunumeric/mapper.cc
   src/cunumeric/ndarray.cc
@@ -275,6 +276,7 @@ if(Legion_USE_CUDA)
     src/cunumeric/convolution/convolve.cu
     src/cunumeric/fft/fft.cu
     src/cunumeric/transform/flip.cu
+    src/cunumeric/utilities/repartition.cu
     src/cunumeric/arg_redop_register.cu
     src/cunumeric/cudalibs.cu
     src/cunumeric/stat/histogram.cu
@@ -345,6 +347,14 @@ if(Legion_USE_CUDA OR cunumeric_cuRAND_INCLUDE_DIR)
   endif()
 endif()
 
+# add sources for cusolverMp
+if(Legion_USE_CUDA AND CUSOLVERMP_DIR)
+  list(APPEND cunumeric_SOURCES
+    src/cunumeric/matrix/mp_potrf.cu
+    src/cunumeric/matrix/mp_solve.cu
+  )
+endif()
+
 list(APPEND cunumeric_SOURCES
   # This must always be the last file!
   # It guarantees we do our registration callback
@@ -404,6 +414,14 @@ target_link_libraries(cunumeric
 if(NOT Legion_USE_CUDA AND cunumeric_cuRAND_INCLUDE_DIR)
   list(APPEND cunumeric_CXX_DEFS CUNUMERIC_CURAND_FOR_CPU_BUILD)
   target_include_directories(cunumeric PRIVATE ${cunumeric_cuRAND_INCLUDE_DIR})
+endif()
+
+if(Legion_USE_CUDA AND CUSOLVERMP_DIR)
+  message(VERBOSE "cunumeric: CUSOLVERMP_DIR ${CUSOLVERMP_DIR}")
+  list(APPEND cunumeric_CXX_DEFS CUNUMERIC_USE_CUSOLVERMP)
+  list(APPEND cunumeric_CUDA_DEFS CUNUMERIC_USE_CUSOLVERMP)
+  target_include_directories(cunumeric PRIVATE ${CUSOLVERMP_DIR}/include)
+  target_link_libraries(cunumeric PRIVATE ${CUSOLVERMP_DIR}/lib/libcusolverMp.so)
 endif()
 
 # Change THRUST_DEVICE_SYSTEM for `.cpp` files

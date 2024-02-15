@@ -51,6 +51,8 @@ enum CuNumericOpCode {
   CUNUMERIC_LOAD_CUDALIBS,
   CUNUMERIC_MATMUL,
   CUNUMERIC_MATVECMUL,
+  CUNUMERIC_MP_POTRF,
+  CUNUMERIC_MP_SOLVE,
   CUNUMERIC_NONZERO,
   CUNUMERIC_PACKBITS,
   CUNUMERIC_POTRF,
@@ -341,6 +343,8 @@ typedef struct ReductionOpIds {
 
 void cunumeric_perform_registration();
 bool cunumeric_has_curand();
+bool cunumeric_has_cusolvermp();
+
 struct ReductionOpIds cunumeric_register_reduction_ops(int32_t code);
 
 #ifdef __cplusplus

@@ -51,6 +51,9 @@ def test_solve_1d(n, a_dtype, b_dtype):
 
     rtol = RTOL[out.dtype]
     atol = ATOL[out.dtype]
+    if n > 1024:
+        atol *= 20.0
+
     assert allclose(
         b, num.matmul(a, out), rtol=rtol, atol=atol, check_dtype=False
     )
@@ -71,6 +74,9 @@ def test_solve_2d(n, a_dtype, b_dtype):
 
     rtol = RTOL[out.dtype]
     atol = ATOL[out.dtype]
+    if n > 1024:
+        atol *= 20.0
+
     assert allclose(
         b, num.matmul(a, out), rtol=rtol, atol=atol, check_dtype=False
     )

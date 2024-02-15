@@ -128,7 +128,9 @@ std::vector<StoreMapping> CuNumericMapper::store_mappings(
     case CUNUMERIC_TRSM:
     case CUNUMERIC_SOLVE:
     case CUNUMERIC_SYRK:
-    case CUNUMERIC_GEMM: {
+    case CUNUMERIC_GEMM:
+    case CUNUMERIC_MP_POTRF:
+    case CUNUMERIC_MP_SOLVE: {
       std::vector<StoreMapping> mappings;
       auto inputs  = task.inputs();
       auto outputs = task.outputs();

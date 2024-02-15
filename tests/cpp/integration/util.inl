@@ -120,7 +120,10 @@ struct check_array_eq_fn {
                   const std::vector<size_t>& shape,
                   legate::Rect<DIM> rect)
   {
-    std::cerr << check_array_eq<T, DIM>(acc, values_ptr, shape, rect) << std::endl;
+    auto string_result = check_array_eq<T, DIM>(acc, values_ptr, shape, rect);
+    if (rect.volume() <= 256) {
+      std::cerr << string_result << std::endl;
+    }
   }
 };
 
@@ -131,6 +134,17 @@ struct assign_array_fn {
     auto index = 0;
     for (legate::PointInRectIterator<DIM> itr(rect, false); itr.valid(); ++itr) {
       acc[*itr] = values_ptr[index++];
+    }
+  }
+};
+
+template <typename T, int32_t DIM>
+struct copy_array_fn {
+  void operator()(legate::AccessorRO<T, DIM> acc, T* values_ptr, legate::Rect<DIM> rect)
+  {
+    auto index = 0;
+    for (legate::PointInRectIterator<DIM> itr(rect, false); itr.valid(); ++itr) {
+      values_ptr[index++] = acc[*itr];
     }
   }
 };
@@ -175,6 +189,34 @@ void assign_values_to_array(cunumeric::NDArray array, T* values_ptr, size_t leng
   auto physical_store = logical_store.get_physical_store();
   auto rect           = physical_store.shape<DIM>();
   assign_array_fn<T, DIM>()(acc, values_ptr, rect);
+}
+
+template <typename T, int32_t DIM>
+std::vector<T> assign_array_to_values(cunumeric::NDArray array)
+{
+  std::vector<T> result(array.size());
+  if (array.size() > 0) {
+    T* values_ptr = result.data();
+    assert(values_ptr != nullptr);
+    auto acc            = array.get_read_accessor<T, DIM>();
+    auto logical_store  = array.get_store();
+    auto physical_store = logical_store.get_physical_store();
+    auto rect           = physical_store.shape<DIM>();
+    copy_array_fn<T, DIM>()(acc, values_ptr, rect);
+  }
+  return std::move(result);
+}
+
+template <typename T, int32_t DIM>
+void check_array_eq(cunumeric::NDArray array1, cunumeric::NDArray array2)
+{
+  assert(array1.size() == array2.size());
+  if (array1.size() == 0) {
+    return;
+  }
+
+  std::vector<T> data2 = assign_array_to_values<T, DIM>(array2);
+  check_array_eq<T, DIM>(array1, data2.data(), data2.size());
 }
 
 }  // namespace

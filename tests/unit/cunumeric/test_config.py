@@ -77,6 +77,8 @@ def test_CuNumericOpCode() -> None:
         "LOAD_CUDALIBS",
         "MATMUL",
         "MATVECMUL",
+        "MP_POTRF",
+        "MP_SOLVE",
         "NONZERO",
         "PACKBITS",
         "POTRF",

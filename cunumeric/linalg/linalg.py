@@ -112,13 +112,17 @@ def solve(a: ndarray, b: ndarray, out: Optional[ndarray] = None) -> ndarray:
     LinAlgError
         If `a` is singular or not square.
 
+    Notes
+    ------
+    Multi-GPU usage is only available when compiled with cusolverMP.
+
     See Also
     --------
     numpy.linalg.solve
 
     Availability
     --------
-    Single GPU, Single CPU
+    Multiple GPUs, Single CPU
     """
     if a.ndim < 2:
         raise LinAlgError(

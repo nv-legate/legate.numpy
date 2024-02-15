@@ -23,6 +23,10 @@
 #include "cunumeric/device_scalar_reduction_buffer.h"
 #include <cublas_v2.h>
 #include <cusolverDn.h>
+#if LegateDefined(CUNUMERIC_USE_CUSOLVERMP)
+#include <cusolverMp.h>
+#include <cal.h>
+#endif
 #include <cuda_runtime.h>
 #include <cufft.h>
 #include <cufftXt.h>
@@ -53,6 +57,12 @@
     check_cusolver(__result__, __FILE__, __LINE__); \
   } while (false)
 
+#define CHECK_CAL(expr)                        \
+  do {                                         \
+    calError_t __result__ = (expr);            \
+    check_cal(__result__, __FILE__, __LINE__); \
+  } while (false)
+
 #define CHECK_CUTENSOR(expr)                        \
   do {                                              \
     cutensorStatus_t __result__ = (expr);           \
@@ -73,6 +83,29 @@
 #endif
 
 namespace cunumeric {
+
+template <typename T>
+struct cudaTypeToDataType;
+
+template <>
+struct cudaTypeToDataType<float> {
+  static constexpr cudaDataType type = CUDA_R_32F;
+};
+
+template <>
+struct cudaTypeToDataType<double> {
+  static constexpr cudaDataType type = CUDA_R_64F;
+};
+
+template <>
+struct cudaTypeToDataType<cuComplex> {
+  static constexpr cudaDataType type = CUDA_C_32F;
+};
+
+template <>
+struct cudaTypeToDataType<cuDoubleComplex> {
+  static constexpr cudaDataType type = CUDA_C_64F;
+};
 
 __device__ inline size_t global_tid_1d()
 {
@@ -139,6 +172,9 @@ struct cufftPlanParams {
 legate::cuda::StreamView get_cached_stream();
 cublasHandle_t get_cublas();
 cusolverDnHandle_t get_cusolver();
+#if LegateDefined(CUNUMERIC_USE_CUSOLVERMP)
+cusolverMpHandle_t get_cusolvermp();
+#endif
 cutensorHandle_t* get_cutensor();
 cufftContext get_cufft_plan(cufftType type, const cufftPlanParams& params);
 
@@ -189,6 +225,24 @@ __host__ inline void check_cusolver(cusolverStatus_t status, const char* file, i
 #endif
   }
 }
+
+#if LegateDefined(CUNUMERIC_USE_CUSOLVERMP)
+__host__ inline void check_cal(calError_t status, const char* file, int line)
+{
+  if (status != CAL_OK) {
+    fprintf(stderr,
+            "Internal libcal failure with error code %d in file %s at line %d\n",
+            status,
+            file,
+            line);
+#ifdef DEBUG_CUNUMERIC
+    assert(false);
+#else
+    exit(status);
+#endif
+  }
+}
+#endif
 
 __host__ inline void check_cutensor(cutensorStatus_t result, const char* file, int line)
 {

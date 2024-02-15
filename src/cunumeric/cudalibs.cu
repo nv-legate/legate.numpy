@@ -268,7 +268,14 @@ cufftPlan* cufftPlanCache::get_cufft_plan(const cufftPlanParams& params)
 }
 
 CUDALibraries::CUDALibraries()
-  : finalized_(false), cublas_(nullptr), cusolver_(nullptr), cutensor_(nullptr), plan_caches_()
+  : finalized_(false),
+    cublas_(nullptr),
+    cusolver_(nullptr),
+#if LegateDefined(CUNUMERIC_USE_CUSOLVERMP)
+    cusolvermp_(nullptr),
+#endif
+    cutensor_(nullptr),
+    plan_caches_()
 {
 }
 
@@ -285,6 +292,11 @@ void CUDALibraries::finalize()
   if (cusolver_ != nullptr) {
     finalize_cusolver();
   }
+#if LegateDefined(CUNUMERIC_USE_CUSOLVERMP)
+  if (cusolvermp_ != nullptr) {
+    finalize_cusolvermp();
+  }
+#endif
   if (cutensor_ != nullptr) {
     finalize_cutensor();
   }
@@ -305,6 +317,14 @@ void CUDALibraries::finalize_cusolver()
   CHECK_CUSOLVER(cusolverDnDestroy(cusolver_));
   cusolver_ = nullptr;
 }
+
+#if LegateDefined(CUNUMERIC_USE_CUSOLVERMP)
+void CUDALibraries::finalize_cusolvermp()
+{
+  CHECK_CUSOLVER(cusolverMpDestroy(cusolvermp_));
+  cusolvermp_ = nullptr;
+}
+#endif
 
 void CUDALibraries::finalize_cutensor()
 {
@@ -335,6 +355,18 @@ cusolverDnHandle_t CUDALibraries::get_cusolver()
   }
   return cusolver_;
 }
+
+#if LegateDefined(CUNUMERIC_USE_CUSOLVERMP)
+cusolverMpHandle_t CUDALibraries::get_cusolvermp()
+{
+  if (nullptr == cusolvermp_) {
+    int device = -1;
+    CHECK_CUDA(cudaGetDevice(&device));
+    CHECK_CUSOLVER(cusolverMpCreate(&cusolvermp_, device, get_cached_stream()));
+  }
+  return cusolvermp_;
+}
+#endif
 
 cutensorHandle_t* CUDALibraries::get_cutensor()
 {
@@ -389,6 +421,15 @@ cusolverDnContext* get_cusolver()
   return lib.get_cusolver();
 }
 
+#if LegateDefined(CUNUMERIC_USE_CUSOLVERMP)
+cusolverMpHandle* get_cusolvermp()
+{
+  const auto proc = legate::Processor::get_executing_processor();
+  auto& lib       = get_cuda_libraries(proc);
+  return lib.get_cusolvermp();
+}
+#endif
+
 cutensorHandle_t* get_cutensor()
 {
   const auto proc = legate::Processor::get_executing_processor();
@@ -414,6 +455,9 @@ class LoadCUDALibsTask : public CuNumericTask<LoadCUDALibsTask> {
     auto& lib       = get_cuda_libraries(proc);
     lib.get_cublas();
     lib.get_cusolver();
+#if LegateDefined(CUNUMERIC_USE_CUSOLVERMP)
+    lib.get_cusolvermp();
+#endif
     lib.get_cutensor();
   }
 };

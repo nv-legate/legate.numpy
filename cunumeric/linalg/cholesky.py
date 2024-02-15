@@ -38,9 +38,6 @@ if TYPE_CHECKING:
     from ..runtime import Runtime
 
 
-legate_runtime = get_legate_runtime()
-
-
 def transpose_copy_single(
     library: Library, input: LogicalStore, output: LogicalStore
 ) -> None:
@@ -82,6 +79,25 @@ def potrf_single(library: Library, output: LogicalStore) -> None:
     task.throws_exception(LinAlgError)
     task.add_output(output)
     task.add_input(output)
+    task.execute()
+
+
+def mp_potrf(
+    library: Library,
+    n: int,
+    nb: int,
+    input: LogicalStore,
+    output: LogicalStore,
+) -> None:
+    task = legate_runtime.create_auto_task(library, CuNumericOpCode.MP_POTRF)
+    task.throws_exception(LinAlgError)
+    task.add_input(input)
+    task.add_output(output)
+    task.add_alignment(output, input)
+    task.add_scalar_arg(n, ty.int64)
+    task.add_scalar_arg(nb, ty.int64)
+    task.add_nccl_communicator()  # for repartitioning
+    task.add_cal_communicator()
     task.execute()
 
 
@@ -270,23 +286,34 @@ def cholesky(
         return
 
     shape = tuple(output.base.shape)
-    initial_color_shape = choose_color_shape(runtime, shape)
-    tile_shape = _rounding_divide(shape, initial_color_shape)
-    color_shape = _rounding_divide(shape, tile_shape)
-    n = color_shape[0]
+    tile_shape: tuple[int, ...]
+    if (
+        runtime.has_cusolvermp
+        and runtime.num_gpus > 1
+        and shape[0] >= MIN_CHOLESKY_MATRIX_SIZE
+    ):
+        mp_potrf(
+            library, shape[0], MIN_CHOLESKY_TILE_SIZE, input.base, output.base
+        )
 
-    p_input = input.base.partition_by_tiling(tile_shape)
-    p_output = output.base.partition_by_tiling(tile_shape)
-    transpose_copy(library, color_shape, p_input, p_output)
+        if not no_tril:
+            tril_single(library, output.base)
+    else:
+        initial_color_shape = choose_color_shape(runtime, shape)
+        tile_shape = _rounding_divide(shape, initial_color_shape)
+        color_shape = _rounding_divide(shape, tile_shape)
+        n = color_shape[0]
 
-    for i in range(n):
-        potrf(library, p_output, i)
-        trsm(library, p_output, i, i + 1, n)
-        for k in range(i + 1, n):
-            syrk(library, p_output, k, i)
-            gemm(library, p_output, k, i, k + 1, n)
+        p_input = input.base.partition_by_tiling(tile_shape)
+        p_output = output.base.partition_by_tiling(tile_shape)
+        transpose_copy(library, color_shape, p_input, p_output)
 
-    if no_tril:
-        return
+        for i in range(n):
+            potrf(library, p_output, i)
+            trsm(library, p_output, i, i + 1, n)
+            for k in range(i + 1, n):
+                syrk(library, p_output, k, i)
+                gemm(library, p_output, k, i, k + 1, n)
 
-    tril(library, p_output, n)
+        if not no_tril:
+            tril(library, p_output, n)

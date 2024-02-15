@@ -171,6 +171,8 @@ class _CunumericSharedLib:
     CUNUMERIC_MAX_MAPPERS: int
     CUNUMERIC_MAX_REDOPS: int
     CUNUMERIC_MAX_TASKS: int
+    CUNUMERIC_MP_POTRF: int
+    CUNUMERIC_MP_SOLVE: int
     CUNUMERIC_NONZERO: int
     CUNUMERIC_PACKBITS: int
     CUNUMERIC_POTRF: int
@@ -282,6 +284,10 @@ class _CunumericSharedLib:
         ...
 
     @abstractmethod
+    def cunumeric_has_cusolvermp(self) -> int:
+        ...
+
+    @abstractmethod
     def cunumeric_register_reduction_ops(self, code: int) -> _ReductionOpIds:
         ...
 
@@ -374,6 +380,8 @@ class CuNumericOpCode(IntEnum):
     LOAD_CUDALIBS = _cunumeric.CUNUMERIC_LOAD_CUDALIBS
     MATMUL = _cunumeric.CUNUMERIC_MATMUL
     MATVECMUL = _cunumeric.CUNUMERIC_MATVECMUL
+    MP_POTRF = _cunumeric.CUNUMERIC_MP_POTRF
+    MP_SOLVE = _cunumeric.CUNUMERIC_MP_SOLVE
     NONZERO = _cunumeric.CUNUMERIC_NONZERO
     PACKBITS = _cunumeric.CUNUMERIC_PACKBITS
     POTRF = _cunumeric.CUNUMERIC_POTRF

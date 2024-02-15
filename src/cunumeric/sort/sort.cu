@@ -84,11 +84,13 @@ void local_sort(const type_of<CODE>* values_in,
     values_in, values_out, indices_in, indices_out, volume, sort_dim_size, stable, stream);
 }
 
+namespace {
 // auto align to multiples of 16 bytes
 auto get_16b_aligned = [](auto bytes) { return std::max<size_t>(16, (bytes + 15) / 16 * 16); };
 auto get_16b_aligned_count = [](auto count, auto element_bytes) {
   return (get_16b_aligned(count * element_bytes) + element_bytes - 1) / element_bytes;
 };
+}  // namespace
 
 // increase number of columns computed per block as long as either
 // 1. we have more threads in block than elements in row

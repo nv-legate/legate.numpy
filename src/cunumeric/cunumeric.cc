@@ -78,4 +78,13 @@ bool cunumeric_has_curand()
   return false;
 #endif
 }
+
+bool cunumeric_has_cusolvermp()
+{
+#if LegateDefined(LEGATE_USE_CUDA) && LegateDefined(CUNUMERIC_USE_CUSOLVERMP)
+  return true;
+#else
+  return false;
+#endif
+}
 }

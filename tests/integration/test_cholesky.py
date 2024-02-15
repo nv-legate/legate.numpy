@@ -19,7 +19,7 @@ from utils.comparisons import allclose
 
 import cunumeric as num
 
-SIZES = [8, 9, 255, 512]
+SIZES = [8, 9, 255, 512, 1024]
 
 
 def test_matrix():

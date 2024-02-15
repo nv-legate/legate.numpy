@@ -16,6 +16,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, cast
 
+import legate.core.types as ty
 from legate.core import broadcast, get_legate_runtime
 
 from cunumeric.config import CuNumericOpCode
@@ -45,11 +46,52 @@ def solve_single(library: Library, a: LogicalStore, b: LogicalStore) -> None:
     task.execute()
 
 
+MIN_SOLVE_TILE_SIZE = 512
+MIN_SOLVE_MATRIX_SIZE = 2048
+
+
+def mp_solve(
+    library: Library,
+    n: int,
+    nrhs: int,
+    nb: int,
+    a: LogicalStore,
+    b: LogicalStore,
+    output: LogicalStore,
+) -> None:
+    task = get_legate_runtime().create_auto_task(
+        library, CuNumericOpCode.MP_SOLVE
+    )
+    task.throws_exception(LinAlgError)
+    task.add_input(a)
+    task.add_input(b)
+    task.add_output(output)
+    task.add_alignment(output, b)
+    task.add_scalar_arg(n, ty.int64)
+    task.add_scalar_arg(nrhs, ty.int64)
+    task.add_scalar_arg(nb, ty.int64)
+    task.add_nccl_communicator()  # for repartitioning
+    task.add_cal_communicator()
+    task.execute()
+
+
 def solve(output: DeferredArray, a: DeferredArray, b: DeferredArray) -> None:
     from ..deferred import DeferredArray
 
     runtime = output.runtime
     library = output.library
+
+    if (
+        runtime.has_cusolvermp
+        and runtime.num_gpus > 1
+        and a.base.shape[0] >= MIN_SOLVE_MATRIX_SIZE
+    ):
+        n = a.base.shape[0]
+        nrhs = b.base.shape[1]
+        mp_solve(
+            library, n, nrhs, MIN_SOLVE_TILE_SIZE, a.base, b.base, output.base
+        )
+        return
 
     a_copy = cast(
         DeferredArray,
