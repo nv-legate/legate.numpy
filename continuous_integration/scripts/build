@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+set -x
+
+#
 
 copy_ci_artifacts() {
     set -xeuo pipefail;
@@ -10,7 +13,7 @@ copy_ci_artifacts() {
     cp -r /tmp/conda-build  "$ARTIFACTS_DIR"
 }
 
-build_cunumeric_ci() {
+build_ci_product() {
     set -xeuo pipefail;
 
     printf "\n\n\n\n********* BUILDING CUNUMERIC CPP *********\n"
@@ -25,38 +28,6 @@ build_cunumeric_ci() {
     copy_ci_artifacts;
 }
 
-build_cunumeric() {
-    set -x;
-
-    . conda-utils;
-    . setup-utils;
-
-    export BUILD_TYPE=$1
-
-    set -xeuo pipefail;
-
-    set_base_defs;
-
-    cd "$PREBUILD_DIR"
-
-    setup_build_env;
-    init_sccache;
-    cd "$REPO_DIR";
-
-    rm -rf "$REPO_DIR/build";
-
-    make-conda-env "$BUILD_TYPE";
-
-    activate_conda_env;
-    conda_info;
-
-    case "$BUILD_TYPE" in
-        ci) build_cunumeric_ci;;
-        # release) build_cunumeric_release;;
-        *) return 1;;
-    esac
-}
-
 build_cunumeric_fake() {
     set -xeuo pipefail;
 
@@ -68,5 +39,17 @@ build_cunumeric_fake() {
     copy_ci_artifacts
 }
 
+build_project() {
+    . setup-utils;
 
-(build_cunumeric "$@");
+    init_build_env "$@";
+
+    case "$BUILD_TYPE" in
+        ci) build_ci_product;;
+        release) build_release;;
+        *) return 1;;
+    esac
+}
+
+
+(build_project "$@");

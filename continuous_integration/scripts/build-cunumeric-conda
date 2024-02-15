@@ -28,7 +28,7 @@ build_cunumeric_conda_package() {
     conda_build_args+=(--no-anaconda-upload);
 
     GPU_ENABLED=true
-    [ "${USE_CUDA:-}" = "OFF" ] && GPU_ENABLED=false
+    [ "${USE_CUDA}" = "OFF" ] && GPU_ENABLED=false
 
     conda_build_args+=(--variants "{gpu_enabled:${GPU_ENABLED},python:${python_version}}");
 
@@ -56,9 +56,6 @@ use_local_path:
 numpy:
   - 1.22
 
-gpu_enabled:
-  - ${GPU_ENABLED}
-
 package_version:
   - "$(git -C "${REPO_DIR}" describe --abbrev=0 --tags | sed 's/[a-zA-Z]//g' | cut -d '.' -f -2).00"
 EOF
@@ -75,7 +72,7 @@ EOF
     git -C "${REPO_DIR}" commit --allow-empty --allow-empty-message -n -m "";
 
     # Build cuNumeric conda package
-    CUDA=${CUDA_VERSION_MAJOR}.${CUDA_VERSION_MINOR} \
+    CUDA=${CUDA_VERSION} \
     conda mambabuild ${conda_build_args[@]} "${REPO_DIR}/conda/conda-build";
 
     git -C "${REPO_DIR}" reset --hard HEAD~1;

@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -x
+
 setup_env() {
     set -xeuo pipefail
 
@@ -27,7 +29,7 @@ setup_mypy_env() {
     mamba install -y "mypy>=0.961" jinja2 nbsphinx sphinx-copybutton  "sphinx>=4.4.0" types-docutils
 }
 
-test-cunumeric() {
+test_cunumeric() {
     set -xeo pipefail
 
     . conda-utils;
@@ -67,4 +69,4 @@ test-cunumeric() {
     esac
 }
 
-(test-cunumeric "$@");
+(test_cunumeric "$@");

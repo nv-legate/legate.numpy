@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 
-# . conda-utils
+set -x
 
-setup_env() {
+make_ci_env() {
     set -xeuo pipefail
-    yaml_file=$(find "$ARTIFACTS_DIR" -name "environment*.yaml" | head -n 1)
+    yaml_file=$(find "${ARTIFACTS_DIR}" -name "environment*.yaml" | head -n 1)
 
     [ "${USE_CUDA}" = "ON" ] &&
         echo "  - libcublas-dev" >> "${yaml_file}" &&
@@ -30,7 +30,7 @@ make_conda_env() {
     set -xeuo pipefail
 
     case "$1" in
-        ci) setup_env;;
+        ci) make_ci_env;;
         # release) make_release_env;;
         *) return 1;;
     esac

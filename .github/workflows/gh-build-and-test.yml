@@ -31,13 +31,18 @@ jobs:
     needs: setup-build
     name: "Build (${{ inputs.platform }}, ${{ inputs.target-device }})"
     uses:
-      ./.github/workflows/gh-build.yml
+      nv-legate/legate-gh-ci/.github/workflows/gh-build.yml@v23.11.00
     with:
+      client-repo: ${{ github.event.repository.name }}
       target-device: ${{ inputs.target-device }}
       runs-on: ${{ needs.setup-build.outputs.runner_type }}
       build-type: ci
       use-container: ${{ inputs.platform == 'linux' }}
       platform: ${{ inputs.platform }}
+      dependencies-file: "cmake/versions.json"
+      legate-gh-ci-tag: "v23.11.00"
+      cmake-preset: ""
+      ucx-enabled: false
     secrets: inherit
 
   setup-test:
@@ -53,7 +58,9 @@ jobs:
           set -xeuo pipefail
           MATRIX_JSON='{"include": ['
           RUNNERS=(
-            'linux-amd64-gpu-v100-latest-1:gpu:gpu:linux' 'linux-amd64-2gpu:gpu:2gpu:linux' 'linux-amd64-cpu32:cpu:cpu:linux' 'macos-latest:cpu:cpu:mac')
+            'linux-amd64-gpu-v100-latest-1:gpu:gpu:linux' 'linux-amd64-2gpu:gpu:2gpu:linux'
+            'linux-amd64-cpu32:cpu:cpu:linux'
+            'macos-latest:cpu:cpu:mac')
           TEST_CONFIGS=(
             '1 CPU test:test --cpus 1 --unit --debug:cpu'
             '1 CPU test:test --cpus 1 --unit --debug:gpu'
@@ -102,11 +109,17 @@ jobs:
       matrix: ${{fromJson(needs.setup-test.outputs.matrix)}}
 
     uses:
-      ./.github/workflows/gh-test-within-container.yml
+      nv-legate/legate-gh-ci/.github/workflows/gh-test-within-container.yml@v23.11.00
     with:
+      client-repo: ${{ github.event.repository.name }}
+      build-type: ci
       name: ${{ matrix.test-config.name }}
       target-device: ${{ inputs.target-device }}
       runs-on: ${{ matrix.runner.name }}
       has-gpu: ${{ matrix.runner.type == 'gpu' }}
       test-options: ${{ matrix.test-config.test-options }}
       platform: ${{ inputs.platform }}
+      legate-gh-ci-tag: "v23.11.00"
+      cmake-preset: ""
+      ucx-enabled: false
+    secrets: inherit
