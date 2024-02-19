@@ -91,11 +91,7 @@ void check_array(NDArray a, std::vector<T> values, std::vector<size_t> shape = {
   };
   auto acc = a.get_read_accessor<T, 1>();
   for (size_t i = 0; i < values.size(); ++i) {
-    switch (legate::type_code_of<T>) {
-      case legate::Type::Code::FLOAT32: ASSERT_FLOAT_EQ(acc[i], values[i]) << err_msg(i); break;
-      case legate::Type::Code::FLOAT64: ASSERT_DOUBLE_EQ(acc[i], values[i]) << err_msg(i); break;
-      default: ASSERT_EQ(acc[i], values[i]) << err_msg(i); break;
-    }
+    ASSERT_EQ(acc[i], values[i]) << err_msg(i);
   }
 }
 
