@@ -1258,6 +1258,9 @@ void NDArray::put(NDArray indices, NDArray values, std::string mode)
   legate_runtime->issue_scatter(self_tmp.store_, indirect.store_, values.store_);
 
   if (need_copy) {
+    if (store_.has_scalar_storage()) {
+      self_tmp = runtime->create_array(std::move(self_tmp.store_.project(0, 0)));
+    }
     assign(self_tmp);
   }
 }
@@ -1330,10 +1333,9 @@ NDArray NDArray::_warn_and_convert(legate::Type const& type)
 
 NDArray NDArray::wrap_indices(Scalar const& n)
 {
-  auto runtime       = CuNumericRuntime::get_runtime();
-  auto out           = runtime->create_array(shape(), type());
-  auto divisor_store = runtime->create_scalar_store(n);
-  auto divisor       = runtime->create_array(std::move(divisor_store));
+  auto runtime = CuNumericRuntime::get_runtime();
+  auto out     = runtime->create_array(shape(), type());
+  auto divisor = cunumeric::full({}, n);
   out.binary_op(static_cast<int32_t>(cunumeric::BinaryOpCode::MOD), *this, divisor);
   return out;
 }
