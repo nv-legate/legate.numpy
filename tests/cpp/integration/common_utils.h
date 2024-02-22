@@ -29,6 +29,7 @@
 #include "legate.h"
 #include "cunumeric.h"
 #include "cunumeric/runtime.h"
+#include "util.inl"
 
 namespace cunumeric {
 
@@ -93,6 +94,35 @@ void check_array(NDArray a, std::vector<T> values, std::vector<size_t> shape = {
   for (size_t i = 0; i < values.size(); ++i) {
     ASSERT_EQ(acc[i], values[i]) << err_msg(i);
   }
+}
+
+template <typename T>
+struct PrintArray {
+  template <int32_t DIM>
+  void operator()(cunumeric::NDArray array)
+  {
+    auto acc            = array.get_read_accessor<T, DIM>();
+    auto& shape         = array.shape();
+    auto logical_store  = array.get_store();
+    auto physical_store = logical_store.get_physical_store();
+    auto rect           = physical_store.shape<DIM>();
+    std::cerr << to_string<T, DIM>(acc, shape, rect) << std::endl;
+  }
+};
+
+template <typename T>
+void print_array(NDArray array)
+{
+  if (array.size() == 0) {
+    std::cerr << "[]" << std::endl;
+    return;
+  }
+  if (array.dim() == 0) {
+    auto acc = array.get_read_accessor<T, 1>();
+    std::cerr << "[" << acc[0] << "]" << std::endl;
+    return;
+  }
+  legate::dim_dispatch(array.dim(), PrintArray<T>{}, array);
 }
 
 template <typename T>

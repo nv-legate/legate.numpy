@@ -581,7 +581,9 @@ std::vector<NDArray> NDArray::nonzero()
   }
   auto p_rhs = task.add_input(store_);
 
-  task.add_constraint(legate::broadcast(p_rhs, legate::from_range<uint32_t>(1, ndim)));
+  if (ndim > 1) {
+    task.add_constraint(legate::broadcast(p_rhs, legate::from_range<uint32_t>(1, ndim)));
+  }
 
   runtime->submit(std::move(task));
 
