@@ -24,9 +24,9 @@ from numpy.core.numeric import (  # type: ignore [attr-defined]
     normalize_axis_tuple,
 )
 
+from .._module import dot, empty_like, eye, matmul, ndarray
 from .._ufunc.math import add, sqrt as _sqrt
 from ..array import add_boilerplate, convert_to_cunumeric_ndarray
-from ..module import dot, empty_like, eye, matmul, ndarray
 from ._exception import LinAlgError
 
 if TYPE_CHECKING:

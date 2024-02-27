@@ -18,9 +18,9 @@ from typing import Any
 
 import numpy as np
 
+from ._module import empty, ones
 from .array import ndarray
 from .config import WindowOpCode
-from .module import empty, ones
 
 
 def _create_window(M: int, op_code: WindowOpCode, *args: Any) -> ndarray:

@@ -189,7 +189,7 @@ def broadcast_where(
     where: Union[ndarray, None], shape: NdShape
 ) -> Union[ndarray, None]:
     if where is not None and where.shape != shape:
-        from .module import broadcast_to
+        from ._module import broadcast_to
 
         where = broadcast_to(where, shape)
     return where
@@ -2684,7 +2684,9 @@ class ndarray:
         Multiple GPUs, Multiple CPUs
 
         """
-        from .module import _contract  # work around circular import
+        from ._module.linalg_mvp import (  # work around circular import
+            _contract,
+        )
 
         if self.ndim == 0 or rhs.ndim == 0:
             from ._ufunc import multiply

@@ -16,8 +16,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Optional, Tuple
 
+from ._module import empty
 from .array import add_boilerplate
-from .module import empty
 
 if TYPE_CHECKING:
     from .array import ndarray

@@ -31,7 +31,7 @@ import numpy as _np
 from . import linalg, random, fft, ma
 from .array import maybe_convert_to_np_ndarray, ndarray
 from .bits import packbits, unpackbits
-from .module import *
+from ._module import *
 from ._ufunc import *
 from .logic import *
 from .window import bartlett, blackman, hamming, hanning, kaiser

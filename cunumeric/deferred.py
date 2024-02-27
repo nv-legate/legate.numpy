@@ -375,7 +375,7 @@ class DeferredArray(NumPyThunk):
         # find a broadcasted shape for all arrays passed as indices
         shapes = tuple(a.shape for a in arrays)
         if len(arrays) > 1:
-            from .module import broadcast_shapes
+            from ._module import broadcast_shapes
 
             b_shape = broadcast_shapes(*shapes)
         else:
