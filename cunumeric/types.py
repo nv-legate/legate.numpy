@@ -14,9 +14,7 @@
 #
 from __future__ import annotations
 
-from typing import Literal, Tuple, Union
-
-from typing_extensions import TypeAlias
+from typing import Literal, Tuple, TypeAlias, Union
 
 BoundsMode: TypeAlias = Literal["raise", "wrap", "clip"]
 

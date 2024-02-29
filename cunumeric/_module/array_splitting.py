@@ -18,7 +18,8 @@ from typing import TYPE_CHECKING, Any, Union
 
 import numpy as np
 
-from ..array import convert_to_cunumeric_ndarray, ndarray
+from .._array.array import ndarray
+from .._array.util import convert_to_cunumeric_ndarray
 
 if TYPE_CHECKING:
     import numpy.typing as npt

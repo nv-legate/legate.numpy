@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import numpy.random as _nprandom
 
-from ..array import maybe_convert_to_np_ndarray
+from .._array.util import maybe_convert_to_np_ndarray
 from ..coverage import clone_module
 from ..runtime import runtime
 

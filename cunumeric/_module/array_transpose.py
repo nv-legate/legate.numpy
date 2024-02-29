@@ -20,10 +20,10 @@ from numpy.core.numeric import (  # type: ignore [attr-defined]
     normalize_axis_tuple,
 )
 
-from ..array import add_boilerplate
+from .._array.util import add_boilerplate
 
 if TYPE_CHECKING:
-    from ..array import ndarray
+    from .._array.array import ndarray
 
 
 @add_boilerplate("a")

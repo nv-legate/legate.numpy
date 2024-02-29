@@ -18,10 +18,11 @@ from typing import TYPE_CHECKING, Any, Union
 
 import numpy as np
 
+from ._array.array import ndarray
+from ._array.util import convert_to_cunumeric_ndarray
 from ._module import full
 from ._ufunc.comparison import logical_and
 from ._ufunc.floating import isinf, signbit
-from .array import convert_to_cunumeric_ndarray, ndarray
 
 if TYPE_CHECKING:
     import numpy.typing as npt

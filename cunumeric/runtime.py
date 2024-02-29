@@ -16,13 +16,12 @@ from __future__ import annotations
 
 import warnings
 from functools import reduce
-from typing import TYPE_CHECKING, Any, Optional, Sequence, Union
+from typing import TYPE_CHECKING, Any, Optional, Sequence, TypeGuard, Union
 
 import legate.core.types as ty
 import numpy as np
 from legate.core import LEGATE_MAX_DIM, Scalar, TaskTarget, get_legate_runtime
 from legate.settings import settings as legate_settings
-from typing_extensions import TypeGuard
 
 from .config import (
     BitGeneratorOperation,
@@ -42,7 +41,7 @@ if TYPE_CHECKING:
     import numpy.typing as npt
     from legate.core import AutoTask, ManualTask
 
-    from .array import ndarray
+    from ._array.array import ndarray
     from .deferred import DeferredArray
     from .eager import EagerArray
     from .thunk import NumPyThunk

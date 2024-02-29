@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import numpy.linalg as _nplinalg
 
-from ..array import maybe_convert_to_np_ndarray
+from .._array.util import maybe_convert_to_np_ndarray
 from ..coverage import clone_module
 from .linalg import *
 

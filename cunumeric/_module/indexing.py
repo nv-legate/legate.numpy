@@ -21,11 +21,11 @@ from numpy.core.multiarray import (  # type: ignore [attr-defined]
     normalize_axis_index,
 )
 
-from ..array import (
+from .._array.array import ndarray
+from .._array.util import (
     add_boilerplate,
     check_writeable,
     convert_to_cunumeric_ndarray,
-    ndarray,
 )
 from ..coverage import is_implemented
 from ..runtime import runtime

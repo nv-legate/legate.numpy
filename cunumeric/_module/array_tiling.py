@@ -21,7 +21,8 @@ from numpy.core.multiarray import (  # type: ignore [attr-defined]
     normalize_axis_index,
 )
 
-from ..array import add_boilerplate, convert_to_cunumeric_ndarray, ndarray
+from .._array.array import ndarray
+from .._array.util import add_boilerplate, convert_to_cunumeric_ndarray
 from ..runtime import runtime
 from .creation_shape import full
 

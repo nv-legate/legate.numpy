@@ -31,13 +31,13 @@ from typing import (
     Iterable,
     Mapping,
     Optional,
+    Protocol,
     Union,
     cast,
 )
 
 from legate.core import track_provenance
 from legate.core.utils import OrderedSet
-from typing_extensions import Protocol
 
 from .runtime import runtime
 from .settings import settings

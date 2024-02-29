@@ -19,7 +19,7 @@ from typing import TYPE_CHECKING, Any, Union
 import numpy as np
 import numpy.random as nprandom
 
-from ..array import ndarray
+from .._array.array import ndarray
 from ..runtime import runtime
 
 if TYPE_CHECKING:

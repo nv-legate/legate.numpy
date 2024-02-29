@@ -26,7 +26,8 @@ from typing import (
 
 import numpy as np
 
-from ..array import add_boilerplate, convert_to_cunumeric_ndarray, ndarray
+from .._array.array import ndarray
+from .._array.util import add_boilerplate, convert_to_cunumeric_ndarray
 from .creation_data import array
 
 if TYPE_CHECKING:

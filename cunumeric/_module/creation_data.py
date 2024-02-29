@@ -18,7 +18,8 @@ from typing import TYPE_CHECKING, Any, Literal, Optional, Union
 
 import numpy as np
 
-from ..array import add_boilerplate, ndarray
+from .._array.array import ndarray
+from .._array.util import add_boilerplate
 from ..runtime import runtime
 from .creation_shape import empty_like
 

@@ -23,7 +23,7 @@ from ._bitgenerator import XORWOW, BitGenerator
 if TYPE_CHECKING:
     import numpy.typing as npt
 
-    from ..array import ndarray
+    from .._array.array import ndarray
     from ..types import NdShapeLike
 
 

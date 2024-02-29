@@ -18,8 +18,8 @@ from typing import Any
 
 import numpy as np
 
+from ._array.array import ndarray
 from ._module import empty, ones
-from .array import ndarray
 from .config import WindowOpCode
 
 

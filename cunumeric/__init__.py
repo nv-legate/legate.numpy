@@ -24,18 +24,17 @@ with GPU acceleration.
 """
 from __future__ import annotations
 
-import os
-
 import numpy as _np
 
 from . import linalg, random, fft, ma
-from .array import maybe_convert_to_np_ndarray, ndarray
-from .bits import packbits, unpackbits
+from ._array.array import ndarray
+from ._array.util import maybe_convert_to_np_ndarray
 from ._module import *
 from ._ufunc import *
+from .bits import packbits, unpackbits
+from .coverage import clone_module
 from .logic import *
 from .window import bartlett, blackman, hamming, hanning, kaiser
-from .coverage import clone_module
 
 clone_module(_np, globals(), maybe_convert_to_np_ndarray)
 

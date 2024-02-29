@@ -16,7 +16,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Union
 
-from ..array import add_boilerplate, ndarray
+from .._array.array import ndarray
+from .._array.util import add_boilerplate
 
 if TYPE_CHECKING:
     import numpy.typing as npt

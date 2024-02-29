@@ -16,7 +16,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Optional, Union
 
-from ..array import add_boilerplate, ndarray
+from .._array.array import ndarray
+from .._array.thunk import perform_where
+from .._array.util import add_boilerplate
 from .array_shape import ravel, reshape
 
 if TYPE_CHECKING:
@@ -230,7 +232,7 @@ def where(
                 " 'where'"
             )
         return nonzero(a)
-    return ndarray._perform_where(a, x, y)
+    return perform_where(a, x, y)
 
 
 @add_boilerplate("a")

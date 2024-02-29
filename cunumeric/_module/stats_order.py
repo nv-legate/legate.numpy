@@ -19,7 +19,7 @@ from typing import TYPE_CHECKING, Any, Iterable, Optional, Union
 
 import numpy as np
 
-from ..array import add_boilerplate
+from .._array.util import add_boilerplate
 from .array_transpose import moveaxis
 from .creation_shape import zeros
 from .ssc_sorting import sort
@@ -29,7 +29,7 @@ if TYPE_CHECKING:
 
     import numpy.typing as npt
 
-    from ..array import ndarray
+    from .._array.array import ndarray
 
 
 # for the case when axis = tuple (non-singleton)

@@ -17,8 +17,7 @@
 
 import math
 from functools import reduce
-
-from typing_extensions import Protocol
+from typing import Protocol
 
 
 class Timer(Protocol):

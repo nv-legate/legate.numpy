@@ -1,4 +1,4 @@
-# Copyright 2021-2022 NVIDIA Corporation
+# Copyright 2024 NVIDIA Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,15 +13,3 @@
 # limitations under the License.
 #
 from __future__ import annotations
-
-import numpy.fft as _npfft
-
-from .._array.util import maybe_convert_to_np_ndarray
-from ..coverage import clone_module
-from .fft import *
-
-clone_module(_npfft, globals(), maybe_convert_to_np_ndarray)
-
-del maybe_convert_to_np_ndarray
-del clone_module
-del _npfft

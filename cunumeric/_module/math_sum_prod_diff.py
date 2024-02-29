@@ -14,18 +14,22 @@
 #
 from __future__ import annotations
 
-from typing import Any, Optional, Union
+from typing import TYPE_CHECKING, Any, Optional, Union
 
 import numpy as np
 
+from .._array.thunk import perform_scan, perform_unary_reduction
+from .._array.util import add_boilerplate
 from .._ufunc.floating import isnan
 from .._ufunc.math import add, multiply
 from .._unary_red_utils import get_non_nan_unary_red_code
-from ..array import add_boilerplate, ndarray
 from ..config import ScanCode, UnaryRedCode
 from ..settings import settings as cunumeric_settings
 from .indexing import putmask
 from .logic_truth import all, any
+
+if TYPE_CHECKING:
+    from .._array.array import ndarray
 
 
 @add_boilerplate("a")
@@ -245,7 +249,7 @@ def cumprod(
     --------
     Multiple GPUs, Multiple CPUs
     """
-    return ndarray._perform_scan(
+    return perform_scan(
         ScanCode.PROD,
         a,
         axis=axis,
@@ -307,7 +311,7 @@ def cumsum(
     --------
     Multiple GPUs, Multiple CPUs
     """
-    return ndarray._perform_scan(
+    return perform_scan(
         ScanCode.SUM, a, axis=axis, dtype=dtype, out=out, nan_to_identity=False
     )
 
@@ -368,7 +372,7 @@ def nancumprod(
     --------
     Multiple GPUs, Multiple CPUs
     """
-    return ndarray._perform_scan(
+    return perform_scan(
         ScanCode.PROD, a, axis=axis, dtype=dtype, out=out, nan_to_identity=True
     )
 
@@ -429,7 +433,7 @@ def nancumsum(
     --------
     Multiple GPUs, Multiple CPUs
     """
-    return ndarray._perform_scan(
+    return perform_scan(
         ScanCode.SUM, a, axis=axis, dtype=dtype, out=out, nan_to_identity=True
     )
 
@@ -492,7 +496,7 @@ def nanargmax(
         a.dtype.kind, UnaryRedCode.NANARGMAX
     )
 
-    return a._perform_unary_reduction(
+    return perform_unary_reduction(
         unary_red_code,
         a,
         axis=axis,
@@ -560,7 +564,7 @@ def nanargmin(
         a.dtype.kind, UnaryRedCode.NANARGMIN
     )
 
-    return a._perform_unary_reduction(
+    return perform_unary_reduction(
         unary_red_code,
         a,
         axis=axis,
@@ -646,7 +650,7 @@ def nanmin(
         a.dtype.kind, UnaryRedCode.NANMIN
     )
 
-    out_array = a._perform_unary_reduction(
+    out_array = perform_unary_reduction(
         unary_red_code,
         a,
         axis=axis,
@@ -742,7 +746,7 @@ def nanmax(
         a.dtype.kind, UnaryRedCode.NANMAX
     )
 
-    out_array = a._perform_unary_reduction(
+    out_array = perform_unary_reduction(
         unary_red_code,
         a,
         axis=axis,
@@ -843,7 +847,7 @@ def nanprod(
     else:
         unary_red_code = UnaryRedCode.PROD
 
-    return a._perform_unary_reduction(
+    return perform_unary_reduction(
         unary_red_code,
         a,
         axis=axis,

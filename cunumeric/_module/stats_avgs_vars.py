@@ -18,10 +18,10 @@ from typing import TYPE_CHECKING, Any, Optional, Union
 
 import numpy as np
 
-from ..array import add_boilerplate
+from .._array.util import add_boilerplate
 
 if TYPE_CHECKING:
-    from ..array import ndarray
+    from .._array.util import ndarray
 
 
 @add_boilerplate("a")

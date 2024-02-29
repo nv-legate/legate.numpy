@@ -16,7 +16,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Optional
 
-from ..array import add_boilerplate, ndarray
+from .._array.array import ndarray
+from .._array.util import add_boilerplate
 from .creation_shape import ones
 
 if TYPE_CHECKING:

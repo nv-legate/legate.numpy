@@ -22,7 +22,8 @@ from numpy.core.multiarray import (  # type: ignore [attr-defined]
     normalize_axis_index,
 )
 
-from ..array import convert_to_cunumeric_ndarray, ndarray
+from .._array.array import ndarray
+from .._array.util import convert_to_cunumeric_ndarray
 from .array_dimension import _atleast_nd
 
 if TYPE_CHECKING:

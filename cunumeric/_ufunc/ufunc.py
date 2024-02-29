@@ -19,11 +19,11 @@ from typing import TYPE_CHECKING, Any, Dict, Optional, Sequence, Union
 import numpy as np
 from legate.core.utils import OrderedSet
 
-from ..array import (
+from .._array.thunk import perform_unary_reduction
+from .._array.util import (
     add_boilerplate,
     check_writeable,
     convert_to_cunumeric_ndarray,
-    ndarray,
 )
 from ..config import BinaryOpCode, UnaryOpCode, UnaryRedCode
 from ..types import NdShape
@@ -31,6 +31,7 @@ from ..types import NdShape
 if TYPE_CHECKING:
     import numpy.typing as npt
 
+    from .._array.array import ndarray
     from ..types import CastingKind
 
 
@@ -237,6 +238,8 @@ class ufunc:
         casting: CastingKind,
         inputs: tuple[ndarray, ...],
     ) -> ndarray:
+        from .._array.array import ndarray
+
         if out is None:
             return ndarray(shape=out_shape, dtype=res_dtype, inputs=inputs)
         elif out.dtype != res_dtype:
@@ -263,6 +266,8 @@ class ufunc:
     def _maybe_convert_output_to_cunumeric_ndarray(
         out: Union[ndarray, npt.NDArray[Any], None]
     ) -> Union[ndarray, None]:
+        from .._array.array import ndarray
+
         if out is None:
             return None
         if isinstance(out, ndarray):
@@ -557,6 +562,8 @@ class binary_ufunc(ufunc):
     def _find_common_type(
         arrs: Sequence[ndarray], orig_args: Sequence[Any]
     ) -> np.dtype[Any]:
+        from .._array.array import ndarray
+
         all_ndarray = all(isinstance(arg, ndarray) for arg in orig_args)
         unique_dtypes = OrderedSet(arr.dtype for arr in arrs)
         # If all operands are ndarrays and they all have the same dtype,
@@ -758,7 +765,7 @@ class binary_ufunc(ufunc):
             axis = None
 
         # TODO: Unary reductions still need to be refactored
-        return array._perform_unary_reduction(
+        return perform_unary_reduction(
             self._red_code,
             array,
             axis=axis,

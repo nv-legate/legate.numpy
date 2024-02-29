@@ -20,7 +20,7 @@ from typing import TYPE_CHECKING, Union
 
 import numpy as np
 
-from ..array import ndarray
+from .._array.array import ndarray
 from ..config import BitGeneratorType
 from ..runtime import runtime
 

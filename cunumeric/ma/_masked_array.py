@@ -23,7 +23,7 @@ if TYPE_CHECKING:
 
 import numpy as _np
 
-from ..array import maybe_convert_to_np_ndarray
+from .._array.util import maybe_convert_to_np_ndarray
 from ..coverage import clone_class
 
 NDARRAY_INTERNAL = {

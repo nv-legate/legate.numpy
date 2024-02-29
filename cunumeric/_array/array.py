@@ -16,18 +16,8 @@ from __future__ import annotations
 
 import operator
 import warnings
-from functools import reduce, wraps
-from inspect import signature
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Callable,
-    Optional,
-    Sequence,
-    TypeVar,
-    Union,
-    cast,
-)
+from functools import reduce
+from typing import TYPE_CHECKING, Any, Optional, Sequence, Union, cast
 
 import numpy as np
 from legate.core import Field, LogicalArray, Scalar
@@ -38,11 +28,9 @@ from numpy.core.multiarray import (  # type: ignore [attr-defined]
 from numpy.core.numeric import (  # type: ignore [attr-defined]
     normalize_axis_tuple,
 )
-from typing_extensions import ParamSpec
 
-from .config import (
-    BinaryOpCode,
-    ConvertCode,
+from .. import _ufunc
+from ..config import (
     FFTDirection,
     FFTNormalization,
     FFTType,
@@ -50,15 +38,25 @@ from .config import (
     UnaryOpCode,
     UnaryRedCode,
 )
-from .coverage import FALLBACK_WARNING, clone_class, is_implemented
-from .runtime import runtime
-from .types import NdShape
-from .utils import (
+from ..coverage import FALLBACK_WARNING, clone_class, is_implemented
+from ..runtime import runtime
+from ..types import NdShape
+from ..utils import (
     calculate_volume,
     deep_apply,
     dot_modes,
     to_core_dtype,
     tuple_pop,
+)
+from .flags import flagsobj
+from .thunk import perform_scan, perform_unary_op, perform_unary_reduction
+from .util import (
+    add_boilerplate,
+    broadcast_where,
+    check_writeable,
+    convert_to_cunumeric_ndarray,
+    maybe_convert_to_np_ndarray,
+    sanitize_shape,
 )
 
 if TYPE_CHECKING:
@@ -66,11 +64,10 @@ if TYPE_CHECKING:
 
     import numpy.typing as npt
 
-    from .thunk import NumPyThunk
-    from .types import (
+    from ..thunk import NumPyThunk
+    from ..types import (
         BoundsMode,
         CastingKind,
-        NdShapeLike,
         OrderType,
         SelectKind,
         SortSide,
@@ -78,187 +75,6 @@ if TYPE_CHECKING:
     )
 
 from math import prod
-
-R = TypeVar("R")
-P = ParamSpec("P")
-
-
-def add_boilerplate(
-    *array_params: str,
-) -> Callable[[Callable[P, R]], Callable[P, R]]:
-    """
-    Adds required boilerplate to the wrapped cunumeric.ndarray or module-level
-    function.
-
-    Every time the wrapped function is called, this wrapper will:
-    * Convert all specified array-like parameters, plus the special "out"
-      parameter (if present), to cuNumeric ndarrays.
-    * Convert the special "where" parameter (if present) to a valid predicate.
-    """
-    keys = OrderedSet(array_params)
-    assert len(keys) == len(array_params)
-
-    def decorator(func: Callable[P, R]) -> Callable[P, R]:
-        assert not hasattr(
-            func, "__wrapped__"
-        ), "this decorator must be the innermost"
-
-        # For each parameter specified by name, also consider the case where
-        # it's passed as a positional parameter.
-        indices: OrderedSet[int] = OrderedSet()
-        where_idx: Optional[int] = None
-        out_idx: Optional[int] = None
-        params = signature(func).parameters
-        extra = keys - OrderedSet(params)
-        assert len(extra) == 0, f"unknown parameter(s): {extra}"
-        for idx, param in enumerate(params):
-            if param == "where":
-                where_idx = idx
-            elif param == "out":
-                out_idx = idx
-            elif param in keys:
-                indices.add(idx)
-
-        @wraps(func)
-        def wrapper(*args: Any, **kwargs: Any) -> R:
-            assert (where_idx is None or len(args) <= where_idx) and (
-                out_idx is None or len(args) <= out_idx
-            ), "'where' and 'out' should be passed as keyword arguments"
-
-            # Convert relevant arguments to cuNumeric ndarrays
-            args = tuple(
-                convert_to_cunumeric_ndarray(arg)
-                if idx in indices and arg is not None
-                else arg
-                for (idx, arg) in enumerate(args)
-            )
-            for k, v in kwargs.items():
-                if v is None:
-                    continue
-                elif k == "out":
-                    kwargs[k] = convert_to_cunumeric_ndarray(v, share=True)
-                    if not kwargs[k].flags.writeable:
-                        raise ValueError("out is not writeable")
-                elif (k in keys) or (k == "where"):
-                    kwargs[k] = convert_to_cunumeric_ndarray(v)
-
-            return func(*args, **kwargs)
-
-        return wrapper
-
-    return decorator
-
-
-def convert_to_cunumeric_ndarray(obj: Any, share: bool = False) -> ndarray:
-    # If this is an instance of one of our ndarrays then we're done
-    if isinstance(obj, ndarray):
-        return obj
-    # Ask the runtime to make a numpy thunk for this object
-    thunk = runtime.get_numpy_thunk(obj, share=share)
-    writeable = (
-        obj.flags.writeable if isinstance(obj, np.ndarray) and share else True
-    )
-    return ndarray(shape=None, thunk=thunk, writeable=writeable)
-
-
-def maybe_convert_to_np_ndarray(obj: Any) -> Any:
-    """
-    Converts cuNumeric arrays into NumPy arrays, otherwise has no effect.
-    """
-    from .ma import MaskedArray
-
-    if isinstance(obj, (ndarray, MaskedArray)):
-        return obj.__array__()
-    return obj
-
-
-def check_writeable(arr: Union[ndarray, tuple[ndarray, ...], None]) -> None:
-    """
-    Check if the current array is writeable
-    This check needs to be manually inserted
-    with consideration on the behavior of the corresponding method
-    """
-    if arr is None:
-        return
-    check_list = (arr,) if not isinstance(arr, tuple) else arr
-    if any(not arr.flags.writeable for arr in check_list):
-        raise ValueError("array is not writeable")
-
-
-def broadcast_where(
-    where: Union[ndarray, None], shape: NdShape
-) -> Union[ndarray, None]:
-    if where is not None and where.shape != shape:
-        from ._module import broadcast_to
-
-        where = broadcast_to(where, shape)
-    return where
-
-
-class flagsobj:
-    """
-    Information about the memory layout of the array.
-
-    These flags don't reflect the properties of the cuNumeric array, but
-    rather the NumPy array that will be produced if the cuNumeric array is
-    materialized on a single node.
-    """
-
-    def __init__(self, array: ndarray) -> None:
-        # prevent infinite __setattr__ recursion
-        object.__setattr__(self, "_array", array)
-
-    def __repr__(self) -> str:
-        return f"""\
-  C_CONTIGUOUS : {self["C"]}
-  F_CONTIGUOUS : {self["F"]}
-  OWNDATA : {self["O"]}
-  WRITEABLE : {self["W"]}
-  ALIGNED : {self["A"]}
-  WRITEBACKIFCOPY : {self["X"]}
-"""
-
-    def __eq__(self, other: Any) -> bool:
-        flags = ("C", "F", "O", "W", "A", "X")
-        if not isinstance(other, (flagsobj, np.core.multiarray.flagsobj)):
-            return False
-
-        return all(self[f] == other[f] for f in flags)  # type: ignore [index]
-
-    def __getattr__(self, name: str) -> Any:
-        if name == "writeable":
-            return self._array._writeable
-        flags = self._array.__array__().flags
-        return getattr(flags, name)
-
-    def __setattr__(self, name: str, value: Any) -> None:
-        if name == "writeable":
-            self._check_writeable(value)
-            self._array._writeable = bool(value)
-        else:
-            flags = self._array.__array__().flags
-            setattr(flags, name, value)
-
-    def __getitem__(self, key: Any) -> bool:
-        if key == "W":
-            return self._array._writeable
-        flags = self._array.__array__().flags
-        return flags[key]
-
-    def __setitem__(self, key: str, value: Any) -> None:
-        if key == "W":
-            self._check_writeable(value)
-            self._array._writeable = bool(value)
-        else:
-            flags = self._array.__array__().flags
-            flags[key] = value
-
-    def _check_writeable(self, value: Any) -> None:
-        if value and not self._array._writeable:
-            raise ValueError(
-                "non-writeable cunumeric arrays cannot be made writeable"
-            )
-
 
 NDARRAY_INTERNAL = {
     "__array_finalize__",
@@ -290,7 +106,7 @@ class ndarray:
         assert not isinstance(inputs, ndarray)
         if thunk is None:
             assert shape is not None
-            sanitized_shape = self._sanitize_shape(shape)
+            sanitized_shape = sanitize_shape(shape)
             if not isinstance(dtype, np.dtype):
                 dtype = np.dtype(dtype)
             if buffer is not None:
@@ -323,33 +139,6 @@ class ndarray:
         self._legate_data: Union[dict[str, Any], None] = None
 
         self._writeable = writeable
-
-    @staticmethod
-    def _sanitize_shape(
-        shape: Union[NdShapeLike, Sequence[Any], npt.NDArray[Any], ndarray]
-    ) -> NdShape:
-        seq: tuple[Any, ...]
-        if isinstance(shape, (ndarray, np.ndarray)):
-            if shape.ndim == 0:
-                seq = (shape.__array__().item(),)
-            else:
-                seq = tuple(shape.__array__())
-        elif np.isscalar(shape):
-            seq = (shape,)
-        else:
-            seq = tuple(cast(NdShape, shape))
-        try:
-            # Unfortunately, we can't do this check using
-            # 'isinstance(value, int)', as the values in a NumPy ndarray
-            # don't satisfy the predicate (they have numpy value types,
-            # such as numpy.int64).
-            result = tuple(operator.index(value) for value in seq)
-        except TypeError:
-            raise TypeError(
-                "expected a sequence of integers or a single integer, "
-                f"got {shape!r}"
-            )
-        return result
 
     # Support for the Legate data interface
     @property
@@ -435,7 +224,7 @@ class ndarray:
     def __array_ufunc__(
         self, ufunc: Any, method: str, *inputs: Any, **kwargs: Any
     ) -> Any:
-        from . import _ufunc
+        from .. import _ufunc
 
         # Check whether we should handle the arguments
         array_args = inputs
@@ -794,9 +583,7 @@ class ndarray:
 
         """
         # Handle the nice case of it being unsigned
-        from ._ufunc import absolute
-
-        return absolute(self)
+        return _ufunc.absolute(self)
 
     def __add__(self, rhs: Any) -> ndarray:
         """a.__add__(value, /)
@@ -808,9 +595,7 @@ class ndarray:
         Multiple GPUs, Multiple CPUs
 
         """
-        from ._ufunc import add
-
-        return add(self, rhs)
+        return _ufunc.add(self, rhs)
 
     def __and__(self, rhs: Any) -> ndarray:
         """a.__and__(value, /)
@@ -822,9 +607,7 @@ class ndarray:
         Multiple GPUs, Multiple CPUs
 
         """
-        from ._ufunc import bitwise_and
-
-        return bitwise_and(self, rhs)
+        return _ufunc.bitwise_and(self, rhs)
 
     def __array__(
         self, dtype: Union[np.dtype[Any], None] = None
@@ -878,7 +661,7 @@ class ndarray:
         if args[0].size != 1:
             raise ValueError("contains needs scalar item")
         core_dtype = to_core_dtype(self.dtype)
-        return self._perform_unary_reduction(
+        return perform_unary_reduction(
             UnaryRedCode.CONTAINS,
             self,
             axis=None,
@@ -955,9 +738,7 @@ class ndarray:
         Multiple GPUs, Multiple CPUs
 
         """
-        from ._ufunc import equal
-
-        return equal(self, rhs)
+        return _ufunc.equal(self, rhs)
 
     def __float__(self) -> float:
         """a.__float__(/)
@@ -977,9 +758,7 @@ class ndarray:
         Multiple GPUs, Multiple CPUs
 
         """
-        from ._ufunc import floor_divide
-
-        return floor_divide(self, rhs)
+        return _ufunc.floor_divide(self, rhs)
 
     def __format__(self, *args: Any, **kwargs: Any) -> str:
         return self.__array__().__format__(*args, **kwargs)
@@ -994,9 +773,7 @@ class ndarray:
         Multiple GPUs, Multiple CPUs
 
         """
-        from ._ufunc import greater_equal
-
-        return greater_equal(self, rhs)
+        return _ufunc.greater_equal(self, rhs)
 
     # __getattribute__
 
@@ -1048,9 +825,7 @@ class ndarray:
         Multiple GPUs, Multiple CPUs
 
         """
-        from ._ufunc import greater
-
-        return greater(self, rhs)
+        return _ufunc.greater(self, rhs)
 
     def __hash__(self) -> int:
         raise TypeError("unhashable type: cunumeric.ndarray")
@@ -1065,9 +840,7 @@ class ndarray:
         Multiple GPUs, Multiple CPUs
 
         """
-        from ._ufunc import add
-
-        return add(self, rhs, out=self)
+        return _ufunc.add(self, rhs, out=self)
 
     def __iand__(self, rhs: Any) -> ndarray:
         """a.__iand__(value, /)
@@ -1079,9 +852,7 @@ class ndarray:
         Multiple GPUs, Multiple CPUs
 
         """
-        from ._ufunc import bitwise_and
-
-        return bitwise_and(self, rhs, out=self)
+        return _ufunc.bitwise_and(self, rhs, out=self)
 
     def __idiv__(self, rhs: Any) -> ndarray:
         """a.__idiv__(value, /)
@@ -1105,9 +876,7 @@ class ndarray:
         Multiple GPUs, Multiple CPUs
 
         """
-        from ._ufunc import floor_divide
-
-        return floor_divide(self, rhs, out=self)
+        return _ufunc.floor_divide(self, rhs, out=self)
 
     def __ilshift__(self, rhs: Any) -> ndarray:
         """a.__ilshift__(value, /)
@@ -1119,9 +888,7 @@ class ndarray:
         Multiple GPUs, Multiple CPUs
 
         """
-        from ._ufunc import left_shift
-
-        return left_shift(self, rhs, out=self)
+        return _ufunc.left_shift(self, rhs, out=self)
 
     def __imod__(self, rhs: Any) -> ndarray:
         """a.__imod__(value, /)
@@ -1133,9 +900,7 @@ class ndarray:
         Multiple GPUs, Multiple CPUs
 
         """
-        from ._ufunc import remainder
-
-        return remainder(self, rhs, out=self)
+        return _ufunc.remainder(self, rhs, out=self)
 
     def __imul__(self, rhs: Any) -> ndarray:
         """a.__imul__(value, /)
@@ -1147,9 +912,7 @@ class ndarray:
         Multiple GPUs, Multiple CPUs
 
         """
-        from ._ufunc import multiply
-
-        return multiply(self, rhs, out=self)
+        return _ufunc.multiply(self, rhs, out=self)
 
     def __index__(self) -> int:
         return self.__array__().__index__()
@@ -1174,13 +937,9 @@ class ndarray:
         """
         if self.dtype == np.bool_:
             # Boolean values are special, just do logical NOT
-            from ._ufunc import logical_not
-
-            return logical_not(self)
+            return _ufunc.logical_not(self)
         else:
-            from ._ufunc import invert
-
-            return invert(self)
+            return _ufunc.invert(self)
 
     def __ior__(self, rhs: Any) -> ndarray:
         """a.__ior__(/)
@@ -1192,9 +951,7 @@ class ndarray:
         Multiple GPUs, Multiple CPUs
 
         """
-        from ._ufunc import bitwise_or
-
-        return bitwise_or(self, rhs, out=self)
+        return _ufunc.bitwise_or(self, rhs, out=self)
 
     def __ipow__(self, rhs: float) -> ndarray:
         """a.__ipow__(/)
@@ -1206,9 +963,7 @@ class ndarray:
         Multiple GPUs, Multiple CPUs
 
         """
-        from ._ufunc import power
-
-        return power(self, rhs, out=self)
+        return _ufunc.power(self, rhs, out=self)
 
     def __irshift__(self, rhs: Any) -> ndarray:
         """a.__irshift__(/)
@@ -1220,9 +975,7 @@ class ndarray:
         Multiple GPUs, Multiple CPUs
 
         """
-        from ._ufunc import right_shift
-
-        return right_shift(self, rhs, out=self)
+        return _ufunc.right_shift(self, rhs, out=self)
 
     def __iter__(self) -> Any:
         """a.__iter__(/)"""
@@ -1238,9 +991,7 @@ class ndarray:
         Multiple GPUs, Multiple CPUs
 
         """
-        from ._ufunc import subtract
-
-        return subtract(self, rhs, out=self)
+        return _ufunc.subtract(self, rhs, out=self)
 
     def __itruediv__(self, rhs: Any) -> ndarray:
         """a.__itruediv__(/)
@@ -1252,9 +1003,7 @@ class ndarray:
         Multiple GPUs, Multiple CPUs
 
         """
-        from ._ufunc import true_divide
-
-        return true_divide(self, rhs, out=self)
+        return _ufunc.true_divide(self, rhs, out=self)
 
     def __ixor__(self, rhs: Any) -> ndarray:
         """a.__ixor__(/)
@@ -1266,9 +1015,7 @@ class ndarray:
         Multiple GPUs, Multiple CPUs
 
         """
-        from ._ufunc import bitwise_xor
-
-        return bitwise_xor(self, rhs, out=self)
+        return _ufunc.bitwise_xor(self, rhs, out=self)
 
     def __le__(self, rhs: Any) -> ndarray:
         """a.__le__(value, /)
@@ -1280,9 +1027,7 @@ class ndarray:
         Multiple GPUs, Multiple CPUs
 
         """
-        from ._ufunc import less_equal
-
-        return less_equal(self, rhs)
+        return _ufunc.less_equal(self, rhs)
 
     def __len__(self) -> int:
         """a.__len__(/)
@@ -1302,9 +1047,7 @@ class ndarray:
         Multiple GPUs, Multiple CPUs
 
         """
-        from ._ufunc import left_shift
-
-        return left_shift(self, rhs)
+        return _ufunc.left_shift(self, rhs)
 
     def __lt__(self, rhs: Any) -> ndarray:
         """a.__lt__(value, /)
@@ -1316,9 +1059,7 @@ class ndarray:
         Multiple GPUs, Multiple CPUs
 
         """
-        from ._ufunc import less
-
-        return less(self, rhs)
+        return _ufunc.less(self, rhs)
 
     def __matmul__(self, value: Any) -> ndarray:
         """a.__matmul__(value, /)
@@ -1342,9 +1083,7 @@ class ndarray:
         Multiple GPUs, Multiple CPUs
 
         """
-        from ._ufunc import remainder
-
-        return remainder(self, rhs)
+        return _ufunc.remainder(self, rhs)
 
     def __mul__(self, rhs: Any) -> ndarray:
         """a.__mul__(value, /)
@@ -1356,9 +1095,7 @@ class ndarray:
         Multiple GPUs, Multiple CPUs
 
         """
-        from ._ufunc import multiply
-
-        return multiply(self, rhs)
+        return _ufunc.multiply(self, rhs)
 
     def __ne__(self, rhs: object) -> ndarray:  # type: ignore [override]
         """a.__ne__(value, /)
@@ -1370,9 +1107,7 @@ class ndarray:
         Multiple GPUs, Multiple CPUs
 
         """
-        from ._ufunc import not_equal
-
-        return not_equal(self, rhs)
+        return _ufunc.not_equal(self, rhs)
 
     def __neg__(self) -> ndarray:
         """a.__neg__(value, /)
@@ -1384,9 +1119,7 @@ class ndarray:
         Multiple GPUs, Multiple CPUs
 
         """
-        from ._ufunc import negative
-
-        return negative(self)
+        return _ufunc.negative(self)
 
     # __new__
 
@@ -1422,9 +1155,7 @@ class ndarray:
         Multiple GPUs, Multiple CPUs
 
         """
-        from ._ufunc import bitwise_or
-
-        return bitwise_or(self, rhs)
+        return _ufunc.bitwise_or(self, rhs)
 
     def __pos__(self) -> ndarray:
         """a.__pos__(value, /)
@@ -1437,9 +1168,7 @@ class ndarray:
 
         """
         # the positive opeartor is equivalent to copy
-        from ._ufunc import positive
-
-        return positive(self)
+        return _ufunc.positive(self)
 
     def __pow__(self, rhs: float) -> ndarray:
         """a.__pow__(value, /)
@@ -1451,9 +1180,7 @@ class ndarray:
         Multiple GPUs, Multiple CPUs
 
         """
-        from ._ufunc import power
-
-        return power(self, rhs)
+        return _ufunc.power(self, rhs)
 
     def __radd__(self, lhs: Any) -> ndarray:
         """a.__radd__(value, /)
@@ -1465,9 +1192,7 @@ class ndarray:
         Multiple GPUs, Multiple CPUs
 
         """
-        from ._ufunc import add
-
-        return add(lhs, self)
+        return _ufunc.add(lhs, self)
 
     def __rand__(self, lhs: Any) -> ndarray:
         """a.__rand__(value, /)
@@ -1479,9 +1204,7 @@ class ndarray:
         Multiple GPUs, Multiple CPUs
 
         """
-        from ._ufunc import bitwise_and
-
-        return bitwise_and(lhs, self)
+        return _ufunc.bitwise_and(lhs, self)
 
     def __rdiv__(self, lhs: Any) -> ndarray:
         """a.__rdiv__(value, /)
@@ -1493,9 +1216,7 @@ class ndarray:
         Multiple GPUs, Multiple CPUs
 
         """
-        from ._ufunc import true_divide
-
-        return true_divide(lhs, self)
+        return _ufunc.true_divide(lhs, self)
 
     def __rdivmod__(self, lhs: Any) -> ndarray:
         """a.__rdivmod__(value, /)
@@ -1548,9 +1269,7 @@ class ndarray:
         Multiple GPUs, Multiple CPUs
 
         """
-        from ._ufunc import floor_divide
-
-        return floor_divide(lhs, self)
+        return _ufunc.floor_divide(lhs, self)
 
     def __rmod__(self, lhs: Any) -> ndarray:
         """a.__rmod__(value, /)
@@ -1562,9 +1281,7 @@ class ndarray:
         Multiple GPUs, Multiple CPUs
 
         """
-        from ._ufunc import remainder
-
-        return remainder(lhs, self)
+        return _ufunc.remainder(lhs, self)
 
     def __rmul__(self, lhs: Any) -> ndarray:
         """a.__rmul__(value, /)
@@ -1576,9 +1293,7 @@ class ndarray:
         Multiple GPUs, Multiple CPUs
 
         """
-        from ._ufunc import multiply
-
-        return multiply(lhs, self)
+        return _ufunc.multiply(lhs, self)
 
     def __ror__(self, lhs: Any) -> ndarray:
         """a.__ror__(value, /)
@@ -1590,9 +1305,7 @@ class ndarray:
         Multiple GPUs, Multiple CPUs
 
         """
-        from ._ufunc import bitwise_or
-
-        return bitwise_or(lhs, self)
+        return _ufunc.bitwise_or(lhs, self)
 
     def __rpow__(self, lhs: Any) -> ndarray:
         """__rpow__(value, /)
@@ -1604,9 +1317,7 @@ class ndarray:
         Multiple GPUs, Multiple CPUs
 
         """
-        from ._ufunc import power
-
-        return power(lhs, self)
+        return _ufunc.power(lhs, self)
 
     def __rshift__(self, rhs: Any) -> ndarray:
         """a.__rshift__(value, /)
@@ -1618,9 +1329,7 @@ class ndarray:
         Multiple GPUs, Multiple CPUs
 
         """
-        from ._ufunc import right_shift
-
-        return right_shift(self, rhs)
+        return _ufunc.right_shift(self, rhs)
 
     def __rsub__(self, lhs: Any) -> ndarray:
         """a.__rsub__(value, /)
@@ -1632,9 +1341,7 @@ class ndarray:
         Multiple GPUs, Multiple CPUs
 
         """
-        from ._ufunc import subtract
-
-        return subtract(lhs, self)
+        return _ufunc.subtract(lhs, self)
 
     def __rtruediv__(self, lhs: Any) -> ndarray:
         """a.__rtruediv__(value, /)
@@ -1646,9 +1353,7 @@ class ndarray:
         Multiple GPUs, Multiple CPUs
 
         """
-        from ._ufunc import true_divide
-
-        return true_divide(lhs, self)
+        return _ufunc.true_divide(lhs, self)
 
     def __rxor__(self, lhs: Any) -> ndarray:
         """a.__rxor__(value, /)
@@ -1660,9 +1365,7 @@ class ndarray:
         Multiple GPUs, Multiple CPUs
 
         """
-        from ._ufunc import bitwise_xor
-
-        return bitwise_xor(lhs, self)
+        return _ufunc.bitwise_xor(lhs, self)
 
     # __setattr__
     @add_boilerplate("value")
@@ -1714,9 +1417,7 @@ class ndarray:
         Multiple GPUs, Multiple CPUs
 
         """
-        from ._ufunc import subtract
-
-        return subtract(self, rhs)
+        return _ufunc.subtract(self, rhs)
 
     def __str__(self) -> str:
         """a.__str__(/)
@@ -1740,9 +1441,7 @@ class ndarray:
         Multiple GPUs, Multiple CPUs
 
         """
-        from ._ufunc import true_divide
-
-        return true_divide(self, rhs)
+        return _ufunc.true_divide(self, rhs)
 
     def __xor__(self, rhs: Any) -> ndarray:
         """a.__xor__(value, /)
@@ -1754,9 +1453,7 @@ class ndarray:
         Multiple GPUs, Multiple CPUs
 
         """
-        from ._ufunc import bitwise_xor
-
-        return bitwise_xor(self, rhs)
+        return _ufunc.bitwise_xor(self, rhs)
 
     @add_boilerplate()
     def all(
@@ -1782,7 +1479,7 @@ class ndarray:
         Multiple GPUs, Multiple CPUs
 
         """
-        return self._perform_unary_reduction(
+        return perform_unary_reduction(
             UnaryRedCode.ALL,
             self,
             axis=axis,
@@ -1817,7 +1514,7 @@ class ndarray:
         Multiple GPUs, Multiple CPUs
 
         """
-        return self._perform_unary_reduction(
+        return perform_unary_reduction(
             UnaryRedCode.ANY,
             self,
             axis=axis,
@@ -1854,7 +1551,7 @@ class ndarray:
             raise ValueError("output array must have int64 dtype")
         if axis is not None and not isinstance(axis, int):
             raise ValueError("axis must be an integer")
-        return self._perform_unary_reduction(
+        return perform_unary_reduction(
             UnaryRedCode.ARGMAX,
             self,
             axis=axis,
@@ -1889,7 +1586,7 @@ class ndarray:
             raise ValueError("output array must have int64 dtype")
         if axis is not None and not isinstance(axis, int):
             raise ValueError("axis must be an integer")
-        return self._perform_unary_reduction(
+        return perform_unary_reduction(
             UnaryRedCode.ARGMIN,
             self,
             axis=axis,
@@ -2282,7 +1979,7 @@ class ndarray:
                 )
         core_dtype = to_core_dtype(self.dtype)
         extra_args = (Scalar(min, core_dtype), Scalar(max, core_dtype))
-        return self._perform_unary_op(
+        return perform_unary_op(
             UnaryOpCode.CLIP, self, out=out, extra_args=extra_args
         )
 
@@ -2346,7 +2043,7 @@ class ndarray:
         dtype: Union[np.dtype[Any], None] = None,
         out: Union[ndarray, None] = None,
     ) -> ndarray:
-        return self._perform_scan(
+        return perform_scan(
             ScanCode.SUM,
             self,
             axis=axis,
@@ -2362,7 +2059,7 @@ class ndarray:
         dtype: Union[np.dtype[Any], None] = None,
         out: Union[ndarray, None] = None,
     ) -> ndarray:
-        return self._perform_scan(
+        return perform_scan(
             ScanCode.PROD,
             self,
             axis=axis,
@@ -2378,7 +2075,7 @@ class ndarray:
         dtype: Union[np.dtype[Any], None] = None,
         out: Union[ndarray, None] = None,
     ) -> ndarray:
-        return self._perform_scan(
+        return perform_scan(
             ScanCode.SUM,
             self,
             axis=axis,
@@ -2394,7 +2091,7 @@ class ndarray:
         dtype: Union[np.dtype[Any], None] = None,
         out: Union[ndarray, None] = None,
     ) -> ndarray:
-        return self._perform_scan(
+        return perform_scan(
             ScanCode.PROD,
             self,
             axis=axis,
@@ -2684,14 +2381,11 @@ class ndarray:
         Multiple GPUs, Multiple CPUs
 
         """
-        from ._module.linalg_mvp import (  # work around circular import
-            _contract,
-        )
+        # work around circular import
+        from .._module.linalg_mvp import _contract
 
         if self.ndim == 0 or rhs.ndim == 0:
-            from ._ufunc import multiply
-
-            return multiply(self, rhs, out=out)
+            return _ufunc.multiply(self, rhs, out=out)
 
         (self_modes, rhs_modes, out_modes) = dot_modes(self.ndim, rhs.ndim)
         return _contract(
@@ -3064,7 +2758,7 @@ class ndarray:
         Multiple GPUs, Multiple CPUs
 
         """
-        return self._perform_unary_reduction(
+        return perform_unary_reduction(
             UnaryRedCode.MAX,
             self,
             axis=axis,
@@ -3077,7 +2771,7 @@ class ndarray:
     def _count_nonzero(self, axis: Any = None) -> Union[int, ndarray]:
         if self.size == 0:
             return 0
-        return ndarray._perform_unary_reduction(
+        return perform_unary_reduction(
             UnaryRedCode.COUNT_NONZERO,
             self,
             res_dtype=np.dtype(np.uint64),
@@ -3201,8 +2895,6 @@ class ndarray:
         keepdims: bool = False,
         where: Union[ndarray, None] = None,
     ) -> ndarray:
-        from . import _ufunc
-
         if np.issubdtype(dtype, np.integer) or np.issubdtype(dtype, np.bool_):
             return self.mean(
                 axis=axis, dtype=dtype, out=out, keepdims=keepdims, where=where
@@ -3272,7 +2964,7 @@ class ndarray:
         if axis is None or calculate_volume(tuple_pop(self.shape, axis)) == 1:
             # this is a scalar reduction and we can optimize this as a single
             # pass through a scalar reduction
-            result = self._perform_unary_reduction(
+            result = perform_unary_reduction(
                 UnaryRedCode.VARIANCE,
                 self,
                 axis=axis,
@@ -3296,7 +2988,7 @@ class ndarray:
             # delta*delta in second pass
             delta = self - mu
 
-            result = self._perform_unary_reduction(
+            result = perform_unary_reduction(
                 UnaryRedCode.SUM_SQUARES,
                 delta,
                 axis=axis,
@@ -3341,7 +3033,7 @@ class ndarray:
         Multiple GPUs, Multiple CPUs
 
         """
-        return self._perform_unary_reduction(
+        return perform_unary_reduction(
             UnaryRedCode.MIN,
             self,
             axis=axis,
@@ -3449,7 +3141,7 @@ class ndarray:
             self_array = temp
         else:
             self_array = self
-        return self._perform_unary_reduction(
+        return perform_unary_reduction(
             UnaryRedCode.PROD,
             self_array,
             axis=axis,
@@ -3819,7 +3511,7 @@ class ndarray:
             self_array = temp
         else:
             self_array = self
-        return self._perform_unary_reduction(
+        return perform_unary_reduction(
             UnaryRedCode.SUM,
             self_array,
             axis=axis,
@@ -3847,7 +3539,7 @@ class ndarray:
         else:
             unary_red_code = UnaryRedCode.SUM
 
-        return self._perform_unary_reduction(
+        return perform_unary_reduction(
             unary_red_code,
             self,
             axis=axis,
@@ -4165,44 +3857,6 @@ class ndarray:
         thunk = self._thunk.unique()
         return ndarray(shape=thunk.shape, thunk=thunk)
 
-    @classmethod
-    def _get_where_thunk(
-        cls, where: Union[None, ndarray], out_shape: NdShape
-    ) -> Union[None, NumPyThunk]:
-        if where is None:
-            return where
-        if (
-            not isinstance(where, ndarray)
-            or where.dtype != np.bool_
-            or where.shape != out_shape
-        ):
-            raise RuntimeError("should have converted this earlier")
-        return where._thunk
-
-    @staticmethod
-    def find_common_type(*args: ndarray) -> np.dtype[Any]:
-        """Determine common type following NumPy's coercion rules.
-
-        Parameters
-        ----------
-        *args : ndarray
-            A list of ndarrays
-
-        Returns
-        -------
-        datatype : data-type
-            The type that results from applying the NumPy type promotion rules
-            to the arguments.
-        """
-        array_types = list()
-        scalars = list()
-        for array in args:
-            if array.ndim == 0:
-                scalars.append(array.dtype.type(0))
-            else:
-                array_types.append(array.dtype)
-        return np.result_type(*array_types, *scalars)
-
     def _maybe_convert(self, dtype: np.dtype[Any], hints: Any) -> ndarray:
         if self.dtype == dtype:
             return self
@@ -4219,313 +3873,6 @@ class ndarray:
             return self.astype(dtype)
         else:
             return self
-
-    # For performing normal/broadcast unary operations
-    @classmethod
-    def _perform_unary_op(
-        cls,
-        op: UnaryOpCode,
-        src: ndarray,
-        out: Union[Any, None] = None,
-        extra_args: Any = None,
-        dtype: Union[np.dtype[Any], None] = None,
-        out_dtype: Union[np.dtype[Any], None] = None,
-    ) -> ndarray:
-        if out is not None:
-            # If the shapes don't match see if we can broadcast
-            # This will raise an exception if they can't be broadcast together
-            if np.broadcast_shapes(src.shape, out.shape) != out.shape:
-                raise ValueError(
-                    f"non-broadcastable output operand with shape {out.shape} "
-                    f"doesn't match the broadcast shape {src.shape}"
-                )
-        else:
-            # No output yet, so make one
-            out_shape = src.shape
-
-            if dtype is not None:
-                out = ndarray(
-                    shape=out_shape,
-                    dtype=dtype,
-                    inputs=(src,),
-                )
-            elif out_dtype is not None:
-                out = ndarray(
-                    shape=out_shape,
-                    dtype=out_dtype,
-                    inputs=(src,),
-                )
-            else:
-                out = ndarray(
-                    shape=out_shape,
-                    dtype=src.dtype
-                    if src.dtype.kind != "c"
-                    else np.dtype(np.float32)
-                    if src.dtype == np.dtype(np.complex64)
-                    else np.dtype(np.float64),
-                    inputs=(src,),
-                )
-
-        if out_dtype is None:
-            if out.dtype != src.dtype and not (
-                op == UnaryOpCode.ABSOLUTE and src.dtype.kind == "c"
-            ):
-                temp = ndarray(
-                    out.shape,
-                    dtype=src.dtype,
-                    inputs=(src,),
-                )
-                temp._thunk.unary_op(
-                    op,
-                    src._thunk,
-                    True,
-                    extra_args,
-                )
-                out._thunk.convert(temp._thunk)
-            else:
-                out._thunk.unary_op(
-                    op,
-                    src._thunk,
-                    True,
-                    extra_args,
-                )
-        else:
-            if out.dtype != out_dtype:
-                temp = ndarray(
-                    out.shape,
-                    dtype=out_dtype,
-                    inputs=(src,),
-                )
-                temp._thunk.unary_op(
-                    op,
-                    src._thunk,
-                    True,
-                    extra_args,
-                )
-                out._thunk.convert(temp._thunk)
-            else:
-                out._thunk.unary_op(
-                    op,
-                    src._thunk,
-                    True,
-                    extra_args,
-                )
-        return out
-
-    # For performing reduction unary operations
-    @classmethod
-    def _perform_unary_reduction(
-        cls,
-        op: UnaryRedCode,
-        src: ndarray,
-        axis: Any = None,
-        dtype: Union[np.dtype[Any], None] = None,
-        res_dtype: Union[npt.DTypeLike, None] = None,
-        out: Union[ndarray, None] = None,
-        keepdims: bool = False,
-        args: tuple[Scalar, ...] = (),
-        initial: Union[int, float, None] = None,
-        where: Union[ndarray, None] = None,
-    ) -> ndarray:
-        # When 'res_dtype' is not None, the input and output of the reduction
-        # have different types. Such reduction operators don't take a dtype of
-        # the accumulator
-        if res_dtype is not None:
-            assert dtype is None
-            dtype = src.dtype
-        else:
-            # If 'dtype' exists, that determines both the accumulation dtype
-            # and the output dtype
-            if dtype is not None:
-                res_dtype = dtype
-            elif out is not None:
-                dtype = out.dtype
-                res_dtype = out.dtype
-            else:
-                dtype = src.dtype
-                res_dtype = src.dtype
-
-        # TODO: Need to require initial to be given when the array is empty
-        #       or a where mask is given.
-        if (
-            op
-            in (
-                UnaryRedCode.ARGMAX,
-                UnaryRedCode.ARGMIN,
-                UnaryRedCode.MAX,
-                UnaryRedCode.MIN,
-            )
-            and src.dtype.kind == "c"
-        ):
-            raise NotImplementedError(
-                "(arg)max/min not supported for complex-type arrays"
-            )
-
-        if axis is None:
-            axes = tuple(range(src.ndim))
-        else:
-            axes = normalize_axis_tuple(axis, src.ndim)
-
-        out_shape: NdShape = ()
-        for dim in range(src.ndim):
-            if dim not in axes:
-                out_shape += (src.shape[dim],)
-            elif keepdims:
-                out_shape += (1,)
-
-        if out is None:
-            out = ndarray(
-                shape=out_shape, dtype=res_dtype, inputs=(src, where)
-            )
-        elif out.shape != out_shape:
-            errmsg = (
-                f"the output shapes do not match: expected {out_shape} "
-                f"but got {out.shape}"
-            )
-            raise ValueError(errmsg)
-
-        if dtype != src.dtype:
-            src = src.astype(dtype)
-
-        if out.dtype == res_dtype:
-            result = out
-        else:
-            result = ndarray(
-                shape=out_shape, dtype=res_dtype, inputs=(src, where)
-            )
-
-        where_array = broadcast_where(where, src.shape)
-        result._thunk.unary_reduction(
-            op,
-            src._thunk,
-            cls._get_where_thunk(where_array, src.shape),
-            axis,
-            axes,
-            keepdims,
-            args,
-            initial,
-        )
-
-        if result is not out:
-            out._thunk.convert(result._thunk)
-
-        return out
-
-    @classmethod
-    def _perform_binary_reduction(
-        cls,
-        op: BinaryOpCode,
-        one: ndarray,
-        two: ndarray,
-        dtype: np.dtype[Any],
-        extra_args: tuple[Scalar, ...] = (),
-    ) -> ndarray:
-        args = (one, two)
-
-        # We only handle bool types here for now
-        assert dtype is not None and dtype == np.dtype(np.bool_)
-        # Collapsing down to a single value in this case
-        # Check to see if we need to broadcast between inputs
-        if one.shape != two.shape:
-            broadcast = np.broadcast_shapes(one.shape, two.shape)
-        else:
-            broadcast = None
-
-        common_type = cls.find_common_type(one, two)
-        one_thunk = one._maybe_convert(common_type, args)._thunk
-        two_thunk = two._maybe_convert(common_type, args)._thunk
-
-        dst = ndarray(shape=(), dtype=dtype, inputs=args)
-        dst._thunk.binary_reduction(
-            op,
-            one_thunk,
-            two_thunk,
-            broadcast,
-            extra_args,
-        )
-        return dst
-
-    @classmethod
-    def _perform_where(
-        cls, mask: ndarray, one: ndarray, two: ndarray
-    ) -> ndarray:
-        args = (mask, one, two)
-
-        mask = mask._maybe_convert(np.dtype(np.bool_), args)
-
-        common_type = cls.find_common_type(one, two)
-        one = one._maybe_convert(common_type, args)
-        two = two._maybe_convert(common_type, args)
-
-        # Compute the output shape
-        out_shape = np.broadcast_shapes(mask.shape, one.shape, two.shape)
-        out = ndarray(shape=out_shape, dtype=common_type, inputs=args)
-        out._thunk.where(mask._thunk, one._thunk, two._thunk)
-        return out
-
-    @classmethod
-    def _perform_scan(
-        cls,
-        op: ScanCode,
-        src: ndarray,
-        axis: Any = None,
-        dtype: Union[npt.DTypeLike, None] = None,
-        out: Union[ndarray, None] = None,
-        nan_to_identity: bool = False,
-    ) -> ndarray:
-        if src.dtype.kind != "c" and src.dtype.kind != "f":
-            nan_to_identity = False
-        if dtype is None:
-            if out is None:
-                if src.dtype.kind == "i":
-                    # Set dtype to default platform integer
-                    dtype = np.int_
-                else:
-                    dtype = src.dtype
-            else:
-                dtype = out.dtype
-        # flatten input when axis is None
-        if axis is None:
-            axis = 0
-            src_arr = src.ravel()
-        else:
-            axis = normalize_axis_index(axis, src.ndim)
-            src_arr = src
-        if out is not None:
-            if dtype != out.dtype:
-                # if out array is specified, its type overrules dtype
-                dtype = out.dtype
-            if out.shape != src_arr.shape:
-                raise NotImplementedError(
-                    "Varried output shape not supported. Output must have "
-                    "same shape as input (same size if no axis is provided"
-                )
-        else:
-            out = ndarray(shape=src_arr.shape, dtype=dtype)
-
-        if dtype != src_arr.dtype:
-            if nan_to_identity:
-                if op is ScanCode.SUM:
-                    nan_op = ConvertCode.SUM
-                else:
-                    nan_op = ConvertCode.PROD
-                # If convert is called, it will handle NAN conversion
-                nan_to_identity = False
-            else:
-                nan_op = ConvertCode.NOOP
-            # convert input to temporary for type conversion
-            temp = ndarray(shape=src_arr.shape, dtype=dtype)
-            temp._thunk.convert(src_arr._thunk, nan_op=nan_op)
-            src_arr = temp
-
-        out._thunk.scan(
-            op,
-            src_arr._thunk,
-            axis=axis,
-            dtype=dtype,
-            nan_to_identity=nan_to_identity,
-        )
-        return out
 
     def _wrap(self, new_len: int) -> ndarray:
         if new_len == 1:

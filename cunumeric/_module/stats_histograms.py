@@ -18,7 +18,8 @@ from typing import TYPE_CHECKING, Any, Optional, Union
 
 import numpy as np
 
-from ..array import add_boilerplate, ndarray
+from .._array.array import ndarray
+from .._array.util import add_boilerplate
 from .creation_data import asarray
 from .creation_shape import ones, zeros
 from .math_extrema import amax, amin

@@ -22,8 +22,13 @@ from typing import TYPE_CHECKING, Any, Literal, Optional, Union
 import numpy as np
 import opt_einsum as oe  # type: ignore [import]
 
+from .._array.array import ndarray
+from .._array.util import (
+    add_boilerplate,
+    convert_to_cunumeric_ndarray,
+    find_common_type,
+)
 from .._ufunc.math import multiply
-from ..array import add_boilerplate, convert_to_cunumeric_ndarray, ndarray
 from ..types import NdShape
 from ..utils import AxesPairLike, inner_modes, matmul_modes, tensordot_modes
 from .creation_data import copy
@@ -475,7 +480,7 @@ def _contract(
     elif b is None:
         c_dtype = a.dtype
     else:
-        c_dtype = ndarray.find_common_type(a, b)
+        c_dtype = find_common_type(a, b)
 
     a = _maybe_cast_input(a, c_dtype, casting)
 

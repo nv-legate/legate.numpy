@@ -27,6 +27,7 @@ from typing import (
     Callable,
     Dict,
     Optional,
+    ParamSpec,
     Sequence,
     TypeVar,
     Union,
@@ -50,7 +51,6 @@ from legate.core.utils import OrderedSet
 from numpy.core.numeric import (  # type: ignore [attr-defined]
     normalize_axis_tuple,
 )
-from typing_extensions import ParamSpec
 
 from ._sort import sort_deferred
 from .config import (

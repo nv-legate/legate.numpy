@@ -18,7 +18,8 @@ from typing import TYPE_CHECKING, Optional, Sequence, Union
 
 import numpy as np
 
-from ..array import add_boilerplate, ndarray
+from .._array.array import ndarray
+from .._array.util import add_boilerplate
 
 if TYPE_CHECKING:
     from ..types import SelectKind, SortType

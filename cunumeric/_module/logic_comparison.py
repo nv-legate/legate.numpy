@@ -14,14 +14,18 @@
 #
 from __future__ import annotations
 
-from typing import Union
+from typing import TYPE_CHECKING, Union
 
 import numpy as np
 from legate.core import Scalar, types as ty
 
-from ..array import add_boilerplate, ndarray
+from .._array.thunk import perform_binary_reduction
+from .._array.util import add_boilerplate, find_common_type
 from ..config import BinaryOpCode
 from .creation_shape import empty
+
+if TYPE_CHECKING:
+    from .._array.array import ndarray
 
 
 @add_boilerplate("a", "b")
@@ -83,7 +87,7 @@ def allclose(
             "cuNumeric does not support `equal_nan` yet for allclose"
         )
     args = (Scalar(rtol, ty.float64), Scalar(atol, ty.float64))
-    return ndarray._perform_binary_reduction(
+    return perform_binary_reduction(
         BinaryOpCode.ISCLOSE,
         a,
         b,
@@ -147,7 +151,7 @@ def isclose(
     out_shape = np.broadcast_shapes(a.shape, b.shape)
     out = empty(out_shape, dtype=bool)
 
-    common_type = ndarray.find_common_type(a, b)
+    common_type = find_common_type(a, b)
     a = a.astype(common_type)
     b = b.astype(common_type)
 
@@ -192,6 +196,6 @@ def array_equal(
 
     if a1.shape != a2.shape:
         return False
-    return ndarray._perform_binary_reduction(
+    return perform_binary_reduction(
         BinaryOpCode.EQUAL, a1, a2, dtype=np.dtype(np.bool_)
     )
