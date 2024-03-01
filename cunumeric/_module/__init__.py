@@ -44,6 +44,14 @@ from .array_splitting import *  # Splitting arrays
 from .array_tiling import *  # Tiling arrays
 from .array_rearrange import *  # Rearranging elements
 
+# --- Binary operations
+#  https://numpy.org/doc/stable/reference/routines.bitwise.html
+#
+# from .binary_elementwise_bit_ops import *  # Elementwise bit operations
+# from .binary_output import *  # Output formatting
+
+from .binary_bit_packing import *  # Bit packing
+
 # --- Indexing routines
 #
 # These routines in the numpy module are a bit odd, they are documented under
@@ -59,11 +67,11 @@ from .linalg_mvp import *  # Matrix and vector products
 # --- Logic functions
 # https://numpy.org/doc/stable/reference/routines.logic.html
 #
-# from .logic_contents import *  # Array contents
-# from .logic_type import *  # Array type testing
 # from .logic_ops import *  # Logical operations
 
 from .logic_truth import *  # Truth value testing
+from .logic_array_contents import *  # Array contents
+from .logic_array_type import *  # Array type testing
 from .logic_comparison import *  # Comparison
 
 # --- Mathematical functions
@@ -104,3 +112,8 @@ from .ssc_counting import *  # Counting
 from .stats_order import *  # Order statistics
 from .stats_avgs_vars import *  # Averages and variances
 from .stats_histograms import *  # Histograms
+
+# --- Window functions
+# https://numpy.org/doc/stable/reference/routines.window.html
+
+from .window import *  # Various windows

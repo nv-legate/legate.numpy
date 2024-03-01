@@ -16,12 +16,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Optional, Tuple
 
-from ._array.util import add_boilerplate
-from ._module import empty
+from .._array.util import add_boilerplate
+from .creation_shape import empty
 
 if TYPE_CHECKING:
-    from ._array.array import ndarray
-    from .types import BitOrder
+    from .._array.array import ndarray
+    from ..types import BitOrder
 
 
 def _sanitize_arguments(

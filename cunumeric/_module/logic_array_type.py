@@ -1,4 +1,4 @@
-# Copyright 2022 NVIDIA Corporation
+# Copyright 2024 NVIDIA Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,104 +18,12 @@ from typing import TYPE_CHECKING, Any, Union
 
 import numpy as np
 
-from ._array.array import ndarray
-from ._array.util import convert_to_cunumeric_ndarray
-from ._module import full
-from ._ufunc.comparison import logical_and
-from ._ufunc.floating import isinf, signbit
+from .._array.array import ndarray
+from .._array.util import convert_to_cunumeric_ndarray
+from .creation_shape import full
 
 if TYPE_CHECKING:
     import numpy.typing as npt
-
-
-def isneginf(x: ndarray, out: Union[ndarray, None] = None) -> ndarray:
-    """
-
-    Test element-wise for negative infinity, return result as bool array.
-
-    Parameters
-    ----------
-    x : array_like
-        The input array.
-    out : array_like, optional
-        A location into which the result is stored. If provided, it must have a
-        shape that the input broadcasts to. If not provided or None, a
-        freshly-allocated boolean array is returned.
-
-    Returns
-    -------
-    out : ndarray
-        A boolean array with the same dimensions as the input.
-        If second argument is not supplied then a numpy boolean array is
-        returned with values True where the corresponding element of the
-        input is negative infinity and values False where the element of
-        the input is not negative infinity.
-
-        If a second argument is supplied the result is stored there. If the
-        type of that array is a numeric type the result is represented as
-        zeros and ones, if the type is boolean then as False and True. The
-        return value `out` is then a reference to that array.
-
-    See Also
-    --------
-    numpy.isneginf
-
-    Availability
-    --------
-    Multiple GPUs, Multiple CPUs
-
-    """
-    x = convert_to_cunumeric_ndarray(x)
-    if out is not None:
-        out = convert_to_cunumeric_ndarray(out, share=True)
-    rhs1 = isinf(x)
-    rhs2 = signbit(x)
-    return logical_and(rhs1, rhs2, out=out)
-
-
-def isposinf(x: ndarray, out: Union[ndarray, None] = None) -> ndarray:
-    """
-
-    Test element-wise for positive infinity, return result as bool array.
-
-    Parameters
-    ----------
-    x : array_like
-        The input array.
-    out : array_like, optional
-        A location into which the result is stored. If provided, it must have a
-        shape that the input broadcasts to. If not provided or None, a
-        freshly-allocated boolean array is returned.
-
-    Returns
-    -------
-    out : ndarray
-        A boolean array with the same dimensions as the input.
-        If second argument is not supplied then a boolean array is returned
-        with values True where the corresponding element of the input is
-        positive infinity and values False where the element of the input is
-        not positive infinity.
-
-        If a second argument is supplied the result is stored there. If the
-        type of that array is a numeric type the result is represented as zeros
-        and ones, if the type is boolean then as False and True.
-        The return value `out` is then a reference to that array.
-
-    See Also
-    --------
-    numpy.isposinf
-
-    Availability
-    --------
-    Multiple GPUs, Multiple CPUs
-
-    """
-    x = convert_to_cunumeric_ndarray(x)
-    if out is not None:
-        out = convert_to_cunumeric_ndarray(out, share=True)
-    rhs1 = isinf(x)
-    rhs2 = ~signbit(x)
-    return logical_and(rhs1, rhs2, out=out)
 
 
 def iscomplex(x: Union[ndarray, npt.NDArray[Any]]) -> ndarray:
