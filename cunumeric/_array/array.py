@@ -35,6 +35,7 @@ from ..config import (
     FFTNormalization,
     FFTType,
     ScanCode,
+    TransferType,
     UnaryOpCode,
     UnaryRedCode,
 )
@@ -120,7 +121,7 @@ class ndarray:
                     order=order,
                 )
                 self._thunk = runtime.find_or_create_array_thunk(
-                    np_array, share=False
+                    np_array, TransferType.SHARE
                 )
             else:
                 # Filter the inputs if necessary
@@ -146,7 +147,9 @@ class ndarray:
         if self._legate_data is None:
             # If the thunk is an eager array, we need to convert it to a
             # deferred array so we can extract a legate store
-            deferred_thunk = runtime.to_deferred_array(self._thunk)
+            deferred_thunk = runtime.to_deferred_array(
+                self._thunk, read_only=False
+            )
             # We don't have nullable data for the moment
             # until we support masked arrays
             dtype = deferred_thunk.base.type

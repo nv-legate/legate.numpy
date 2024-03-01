@@ -106,6 +106,9 @@ def auto_convert(
 ) -> Callable[[Callable[P, R]], Callable[P, R]]:
     """
     Converts all named parameters to DeferredArrays.
+
+    This function makes an immutable copy of any parameter that wasn't already
+    a DeferredArray.
     """
     keys = OrderedSet(thunk_params)
     assert len(keys) == len(thunk_params)
@@ -126,14 +129,14 @@ def auto_convert(
         def wrapper(*args: Any, **kwargs: Any) -> R:
             # Convert relevant arguments to DeferredArrays
             args = tuple(
-                runtime.to_deferred_array(arg)
+                runtime.to_deferred_array(arg, read_only=True)
                 if idx in indices and arg is not None
                 else arg
                 for (idx, arg) in enumerate(args)
             )
             for k, v in kwargs.items():
                 if k in keys and v is not None:
-                    kwargs[k] = runtime.to_deferred_array(v)
+                    kwargs[k] = runtime.to_deferred_array(v, read_only=True)
 
             return func(*args, **kwargs)
 
@@ -365,7 +368,7 @@ class DeferredArray(NumPyThunk):
         new_arrays: tuple[Any, ...] = tuple()
         # check array's type and convert them to deferred arrays
         for a in arrays:
-            a = runtime.to_deferred_array(a)
+            a = runtime.to_deferred_array(a, read_only=True)
             data_type = a.dtype
             if data_type != np.int64:
                 raise TypeError("index arrays should be int64 type")
@@ -586,7 +589,7 @@ class DeferredArray(NumPyThunk):
     ) -> tuple[bool, Any, Any, Any]:
         rhs = self
         if not isinstance(key, DeferredArray):
-            key = runtime.to_deferred_array(key)
+            key = runtime.to_deferred_array(key, read_only=True)
 
         # in case when boolean array is passed as an index, shape for all
         # its dimensions should be the same as the shape of
@@ -783,8 +786,8 @@ class DeferredArray(NumPyThunk):
             elif isinstance(k, slice):
                 k, store = self._slice_store(k, store, dim + shift)
             elif isinstance(k, NumPyThunk):
-                if not isinstance(computed_key, DeferredArray):
-                    k = runtime.to_deferred_array(k)
+                if not isinstance(k, DeferredArray):
+                    k = runtime.to_deferred_array(k, read_only=True)
                 if k.dtype == bool:
                     for i in range(k.ndim):
                         if k.shape[i] != store.shape[dim + i + shift]:
@@ -1058,7 +1061,7 @@ class DeferredArray(NumPyThunk):
             result_array = numpy_array.reshape(newshape, order=order).copy()
             result = runtime.get_numpy_thunk(result_array)
 
-            return runtime.to_deferred_array(result)
+            return runtime.to_deferred_array(result, read_only=True)
 
         if self.shape == newshape:
             return self
@@ -1299,24 +1302,20 @@ class DeferredArray(NumPyThunk):
 
         task.execute()
 
-    @auto_convert("v", "lhs")
-    def convolve(self, v: Any, lhs: Any, mode: ConvolveMode) -> None:
-        input = self.base
-        filter = v.base
-        output = lhs.base
-
+    @auto_convert("input", "filter")
+    def convolve(self, input: Any, filter: Any, mode: ConvolveMode) -> None:
         task = legate_runtime.create_auto_task(
             self.library, CuNumericOpCode.CONVOLVE
         )
 
         offsets = tuple((ext + 1) // 2 for ext in filter.shape)
 
-        p_out = task.add_output(output)
-        p_filter = task.add_input(filter)
-        p_in = task.add_input(input)
+        p_out = task.add_output(self.base)
+        p_filter = task.add_input(filter.base)
+        p_in = task.add_input(input.base)
         p_halo = task.declare_partition()
-        task.add_input(input, p_halo)
-        task.add_scalar_arg(self.shape, (ty.int64,))
+        task.add_input(input.base, p_halo)
+        task.add_scalar_arg(input.shape, (ty.int64,))
 
         task.add_constraint(align(p_out, p_in))
         task.add_constraint(bloat(p_out, p_halo, offsets, offsets))
@@ -1338,7 +1337,9 @@ class DeferredArray(NumPyThunk):
             lhs_eager = runtime.to_eager_array(lhs)
             rhs_eager = runtime.to_eager_array(rhs)
             lhs_eager.fft(rhs_eager, axes, kind, direction)
-            lhs.base = runtime.to_deferred_array(lhs_eager).base
+            lhs.base = runtime.to_deferred_array(
+                lhs_eager, read_only=True
+            ).base
         else:
             input = rhs.base
             output = lhs.base
@@ -1662,8 +1663,10 @@ class DeferredArray(NumPyThunk):
     # Create array from input array and indices
     def choose(self, rhs: Any, *args: Any) -> None:
         # convert all arrays to deferred
-        index_arr = runtime.to_deferred_array(rhs)
-        ch_def = tuple(runtime.to_deferred_array(c) for c in args)
+        index_arr = runtime.to_deferred_array(rhs, read_only=True)
+        ch_def = tuple(
+            runtime.to_deferred_array(c, read_only=True) for c in args
+        )
 
         out_arr = self.base
         # broadcast input array and all choices arrays to the same shape
@@ -1687,8 +1690,12 @@ class DeferredArray(NumPyThunk):
         choicelist: Iterable[Any],
         default: npt.NDArray[Any],
     ) -> None:
-        condlist_ = tuple(runtime.to_deferred_array(c) for c in condlist)
-        choicelist_ = tuple(runtime.to_deferred_array(c) for c in choicelist)
+        condlist_ = tuple(
+            runtime.to_deferred_array(c, read_only=True) for c in condlist
+        )
+        choicelist_ = tuple(
+            runtime.to_deferred_array(c, read_only=True) for c in choicelist
+        )
 
         task = legate_runtime.create_auto_task(
             self.library, CuNumericOpCode.SELECT
@@ -1952,7 +1959,7 @@ class DeferredArray(NumPyThunk):
             task.add_scalar_arg(repeats, ty.int64)
         else:
             shape = self.shape
-            repeats = runtime.to_deferred_array(repeats).base
+            repeats = runtime.to_deferred_array(repeats, read_only=True).base
             for dim, extent in enumerate(shape):
                 if dim == axis:
                     continue
@@ -3086,7 +3093,8 @@ class DeferredArray(NumPyThunk):
 
             if multiout is not None:
                 for out in multiout:
-                    p_out = task.add_output(out.base)
+                    out_def = runtime.to_deferred_array(out, read_only=False)
+                    p_out = task.add_output(out_def.base)
                     task.add_constraint(align(p_out, p_rhs))
 
             task.execute()

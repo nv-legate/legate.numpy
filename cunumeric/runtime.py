@@ -15,7 +15,7 @@
 from __future__ import annotations
 
 import warnings
-from functools import reduce
+from functools import lru_cache, reduce
 from typing import TYPE_CHECKING, Any, Optional, Sequence, TypeGuard, Union
 
 import legate.core.types as ty
@@ -27,9 +27,15 @@ from .config import (
     BitGeneratorOperation,
     CuNumericOpCode,
     CuNumericTunable,
+    TransferType,
     cunumeric_lib,
 )
-from .utils import calculate_volume, find_last_user_stacklevel, to_core_dtype
+from .utils import (
+    calculate_volume,
+    find_last_user_stacklevel,
+    is_supported_type,
+    to_core_dtype,
+)
 
 # We need to be careful about importing from other cunumeric modules here. The
 # runtime is global and used in many places, but also depends on many of the
@@ -50,6 +56,25 @@ if TYPE_CHECKING:
 DIMENSION = int
 
 legate_runtime = get_legate_runtime()
+
+
+def thunk_from_scalar(
+    bytes: bytes, shape: NdShape, dtype: np.dtype[Any]
+) -> DeferredArray:
+    from .deferred import DeferredArray
+
+    store = legate_runtime.create_store_from_scalar(
+        Scalar(bytes, to_core_dtype(dtype)),
+        shape=shape,
+    )
+    return DeferredArray(store)
+
+
+@lru_cache
+def cached_thunk_from_scalar(
+    bytes: bytes, shape: NdShape, dtype: np.dtype[Any]
+) -> DeferredArray:
+    return thunk_from_scalar(bytes, shape, dtype)
 
 
 class Runtime(object):
@@ -272,7 +297,8 @@ class Runtime(object):
         # We can't attach NumPy ndarrays in shared mode unless they are
         # writeable
         share = share and obj.flags["W"]
-        return self.find_or_create_array_thunk(obj, share=share)
+        transfer = TransferType.SHARE if share else TransferType.MAKE_COPY
+        return self.find_or_create_array_thunk(obj, transfer)
 
     @staticmethod
     def compute_parent_child_mapping(
@@ -346,27 +372,32 @@ class Runtime(object):
             return key
 
     def find_or_create_array_thunk(
-        self, array: npt.NDArray[Any], share: bool = False, defer: bool = False
+        self,
+        array: npt.NDArray[Any],
+        transfer: TransferType,
+        read_only: bool = False,
+        defer: bool = False,
     ) -> NumPyThunk:
         from .deferred import DeferredArray
 
         assert isinstance(array, np.ndarray)
+        if not is_supported_type(array.dtype):
+            raise TypeError(f"cuNumeric does not support dtype={array.dtype}")
+
         # We have to be really careful here to handle the case of
         # aliased numpy arrays that are passed in from the application
         # In case of aliasing we need to make sure that they are
         # mapped to the same logical region. The way we handle this
         # is to always create the thunk for the root array and
         # then create sub-thunks that mirror the array views
-        if array.base is not None and isinstance(array.base, np.ndarray):
+        if (
+            transfer == TransferType.SHARE
+            and array.base is not None
+            and isinstance(array.base, np.ndarray)
+        ):
             key = self.compute_parent_child_mapping(array)
             if key is None:
                 # This base array wasn't made with a view
-                if not share:
-                    return self.find_or_create_array_thunk(
-                        array.copy(),
-                        share=False,
-                        defer=defer,
-                    )
                 raise NotImplementedError(
                     "cuNumeric does not currently know "
                     + "how to attach to array views that are not affine "
@@ -374,43 +405,53 @@ class Runtime(object):
                 )
             parent_thunk = self.find_or_create_array_thunk(
                 array.base,
-                share=share,
-                defer=defer,
+                transfer,
+                read_only,
+                defer,
             )
-            # Don't store this one in the ptr_to_thunk as we only want to
-            # store the root ones
             return parent_thunk.get_item(key)
 
         # Once it's a normal numpy array we can make it into one of our arrays
         # Check to see if it is a type that we support for doing deferred
         # execution and big enough to be worth off-loading onto Legion
-        dtype = to_core_dtype(array.dtype)
         if defer or not self.is_eager_shape(array.shape):
-            if array.size == 1 and not share:
-                # This is a single value array
-                # We didn't attach to this so we don't need to save it
-                store = legate_runtime.create_store_from_scalar(
-                    Scalar(array.tobytes(), dtype),
-                    shape=array.shape,
-                )
-                return DeferredArray(store)
+            if array.size == 1 and transfer != TransferType.SHARE:
+                # This is a single value array that we're not attaching to.
+                # We cache these, but only if the user has promised not to
+                # write-through them.
+                # TODO(mpapadakis): Also mark the Store as read-only, whenever
+                # the Core supports that.
+                if read_only:
+                    return cached_thunk_from_scalar(
+                        array.tobytes(), array.shape, array.dtype
+                    )
+                else:
+                    return thunk_from_scalar(
+                        array.tobytes(), array.shape, array.dtype
+                    )
 
-            # This is not a scalar so make a field
+            # This is not a scalar so make a field.
+            # We won't try to cache these bigger arrays.
             store = legate_runtime.create_store_from_buffer(
-                dtype,
+                to_core_dtype(array.dtype),
                 array.shape,
-                array,
-                not share,  # read_only
+                array.copy() if transfer == TransferType.MAKE_COPY else array,
+                # This argument should really be called "donate"
+                read_only=(transfer != TransferType.SHARE),
             )
             return DeferredArray(
                 store,
-                numpy_array=array if share else None,
+                numpy_array=(
+                    array if transfer == TransferType.SHARE else None
+                ),
             )
 
         from .eager import EagerArray
 
-        # Make this into an eager evaluated thunk
-        return EagerArray(array)
+        # Make this into an eagerly evaluated thunk
+        return EagerArray(
+            array.copy() if transfer == TransferType.MAKE_COPY else array
+        )
 
     def create_empty_thunk(
         self,
@@ -511,11 +552,15 @@ class Runtime(object):
         else:
             raise RuntimeError("invalid array type")
 
-    def to_deferred_array(self, array: NumPyThunk) -> DeferredArray:
+    def to_deferred_array(
+        self,
+        array: NumPyThunk,
+        read_only: bool,
+    ) -> DeferredArray:
         if self.is_deferred_array(array):
             return array
         elif self.is_eager_array(array):
-            return array.to_deferred_array()
+            return array.to_deferred_array(read_only)
         else:
             raise RuntimeError("invalid array type")
 

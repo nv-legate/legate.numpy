@@ -91,7 +91,7 @@ def convolve(a: ndarray, v: ndarray, mode: ConvolveMode = "full") -> ndarray:
         dtype=a.dtype,
         inputs=(a, v),
     )
-    a._thunk.convolve(v._thunk, out._thunk, mode)
+    out._thunk.convolve(a._thunk, v._thunk, mode)
     return out
 
 

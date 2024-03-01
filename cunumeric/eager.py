@@ -27,7 +27,7 @@ from typing import (
 )
 
 import numpy as np
-from legate.core import Scalar, get_legate_runtime
+from legate.core import Scalar
 
 from .config import (
     FFT_C2R,
@@ -38,6 +38,7 @@ from .config import (
     ConvertCode,
     FFTDirection,
     ScanCode,
+    TransferType,
     UnaryOpCode,
     UnaryRedCode,
     WindowOpCode,
@@ -45,7 +46,7 @@ from .config import (
 from .deferred import DeferredArray
 from .runtime import runtime
 from .thunk import NumPyThunk
-from .utils import is_advanced_indexing, is_supported_type, to_core_dtype
+from .utils import is_advanced_indexing
 
 if TYPE_CHECKING:
     import numpy.typing as npt
@@ -219,10 +220,11 @@ class EagerArray(NumPyThunk):
 
     def __init__(
         self,
-        array: npt.NDArray[Any],
+        val: npt.ArrayLike,
         parent: Optional[EagerArray] = None,
         key: Optional[tuple[Any, ...]] = None,
     ) -> None:
+        array = np.asarray(val)
         super().__init__(array.dtype)
         self.array: npt.NDArray[Any] = array
         self.parent: Optional[EagerArray] = parent
@@ -230,7 +232,7 @@ class EagerArray(NumPyThunk):
         self.key: Optional[tuple[Any, ...]] = key
         #: if this ever becomes set (to a DeferredArray), we forward all
         #: operations to it
-        self.deferred: Optional[Union[DeferredArray, NumPyThunk]] = None
+        self.deferred: Optional[DeferredArray] = None
         self.escaped = False
 
     @property
@@ -257,70 +259,77 @@ class EagerArray(NumPyThunk):
         for arg in args:
             if runtime.is_eager_array(arg):
                 if arg.deferred is not None:
-                    self.to_deferred_array()
+                    self.to_deferred_array(read_only=False)
                     break
             elif runtime.is_deferred_array(arg):
-                self.to_deferred_array()
+                self.to_deferred_array(read_only=False)
                 break
             elif arg is None or not isinstance(arg, NumPyThunk):
                 pass
             else:
                 raise RuntimeError("bad argument type")
 
-    def _convert_children(self) -> None:
-        """
-        Traverse down our children and convert them to deferred arrays.
-        """
-        assert runtime.is_deferred_array(self.deferred)
+    def _convert_subtree(self) -> None:
+        assert self.deferred is None
+        if self.parent is None:
+            transfer = (
+                TransferType.SHARE
+                if self.escaped
+                # We can donate the base array, since it hasn't escaped to the
+                # user, and we won't be using it anymore.
+                else TransferType.DONATE
+            )
+            deferred = runtime.find_or_create_array_thunk(
+                self.array, transfer=transfer, defer=True
+            )
+        else:
+            parent = self.parent.deferred
+            assert self.key is not None
+            func = getattr(parent, self.key[0])
+            args = self.key[1:]
+            deferred = func(*args)
+        self.deferred = cast(DeferredArray, deferred)
         for child in self.children:
-            if child.deferred is None:
-                assert child.key is not None
-                func = getattr(self.deferred, child.key[0])
-                args = child.key[1:]
-                child.deferred = func(*args)
-        # After we've made all the deferred views for each child then
-        # we can traverse down. Do it this way so we can get partition
-        # coalescing where possible
-        for child in self.children:
-            child._convert_children()
+            child._convert_subtree()
 
-    def to_deferred_array(self) -> DeferredArray:
-        """This is a really important method. It will convert a tree of
-        eager NumPy arrays into an equivalent tree of deferred arrays that
-        are mirrored by an equivalent logical region tree. To be consistent
-        we always do this from the root, so once any array in the tree needs
-        to be converted then we do it for all of them.
-        :meta private:
+    def _convert_tree(self) -> None:
         """
-        # Check to see if we already have our deferred array
-        # or whether we need to go up the tree to have it made
-        if self.deferred is None:
-            if self.parent is None:
-                assert is_supported_type(self.array.dtype)
-                # We are at the root of the tree so we need to
-                # actually make a DeferredArray to use
-                if self.array.size == 1:
-                    legate_runtime = get_legate_runtime()
-                    store = legate_runtime.create_store_from_scalar(
-                        Scalar(
-                            self.array.tobytes(),
-                            to_core_dtype(self.array.dtype),
-                        ),
-                        shape=self.shape,
-                    )
-                    self.deferred = DeferredArray(store)
-                else:
-                    self.deferred = runtime.find_or_create_array_thunk(
-                        self.array,
-                        share=self.escaped,
-                        defer=True,
-                    )
-                self._convert_children()
-            else:
-                # Traverse up the tree to make the deferred array
-                self.parent.to_deferred_array()
-                assert self.deferred is not None
-        return cast(DeferredArray, self.deferred)
+        Convert the entire array tree to deferred arrays.
+
+        We have to convert the whole tree when we convert even one node, to
+        make sure any future use of any array in the tree will go through the
+        deferred path, rather than use the original eager NumPy array, that we
+        donated.
+        """
+        if self.parent is None:
+            self._convert_subtree()
+        else:
+            self.parent._convert_tree()
+
+    def to_deferred_array(self, read_only: bool) -> DeferredArray:
+        """
+        Convert this EagerArray into a DeferredArray.
+
+        If `read_only` is `False`, the EagerArray's buffer is donated to
+        initialize the DeferredArray, and the returned DeferredArray is used
+        in place of the EagerArray going forward.
+        """
+        if self.deferred is not None:
+            return self.deferred
+        if read_only:
+            deferred = cast(
+                DeferredArray,
+                runtime.find_or_create_array_thunk(
+                    self.array,
+                    transfer=TransferType.MAKE_COPY,
+                    read_only=True,
+                    defer=True,
+                ),
+            )
+        else:
+            self._convert_tree()
+            deferred = cast(DeferredArray, self.deferred)
+        return deferred
 
     def imag(self) -> NumPyThunk:
         if self.deferred is not None:
@@ -338,17 +347,17 @@ class EagerArray(NumPyThunk):
 
         return EagerArray(self.array.conj())
 
-    def convolve(self, v: Any, out: Any, mode: ConvolveMode) -> None:
-        self.check_eager_args(v, out)
+    def convolve(self, input: Any, filter: Any, mode: ConvolveMode) -> None:
+        self.check_eager_args(input, filter)
         if self.deferred is not None:
-            self.deferred.convolve(v, out, mode)
+            self.deferred.convolve(input, filter, mode)
         else:
             if self.ndim == 1:
-                out.array = np.convolve(self.array, v.array, mode)
+                self.array[:] = np.convolve(input.array, filter.array, mode)
             else:
                 from scipy.signal import convolve  # type: ignore [import]
 
-                out.array = convolve(self.array, v.array, mode)
+                self.array[...] = convolve(input.array, filter.array, mode)
 
     def fft(
         self,

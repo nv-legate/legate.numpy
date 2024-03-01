@@ -647,6 +647,13 @@ class BitGeneratorDistribution(IntEnum):
     NEGATIVE_BINOMIAL = _cunumeric.CUNUMERIC_BITGENDIST_NEGATIVE_BINOMIAL
 
 
+@unique
+class TransferType(IntEnum):
+    DONATE = 0
+    MAKE_COPY = 1
+    SHARE = 2
+
+
 # Match these to fftType in fft_util.h
 class FFTType:
     def __init__(

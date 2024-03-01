@@ -93,13 +93,13 @@ class NumPyThunk(ABC):
         ...
 
     @abstractmethod
-    def convolve(self, v: Any, out: Any, mode: ConvolveMode) -> None:
+    def convolve(self, input: Any, filter: Any, mode: ConvolveMode) -> None:
         ...
 
     @abstractmethod
     def fft(
         self,
-        out: Any,
+        rhs: Any,
         axes: Sequence[int],
         kind: FFTType,
         direction: FFTDirection,
