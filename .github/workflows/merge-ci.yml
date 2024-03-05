@@ -8,7 +8,7 @@ on:
 jobs:
   merge:
     if: ${{ github.repository_owner == 'nv-legate' }}
-    runs-on: ubuntu-latest
+    runs-on: linux-amd64-cpu4
     steps:
     - name: Cunumeric Internal repository
       uses: actions/checkout@v4

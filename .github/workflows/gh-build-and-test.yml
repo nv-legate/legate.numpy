@@ -11,7 +11,7 @@ on:
 jobs:
   setup-build:
     name: Setup build
-    runs-on: ubuntu-latest
+    runs-on: linux-amd64-cpu4
     outputs:
       runner_type: ${{ steps.set_runner.outputs.runner_type }}
     steps:
@@ -49,7 +49,7 @@ jobs:
     name: Setup test
     needs:
       - build
-    runs-on: ubuntu-latest
+    runs-on: linux-amd64-cpu4
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
