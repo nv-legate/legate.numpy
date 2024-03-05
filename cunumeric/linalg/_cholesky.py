@@ -34,7 +34,7 @@ legate_runtime = get_legate_runtime()
 if TYPE_CHECKING:
     from legate.core import Library, LogicalStore, LogicalStorePartition
 
-    from ..deferred import DeferredArray
+    from .._thunk.deferred import DeferredArray
     from ..runtime import Runtime
 
 

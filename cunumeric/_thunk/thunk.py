@@ -17,15 +17,15 @@ from __future__ import annotations
 from abc import ABC, abstractmethod, abstractproperty
 from typing import TYPE_CHECKING, Any, Iterable, Optional, Sequence, Union
 
-from .config import ConvertCode
-from .runtime import runtime
+from ..config import ConvertCode
+from ..runtime import runtime
 
 if TYPE_CHECKING:
     import numpy as np
     import numpy.typing as npt
     from legate.core import Scalar
 
-    from .config import (
+    from ..config import (
         BinaryOpCode,
         BitGeneratorType,
         FFTDirection,
@@ -34,7 +34,7 @@ if TYPE_CHECKING:
         UnaryRedCode,
         WindowOpCode,
     )
-    from .types import (
+    from ..types import (
         BitOrder,
         ConvolveMode,
         NdShape,

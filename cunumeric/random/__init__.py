@@ -17,7 +17,7 @@ from __future__ import annotations
 import numpy.random as _nprandom
 
 from .._array.util import maybe_convert_to_np_ndarray
-from ..coverage import clone_module
+from .._utils.coverage import clone_module
 from ..runtime import runtime
 
 if runtime.has_curand:

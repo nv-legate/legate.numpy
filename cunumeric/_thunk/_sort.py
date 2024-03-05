@@ -21,11 +21,11 @@ from numpy.core.multiarray import (  # type: ignore [attr-defined]
     normalize_axis_index,
 )
 
-from .config import CuNumericOpCode
-from .runtime import runtime
+from ..config import CuNumericOpCode
+from ..runtime import runtime
 
 if TYPE_CHECKING:
-    from .deferred import DeferredArray
+    from .._thunk.deferred import DeferredArray
 
 
 def sort_flattened(

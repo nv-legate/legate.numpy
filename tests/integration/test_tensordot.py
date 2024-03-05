@@ -19,7 +19,7 @@ from utils.contractions import check_default
 from utils.generators import mk_0to1_array
 
 import cunumeric as num
-from cunumeric.utils import tensordot_modes
+from cunumeric._utils.linalg import tensordot_modes
 
 
 def gen_axes(a_ndim, b_ndim):

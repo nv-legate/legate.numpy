@@ -29,7 +29,8 @@ from typing import (
 import numpy as np
 from legate.core import Scalar
 
-from .config import (
+from .._utils.array import is_advanced_indexing
+from ..config import (
     FFT_C2R,
     FFT_D2Z,
     FFT_R2C,
@@ -43,16 +44,15 @@ from .config import (
     UnaryRedCode,
     WindowOpCode,
 )
+from ..runtime import runtime
 from .deferred import DeferredArray
-from .runtime import runtime
 from .thunk import NumPyThunk
-from .utils import is_advanced_indexing
 
 if TYPE_CHECKING:
     import numpy.typing as npt
 
-    from .config import BitGeneratorType, FFTType
-    from .types import (
+    from ..config import BitGeneratorType, FFTType
+    from ..types import (
         BitOrder,
         ConvolveMode,
         NdShape,
@@ -1666,7 +1666,7 @@ class EagerArray(NumPyThunk):
             try:
                 result = np.linalg.cholesky(src.array)
             except np.linalg.LinAlgError as e:
-                from .linalg import LinAlgError
+                from ..linalg import LinAlgError
 
                 raise LinAlgError(e) from e
             if no_tril:
@@ -1681,7 +1681,7 @@ class EagerArray(NumPyThunk):
             try:
                 result = np.linalg.solve(a.array, b.array)
             except np.linalg.LinAlgError as e:
-                from .linalg import LinAlgError
+                from ..linalg import LinAlgError
 
                 raise LinAlgError(e) from e
             self.array[:] = result

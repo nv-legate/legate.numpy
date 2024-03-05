@@ -31,7 +31,7 @@ from ._array.array import ndarray
 from ._array.util import maybe_convert_to_np_ndarray
 from ._module import *
 from ._ufunc import *
-from .coverage import clone_module
+from ._utils.coverage import clone_module
 
 clone_module(_np, globals(), maybe_convert_to_np_ndarray)
 

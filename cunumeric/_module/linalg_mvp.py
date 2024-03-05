@@ -29,8 +29,13 @@ from .._array.util import (
     find_common_type,
 )
 from .._ufunc.math import multiply
+from .._utils.linalg import (
+    AxesPairLike,
+    inner_modes,
+    matmul_modes,
+    tensordot_modes,
+)
 from ..types import NdShape
-from ..utils import AxesPairLike, inner_modes, matmul_modes, tensordot_modes
 from .creation_data import copy
 
 if TYPE_CHECKING:

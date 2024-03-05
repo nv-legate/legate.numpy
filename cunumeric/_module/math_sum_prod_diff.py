@@ -22,9 +22,9 @@ from .._array.thunk import perform_scan, perform_unary_reduction
 from .._array.util import add_boilerplate
 from .._ufunc.floating import isnan
 from .._ufunc.math import add, multiply
-from .._unary_red_utils import get_non_nan_unary_red_code
 from ..config import ScanCode, UnaryRedCode
 from ..settings import settings as cunumeric_settings
+from ._unary_red_utils import get_non_nan_unary_red_code
 from .indexing import putmask
 from .logic_truth import all, any
 

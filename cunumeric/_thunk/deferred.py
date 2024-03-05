@@ -52,8 +52,8 @@ from numpy.core.numeric import (  # type: ignore [attr-defined]
     normalize_axis_tuple,
 )
 
-from ._sort import sort_deferred
-from .config import (
+from .._utils.array import is_advanced_indexing, to_core_dtype
+from ..config import (
     BinaryOpCode,
     BitGeneratorDistribution,
     BitGeneratorOperation,
@@ -64,17 +64,17 @@ from .config import (
     UnaryOpCode,
     UnaryRedCode,
 )
-from .linalg._cholesky import cholesky_deferred
-from .linalg._solve import solve_deferred
-from .runtime import runtime
+from ..linalg._cholesky import cholesky_deferred
+from ..linalg._solve import solve_deferred
+from ..runtime import runtime
+from ._sort import sort_deferred
 from .thunk import NumPyThunk
-from .utils import is_advanced_indexing, to_core_dtype
 
 if TYPE_CHECKING:
     import numpy.typing as npt
 
-    from .config import BitGeneratorType, FFTDirection, FFTType, WindowOpCode
-    from .types import (
+    from ..config import BitGeneratorType, FFTDirection, FFTType, WindowOpCode
+    from ..types import (
         BitOrder,
         ConvolveMode,
         NdShape,
@@ -378,7 +378,7 @@ class DeferredArray(NumPyThunk):
         # find a broadcasted shape for all arrays passed as indices
         shapes = tuple(a.shape for a in arrays)
         if len(arrays) > 1:
-            from ._module import broadcast_shapes
+            from .._module import broadcast_shapes
 
             b_shape = broadcast_shapes(*shapes)
         else:

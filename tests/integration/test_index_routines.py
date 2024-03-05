@@ -21,7 +21,7 @@ from legate.core import LEGATE_MAX_DIM
 from utils.generators import mk_seq_array
 
 import cunumeric as num
-from cunumeric.eager import diagonal_reference
+from cunumeric._thunk.eager import diagonal_reference
 
 
 class TestChoose1d:

@@ -20,7 +20,7 @@ import pytest
 from mock import MagicMock, patch
 
 import cunumeric
-import cunumeric.coverage as m  # module under test
+import cunumeric._utils.coverage as m  # module under test
 from cunumeric.settings import settings
 
 

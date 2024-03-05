@@ -27,7 +27,7 @@ from ._exception import LinAlgError
 if TYPE_CHECKING:
     from legate.core import Library, LogicalStore
 
-    from ..deferred import DeferredArray
+    from .._thunk.deferred import DeferredArray
 
 
 def solve_single(library: Library, a: LogicalStore, b: LogicalStore) -> None:
@@ -78,7 +78,7 @@ def mp_solve(
 def solve_deferred(
     output: DeferredArray, a: DeferredArray, b: DeferredArray
 ) -> None:
-    from ..deferred import DeferredArray
+    from .._thunk.deferred import DeferredArray
 
     library = output.library
 

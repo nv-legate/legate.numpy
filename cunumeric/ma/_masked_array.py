@@ -24,7 +24,7 @@ if TYPE_CHECKING:
 import numpy as _np
 
 from .._array.util import maybe_convert_to_np_ndarray
-from ..coverage import clone_class
+from .._utils.coverage import clone_class
 
 NDARRAY_INTERNAL = {
     "__array_finalize__",

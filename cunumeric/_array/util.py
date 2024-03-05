@@ -212,3 +212,10 @@ def find_common_type(*args: ndarray) -> np.dtype[Any]:
         else:
             array_types.append(array.dtype)
     return np.result_type(*array_types, *scalars)
+
+
+T = TypeVar("T")
+
+
+def tuple_pop(tup: tuple[T, ...], index: int) -> tuple[T, ...]:
+    return tup[:index] + tup[index + 1 :]

@@ -27,7 +27,7 @@ from .._array.util import (
     check_writeable,
     convert_to_cunumeric_ndarray,
 )
-from ..coverage import is_implemented
+from .._utils.coverage import is_implemented
 from ..runtime import runtime
 from ..types import NdShape
 from .array_joining import hstack

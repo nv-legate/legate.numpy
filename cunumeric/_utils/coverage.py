@@ -39,9 +39,10 @@ from typing import (
 from legate.core import track_provenance
 from legate.core.utils import OrderedSet
 
-from .runtime import runtime
-from .settings import settings
-from .utils import deep_apply, find_last_user_frames, find_last_user_stacklevel
+from ..runtime import runtime
+from ..settings import settings
+from .stack import find_last_user_frames, find_last_user_stacklevel
+from .structure import deep_apply
 
 __all__ = ("clone_module", "clone_class")
 
@@ -251,7 +252,7 @@ def clone_module(
 
     reporting = settings.report_coverage()
 
-    from ._ufunc.ufunc import ufunc as lgufunc
+    from .._ufunc.ufunc import ufunc as lgufunc
 
     for attr, value in new_globals.items():
         # Only need to wrap things that are in the origin module to begin with

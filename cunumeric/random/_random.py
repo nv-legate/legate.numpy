@@ -19,7 +19,7 @@ from typing import TYPE_CHECKING, Any, Union
 import numpy as np
 
 from .._array.array import ndarray
-from ..coverage import clone_class
+from .._utils.coverage import clone_class
 from ..runtime import runtime
 from ._generator import default_rng, get_static_generator  # NOQA
 

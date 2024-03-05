@@ -1,4 +1,4 @@
-# Copyright 2021-2022 NVIDIA Corporation
+# Copyright 2024 NVIDIA Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,106 +14,10 @@
 #
 from __future__ import annotations
 
-import traceback
-from functools import reduce
 from string import ascii_lowercase, ascii_uppercase
-from types import FrameType
-from typing import Any, Callable, List, Sequence, Tuple, TypeVar, Union
+from typing import List, Sequence, Tuple, Union
 
-import legate.core.types as ty
-import numpy as np
 from legate.core.utils import OrderedSet
-
-from .types import NdShape
-
-SUPPORTED_DTYPES = {
-    np.dtype(np.bool_): ty.bool_,
-    np.dtype(np.int8): ty.int8,
-    np.dtype(np.int16): ty.int16,
-    np.dtype(np.int32): ty.int32,
-    np.dtype(np.int64): ty.int64,
-    np.dtype(np.uint8): ty.uint8,
-    np.dtype(np.uint16): ty.uint16,
-    np.dtype(np.uint32): ty.uint32,
-    np.dtype(np.uint64): ty.uint64,
-    np.dtype(np.float16): ty.float16,
-    np.dtype(np.float32): ty.float32,
-    np.dtype(np.float64): ty.float64,
-    np.dtype(np.complex64): ty.complex64,
-    np.dtype(np.complex128): ty.complex128,
-}
-
-
-def is_supported_type(dtype: Union[str, np.dtype[Any]]) -> bool:
-    return np.dtype(dtype) in SUPPORTED_DTYPES
-
-
-def to_core_dtype(dtype: Union[str, np.dtype[Any]]) -> ty.Type:
-    core_dtype = SUPPORTED_DTYPES.get(np.dtype(dtype))
-    if core_dtype is None:
-        raise TypeError(f"cuNumeric does not support dtype={dtype}")
-    return core_dtype
-
-
-def is_advanced_indexing(key: Any) -> bool:
-    if key is Ellipsis or key is None:  # np.newdim case
-        return False
-    if np.isscalar(key):
-        return False
-    if isinstance(key, slice):
-        return False
-    if isinstance(key, tuple):
-        return any(is_advanced_indexing(k) for k in key)
-    # Any other kind of thing leads to advanced indexing
-    return True
-
-
-def find_last_user_stacklevel() -> int:
-    stacklevel = 1
-    for frame, _ in traceback.walk_stack(None):
-        if not frame.f_globals["__name__"].startswith("cunumeric"):
-            break
-        stacklevel += 1
-    return stacklevel
-
-
-def get_line_number_from_frame(frame: FrameType) -> str:
-    return f"{frame.f_code.co_filename}:{frame.f_lineno}"
-
-
-def find_last_user_frames(top_only: bool = True) -> str:
-    for last, _ in traceback.walk_stack(None):
-        if "__name__" not in last.f_globals:
-            continue
-        name = last.f_globals["__name__"]
-        if not any(name.startswith(pkg) for pkg in ("cunumeric", "legate")):
-            break
-
-    if top_only:
-        return get_line_number_from_frame(last)
-
-    frames: list[FrameType] = []
-    curr: Union[FrameType, None] = last
-    while curr is not None:
-        if "legion_top.py" in curr.f_code.co_filename:
-            break
-        frames.append(curr)
-        curr = curr.f_back
-    return "|".join(get_line_number_from_frame(f) for f in frames)
-
-
-def calculate_volume(shape: NdShape) -> int:
-    if len(shape) == 0:
-        return 0
-    return reduce(lambda x, y: x * y, shape)
-
-
-T = TypeVar("T")
-
-
-def tuple_pop(tup: Tuple[T, ...], index: int) -> Tuple[T, ...]:
-    return tup[:index] + tup[index + 1 :]
-
 
 Modes = Tuple[List[str], List[str], List[str]]
 
@@ -229,23 +133,3 @@ def tensordot_modes(a_ndim: int, b_ndim: int, axes: AxesPairLike) -> Modes:
     ]
 
     return (a_modes, b_modes, a_out + b_out)
-
-
-def deep_apply(obj: Any, func: Callable[[Any], Any]) -> Any:
-    """
-    Apply the provided function to objects contained at any depth within a data
-    structure.
-
-    This function will recurse over arbitrary nestings of lists, tuples and
-    dicts. This recursion logic is rather limited, but this function is
-    primarily meant to be used for arguments of NumPy API calls, which
-    shouldn't nest their arrays very deep.
-    """
-    if isinstance(obj, list):
-        return [deep_apply(x, func) for x in obj]
-    elif isinstance(obj, tuple):
-        return tuple(deep_apply(x, func) for x in obj)
-    elif isinstance(obj, dict):
-        return {k: deep_apply(v, func) for k, v in obj.items()}
-    else:
-        return func(obj)

@@ -38,7 +38,7 @@ from .util import broadcast_where, find_common_type
 if TYPE_CHECKING:
     import numpy.typing as npt
 
-    from ..thunk import NumPyThunk
+    from .._thunk.thunk import NumPyThunk
     from .array import ndarray
 
 

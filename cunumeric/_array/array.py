@@ -30,6 +30,10 @@ from numpy.core.numeric import (  # type: ignore [attr-defined]
 )
 
 from .. import _ufunc
+from .._utils.array import calculate_volume, to_core_dtype
+from .._utils.coverage import FALLBACK_WARNING, clone_class, is_implemented
+from .._utils.linalg import dot_modes
+from .._utils.structure import deep_apply
 from ..config import (
     FFTDirection,
     FFTNormalization,
@@ -39,16 +43,8 @@ from ..config import (
     UnaryOpCode,
     UnaryRedCode,
 )
-from ..coverage import FALLBACK_WARNING, clone_class, is_implemented
 from ..runtime import runtime
 from ..types import NdShape
-from ..utils import (
-    calculate_volume,
-    deep_apply,
-    dot_modes,
-    to_core_dtype,
-    tuple_pop,
-)
 from .flags import flagsobj
 from .thunk import perform_scan, perform_unary_op, perform_unary_reduction
 from .util import (
@@ -58,6 +54,7 @@ from .util import (
     convert_to_cunumeric_ndarray,
     maybe_convert_to_np_ndarray,
     sanitize_shape,
+    tuple_pop,
 )
 
 if TYPE_CHECKING:
@@ -65,7 +62,7 @@ if TYPE_CHECKING:
 
     import numpy.typing as npt
 
-    from ..thunk import NumPyThunk
+    from .._thunk.thunk import NumPyThunk
     from ..types import (
         BoundsMode,
         CastingKind,

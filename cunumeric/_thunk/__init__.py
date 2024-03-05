@@ -1,4 +1,4 @@
-# Copyright 2023 NVIDIA Corporation
+# Copyright 2024 NVIDIA Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,17 +13,3 @@
 # limitations under the License.
 #
 from __future__ import annotations
-
-import numpy.ma as _ma
-
-from .._array.util import maybe_convert_to_np_ndarray
-from .._utils.coverage import clone_module
-from ._masked_array import MaskedArray
-
-masked_array = MaskedArray
-
-clone_module(_ma, globals(), maybe_convert_to_np_ndarray)
-
-del maybe_convert_to_np_ndarray
-del clone_module
-del _ma

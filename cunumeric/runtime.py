@@ -23,18 +23,14 @@ import numpy as np
 from legate.core import LEGATE_MAX_DIM, Scalar, TaskTarget, get_legate_runtime
 from legate.settings import settings as legate_settings
 
+from ._utils.array import calculate_volume, is_supported_type, to_core_dtype
+from ._utils.stack import find_last_user_stacklevel
 from .config import (
     BitGeneratorOperation,
     CuNumericOpCode,
     CuNumericTunable,
     TransferType,
     cunumeric_lib,
-)
-from .utils import (
-    calculate_volume,
-    find_last_user_stacklevel,
-    is_supported_type,
-    to_core_dtype,
 )
 
 # We need to be careful about importing from other cunumeric modules here. The
@@ -48,9 +44,9 @@ if TYPE_CHECKING:
     from legate.core import AutoTask, ManualTask
 
     from ._array.array import ndarray
-    from .deferred import DeferredArray
-    from .eager import EagerArray
-    from .thunk import NumPyThunk
+    from ._thunk.deferred import DeferredArray
+    from ._thunk.eager import EagerArray
+    from ._thunk.thunk import NumPyThunk
     from .types import NdShape
 
 DIMENSION = int
@@ -61,7 +57,7 @@ legate_runtime = get_legate_runtime()
 def thunk_from_scalar(
     bytes: bytes, shape: NdShape, dtype: np.dtype[Any]
 ) -> DeferredArray:
-    from .deferred import DeferredArray
+    from ._thunk.deferred import DeferredArray
 
     store = legate_runtime.create_store_from_scalar(
         Scalar(bytes, to_core_dtype(dtype)),
@@ -278,7 +274,7 @@ class Runtime(object):
                     "Array must be non-nullable and not nested"
                 )
 
-            from .deferred import DeferredArray
+            from ._thunk.deferred import DeferredArray
 
             return DeferredArray(array.data)
         # See if this is a normal numpy array
@@ -378,7 +374,7 @@ class Runtime(object):
         read_only: bool = False,
         defer: bool = False,
     ) -> NumPyThunk:
-        from .deferred import DeferredArray
+        from ._thunk.deferred import DeferredArray
 
         assert isinstance(array, np.ndarray)
         if not is_supported_type(array.dtype):
@@ -446,7 +442,7 @@ class Runtime(object):
                 ),
             )
 
-        from .eager import EagerArray
+        from ._thunk.eager import EagerArray
 
         # Make this into an eagerly evaluated thunk
         return EagerArray(
@@ -459,7 +455,7 @@ class Runtime(object):
         dtype: ty.Type,
         inputs: Optional[Sequence[NumPyThunk]] = None,
     ) -> NumPyThunk:
-        from .deferred import DeferredArray
+        from ._thunk.deferred import DeferredArray
 
         if self.is_eager_shape(shape) and self.are_all_eager_inputs(inputs):
             return self.create_eager_thunk(shape, dtype.to_numpy_dtype())
@@ -474,14 +470,14 @@ class Runtime(object):
         shape: NdShape,
         dtype: np.dtype[Any],
     ) -> NumPyThunk:
-        from .eager import EagerArray
+        from ._thunk.eager import EagerArray
 
         return EagerArray(np.empty(shape, dtype=dtype))
 
     def create_unbound_thunk(
         self, dtype: ty.Type, ndim: int = 1
     ) -> DeferredArray:
-        from .deferred import DeferredArray
+        from ._thunk.deferred import DeferredArray
 
         store = legate_runtime.create_store(dtype, ndim=ndim)
         return DeferredArray(store)
@@ -517,8 +513,8 @@ class Runtime(object):
 
     @staticmethod
     def are_all_eager_inputs(inputs: Optional[Sequence[NumPyThunk]]) -> bool:
-        from .eager import EagerArray
-        from .thunk import NumPyThunk
+        from ._thunk.eager import EagerArray
+        from ._thunk.thunk import NumPyThunk
 
         if inputs is None:
             return True
@@ -530,7 +526,7 @@ class Runtime(object):
 
     @staticmethod
     def is_eager_array(array: NumPyThunk) -> TypeGuard[EagerArray]:
-        from .eager import EagerArray
+        from ._thunk.eager import EagerArray
 
         return isinstance(array, EagerArray)
 
@@ -538,12 +534,12 @@ class Runtime(object):
     def is_deferred_array(
         array: Optional[NumPyThunk],
     ) -> TypeGuard[DeferredArray]:
-        from .deferred import DeferredArray
+        from ._thunk.deferred import DeferredArray
 
         return isinstance(array, DeferredArray)
 
     def to_eager_array(self, array: NumPyThunk) -> EagerArray:
-        from .eager import EagerArray
+        from ._thunk.eager import EagerArray
 
         if self.is_eager_array(array):
             return array

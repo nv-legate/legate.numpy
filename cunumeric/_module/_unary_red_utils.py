@@ -15,7 +15,7 @@
 
 from __future__ import annotations
 
-from .config import UnaryRedCode
+from ..config import UnaryRedCode
 
 # corresponding non-nan unary reduction ops for nan unary reduction ops
 _EQUIVALENT_NON_NAN_OPS: dict[UnaryRedCode, UnaryRedCode] = {
