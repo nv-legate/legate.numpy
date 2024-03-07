@@ -14,7 +14,7 @@
 #
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Union
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import numpy.random as nprandom
@@ -28,13 +28,13 @@ if TYPE_CHECKING:
     from ..types import NdShapeLike
 
 
-def seed(init: Union[int, None] = None) -> None:
+def seed(init: int | None = None) -> None:
     if init is None:
         init = 0
     runtime.set_next_random_epoch(int(init))
 
 
-def rand(*shapeargs: int) -> Union[float, ndarray]:
+def rand(*shapeargs: int) -> float | ndarray:
     """
     rand(d0, d1, ..., dn)
 
@@ -72,10 +72,10 @@ def rand(*shapeargs: int) -> Union[float, ndarray]:
 
 def randint(
     low: int,
-    high: Union[int, None] = None,
-    size: Union[NdShapeLike, None] = None,
-    dtype: Union[np.dtype[Any], type, None] = int,
-) -> Union[int, ndarray, npt.NDArray[Any]]:
+    high: int | None = None,
+    size: NdShapeLike | None = None,
+    dtype: np.dtype[Any] | type | None = int,
+) -> int | ndarray | npt.NDArray[Any]:
     """
     Return random integers from `low` (inclusive) to `high` (exclusive).
 
@@ -147,7 +147,7 @@ def randint(
     return result
 
 
-def randn(*shapeargs: int) -> Union[float, ndarray]:
+def randn(*shapeargs: int) -> float | ndarray:
     """
     randn(d0, d1, ..., dn)
 
@@ -182,7 +182,7 @@ def randn(*shapeargs: int) -> Union[float, ndarray]:
     return result
 
 
-def random(size: Union[NdShapeLike, None] = None) -> Union[float, ndarray]:
+def random(size: NdShapeLike | None = None) -> float | ndarray:
     """
     random(size=None)
 

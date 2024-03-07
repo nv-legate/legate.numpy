@@ -14,7 +14,7 @@
 #
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Optional, Union
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
@@ -35,12 +35,12 @@ if TYPE_CHECKING:
 @add_boilerplate("a")
 def prod(
     a: ndarray,
-    axis: Optional[Union[int, tuple[int, ...]]] = None,
-    dtype: Optional[np.dtype[Any]] = None,
-    out: Optional[ndarray] = None,
+    axis: int | tuple[int, ...] | None = None,
+    dtype: np.dtype[Any] | None = None,
+    out: ndarray | None = None,
     keepdims: bool = False,
-    initial: Optional[Union[int, float]] = None,
-    where: Optional[ndarray] = None,
+    initial: int | float | None = None,
+    where: ndarray | None = None,
 ) -> ndarray:
     """
 
@@ -116,12 +116,12 @@ def prod(
 @add_boilerplate("a")
 def sum(
     a: ndarray,
-    axis: Optional[Union[int, tuple[int, ...]]] = None,
-    dtype: Optional[np.dtype[Any]] = None,
-    out: Optional[ndarray] = None,
+    axis: int | tuple[int, ...] | None = None,
+    dtype: np.dtype[Any] | None = None,
+    out: ndarray | None = None,
     keepdims: bool = False,
-    initial: Optional[Union[int, float]] = None,
-    where: Optional[ndarray] = None,
+    initial: int | float | None = None,
+    where: ndarray | None = None,
 ) -> ndarray:
     """
 
@@ -197,9 +197,9 @@ def sum(
 @add_boilerplate("a")
 def cumprod(
     a: ndarray,
-    axis: Optional[int] = None,
-    dtype: Optional[np.dtype[Any]] = None,
-    out: Optional[ndarray] = None,
+    axis: int | None = None,
+    dtype: np.dtype[Any] | None = None,
+    out: ndarray | None = None,
 ) -> ndarray:
     """
     Return the cumulative product of the elements along a given axis.
@@ -262,9 +262,9 @@ def cumprod(
 @add_boilerplate("a")
 def cumsum(
     a: ndarray,
-    axis: Optional[int] = None,
-    dtype: Optional[np.dtype[Any]] = None,
-    out: Optional[ndarray] = None,
+    axis: int | None = None,
+    dtype: np.dtype[Any] | None = None,
+    out: ndarray | None = None,
 ) -> ndarray:
     """
     Return the cumulative sum of the elements along a given axis.
@@ -319,9 +319,9 @@ def cumsum(
 @add_boilerplate("a")
 def nancumprod(
     a: ndarray,
-    axis: Optional[int] = None,
-    dtype: Optional[np.dtype[Any]] = None,
-    out: Optional[ndarray] = None,
+    axis: int | None = None,
+    dtype: np.dtype[Any] | None = None,
+    out: ndarray | None = None,
 ) -> ndarray:
     """
     Return the cumulative product of the elements along a given axis treating
@@ -380,9 +380,9 @@ def nancumprod(
 @add_boilerplate("a")
 def nancumsum(
     a: ndarray,
-    axis: Optional[int] = None,
-    dtype: Optional[np.dtype[Any]] = None,
-    out: Optional[ndarray] = None,
+    axis: int | None = None,
+    dtype: np.dtype[Any] | None = None,
+    out: ndarray | None = None,
 ) -> ndarray:
     """
     Return the cumulative sum of the elements along a given axis treating Not a
@@ -442,7 +442,7 @@ def nancumsum(
 def nanargmax(
     a: ndarray,
     axis: Any = None,
-    out: Union[ndarray, None] = None,
+    out: ndarray | None = None,
     *,
     keepdims: bool = False,
 ) -> ndarray:
@@ -510,7 +510,7 @@ def nanargmax(
 def nanargmin(
     a: ndarray,
     axis: Any = None,
-    out: Union[ndarray, None] = None,
+    out: ndarray | None = None,
     *,
     keepdims: bool = False,
 ) -> ndarray:
@@ -578,10 +578,10 @@ def nanargmin(
 def nanmin(
     a: ndarray,
     axis: Any = None,
-    out: Union[ndarray, None] = None,
+    out: ndarray | None = None,
     keepdims: bool = False,
-    initial: Optional[Union[int, float]] = None,
-    where: Optional[ndarray] = None,
+    initial: int | float | None = None,
+    where: ndarray | None = None,
 ) -> ndarray:
     """
     Return minimum of an array or minimum along an axis, ignoring any
@@ -671,10 +671,10 @@ def nanmin(
 def nanmax(
     a: ndarray,
     axis: Any = None,
-    out: Union[ndarray, None] = None,
+    out: ndarray | None = None,
     keepdims: bool = False,
-    initial: Optional[Union[int, float]] = None,
-    where: Optional[ndarray] = None,
+    initial: int | float | None = None,
+    where: ndarray | None = None,
 ) -> ndarray:
     """
     Return the maximum of an array or maximum along an axis, ignoring any
@@ -768,10 +768,10 @@ def nanprod(
     a: ndarray,
     axis: Any = None,
     dtype: Any = None,
-    out: Union[ndarray, None] = None,
+    out: ndarray | None = None,
     keepdims: bool = False,
-    initial: Optional[Union[int, float]] = None,
-    where: Optional[ndarray] = None,
+    initial: int | float | None = None,
+    where: ndarray | None = None,
 ) -> ndarray:
     """
     Return the product of array elements over a given axis treating
@@ -864,10 +864,10 @@ def nansum(
     a: ndarray,
     axis: Any = None,
     dtype: Any = None,
-    out: Union[ndarray, None] = None,
+    out: ndarray | None = None,
     keepdims: bool = False,
-    initial: Optional[Union[int, float]] = None,
-    where: Optional[ndarray] = None,
+    initial: int | float | None = None,
+    where: ndarray | None = None,
 ) -> ndarray:
     """
     Return the sum of array elements over a given axis treating

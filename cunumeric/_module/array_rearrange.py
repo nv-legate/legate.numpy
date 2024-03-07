@@ -14,7 +14,7 @@
 #
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 from .._array.util import add_boilerplate
 
@@ -24,7 +24,7 @@ if TYPE_CHECKING:
 
 
 @add_boilerplate("m")
-def flip(m: ndarray, axis: Optional[NdShapeLike] = None) -> ndarray:
+def flip(m: ndarray, axis: NdShapeLike | None = None) -> ndarray:
     """
     Reverse the order of elements in an array along the given axis.
 

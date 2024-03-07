@@ -14,7 +14,7 @@
 #
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Literal, Optional, Union
+from typing import TYPE_CHECKING, Any, Literal
 
 import numpy as np
 
@@ -29,9 +29,9 @@ if TYPE_CHECKING:
 
 def array(
     obj: Any,
-    dtype: Optional[np.dtype[Any]] = None,
+    dtype: np.dtype[Any] | None = None,
     copy: bool = True,
-    order: Union[OrderType, Literal["K"]] = "K",
+    order: OrderType | Literal["K"] = "K",
     subok: bool = False,
     ndmin: int = 0,
 ) -> ndarray:
@@ -109,7 +109,7 @@ def array(
     return result
 
 
-def asarray(a: Any, dtype: Optional[np.dtype[Any]] = None) -> ndarray:
+def asarray(a: Any, dtype: np.dtype[Any] | None = None) -> ndarray:
     """
     Convert the input to an array.
 

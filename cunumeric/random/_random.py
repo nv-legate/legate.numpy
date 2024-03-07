@@ -14,7 +14,7 @@
 #
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Union
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
@@ -29,7 +29,7 @@ if TYPE_CHECKING:
     from ..types import NdShapeLike
 
 
-def seed(init: Union[int, None] = None) -> None:
+def seed(init: int | None = None) -> None:
     """
     Reseed the legacy random number generator.
 
@@ -51,7 +51,7 @@ def seed(init: Union[int, None] = None) -> None:
 def beta(
     a: float,
     b: float,
-    size: Union[NdShapeLike, None] = None,
+    size: NdShapeLike | None = None,
     dtype: npt.DTypeLike = np.float64,
 ) -> ndarray:
     """
@@ -103,7 +103,7 @@ def beta(
 def binomial(
     ntrials: int,
     p: float,
-    size: Union[NdShapeLike, None] = None,
+    size: NdShapeLike | None = None,
     dtype: npt.DTypeLike = np.uint32,
 ) -> ndarray:
     """
@@ -174,7 +174,7 @@ def bytes(length: int) -> ndarray:
 
 def chisquare(
     df: float,
-    size: Union[NdShapeLike, None] = None,
+    size: NdShapeLike | None = None,
     dtype: npt.DTypeLike = np.float64,
 ) -> ndarray:
     """
@@ -220,7 +220,7 @@ def chisquare(
 
 def exponential(
     scale: float = 1.0,
-    size: Union[NdShapeLike, None] = None,
+    size: NdShapeLike | None = None,
     dtype: npt.DTypeLike = np.float64,
 ) -> ndarray:
     """
@@ -281,7 +281,7 @@ def exponential(
 def f(
     dfnum: float,
     dfden: float,
-    size: Union[NdShapeLike, None] = None,
+    size: NdShapeLike | None = None,
     dtype: npt.DTypeLike = np.float64,
 ) -> ndarray:
     """
@@ -329,7 +329,7 @@ def f(
 def gamma(
     shape: float,
     scale: float = 1.0,
-    size: Union[NdShapeLike, None] = None,
+    size: NdShapeLike | None = None,
     dtype: npt.DTypeLike = np.float64,
 ) -> ndarray:
     """
@@ -371,7 +371,7 @@ def gamma(
 
 def geometric(
     p: float,
-    size: Union[NdShapeLike, None] = None,
+    size: NdShapeLike | None = None,
     dtype: npt.DTypeLike = np.uint32,
 ) -> ndarray:
     """
@@ -419,7 +419,7 @@ def geometric(
 def gumbel(
     loc: float = 0.0,
     scale: float = 1.0,
-    size: Union[NdShapeLike, None] = None,
+    size: NdShapeLike | None = None,
     dtype: npt.DTypeLike = np.float64,
 ) -> ndarray:
     """
@@ -462,7 +462,7 @@ def hypergeometric(
     ngood: int,
     nbad: int,
     nsample: int,
-    size: Union[NdShapeLike, None] = None,
+    size: NdShapeLike | None = None,
     dtype: npt.DTypeLike = np.uint32,
 ) -> ndarray:
     """
@@ -513,7 +513,7 @@ def hypergeometric(
 def laplace(
     loc: float = 0.0,
     scale: float = 1.0,
-    size: Union[NdShapeLike, None] = None,
+    size: NdShapeLike | None = None,
     dtype: npt.DTypeLike = np.float64,
 ) -> ndarray:
     """
@@ -558,7 +558,7 @@ def laplace(
 def logistic(
     loc: float = 0.0,
     scale: float = 1.0,
-    size: Union[NdShapeLike, None] = None,
+    size: NdShapeLike | None = None,
     dtype: npt.DTypeLike = np.float64,
 ) -> ndarray:
     """
@@ -600,7 +600,7 @@ def logistic(
 def lognormal(
     mean: float = 0.0,
     sigma: float = 1.0,
-    size: Union[NdShapeLike, None] = None,
+    size: NdShapeLike | None = None,
     dtype: npt.DTypeLike = np.float64,
 ) -> ndarray:
     """
@@ -643,7 +643,7 @@ def lognormal(
 
 def logseries(
     p: float,
-    size: Union[NdShapeLike, None] = None,
+    size: NdShapeLike | None = None,
     dtype: npt.DTypeLike = np.uint32,
 ) -> ndarray:
     """
@@ -682,7 +682,7 @@ def logseries(
 def negative_binomial(
     n: int,
     p: float,
-    size: Union[NdShapeLike, None] = None,
+    size: NdShapeLike | None = None,
     dtype: npt.DTypeLike = np.uint32,
 ) -> ndarray:
     """
@@ -726,7 +726,7 @@ def negative_binomial(
 def noncentral_chisquare(
     df: float,
     nonc: float,
-    size: Union[NdShapeLike, None] = None,
+    size: NdShapeLike | None = None,
     dtype: npt.DTypeLike = np.float64,
 ) -> ndarray:
     """
@@ -769,7 +769,7 @@ def noncentral_f(
     dfnum: float,
     dfden: float,
     nonc: float,
-    size: Union[NdShapeLike, None] = None,
+    size: NdShapeLike | None = None,
     dtype: npt.DTypeLike = np.float64,
 ) -> ndarray:
     """
@@ -815,7 +815,7 @@ def noncentral_f(
 def normal(
     loc: float = 0.0,
     scale: float = 1.0,
-    size: Union[NdShapeLike, None] = None,
+    size: NdShapeLike | None = None,
     dtype: npt.DTypeLike = np.float64,
 ) -> ndarray:
     """
@@ -869,7 +869,7 @@ def normal(
 
 def pareto(
     a: float,
-    size: Union[NdShapeLike, None] = None,
+    size: NdShapeLike | None = None,
     dtype: npt.DTypeLike = np.float64,
 ) -> ndarray:
     """
@@ -920,9 +920,7 @@ def pareto(
     return get_static_generator().pareto(a, size, dtype)
 
 
-def poisson(
-    lam: float = 1.0, size: Union[NdShapeLike, None] = None
-) -> ndarray:
+def poisson(lam: float = 1.0, size: NdShapeLike | None = None) -> ndarray:
     """
     poisson(lam=1.0, size=None)
 
@@ -960,7 +958,7 @@ def poisson(
 
 def power(
     a: float,
-    size: Union[NdShapeLike, None] = None,
+    size: NdShapeLike | None = None,
     dtype: npt.DTypeLike = np.float64,
 ) -> ndarray:
     """
@@ -1001,7 +999,7 @@ def power(
     return get_static_generator().power(a, size, dtype)
 
 
-def rand(*shapeargs: int) -> Union[float, ndarray]:
+def rand(*shapeargs: int) -> float | ndarray:
     """
     rand(d0, d1, ..., dn)
 
@@ -1035,10 +1033,10 @@ def rand(*shapeargs: int) -> Union[float, ndarray]:
 
 def randint(
     low: int,
-    high: Union[int, None] = None,
-    size: Union[NdShapeLike, None] = None,
-    dtype: Union[np.dtype[Any], type] = int,
-) -> Union[int, ndarray, npt.NDArray[Any]]:
+    high: int | None = None,
+    size: NdShapeLike | None = None,
+    dtype: np.dtype[Any] | type = int,
+) -> int | ndarray | npt.NDArray[Any]:
     """
     randint(low, high=None, size=None, dtype=int)
 
@@ -1094,7 +1092,7 @@ def randint(
     return get_static_generator().integers(low, high, size, dtype)
 
 
-def randn(*shapeargs: int) -> Union[float, ndarray]:
+def randn(*shapeargs: int) -> float | ndarray:
     """
     randn(d0, d1, ..., dn)
 
@@ -1131,8 +1129,8 @@ def randn(*shapeargs: int) -> Union[float, ndarray]:
 
 
 def random(
-    size: Union[NdShapeLike, None] = None,
-) -> Union[float, ndarray]:
+    size: NdShapeLike | None = None,
+) -> float | ndarray:
     """
     random(size=None)
 
@@ -1153,10 +1151,10 @@ def random(
 # deprecated in numpy from version 1.11.0
 def random_integers(
     low: int,
-    high: Union[int, None] = None,
-    size: Union[NdShapeLike, None] = None,
-    dtype: Union[np.dtype[Any], type] = int,
-) -> Union[int, ndarray, npt.NDArray[Any]]:
+    high: int | None = None,
+    size: NdShapeLike | None = None,
+    dtype: np.dtype[Any] | type = int,
+) -> int | ndarray | npt.NDArray[Any]:
     """
     random_integers(low, high=None, size=None)
 
@@ -1205,8 +1203,8 @@ def random_integers(
 
 
 def random_sample(
-    size: Union[NdShapeLike, None] = None, dtype: npt.DTypeLike = np.float64
-) -> Union[float, ndarray]:
+    size: NdShapeLike | None = None, dtype: npt.DTypeLike = np.float64
+) -> float | ndarray:
     """
     random_sample(size=None)
 
@@ -1247,7 +1245,7 @@ ranf = random_sample
 
 def rayleigh(
     scale: float = 1.0,
-    size: Union[NdShapeLike, None] = None,
+    size: NdShapeLike | None = None,
     dtype: npt.DTypeLike = np.float64,
 ) -> ndarray:
     """
@@ -1287,7 +1285,7 @@ sample = random_sample
 
 
 def standard_cauchy(
-    size: Union[NdShapeLike, None] = None,
+    size: NdShapeLike | None = None,
     dtype: npt.DTypeLike = np.float64,
 ) -> ndarray:
     """
@@ -1321,7 +1319,7 @@ def standard_cauchy(
 
 
 def standard_exponential(
-    size: Union[NdShapeLike, None] = None,
+    size: NdShapeLike | None = None,
     dtype: npt.DTypeLike = np.float64,
 ) -> ndarray:
     """
@@ -1357,7 +1355,7 @@ def standard_exponential(
 
 def standard_gamma(
     shape: float,
-    size: Union[NdShapeLike, None] = None,
+    size: NdShapeLike | None = None,
     dtype: npt.DTypeLike = np.float64,
 ) -> ndarray:
     """
@@ -1395,7 +1393,7 @@ def standard_gamma(
 
 def standard_t(
     df: float,
-    size: Union[NdShapeLike, None] = None,
+    size: NdShapeLike | None = None,
     dtype: npt.DTypeLike = np.float64,
 ) -> ndarray:
     """
@@ -1437,7 +1435,7 @@ def triangular(
     left: float,
     mode: float,
     right: float,
-    size: Union[NdShapeLike, None] = None,
+    size: NdShapeLike | None = None,
     dtype: npt.DTypeLike = np.float64,
 ) -> ndarray:
     """
@@ -1484,7 +1482,7 @@ def triangular(
 def uniform(
     low: float = 0.0,
     high: float = 1.0,
-    size: Union[NdShapeLike, None] = None,
+    size: NdShapeLike | None = None,
     dtype: npt.DTypeLike = np.float64,
 ) -> ndarray:
     """
@@ -1532,7 +1530,7 @@ def uniform(
 def vonmises(
     mu: float,
     kappa: float,
-    size: Union[NdShapeLike, None] = None,
+    size: NdShapeLike | None = None,
     dtype: npt.DTypeLike = np.float64,
 ) -> ndarray:
     """
@@ -1578,7 +1576,7 @@ def vonmises(
 def wald(
     mean: float,
     scale: float,
-    size: Union[NdShapeLike, None] = None,
+    size: NdShapeLike | None = None,
     dtype: npt.DTypeLike = np.float64,
 ) -> ndarray:
     """
@@ -1624,7 +1622,7 @@ def wald(
 
 def weibull(
     a: float,
-    size: Union[NdShapeLike, None] = None,
+    size: NdShapeLike | None = None,
     dtype: npt.DTypeLike = np.float64,
 ) -> ndarray:
     """
@@ -1669,7 +1667,7 @@ def weibull(
 
 def zipf(
     a: float,
-    size: Union[NdShapeLike, None] = None,
+    size: NdShapeLike | None = None,
     dtype: npt.DTypeLike = np.uint32,
 ) -> ndarray:
     """
@@ -1735,5 +1733,5 @@ class RandomState:
         Random seed used to initialize the pseudo-random number generator.
     """
 
-    def __init__(self, seed: Union[int, None] = None):
+    def __init__(self, seed: int | None = None):
         self._np_random_state = np.random.RandomState(seed or 0)

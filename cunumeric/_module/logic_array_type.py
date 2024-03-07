@@ -14,7 +14,7 @@
 #
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Union
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
@@ -26,7 +26,7 @@ if TYPE_CHECKING:
     import numpy.typing as npt
 
 
-def iscomplex(x: Union[ndarray, npt.NDArray[Any]]) -> ndarray:
+def iscomplex(x: ndarray | npt.NDArray[Any]) -> ndarray:
     """
 
     Returns a bool array, where True if input element is complex.
@@ -60,7 +60,7 @@ def iscomplex(x: Union[ndarray, npt.NDArray[Any]]) -> ndarray:
         return x.imag != 0
 
 
-def iscomplexobj(x: Union[ndarray, npt.NDArray[Any]]) -> bool:
+def iscomplexobj(x: ndarray | npt.NDArray[Any]) -> bool:
     """
 
     Check for a complex type or an array of complex numbers.
@@ -93,7 +93,7 @@ def iscomplexobj(x: Union[ndarray, npt.NDArray[Any]]) -> bool:
         return np.iscomplexobj(x)
 
 
-def isreal(x: Union[ndarray, npt.NDArray[Any]]) -> ndarray:
+def isreal(x: ndarray | npt.NDArray[Any]) -> ndarray:
     """
 
     Returns a bool array, where True if input element is real.
@@ -158,7 +158,7 @@ def isrealobj(x: ndarray) -> bool:
     return not iscomplexobj(x)
 
 
-def isscalar(x: Union[ndarray, npt.NDArray[Any]]) -> bool:
+def isscalar(x: ndarray | npt.NDArray[Any]) -> bool:
     """
 
     Returns True if the type of `element` is a scalar type.

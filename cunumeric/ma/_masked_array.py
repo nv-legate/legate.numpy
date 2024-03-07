@@ -14,7 +14,7 @@
 #
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Type, Union
+from typing import TYPE_CHECKING, Any, Type
 
 if TYPE_CHECKING:
     import numpy.typing as npt
@@ -52,7 +52,7 @@ class MaskedArray:
         self,
         data: Any = None,
         mask: _np.bool_ = nomask,
-        dtype: Union[npt.DTypeLike, None] = None,
+        dtype: npt.DTypeLike | None = None,
         copy: bool = False,
         subok: bool = True,
         ndmin: int = 0,
@@ -60,7 +60,7 @@ class MaskedArray:
         keep_mask: Any = True,
         hard_mask: Any = None,
         shrink: bool = True,
-        order: Union[str, None] = None,
+        order: str | None = None,
     ) -> None:
         self._internal_ma = _np.ma.MaskedArray(  # type: ignore
             data=maybe_convert_to_np_ndarray(data),

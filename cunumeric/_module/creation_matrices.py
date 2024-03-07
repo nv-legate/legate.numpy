@@ -14,7 +14,7 @@
 #
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 from .._array.array import ndarray
 from .._array.util import add_boilerplate
@@ -71,11 +71,11 @@ def diag(v: ndarray, k: int = 0) -> ndarray:
 
 def tri(
     N: int,
-    M: Optional[int] = None,
+    M: int | None = None,
     k: int = 0,
     dtype: npt.DTypeLike = float,
     *,
-    like: Optional[ndarray] = None,
+    like: ndarray | None = None,
 ) -> ndarray:
     """
     An array with ones at and below the given diagonal and zeros elsewhere.

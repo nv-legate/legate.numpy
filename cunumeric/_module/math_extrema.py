@@ -14,7 +14,7 @@
 #
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Optional, Union
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
@@ -28,12 +28,12 @@ if TYPE_CHECKING:
 @add_boilerplate("a")
 def amax(
     a: ndarray,
-    axis: Optional[Union[int, tuple[int, ...]]] = None,
-    dtype: Optional[np.dtype[Any]] = None,
-    out: Optional[ndarray] = None,
+    axis: int | tuple[int, ...] | None = None,
+    dtype: np.dtype[Any] | None = None,
+    out: ndarray | None = None,
     keepdims: bool = False,
-    initial: Optional[Union[int, float]] = None,
-    where: Optional[ndarray] = None,
+    initial: int | float | None = None,
+    where: ndarray | None = None,
 ) -> ndarray:
     """
 
@@ -105,12 +105,12 @@ max = amax
 @add_boilerplate("a")
 def amin(
     a: ndarray,
-    axis: Optional[Union[int, tuple[int, ...]]] = None,
-    dtype: Optional[np.dtype[Any]] = None,
-    out: Optional[ndarray] = None,
+    axis: int | tuple[int, ...] | None = None,
+    dtype: np.dtype[Any] | None = None,
+    out: ndarray | None = None,
     keepdims: bool = False,
-    initial: Optional[Union[int, float]] = None,
-    where: Optional[ndarray] = None,
+    initial: int | float | None = None,
+    where: ndarray | None = None,
 ) -> ndarray:
     """
 

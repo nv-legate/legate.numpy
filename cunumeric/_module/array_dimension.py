@@ -14,15 +14,7 @@
 #
 from __future__ import annotations
 
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Iterable,
-    Optional,
-    Sequence,
-    Tuple,
-    Union,
-)
+from typing import TYPE_CHECKING, Any, Iterable, Sequence
 
 import numpy as np
 
@@ -46,9 +38,7 @@ def _reshape_recur(ndim: int, arr: ndarray) -> tuple[int, ...]:
     return cur_shape
 
 
-def _atleast_nd(
-    ndim: int, arys: Sequence[ndarray]
-) -> Union[list[ndarray], ndarray]:
+def _atleast_nd(ndim: int, arys: Sequence[ndarray]) -> list[ndarray] | ndarray:
     inputs = list(convert_to_cunumeric_ndarray(arr) for arr in arys)
     # 'reshape' change the shape of arrays
     # only when arr.shape != _reshape_recur(ndim,arr)
@@ -60,7 +50,7 @@ def _atleast_nd(
     return result
 
 
-def atleast_1d(*arys: ndarray) -> Union[list[ndarray], ndarray]:
+def atleast_1d(*arys: ndarray) -> list[ndarray] | ndarray:
     """
 
     Convert inputs to arrays with at least one dimension.
@@ -89,7 +79,7 @@ def atleast_1d(*arys: ndarray) -> Union[list[ndarray], ndarray]:
     return _atleast_nd(1, arys)
 
 
-def atleast_2d(*arys: ndarray) -> Union[list[ndarray], ndarray]:
+def atleast_2d(*arys: ndarray) -> list[ndarray] | ndarray:
     """
 
     View inputs as arrays with at least two dimensions.
@@ -119,7 +109,7 @@ def atleast_2d(*arys: ndarray) -> Union[list[ndarray], ndarray]:
     return _atleast_nd(2, arys)
 
 
-def atleast_3d(*arys: ndarray) -> Union[list[ndarray], ndarray]:
+def atleast_3d(*arys: ndarray) -> list[ndarray] | ndarray:
     """
 
     View inputs as arrays with at least three dimensions.
@@ -153,7 +143,7 @@ def atleast_3d(*arys: ndarray) -> Union[list[ndarray], ndarray]:
 
 
 @add_boilerplate("a")
-def squeeze(a: ndarray, axis: Optional[NdShapeLike] = None) -> ndarray:
+def squeeze(a: ndarray, axis: NdShapeLike | None = None) -> ndarray:
     """
 
     Remove single-dimensional entries from the shape of an array.
@@ -190,9 +180,7 @@ def squeeze(a: ndarray, axis: Optional[NdShapeLike] = None) -> ndarray:
     return a.squeeze(axis=axis)
 
 
-def broadcast_shapes(
-    *args: Union[NdShapeLike, Sequence[NdShapeLike]]
-) -> NdShape:
+def broadcast_shapes(*args: NdShapeLike | Sequence[NdShapeLike]) -> NdShape:
     """
 
     Broadcast the input shapes into a single shape.
@@ -372,7 +360,7 @@ class broadcast:
         return self._index
 
     @property
-    def iters(self) -> Tuple[Iterable[Any], ...]:
+    def iters(self) -> tuple[Iterable[Any], ...]:
         """tuple of iterators along self’s "components." """
         return self._iters
 

@@ -14,7 +14,7 @@
 #
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Union
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 from legate.core import Scalar
@@ -43,8 +43,8 @@ if TYPE_CHECKING:
 
 
 def get_where_thunk(
-    where: Union[None, ndarray], out_shape: NdShape
-) -> Union[None, NumPyThunk]:
+    where: ndarray | None, out_shape: NdShape
+) -> NumPyThunk | None:
     from .array import ndarray
 
     if where is None:
@@ -61,10 +61,10 @@ def get_where_thunk(
 def perform_unary_op(
     op: UnaryOpCode,
     src: ndarray,
-    out: Union[Any, None] = None,
+    out: Any | None = None,
     extra_args: Any = None,
-    dtype: Union[np.dtype[Any], None] = None,
-    out_dtype: Union[np.dtype[Any], None] = None,
+    dtype: np.dtype[Any] | None = None,
+    out_dtype: np.dtype[Any] | None = None,
 ) -> ndarray:
     from .array import ndarray
 
@@ -154,13 +154,13 @@ def perform_unary_reduction(
     op: UnaryRedCode,
     src: ndarray,
     axis: Any = None,
-    dtype: Union[np.dtype[Any], None] = None,
-    res_dtype: Union[npt.DTypeLike, None] = None,
-    out: Union[ndarray, None] = None,
+    dtype: np.dtype[Any] | None = None,
+    res_dtype: npt.DTypeLike | None = None,
+    out: ndarray | None = None,
     keepdims: bool = False,
     args: tuple[Scalar, ...] = (),
-    initial: Union[int, float, None] = None,
-    where: Union[ndarray, None] = None,
+    initial: int | float | None = None,
+    where: ndarray | None = None,
 ) -> ndarray:
     from .array import ndarray
 
@@ -303,8 +303,8 @@ def perform_scan(
     op: ScanCode,
     src: ndarray,
     axis: Any = None,
-    dtype: Union[npt.DTypeLike, None] = None,
-    out: Union[ndarray, None] = None,
+    dtype: npt.DTypeLike | None = None,
+    out: ndarray | None = None,
     nan_to_identity: bool = False,
 ) -> ndarray:
     from .array import ndarray

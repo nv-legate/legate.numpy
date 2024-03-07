@@ -14,7 +14,7 @@
 #
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Dict, Optional, Sequence, Union
+from typing import TYPE_CHECKING, Any, Sequence
 
 import numpy as np
 from legate.core.utils import OrderedSet
@@ -185,7 +185,7 @@ def to_dtypes(chars: str) -> tuple[np.dtype[Any], ...]:
 
 
 class ufunc:
-    _types: Dict[Any, str]
+    _types: dict[Any, str]
     _nin: int
     _nout: int
 
@@ -232,7 +232,7 @@ class ufunc:
 
     def _maybe_create_result(
         self,
-        out: Union[ndarray, None],
+        out: ndarray | None,
         out_shape: NdShape,
         res_dtype: np.dtype[Any],
         casting: CastingKind,
@@ -254,9 +254,7 @@ class ufunc:
             return out
 
     @staticmethod
-    def _maybe_cast_output(
-        out: Union[ndarray, None], result: ndarray
-    ) -> ndarray:
+    def _maybe_cast_output(out: ndarray | None, result: ndarray) -> ndarray:
         if out is None or out is result:
             return result
         out._thunk.convert(result._thunk, warn=False)
@@ -264,8 +262,8 @@ class ufunc:
 
     @staticmethod
     def _maybe_convert_output_to_cunumeric_ndarray(
-        out: Union[ndarray, npt.NDArray[Any], None]
-    ) -> Union[ndarray, None]:
+        out: ndarray | npt.NDArray[Any] | None,
+    ) -> ndarray | None:
         from .._array.array import ndarray
 
         if out is None:
@@ -279,11 +277,11 @@ class ufunc:
     def _prepare_operands(
         self,
         *args: Any,
-        out: Union[ndarray, tuple[ndarray, ...], None],
+        out: ndarray | tuple[ndarray, ...] | None,
         where: bool = True,
     ) -> tuple[
         Sequence[ndarray],
-        Sequence[Union[ndarray, None]],
+        Sequence[ndarray | None],
         tuple[int, ...],
         bool,
     ]:
@@ -407,11 +405,11 @@ class unary_ufunc(ufunc):
     def __call__(
         self,
         *args: Any,
-        out: Union[ndarray, None] = None,
+        out: ndarray | None = None,
         where: bool = True,
         casting: CastingKind = "same_kind",
         order: str = "K",
-        dtype: Union[np.dtype[Any], None] = None,
+        dtype: np.dtype[Any] | None = None,
         **kwargs: Any,
     ) -> ndarray:
         (x,), (out,), out_shape, where = self._prepare_operands(
@@ -492,11 +490,11 @@ class multiout_unary_ufunc(ufunc):
     def __call__(
         self,
         *args: Any,
-        out: Union[ndarray, tuple[ndarray, ...], None] = None,
+        out: ndarray | tuple[ndarray, ...] | None = None,
         where: bool = True,
         casting: CastingKind = "same_kind",
         order: str = "K",
-        dtype: Union[np.dtype[Any], None] = None,
+        dtype: np.dtype[Any] | None = None,
         **kwargs: Any,
     ) -> tuple[ndarray, ...]:
         (x,), outs, out_shape, where = self._prepare_operands(
@@ -540,7 +538,7 @@ class binary_ufunc(ufunc):
         doc: str,
         op_code: BinaryOpCode,
         types: dict[tuple[str, str], str],
-        red_code: Union[UnaryRedCode, None] = None,
+        red_code: UnaryRedCode | None = None,
         use_common_type: bool = True,
     ) -> None:
         super().__init__(name, doc)
@@ -653,11 +651,11 @@ class binary_ufunc(ufunc):
     def __call__(
         self,
         *args: Any,
-        out: Union[ndarray, None] = None,
+        out: ndarray | None = None,
         where: bool = True,
         casting: CastingKind = "same_kind",
         order: str = "K",
-        dtype: Union[np.dtype[Any], None] = None,
+        dtype: np.dtype[Any] | None = None,
         **kwargs: Any,
     ) -> ndarray:
         arrs, (out,), out_shape, where = self._prepare_operands(
@@ -696,12 +694,12 @@ class binary_ufunc(ufunc):
     def reduce(
         self,
         array: ndarray,
-        axis: Union[int, tuple[int, ...], None] = 0,
-        dtype: Union[np.dtype[Any], None] = None,
-        out: Union[ndarray, None] = None,
+        axis: int | tuple[int, ...] | None = 0,
+        dtype: np.dtype[Any] | None = None,
+        out: ndarray | None = None,
         keepdims: bool = False,
-        initial: Union[Any, None] = None,
-        where: Optional[ndarray] = None,
+        initial: Any | None = None,
+        where: ndarray | None = None,
     ) -> ndarray:
         """
         reduce(array, axis=0, dtype=None, out=None, keepdims=False, initial=<no
@@ -818,7 +816,7 @@ def create_binary_ufunc(
     name: str,
     op_code: BinaryOpCode,
     types: Sequence[str],
-    red_code: Union[UnaryRedCode, None] = None,
+    red_code: UnaryRedCode | None = None,
     use_common_type: bool = True,
 ) -> binary_ufunc:
     doc = _BINARY_DOCSTRING_TEMPLATE.format(summary, name)

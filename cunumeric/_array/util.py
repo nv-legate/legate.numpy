@@ -21,11 +21,9 @@ from typing import (
     TYPE_CHECKING,
     Any,
     Callable,
-    Optional,
     ParamSpec,
     Sequence,
     TypeVar,
-    Union,
     cast,
 )
 
@@ -69,8 +67,8 @@ def add_boilerplate(
         # For each parameter specified by name, also consider the case where
         # it's passed as a positional parameter.
         indices: OrderedSet[int] = OrderedSet()
-        where_idx: Optional[int] = None
-        out_idx: Optional[int] = None
+        where_idx: int | None = None
+        out_idx: int | None = None
         params = signature(func).parameters
         extra = keys - OrderedSet(params)
         assert len(extra) == 0, f"unknown parameter(s): {extra}"
@@ -112,9 +110,7 @@ def add_boilerplate(
     return decorator
 
 
-def broadcast_where(
-    where: Union[ndarray, None], shape: NdShape
-) -> Union[ndarray, None]:
+def broadcast_where(where: ndarray | None, shape: NdShape) -> ndarray | None:
     if where is not None and where.shape != shape:
         from .._module import broadcast_to
 
@@ -148,7 +144,7 @@ def maybe_convert_to_np_ndarray(obj: Any) -> Any:
     return obj
 
 
-def check_writeable(arr: Union[ndarray, tuple[ndarray, ...], None]) -> None:
+def check_writeable(arr: ndarray | tuple[ndarray, ...] | None) -> None:
     """
     Check if the current array is writeable
     This check needs to be manually inserted
@@ -162,7 +158,7 @@ def check_writeable(arr: Union[ndarray, tuple[ndarray, ...], None]) -> None:
 
 
 def sanitize_shape(
-    shape: Union[NdShapeLike, Sequence[Any], npt.NDArray[Any], ndarray]
+    shape: NdShapeLike | Sequence[Any] | npt.NDArray[Any] | ndarray,
 ) -> NdShape:
     from .array import ndarray
 

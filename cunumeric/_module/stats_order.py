@@ -15,7 +15,7 @@
 from __future__ import annotations
 
 import math
-from typing import TYPE_CHECKING, Any, Iterable, Optional, Union
+from typing import TYPE_CHECKING, Any, Iterable
 
 import numpy as np
 
@@ -317,13 +317,13 @@ def _nearest(q: float, n: int) -> tuple[float, int]:
 def _quantile_impl(
     arr: ndarray,
     q_arr: npt.NDArray[Any],
-    axis: Optional[int],
+    axis: int | None,
     axes_set: Iterable[int],
     original_shape: tuple[int, ...],
     method: Callable[[float, int], tuple[float, int]],
     keepdims: bool,
     to_dtype: np.dtype[Any],
-    qs_all: Optional[ndarray],
+    qs_all: ndarray | None,
 ) -> ndarray:
     ndims = len(arr.shape)
 
@@ -407,9 +407,9 @@ def _quantile_impl(
 @add_boilerplate("a")
 def quantile(
     a: ndarray,
-    q: Union[float, Iterable[float], ndarray],
-    axis: Union[None, int, tuple[int, ...]] = None,
-    out: Optional[ndarray] = None,
+    q: float | Iterable[float] | ndarray,
+    axis: int | tuple[int, ...] | None = None,
+    out: ndarray | None = None,
     overwrite_input: bool = False,
     method: str = "linear",
     keepdims: bool = False,
@@ -507,7 +507,7 @@ def quantile(
         "nearest": _nearest,
     }
 
-    real_axis: Optional[int]
+    real_axis: int | None
     axes_set: Iterable[int] = []
     original_shape = a.shape
 
@@ -602,9 +602,9 @@ def quantile(
 @add_boilerplate("a")
 def percentile(
     a: ndarray,
-    q: Union[float, Iterable[float], ndarray],
-    axis: Union[None, int, tuple[int, ...]] = None,
-    out: Optional[ndarray] = None,
+    q: float | Iterable[float] | ndarray,
+    axis: int | tuple[int, ...] | None = None,
+    out: ndarray | None = None,
     overwrite_input: bool = False,
     method: str = "linear",
     keepdims: bool = False,

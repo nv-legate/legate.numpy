@@ -14,7 +14,7 @@
 #
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Optional, Sequence, Union, cast
+from typing import TYPE_CHECKING, Any, Sequence, cast
 
 import numpy as np
 from numpy.core.multiarray import (  # type: ignore [attr-defined]
@@ -37,7 +37,7 @@ _builtin_max = max
 
 @add_boilerplate("A")
 def tile(
-    A: ndarray, reps: Union[int, Sequence[int], npt.NDArray[np.int_]]
+    A: ndarray, reps: int | Sequence[int] | npt.NDArray[np.int_]
 ) -> ndarray:
     """
     Construct an array by repeating A the number of times given by reps.
@@ -100,7 +100,7 @@ def tile(
     return result
 
 
-def repeat(a: ndarray, repeats: Any, axis: Optional[int] = None) -> ndarray:
+def repeat(a: ndarray, repeats: Any, axis: int | None = None) -> ndarray:
     """
     Repeat elements of an array.
 
@@ -160,7 +160,7 @@ def repeat(a: ndarray, repeats: Any, axis: Optional[int] = None) -> ndarray:
                     category=UserWarning,
                 )
             repeats = np.int64(repeats)
-            return full((repeats,), cast(Union[int, float], a))
+            return full((repeats,), cast(int | float, a))
         elif np.ndim(repeats) == 1 and len(repeats) == 1:
             if not isinstance(repeats, int):
                 runtime.warn(
@@ -168,7 +168,7 @@ def repeat(a: ndarray, repeats: Any, axis: Optional[int] = None) -> ndarray:
                     category=UserWarning,
                 )
             repeats = np.int64(repeats)
-            return full((repeats[0],), cast(Union[int, float], a))
+            return full((repeats[0],), cast(int | float, a))
         else:
             raise ValueError(
                 "`repeat` with a scalar parameter `a` is only "

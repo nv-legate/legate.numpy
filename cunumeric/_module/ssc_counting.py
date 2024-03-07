@@ -14,7 +14,7 @@
 #
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional, Union
+from typing import TYPE_CHECKING
 
 from .._array.util import add_boilerplate
 
@@ -24,8 +24,8 @@ if TYPE_CHECKING:
 
 @add_boilerplate("a")
 def count_nonzero(
-    a: ndarray, axis: Optional[Union[int, tuple[int, ...]]] = None
-) -> Union[int, ndarray]:
+    a: ndarray, axis: int | tuple[int, ...] | None = None
+) -> int | ndarray:
     """
 
     Counts the number of non-zero values in the array ``a``.

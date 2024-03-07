@@ -15,11 +15,11 @@
 from __future__ import annotations
 
 from string import ascii_lowercase, ascii_uppercase
-from typing import List, Sequence, Tuple, Union
+from typing import Sequence
 
 from legate.core.utils import OrderedSet
 
-Modes = Tuple[List[str], List[str], List[str]]
+Modes = tuple[list[str], list[str], list[str]]
 
 
 def dot_modes(a_ndim: int, b_ndim: int) -> Modes:
@@ -69,14 +69,9 @@ def matmul_modes(a_ndim: int, b_ndim: int) -> Modes:
 
 
 Axes = Sequence[int]
-AxesPair = Tuple[Axes, Axes]
-AxesPairLikeTuple = Union[
-    Tuple[int, int],
-    Tuple[int, Axes],
-    Tuple[Axes, int],
-    Tuple[Axes, Axes],
-]
-AxesPairLike = Union[int, AxesPairLikeTuple]
+AxesPair = tuple[Axes, Axes]
+AxesPairLikeTuple = tuple[int | Axes, int | Axes]
+AxesPairLike = int | AxesPairLikeTuple
 
 
 def tensordot_modes(a_ndim: int, b_ndim: int, axes: AxesPairLike) -> Modes:

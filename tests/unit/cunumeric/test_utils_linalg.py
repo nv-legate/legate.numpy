@@ -13,8 +13,6 @@
 # limitations under the License.
 #
 
-from typing import List, Tuple, Union
-
 import numpy as np
 import pytest
 
@@ -98,7 +96,7 @@ def test_matmul_modes(a: int, b: int) -> None:
     assert _matmul_modes_oracle(a, b)
 
 
-AxesType = Union[int, Tuple[int, int], Tuple[List[int], List[int]]]
+AxesType = int | tuple[int, int] | tuple[list[int], list[int]]
 
 
 def _tensordot_modes_oracle(a_ndim: int, b_ndim: int, axes: AxesType) -> bool:

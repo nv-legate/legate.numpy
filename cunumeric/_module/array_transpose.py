@@ -14,7 +14,7 @@
 #
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional, Sequence
+from typing import TYPE_CHECKING, Sequence
 
 from numpy.core.numeric import (  # type: ignore [attr-defined]
     normalize_axis_tuple,
@@ -59,7 +59,7 @@ def swapaxes(a: ndarray, axis1: int, axis2: int) -> ndarray:
 
 
 @add_boilerplate("a")
-def transpose(a: ndarray, axes: Optional[list[int]] = None) -> ndarray:
+def transpose(a: ndarray, axes: list[int] | None = None) -> ndarray:
     """
 
     Permute the dimensions of an array.

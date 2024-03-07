@@ -14,7 +14,7 @@
 #
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Optional, Sequence, Union
+from typing import TYPE_CHECKING, Any, Sequence
 
 import numpy as np
 from numpy.core.multiarray import (  # type: ignore [attr-defined]
@@ -114,7 +114,7 @@ def place(arr: ndarray, mask: ndarray, vals: ndarray) -> None:
 # Indexing-like operations
 def indices(
     dimensions: Sequence[int], dtype: npt.DTypeLike = int, sparse: bool = False
-) -> Union[ndarray, tuple[ndarray, ...]]:
+) -> ndarray | tuple[ndarray, ...]:
     """
     Return an array representing the indices of a grid.
     Compute an array where the subarrays contain index values 0, 1, ...
@@ -132,7 +132,7 @@ def indices(
 
     Returns
     -------
-    grid : ndarray or Tuple[ndarray, ...]
+    grid : ndarray or tuple[ndarray, ...]
         If sparse is False returns one array of grid indices,
         ``grid.shape = (len(dimensions),) + tuple(dimensions)``.
         If sparse is True returns a tuple of arrays, with
@@ -302,7 +302,7 @@ def diag_indices_from(arr: ndarray) -> tuple[ndarray, ...]:
 
 
 def tril_indices(
-    n: int, k: int = 0, m: Optional[int] = None
+    n: int, k: int = 0, m: int | None = None
 ) -> tuple[ndarray, ...]:
     """
     Return the indices for the lower-triangle of an (n, m) array.
@@ -381,7 +381,7 @@ def tril_indices_from(arr: ndarray, k: int = 0) -> tuple[ndarray, ...]:
 
 
 def triu_indices(
-    n: int, k: int = 0, m: Optional[int] = None
+    n: int, k: int = 0, m: int | None = None
 ) -> tuple[ndarray, ...]:
     """
     Return the indices for the upper-triangle of an (n, m) array.
@@ -462,8 +462,8 @@ def triu_indices_from(arr: ndarray, k: int = 0) -> tuple[ndarray, ...]:
 def take(
     a: ndarray,
     indices: ndarray,
-    axis: Optional[int] = None,
-    out: Optional[ndarray] = None,
+    axis: int | None = None,
+    out: ndarray | None = None,
     mode: BoundsMode = "raise",
 ) -> ndarray:
     """
@@ -531,9 +531,7 @@ def _fill_fancy_index_for_along_axis_routines(
 
 
 @add_boilerplate("a", "indices")
-def take_along_axis(
-    a: ndarray, indices: ndarray, axis: Union[int, None]
-) -> ndarray:
+def take_along_axis(a: ndarray, indices: ndarray, axis: int | None) -> ndarray:
     """
     Take values from the input array by matching 1d index and data slices.
 
@@ -597,7 +595,7 @@ def take_along_axis(
 
 @add_boilerplate("a", "indices", "values")
 def put_along_axis(
-    a: ndarray, indices: ndarray, values: ndarray, axis: Union[int, None]
+    a: ndarray, indices: ndarray, values: ndarray, axis: int | None
 ) -> None:
     """
     Put values into the destination array by matching 1d index and data slices.
@@ -677,7 +675,7 @@ def put_along_axis(
 def choose(
     a: ndarray,
     choices: Sequence[ndarray],
-    out: Optional[ndarray] = None,
+    out: ndarray | None = None,
     mode: BoundsMode = "raise",
 ) -> ndarray:
     """
@@ -824,8 +822,8 @@ def select(
 def compress(
     condition: ndarray,
     a: ndarray,
-    axis: Optional[int] = None,
-    out: Optional[ndarray] = None,
+    axis: int | None = None,
+    out: ndarray | None = None,
 ) -> ndarray:
     """
     Return selected slices of an array along given axis.

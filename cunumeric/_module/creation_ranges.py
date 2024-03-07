@@ -15,7 +15,7 @@
 from __future__ import annotations
 
 import math
-from typing import TYPE_CHECKING, Any, Optional, Union
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
@@ -31,10 +31,10 @@ _builtin_max = max
 
 
 def arange(
-    start: Union[int, float] = 0,
-    stop: Optional[Union[int, float]] = None,
-    step: Optional[Union[int, float]] = 1,
-    dtype: Optional[npt.DTypeLike] = None,
+    start: int | float = 0,
+    stop: int | float | None = None,
+    step: int | float | None = 1,
+    dtype: npt.DTypeLike | None = None,
 ) -> ndarray:
     """
     arange([start,] stop[, step,], dtype=None)
@@ -110,9 +110,9 @@ def linspace(
     num: int = 50,
     endpoint: bool = True,
     retstep: bool = False,
-    dtype: Optional[npt.DTypeLike] = None,
+    dtype: npt.DTypeLike | None = None,
     axis: int = 0,
-) -> Union[ndarray, tuple[ndarray, Union[float, ndarray]]]:
+) -> ndarray | tuple[ndarray, float | ndarray]:
     """
 
     Return evenly spaced numbers over a specified interval.
@@ -225,7 +225,7 @@ def linspace(
     # else delta is a scalar so start must be also
     # therefore it will trivially broadcast correctly
 
-    step: Union[float, ndarray]
+    step: float | ndarray
     if div > 0:
         step = delta / div
         if delta.ndim == 0:

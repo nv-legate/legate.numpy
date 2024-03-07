@@ -14,17 +14,7 @@
 #
 from __future__ import annotations
 
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Callable,
-    Dict,
-    Iterable,
-    Optional,
-    Sequence,
-    Union,
-    cast,
-)
+from typing import TYPE_CHECKING, Any, Callable, Iterable, Sequence, cast
 
 import numpy as np
 from legate.core import Scalar
@@ -63,7 +53,7 @@ if TYPE_CHECKING:
     )
 
 
-_UNARY_OPS: Dict[UnaryOpCode, Any] = {
+_UNARY_OPS: dict[UnaryOpCode, Any] = {
     UnaryOpCode.ABSOLUTE: np.absolute,
     UnaryOpCode.ARCCOS: np.arccos,
     UnaryOpCode.ARCCOSH: np.arccosh,
@@ -110,7 +100,7 @@ _UNARY_OPS: Dict[UnaryOpCode, Any] = {
 
 # Unary reduction operations that don't return the argument of the
 # reduction operation
-_UNARY_RED_OPS_WITHOUT_ARG: Dict[UnaryRedCode, Any] = {
+_UNARY_RED_OPS_WITHOUT_ARG: dict[UnaryRedCode, Any] = {
     UnaryRedCode.ALL: np.all,
     UnaryRedCode.ANY: np.any,
     UnaryRedCode.MAX: np.max,
@@ -125,14 +115,14 @@ _UNARY_RED_OPS_WITHOUT_ARG: Dict[UnaryRedCode, Any] = {
 
 # Unary reduction operations that return the argument of the
 # reduction operation
-_UNARY_RED_OPS_WITH_ARG: Dict[UnaryRedCode, Any] = {
+_UNARY_RED_OPS_WITH_ARG: dict[UnaryRedCode, Any] = {
     UnaryRedCode.ARGMIN: np.argmin,
     UnaryRedCode.ARGMAX: np.argmax,
     UnaryRedCode.NANARGMAX: np.nanargmax,
     UnaryRedCode.NANARGMIN: np.nanargmin,
 }
 
-_BINARY_OPS: Dict[BinaryOpCode, Any] = {
+_BINARY_OPS: dict[BinaryOpCode, Any] = {
     BinaryOpCode.ADD: np.add,
     BinaryOpCode.ARCTAN2: np.arctan2,
     BinaryOpCode.BITWISE_AND: np.bitwise_and,
@@ -169,12 +159,10 @@ _BINARY_OPS: Dict[BinaryOpCode, Any] = {
     BinaryOpCode.SUBTRACT: np.subtract,
 }
 
-_WINDOW_OPS: Dict[
+_WINDOW_OPS: dict[
     WindowOpCode,
-    Union[
-        Callable[[float], npt.NDArray[Any]],
-        Callable[[float, float], npt.NDArray[Any]],
-    ],
+    Callable[[float], npt.NDArray[Any]]
+    | Callable[[float, float], npt.NDArray[Any]],
 ] = {
     WindowOpCode.BARLETT: np.bartlett,
     WindowOpCode.BLACKMAN: np.blackman,
@@ -221,18 +209,18 @@ class EagerArray(NumPyThunk):
     def __init__(
         self,
         val: npt.ArrayLike,
-        parent: Optional[EagerArray] = None,
-        key: Optional[tuple[Any, ...]] = None,
+        parent: EagerArray | None = None,
+        key: tuple[Any, ...] | None = None,
     ) -> None:
         array = np.asarray(val)
         super().__init__(array.dtype)
         self.array: npt.NDArray[Any] = array
-        self.parent: Optional[EagerArray] = parent
+        self.parent: EagerArray | None = parent
         self.children: list[EagerArray] = []
-        self.key: Optional[tuple[Any, ...]] = key
+        self.key: tuple[Any, ...] | None = key
         #: if this ever becomes set (to a DeferredArray), we forward all
         #: operations to it
-        self.deferred: Optional[DeferredArray] = None
+        self.deferred: DeferredArray | None = None
         self.escaped = False
 
     @property
@@ -470,7 +458,7 @@ class EagerArray(NumPyThunk):
             self.children.append(result)
         return result
 
-    def squeeze(self, axis: Optional[int]) -> NumPyThunk:
+    def squeeze(self, axis: int | None) -> NumPyThunk:
         if self.deferred is not None:
             return self.deferred.squeeze(axis)
         # See https://github.com/numpy/numpy/issues/22019
@@ -526,7 +514,7 @@ class EagerArray(NumPyThunk):
         else:
             self.array.fill(value)
 
-    def transpose(self, axes: Union[tuple[int, ...], list[int]]) -> NumPyThunk:
+    def transpose(self, axes: tuple[int, ...] | list[int]) -> NumPyThunk:
         if self.deferred is not None:
             return self.deferred.transpose(axes)
         # See https://github.com/numpy/numpy/issues/22019
@@ -555,7 +543,7 @@ class EagerArray(NumPyThunk):
                 array = np.repeat(self.array, repeats, axis)
             return EagerArray(array)
 
-    def flip(self, rhs: Any, axes: Union[None, int, tuple[int, ...]]) -> None:
+    def flip(self, rhs: Any, axes: int | tuple[int, ...] | None) -> None:
         self.check_eager_args(rhs)
         if self.deferred is not None:
             self.deferred.flip(rhs, axes)
@@ -690,14 +678,14 @@ class EagerArray(NumPyThunk):
         else:
             self.array = np.arange(start, stop, step, self.dtype)
 
-    def tile(self, rhs: Any, reps: Union[int, Sequence[int]]) -> None:
+    def tile(self, rhs: Any, reps: int | Sequence[int]) -> None:
         self.check_eager_args(rhs)
         if self.deferred is not None:
             self.deferred.tile(rhs, reps)
         else:
             self.array[:] = np.tile(rhs.array, reps)
 
-    def bincount(self, rhs: Any, weights: Optional[NumPyThunk] = None) -> None:
+    def bincount(self, rhs: Any, weights: NumPyThunk | None = None) -> None:
         self.check_eager_args(rhs, weights)
         if self.deferred is not None:
             self.deferred.bincount(rhs, weights=weights)
@@ -729,9 +717,9 @@ class EagerArray(NumPyThunk):
         self,
         rhs: Any,
         argsort: bool = False,
-        axis: Union[int, None] = -1,
+        axis: int | None = -1,
         kind: SortType = "quicksort",
-        order: Union[None, str, list[str]] = None,
+        order: str | list[str] | None = None,
     ) -> None:
         self.check_eager_args(rhs)
         if self.deferred is not None:
@@ -746,7 +734,7 @@ class EagerArray(NumPyThunk):
         self,
         handle: int,
         generatorType: BitGeneratorType,
-        seed: Union[int, None],
+        seed: int | None,
         flags: int,
     ) -> None:
         if self.deferred is not None:
@@ -769,7 +757,7 @@ class EagerArray(NumPyThunk):
         self,
         handle: int,
         generatorType: BitGeneratorType,
-        seed: Union[int, None],
+        seed: int | None,
         flags: int,
         low: int,
         high: int,
@@ -789,7 +777,7 @@ class EagerArray(NumPyThunk):
         self,
         handle: int,
         generatorType: BitGeneratorType,
-        seed: Union[int, None],
+        seed: int | None,
         flags: int,
         mean: float,
         sigma: float,
@@ -809,7 +797,7 @@ class EagerArray(NumPyThunk):
         self,
         handle: int,
         generatorType: BitGeneratorType,
-        seed: Union[int, None],
+        seed: int | None,
         flags: int,
         mean: float,
         sigma: float,
@@ -829,7 +817,7 @@ class EagerArray(NumPyThunk):
         self,
         handle: int,
         generatorType: BitGeneratorType,
-        seed: Union[int, None],
+        seed: int | None,
         flags: int,
         low: float,
         high: float,
@@ -849,7 +837,7 @@ class EagerArray(NumPyThunk):
         self,
         handle: int,
         generatorType: BitGeneratorType,
-        seed: Union[int, None],
+        seed: int | None,
         flags: int,
         lam: float,
     ) -> None:
@@ -868,7 +856,7 @@ class EagerArray(NumPyThunk):
         self,
         handle: int,
         generatorType: BitGeneratorType,
-        seed: Union[int, None],
+        seed: int | None,
         flags: int,
         scale: float,
     ) -> None:
@@ -887,7 +875,7 @@ class EagerArray(NumPyThunk):
         self,
         handle: int,
         generatorType: BitGeneratorType,
-        seed: Union[int, None],
+        seed: int | None,
         flags: int,
         mu: float,
         beta: float,
@@ -907,7 +895,7 @@ class EagerArray(NumPyThunk):
         self,
         handle: int,
         generatorType: BitGeneratorType,
-        seed: Union[int, None],
+        seed: int | None,
         flags: int,
         mu: float,
         beta: float,
@@ -927,7 +915,7 @@ class EagerArray(NumPyThunk):
         self,
         handle: int,
         generatorType: BitGeneratorType,
-        seed: Union[int, None],
+        seed: int | None,
         flags: int,
         mu: float,
         beta: float,
@@ -947,7 +935,7 @@ class EagerArray(NumPyThunk):
         self,
         handle: int,
         generatorType: BitGeneratorType,
-        seed: Union[int, None],
+        seed: int | None,
         flags: int,
         alpha: float,
     ) -> None:
@@ -966,7 +954,7 @@ class EagerArray(NumPyThunk):
         self,
         handle: int,
         generatorType: BitGeneratorType,
-        seed: Union[int, None],
+        seed: int | None,
         flags: int,
         alpha: float,
     ) -> None:
@@ -985,7 +973,7 @@ class EagerArray(NumPyThunk):
         self,
         handle: int,
         generatorType: BitGeneratorType,
-        seed: Union[int, None],
+        seed: int | None,
         flags: int,
         sigma: float,
     ) -> None:
@@ -1004,7 +992,7 @@ class EagerArray(NumPyThunk):
         self,
         handle: int,
         generatorType: BitGeneratorType,
-        seed: Union[int, None],
+        seed: int | None,
         flags: int,
         x0: float,
         gamma: float,
@@ -1024,7 +1012,7 @@ class EagerArray(NumPyThunk):
         self,
         handle: int,
         generatorType: BitGeneratorType,
-        seed: Union[int, None],
+        seed: int | None,
         flags: int,
         a: float,
         b: float,
@@ -1045,7 +1033,7 @@ class EagerArray(NumPyThunk):
         self,
         handle: int,
         generatorType: BitGeneratorType,
-        seed: Union[int, None],
+        seed: int | None,
         flags: int,
         lam: float,
         k: float,
@@ -1065,7 +1053,7 @@ class EagerArray(NumPyThunk):
         self,
         handle: int,
         generatorType: BitGeneratorType,
-        seed: Union[int, None],
+        seed: int | None,
         flags: int,
     ) -> None:
         if self.deferred is not None:
@@ -1085,7 +1073,7 @@ class EagerArray(NumPyThunk):
         self,
         handle: int,
         generatorType: BitGeneratorType,
-        seed: Union[int, None],
+        seed: int | None,
         flags: int,
         a: float,
         b: float,
@@ -1105,7 +1093,7 @@ class EagerArray(NumPyThunk):
         self,
         handle: int,
         generatorType: BitGeneratorType,
-        seed: Union[int, None],
+        seed: int | None,
         flags: int,
         dfnum: float,
         dfden: float,
@@ -1130,7 +1118,7 @@ class EagerArray(NumPyThunk):
         self,
         handle: int,
         generatorType: BitGeneratorType,
-        seed: Union[int, None],
+        seed: int | None,
         flags: int,
         p: float,
     ) -> None:
@@ -1149,7 +1137,7 @@ class EagerArray(NumPyThunk):
         self,
         handle: int,
         generatorType: BitGeneratorType,
-        seed: Union[int, None],
+        seed: int | None,
         flags: int,
         dfnum: float,
         dfden: float,
@@ -1172,7 +1160,7 @@ class EagerArray(NumPyThunk):
         self,
         handle: int,
         generatorType: BitGeneratorType,
-        seed: Union[int, None],
+        seed: int | None,
         flags: int,
         df: float,
         nonc: float,
@@ -1200,7 +1188,7 @@ class EagerArray(NumPyThunk):
         self,
         handle: int,
         generatorType: BitGeneratorType,
-        seed: Union[int, None],
+        seed: int | None,
         flags: int,
         k: float,
         theta: float,
@@ -1226,7 +1214,7 @@ class EagerArray(NumPyThunk):
         self,
         handle: int,
         generatorType: BitGeneratorType,
-        seed: Union[int, None],
+        seed: int | None,
         flags: int,
         df: float,
     ) -> None:
@@ -1245,7 +1233,7 @@ class EagerArray(NumPyThunk):
         self,
         handle: int,
         generatorType: BitGeneratorType,
-        seed: Union[int, None],
+        seed: int | None,
         flags: int,
         ngood: int,
         nbad: int,
@@ -1268,7 +1256,7 @@ class EagerArray(NumPyThunk):
         self,
         handle: int,
         generatorType: BitGeneratorType,
-        seed: Union[int, None],
+        seed: int | None,
         flags: int,
         mu: float,
         kappa: float,
@@ -1288,7 +1276,7 @@ class EagerArray(NumPyThunk):
         self,
         handle: int,
         generatorType: BitGeneratorType,
-        seed: Union[int, None],
+        seed: int | None,
         flags: int,
         alpha: float,
     ) -> None:
@@ -1307,7 +1295,7 @@ class EagerArray(NumPyThunk):
         self,
         handle: int,
         generatorType: BitGeneratorType,
-        seed: Union[int, None],
+        seed: int | None,
         flags: int,
         p: float,
     ) -> None:
@@ -1326,7 +1314,7 @@ class EagerArray(NumPyThunk):
         self,
         handle: int,
         generatorType: BitGeneratorType,
-        seed: Union[int, None],
+        seed: int | None,
         flags: int,
         mean: float,
         scale: float,
@@ -1346,7 +1334,7 @@ class EagerArray(NumPyThunk):
         self,
         handle: int,
         generatorType: BitGeneratorType,
-        seed: Union[int, None],
+        seed: int | None,
         flags: int,
         ntrials: int,
         p: float,
@@ -1366,7 +1354,7 @@ class EagerArray(NumPyThunk):
         self,
         handle: int,
         generatorType: BitGeneratorType,
-        seed: Union[int, None],
+        seed: int | None,
         flags: int,
         ntrials: int,
         p: float,
@@ -1387,11 +1375,11 @@ class EagerArray(NumPyThunk):
     def partition(
         self,
         rhs: Any,
-        kth: Union[int, Sequence[int]],
+        kth: int | Sequence[int],
         argpartition: bool = False,
-        axis: Union[int, None] = -1,
+        axis: int | None = -1,
         kind: SelectKind = "introselect",
-        order: Union[None, str, list[str]] = None,
+        order: str | list[str] | None = None,
     ) -> None:
         self.check_eager_args(rhs)
         if self.deferred is not None:
@@ -1422,8 +1410,8 @@ class EagerArray(NumPyThunk):
 
     def random_integer(
         self,
-        low: Union[int, npt.NDArray[Any]],
-        high: Union[int, npt.NDArray[Any]],
+        low: int | npt.NDArray[Any],
+        high: int | npt.NDArray[Any],
     ) -> None:
         if self.deferred is not None:
             self.deferred.random_integer(low, high)
@@ -1441,7 +1429,7 @@ class EagerArray(NumPyThunk):
         rhs: Any,
         where: Any,
         args: tuple[Scalar, ...] = (),
-        multiout: Optional[Any] = None,
+        multiout: Any | None = None,
     ) -> None:
         if multiout is None:
             self.check_eager_args(rhs, where)
@@ -1491,7 +1479,7 @@ class EagerArray(NumPyThunk):
         op: UnaryRedCode,
         rhs: Any,
         where: Any,
-        orig_axis: Union[int, None],
+        orig_axis: int | None,
         axes: tuple[int, ...],
         keepdims: bool,
         args: tuple[Scalar, ...],
@@ -1612,7 +1600,7 @@ class EagerArray(NumPyThunk):
         op: BinaryOpCode,
         rhs1: Any,
         rhs2: Any,
-        broadcast: Union[NdShape, None],
+        broadcast: NdShape | None,
         args: tuple[Scalar, ...],
     ) -> None:
         self.check_eager_args(rhs1, rhs2)
@@ -1691,7 +1679,7 @@ class EagerArray(NumPyThunk):
         op: int,
         rhs: Any,
         axis: int,
-        dtype: Optional[npt.DTypeLike],
+        dtype: npt.DTypeLike | None,
         nan_to_identity: bool,
     ) -> None:
         self.check_eager_args(rhs)
@@ -1724,9 +1712,7 @@ class EagerArray(NumPyThunk):
             fn = _WINDOW_OPS[op_code]
             self.array[:] = fn(M, *args)
 
-    def packbits(
-        self, src: Any, axis: Union[int, None], bitorder: BitOrder
-    ) -> None:
+    def packbits(self, src: Any, axis: int | None, bitorder: BitOrder) -> None:
         self.check_eager_args(src)
         if self.deferred is not None:
             self.deferred.packbits(src, axis, bitorder)
@@ -1736,7 +1722,7 @@ class EagerArray(NumPyThunk):
             )
 
     def unpackbits(
-        self, src: Any, axis: Union[int, None], bitorder: BitOrder
+        self, src: Any, axis: int | None, bitorder: BitOrder
     ) -> None:
         self.check_eager_args(src)
         if self.deferred is not None:

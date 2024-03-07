@@ -15,7 +15,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod, abstractproperty
-from typing import TYPE_CHECKING, Any, Iterable, Optional, Sequence, Union
+from typing import TYPE_CHECKING, Any, Iterable, Sequence
 
 from ..config import ConvertCode
 from ..runtime import runtime
@@ -134,7 +134,7 @@ class NumPyThunk(ABC):
         ...
 
     @abstractmethod
-    def squeeze(self, axis: Optional[int]) -> NumPyThunk:
+    def squeeze(self, axis: int | None) -> NumPyThunk:
         ...
 
     @abstractmethod
@@ -156,11 +156,11 @@ class NumPyThunk(ABC):
         ...
 
     @abstractmethod
-    def transpose(self, axes: Union[tuple[int, ...], list[int]]) -> NumPyThunk:
+    def transpose(self, axes: tuple[int, ...] | list[int]) -> NumPyThunk:
         ...
 
     @abstractmethod
-    def flip(self, rhs: Any, axes: Union[None, int, tuple[int, ...]]) -> None:
+    def flip(self, rhs: Any, axes: int | tuple[int, ...] | None) -> None:
         ...
 
     @abstractmethod
@@ -211,7 +211,7 @@ class NumPyThunk(ABC):
         ...
 
     @abstractmethod
-    def tile(self, rhs: Any, reps: Union[Any, Sequence[int]]) -> None:
+    def tile(self, rhs: Any, reps: Any | Sequence[int]) -> None:
         ...
 
     @abstractmethod
@@ -219,7 +219,7 @@ class NumPyThunk(ABC):
         ...
 
     @abstractmethod
-    def bincount(self, rhs: Any, weights: Optional[NumPyThunk] = None) -> None:
+    def bincount(self, rhs: Any, weights: NumPyThunk | None = None) -> None:
         ...
 
     @abstractmethod
@@ -231,7 +231,7 @@ class NumPyThunk(ABC):
         self,
         handle: int,
         generatorType: BitGeneratorType,
-        seed: Union[int, None],
+        seed: int | None,
         flags: int,
     ) -> None:
         ...
@@ -241,7 +241,7 @@ class NumPyThunk(ABC):
         self,
         handle: int,
         generatorType: BitGeneratorType,
-        seed: Union[int, None],
+        seed: int | None,
         flags: int,
         low: int,
         high: int,
@@ -253,7 +253,7 @@ class NumPyThunk(ABC):
         self,
         handle: int,
         generatorType: BitGeneratorType,
-        seed: Union[int, None],
+        seed: int | None,
         flags: int,
         low: float,
         high: float,
@@ -265,7 +265,7 @@ class NumPyThunk(ABC):
         self,
         handle: int,
         generatorType: BitGeneratorType,
-        seed: Union[int, None],
+        seed: int | None,
         flags: int,
         mean: float,
         sigma: float,
@@ -277,7 +277,7 @@ class NumPyThunk(ABC):
         self,
         handle: int,
         generatorType: BitGeneratorType,
-        seed: Union[int, None],
+        seed: int | None,
         flags: int,
         mean: float,
         sigma: float,
@@ -289,7 +289,7 @@ class NumPyThunk(ABC):
         self,
         handle: int,
         generatorType: BitGeneratorType,
-        seed: Union[int, None],
+        seed: int | None,
         flags: int,
         lam: float,
     ) -> None:
@@ -300,7 +300,7 @@ class NumPyThunk(ABC):
         self,
         handle: int,
         generatorType: BitGeneratorType,
-        seed: Union[int, None],
+        seed: int | None,
         flags: int,
         scale: float,
     ) -> None:
@@ -311,7 +311,7 @@ class NumPyThunk(ABC):
         self,
         handle: int,
         generatorType: BitGeneratorType,
-        seed: Union[int, None],
+        seed: int | None,
         flags: int,
         mu: float,
         beta: float,
@@ -323,7 +323,7 @@ class NumPyThunk(ABC):
         self,
         handle: int,
         generatorType: BitGeneratorType,
-        seed: Union[int, None],
+        seed: int | None,
         flags: int,
         mu: float,
         beta: float,
@@ -335,7 +335,7 @@ class NumPyThunk(ABC):
         self,
         handle: int,
         generatorType: BitGeneratorType,
-        seed: Union[int, None],
+        seed: int | None,
         flags: int,
         mu: float,
         beta: float,
@@ -347,7 +347,7 @@ class NumPyThunk(ABC):
         self,
         handle: int,
         generatorType: BitGeneratorType,
-        seed: Union[int, None],
+        seed: int | None,
         flags: int,
         alpha: float,
     ) -> None:
@@ -358,7 +358,7 @@ class NumPyThunk(ABC):
         self,
         handle: int,
         generatorType: BitGeneratorType,
-        seed: Union[int, None],
+        seed: int | None,
         flags: int,
         alpha: float,
     ) -> None:
@@ -369,7 +369,7 @@ class NumPyThunk(ABC):
         self,
         handle: int,
         generatorType: BitGeneratorType,
-        seed: Union[int, None],
+        seed: int | None,
         flags: int,
         sigma: float,
     ) -> None:
@@ -380,7 +380,7 @@ class NumPyThunk(ABC):
         self,
         handle: int,
         generatorType: BitGeneratorType,
-        seed: Union[int, None],
+        seed: int | None,
         flags: int,
         x0: float,
         gamma: float,
@@ -392,7 +392,7 @@ class NumPyThunk(ABC):
         self,
         handle: int,
         generatorType: BitGeneratorType,
-        seed: Union[int, None],
+        seed: int | None,
         flags: int,
         a: float,
         b: float,
@@ -405,7 +405,7 @@ class NumPyThunk(ABC):
         self,
         handle: int,
         generatorType: BitGeneratorType,
-        seed: Union[int, None],
+        seed: int | None,
         flags: int,
         lam: float,
         k: float,
@@ -417,7 +417,7 @@ class NumPyThunk(ABC):
         self,
         handle: int,
         generatorType: BitGeneratorType,
-        seed: Union[int, None],
+        seed: int | None,
         flags: int,
     ) -> None:
         ...
@@ -427,7 +427,7 @@ class NumPyThunk(ABC):
         self,
         handle: int,
         generatorType: BitGeneratorType,
-        seed: Union[int, None],
+        seed: int | None,
         flags: int,
         a: float,
         b: float,
@@ -439,7 +439,7 @@ class NumPyThunk(ABC):
         self,
         handle: int,
         generatorType: BitGeneratorType,
-        seed: Union[int, None],
+        seed: int | None,
         flags: int,
         dfnum: float,
         dfden: float,
@@ -451,7 +451,7 @@ class NumPyThunk(ABC):
         self,
         handle: int,
         generatorType: BitGeneratorType,
-        seed: Union[int, None],
+        seed: int | None,
         flags: int,
         p: float,
     ) -> None:
@@ -462,7 +462,7 @@ class NumPyThunk(ABC):
         self,
         handle: int,
         generatorType: BitGeneratorType,
-        seed: Union[int, None],
+        seed: int | None,
         flags: int,
         dfnum: float,
         dfden: float,
@@ -475,7 +475,7 @@ class NumPyThunk(ABC):
         self,
         handle: int,
         generatorType: BitGeneratorType,
-        seed: Union[int, None],
+        seed: int | None,
         flags: int,
         df: float,
         nonc: float,
@@ -487,7 +487,7 @@ class NumPyThunk(ABC):
         self,
         handle: int,
         generatorType: BitGeneratorType,
-        seed: Union[int, None],
+        seed: int | None,
         flags: int,
         k: float,
         theta: float,
@@ -499,7 +499,7 @@ class NumPyThunk(ABC):
         self,
         handle: int,
         generatorType: BitGeneratorType,
-        seed: Union[int, None],
+        seed: int | None,
         flags: int,
         df: float,
     ) -> None:
@@ -510,7 +510,7 @@ class NumPyThunk(ABC):
         self,
         handle: int,
         generatorType: BitGeneratorType,
-        seed: Union[int, None],
+        seed: int | None,
         flags: int,
         ngood: int,
         nbad: int,
@@ -523,7 +523,7 @@ class NumPyThunk(ABC):
         self,
         handle: int,
         generatorType: BitGeneratorType,
-        seed: Union[int, None],
+        seed: int | None,
         flags: int,
         mu: float,
         kappa: float,
@@ -535,7 +535,7 @@ class NumPyThunk(ABC):
         self,
         handle: int,
         generatorType: BitGeneratorType,
-        seed: Union[int, None],
+        seed: int | None,
         flags: int,
         alpha: float,
     ) -> None:
@@ -546,7 +546,7 @@ class NumPyThunk(ABC):
         self,
         handle: int,
         generatorType: BitGeneratorType,
-        seed: Union[int, None],
+        seed: int | None,
         flags: int,
         p: float,
     ) -> None:
@@ -557,7 +557,7 @@ class NumPyThunk(ABC):
         self,
         handle: int,
         generatorType: BitGeneratorType,
-        seed: Union[int, None],
+        seed: int | None,
         flags: int,
         mean: float,
         scale: float,
@@ -569,7 +569,7 @@ class NumPyThunk(ABC):
         self,
         handle: int,
         generatorType: BitGeneratorType,
-        seed: Union[int, None],
+        seed: int | None,
         flags: int,
         ntrials: int,
         p: float,
@@ -581,7 +581,7 @@ class NumPyThunk(ABC):
         self,
         handle: int,
         generatorType: BitGeneratorType,
-        seed: Union[int, None],
+        seed: int | None,
         flags: int,
         ntrials: int,
         p: float,
@@ -596,11 +596,11 @@ class NumPyThunk(ABC):
     def partition(
         self,
         rhs: Any,
-        kth: Union[int, Sequence[int]],
+        kth: int | Sequence[int],
         argpartition: bool = False,
-        axis: Union[int, None] = -1,
+        axis: int | None = -1,
         kind: SelectKind = "introselect",
-        order: Union[None, str, list[str]] = None,
+        order: str | list[str] | None = None,
     ) -> None:
         ...
 
@@ -611,8 +611,8 @@ class NumPyThunk(ABC):
     @abstractmethod
     def random_integer(
         self,
-        low: Union[int, npt.NDArray[Any]],
-        high: Union[int, npt.NDArray[Any]],
+        low: int | npt.NDArray[Any],
+        high: int | npt.NDArray[Any],
     ) -> None:
         ...
 
@@ -625,9 +625,9 @@ class NumPyThunk(ABC):
         self,
         rhs: Any,
         argsort: bool = False,
-        axis: Union[int, None] = -1,
+        axis: int | None = -1,
         kind: SortType = "quicksort",
-        order: Union[None, str, list[str]] = None,
+        order: str | list[str] | None = None,
     ) -> None:
         ...
 
@@ -638,7 +638,7 @@ class NumPyThunk(ABC):
         rhs: Any,
         where: Any,
         args: tuple[Scalar, ...] = (),
-        multiout: Optional[Any] = None,
+        multiout: Any | None = None,
     ) -> None:
         ...
 
@@ -648,7 +648,7 @@ class NumPyThunk(ABC):
         op: UnaryRedCode,
         rhs: Any,
         where: Any,
-        orig_axis: Union[int, None],
+        orig_axis: int | None,
         axes: tuple[int, ...],
         keepdims: bool,
         args: tuple[Scalar, ...],
@@ -679,7 +679,7 @@ class NumPyThunk(ABC):
         op: BinaryOpCode,
         rhs1: Any,
         rhs2: Any,
-        broadcast: Union[NdShape, None],
+        broadcast: NdShape | None,
         args: tuple[Scalar, ...],
     ) -> None:
         ...
@@ -710,7 +710,7 @@ class NumPyThunk(ABC):
         op: int,
         rhs: Any,
         axis: int,
-        dtype: Optional[npt.DTypeLike],
+        dtype: npt.DTypeLike | None,
         nan_to_identity: bool,
     ) -> None:
         ...
@@ -724,14 +724,12 @@ class NumPyThunk(ABC):
         ...
 
     @abstractmethod
-    def packbits(
-        self, src: Any, axis: Union[int, None], bitorder: BitOrder
-    ) -> None:
+    def packbits(self, src: Any, axis: int | None, bitorder: BitOrder) -> None:
         ...
 
     @abstractmethod
     def unpackbits(
-        self, src: Any, axis: Union[int, None], bitorder: BitOrder
+        self, src: Any, axis: int | None, bitorder: BitOrder
     ) -> None:
         ...
 

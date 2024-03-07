@@ -17,7 +17,7 @@ from __future__ import annotations
 import re
 from collections import Counter
 from itertools import chain
-from typing import TYPE_CHECKING, Any, Literal, Optional, Union
+from typing import TYPE_CHECKING, Any, Literal
 
 import numpy as np
 import opt_einsum as oe  # type: ignore [import]
@@ -46,7 +46,7 @@ _builtin_max = max
 
 
 @add_boilerplate("a", "b")
-def inner(a: ndarray, b: ndarray, out: Optional[ndarray] = None) -> ndarray:
+def inner(a: ndarray, b: ndarray, out: ndarray | None = None) -> ndarray:
     """
     Inner product of two arrays.
 
@@ -98,7 +98,7 @@ def inner(a: ndarray, b: ndarray, out: Optional[ndarray] = None) -> ndarray:
 
 
 @add_boilerplate("a", "b")
-def dot(a: ndarray, b: ndarray, out: Optional[ndarray] = None) -> ndarray:
+def dot(a: ndarray, b: ndarray, out: ndarray | None = None) -> ndarray:
     """
     Dot product of two arrays. Specifically,
 
@@ -160,10 +160,10 @@ def matmul(
     a: ndarray,
     b: ndarray,
     /,
-    out: Optional[ndarray] = None,
+    out: ndarray | None = None,
     *,
     casting: CastingKind = "same_kind",
-    dtype: Optional[np.dtype[Any]] = None,
+    dtype: np.dtype[Any] | None = None,
 ) -> ndarray:
     """
     Matrix product of two arrays.
@@ -259,7 +259,7 @@ def matmul(
 
 
 @add_boilerplate("a", "b")
-def vdot(a: ndarray, b: ndarray, out: Optional[ndarray] = None) -> ndarray:
+def vdot(a: ndarray, b: ndarray, out: ndarray | None = None) -> ndarray:
     """
     Return the dot product of two vectors.
 
@@ -305,7 +305,7 @@ def vdot(a: ndarray, b: ndarray, out: Optional[ndarray] = None) -> ndarray:
 
 
 @add_boilerplate("a", "b")
-def outer(a: ndarray, b: ndarray, out: Optional[ndarray] = None) -> ndarray:
+def outer(a: ndarray, b: ndarray, out: ndarray | None = None) -> ndarray:
     """
     Compute the outer product of two vectors.
 
@@ -352,7 +352,7 @@ def tensordot(
     a: ndarray,
     b: ndarray,
     axes: AxesPairLike = 2,
-    out: Optional[ndarray] = None,
+    out: ndarray | None = None,
 ) -> ndarray:
     """
     Compute tensor dot product along specified axes.
@@ -423,7 +423,7 @@ class NullOptimizer(oe.paths.PathOptimizer):  # type: ignore [misc,no-any-unimpo
         inputs: list[set[str]],
         outputs: set[str],
         size_dict: dict[str, int],
-        memory_limit: Union[int, None] = None,
+        memory_limit: int | None = None,
     ) -> list[tuple[int, int]]:
         return [(0, 1)] + [(0, -1)] * (len(inputs) - 2)
 
@@ -447,10 +447,10 @@ def _contract(
     b_modes: list[str],
     out_modes: list[str],
     a: ndarray,
-    b: Optional[ndarray] = None,
-    out: Optional[ndarray] = None,
+    b: ndarray | None = None,
+    out: ndarray | None = None,
     casting: CastingKind = "same_kind",
-    dtype: Optional[np.dtype[Any]] = None,
+    dtype: np.dtype[Any] | None = None,
 ) -> ndarray:
     # Sanity checks
     if len(a_modes) != a.ndim:
@@ -664,10 +664,10 @@ def _contract(
 def einsum(
     expr: str,
     *operands: ndarray,
-    out: Optional[ndarray] = None,
-    dtype: Optional[np.dtype[Any]] = None,
+    out: ndarray | None = None,
+    dtype: np.dtype[Any] | None = None,
     casting: CastingKind = "safe",
-    optimize: Union[bool, Literal["greedy", "optimal"]] = True,
+    optimize: bool | Literal["greedy", "optimal"] = True,
 ) -> ndarray:
     """
     Evaluates the Einstein summation convention on the operands.
@@ -785,8 +785,8 @@ def einsum(
 def einsum_path(
     expr: str,
     *operands: ndarray,
-    optimize: Union[bool, list[Any], tuple[Any, ...], str] = "greedy",
-) -> tuple[list[Union[str, int]], str]:
+    optimize: bool | list[Any] | tuple[Any, ...] | str = "greedy",
+) -> tuple[list[str | int], str]:
     """
     Evaluates the lowest cost contraction order for an einsum expression by
     considering the creation of intermediate arrays.
@@ -821,7 +821,7 @@ def einsum_path(
 
     Returns
     -------
-    path : list[Tuple[int,...]]
+    path : list[tuple[int,...]]
         A list representation of the einsum path.
     string_repr : str
         A printable representation of the einsum path.
@@ -873,10 +873,10 @@ def einsum_path(
 def trace(
     a: ndarray,
     offset: int = 0,
-    axis1: Optional[int] = None,
-    axis2: Optional[int] = None,
-    dtype: Optional[np.dtype[Any]] = None,
-    out: Optional[ndarray] = None,
+    axis1: int | None = None,
+    axis2: int | None = None,
+    dtype: np.dtype[Any] | None = None,
+    out: ndarray | None = None,
 ) -> ndarray:
     """
     Return the sum along diagonals of the array.

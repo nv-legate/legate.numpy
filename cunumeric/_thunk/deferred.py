@@ -25,12 +25,9 @@ from typing import (
     TYPE_CHECKING,
     Any,
     Callable,
-    Dict,
-    Optional,
     ParamSpec,
     Sequence,
     TypeVar,
-    Union,
     cast,
 )
 
@@ -145,7 +142,7 @@ def auto_convert(
     return decorator
 
 
-_UNARY_RED_TO_REDUCTION_OPS: Dict[int, int] = {
+_UNARY_RED_TO_REDUCTION_OPS: dict[int, int] = {
     UnaryRedCode.SUM: ReductionOp.ADD,
     UnaryRedCode.SUM_SQUARES: ReductionOp.ADD,
     UnaryRedCode.VARIANCE: ReductionOp.ADD,
@@ -169,7 +166,7 @@ _UNARY_RED_TO_REDUCTION_OPS: Dict[int, int] = {
 
 def max_identity(
     ty: np.dtype[Any],
-) -> Union[int, np.floating[Any], bool, np.complexfloating[Any, Any]]:
+) -> int | np.floating[Any] | bool | np.complexfloating[Any, Any]:
     if ty.kind == "i" or ty.kind == "u":
         return np.iinfo(ty).min
     elif ty.kind == "f":
@@ -184,7 +181,7 @@ def max_identity(
 
 def min_identity(
     ty: np.dtype[Any],
-) -> Union[int, np.floating[Any], bool, np.complexfloating[Any, Any]]:
+) -> int | np.floating[Any] | bool | np.complexfloating[Any, Any]:
     if ty.kind == "i" or ty.kind == "u":
         return np.iinfo(ty).max
     elif ty.kind == "f":
@@ -197,7 +194,7 @@ def min_identity(
         raise ValueError(f"Unsupported dtype: {ty}")
 
 
-_UNARY_RED_IDENTITIES: Dict[UnaryRedCode, Callable[[Any], Any]] = {
+_UNARY_RED_IDENTITIES: dict[UnaryRedCode, Callable[[Any], Any]] = {
     UnaryRedCode.SUM: lambda _: 0,
     UnaryRedCode.SUM_SQUARES: lambda _: 0,
     UnaryRedCode.VARIANCE: lambda _: 0,
@@ -243,7 +240,7 @@ class DeferredArray(NumPyThunk):
     def __init__(
         self,
         base: LogicalStore,
-        numpy_array: Optional[npt.NDArray[Any]] = None,
+        numpy_array: npt.NDArray[Any] | None = None,
     ) -> None:
         super().__init__(base.type.to_numpy_dtype())
         assert base is not None
@@ -585,7 +582,7 @@ class DeferredArray(NumPyThunk):
         self,
         key: Any,
         is_set: bool = False,
-        set_value: Optional[Any] = None,
+        set_value: Any | None = None,
     ) -> tuple[bool, Any, Any, Any]:
         rhs = self
         if not isinstance(key, DeferredArray):
@@ -702,7 +699,7 @@ class DeferredArray(NumPyThunk):
         self,
         key: Any,
         is_set: bool = False,
-        set_value: Optional[Any] = None,
+        set_value: Any | None = None,
     ) -> tuple[bool, Any, Any, Any]:
         is_bool_array, lhs, bool_key = self._has_single_boolean_array(
             key, is_set
@@ -1229,9 +1226,7 @@ class DeferredArray(NumPyThunk):
 
         return result
 
-    def squeeze(
-        self, axis: Optional[Union[int, tuple[int, ...]]]
-    ) -> DeferredArray:
+    def squeeze(self, axis: int | tuple[int, ...] | None) -> DeferredArray:
         result = self.base
         if axis is None:
             shift = 0
@@ -1896,7 +1891,7 @@ class DeferredArray(NumPyThunk):
 
     # Tile the src array onto the destination array
     @auto_convert("rhs")
-    def tile(self, rhs: Any, reps: Union[Any, Sequence[int]]) -> None:
+    def tile(self, rhs: Any, reps: Any | Sequence[int]) -> None:
         src_array = rhs
         dst_array = self
         assert src_array.ndim <= dst_array.ndim
@@ -1918,7 +1913,7 @@ class DeferredArray(NumPyThunk):
 
     # Transpose the matrix dimensions
     def transpose(
-        self, axes: Union[None, tuple[int, ...], list[int]]
+        self, axes: tuple[int, ...] | list[int] | None
     ) -> DeferredArray:
         computed_axes = tuple(axes) if axes is not None else ()
         result = self.base.transpose(computed_axes)
@@ -1970,7 +1965,7 @@ class DeferredArray(NumPyThunk):
         return out
 
     @auto_convert("rhs")
-    def flip(self, rhs: Any, axes: Union[None, int, tuple[int, ...]]) -> None:
+    def flip(self, rhs: Any, axes: int | tuple[int, ...] | None) -> None:
         input = rhs.base
         output = self.base
 
@@ -1993,7 +1988,7 @@ class DeferredArray(NumPyThunk):
 
     # Perform a bin count operation on the array
     @auto_convert("rhs", "weights")
-    def bincount(self, rhs: Any, weights: Optional[NumPyThunk] = None) -> None:
+    def bincount(self, rhs: Any, weights: NumPyThunk | None = None) -> None:
         weight_array = weights
         src_array = rhs
         dst_array = self
@@ -2041,7 +2036,7 @@ class DeferredArray(NumPyThunk):
         self,
         handle: int,
         generatorType: BitGeneratorType,
-        seed: Union[int, None],
+        seed: int | None,
         flags: int,
     ) -> None:
         task = legate_runtime.create_auto_task(
@@ -2065,7 +2060,7 @@ class DeferredArray(NumPyThunk):
         self,
         handle: int,
         generatorType: BitGeneratorType,
-        seed: Union[int, None],
+        seed: int | None,
         flags: int,
         distribution: BitGeneratorDistribution,
         intparams: tuple[int, ...],
@@ -2097,7 +2092,7 @@ class DeferredArray(NumPyThunk):
         self,
         handle: int,
         generatorType: BitGeneratorType,
-        seed: Union[int, None],
+        seed: int | None,
         flags: int,
         low: int,
         high: int,
@@ -2121,7 +2116,7 @@ class DeferredArray(NumPyThunk):
         self,
         handle: int,
         generatorType: BitGeneratorType,
-        seed: Union[int, None],
+        seed: int | None,
         flags: int,
         low: float,
         high: float,
@@ -2155,7 +2150,7 @@ class DeferredArray(NumPyThunk):
         self,
         handle: int,
         generatorType: BitGeneratorType,
-        seed: Union[int, None],
+        seed: int | None,
         flags: int,
         mean: float,
         sigma: float,
@@ -2189,7 +2184,7 @@ class DeferredArray(NumPyThunk):
         self,
         handle: int,
         generatorType: BitGeneratorType,
-        seed: Union[int, None],
+        seed: int | None,
         flags: int,
         mean: float,
         sigma: float,
@@ -2223,7 +2218,7 @@ class DeferredArray(NumPyThunk):
         self,
         handle: int,
         generatorType: BitGeneratorType,
-        seed: Union[int, None],
+        seed: int | None,
         flags: int,
         lam: float,
     ) -> None:
@@ -2249,7 +2244,7 @@ class DeferredArray(NumPyThunk):
         self,
         handle: int,
         generatorType: BitGeneratorType,
-        seed: Union[int, None],
+        seed: int | None,
         flags: int,
         scale: float,
     ) -> None:
@@ -2282,7 +2277,7 @@ class DeferredArray(NumPyThunk):
         self,
         handle: int,
         generatorType: BitGeneratorType,
-        seed: Union[int, None],
+        seed: int | None,
         flags: int,
         mu: float,
         beta: float,
@@ -2316,7 +2311,7 @@ class DeferredArray(NumPyThunk):
         self,
         handle: int,
         generatorType: BitGeneratorType,
-        seed: Union[int, None],
+        seed: int | None,
         flags: int,
         mu: float,
         beta: float,
@@ -2350,7 +2345,7 @@ class DeferredArray(NumPyThunk):
         self,
         handle: int,
         generatorType: BitGeneratorType,
-        seed: Union[int, None],
+        seed: int | None,
         flags: int,
         mu: float,
         beta: float,
@@ -2384,7 +2379,7 @@ class DeferredArray(NumPyThunk):
         self,
         handle: int,
         generatorType: BitGeneratorType,
-        seed: Union[int, None],
+        seed: int | None,
         flags: int,
         alpha: float,
     ) -> None:
@@ -2417,7 +2412,7 @@ class DeferredArray(NumPyThunk):
         self,
         handle: int,
         generatorType: BitGeneratorType,
-        seed: Union[int, None],
+        seed: int | None,
         flags: int,
         alpha: float,
     ) -> None:
@@ -2450,7 +2445,7 @@ class DeferredArray(NumPyThunk):
         self,
         handle: int,
         generatorType: BitGeneratorType,
-        seed: Union[int, None],
+        seed: int | None,
         flags: int,
         sigma: float,
     ) -> None:
@@ -2483,7 +2478,7 @@ class DeferredArray(NumPyThunk):
         self,
         handle: int,
         generatorType: BitGeneratorType,
-        seed: Union[int, None],
+        seed: int | None,
         flags: int,
         x0: float,
         gamma: float,
@@ -2517,7 +2512,7 @@ class DeferredArray(NumPyThunk):
         self,
         handle: int,
         generatorType: BitGeneratorType,
-        seed: Union[int, None],
+        seed: int | None,
         flags: int,
         a: float,
         b: float,
@@ -2552,7 +2547,7 @@ class DeferredArray(NumPyThunk):
         self,
         handle: int,
         generatorType: BitGeneratorType,
-        seed: Union[int, None],
+        seed: int | None,
         flags: int,
         lam: float,
         k: float,
@@ -2586,7 +2581,7 @@ class DeferredArray(NumPyThunk):
         self,
         handle: int,
         generatorType: BitGeneratorType,
-        seed: Union[int, None],
+        seed: int | None,
         flags: int,
     ) -> None:
         if self.dtype == np.uint8:
@@ -2608,7 +2603,7 @@ class DeferredArray(NumPyThunk):
         self,
         handle: int,
         generatorType: BitGeneratorType,
-        seed: Union[int, None],
+        seed: int | None,
         flags: int,
         a: float,
         b: float,
@@ -2642,7 +2637,7 @@ class DeferredArray(NumPyThunk):
         self,
         handle: int,
         generatorType: BitGeneratorType,
-        seed: Union[int, None],
+        seed: int | None,
         flags: int,
         dfnum: float,
         dfden: float,
@@ -2676,7 +2671,7 @@ class DeferredArray(NumPyThunk):
         self,
         handle: int,
         generatorType: BitGeneratorType,
-        seed: Union[int, None],
+        seed: int | None,
         flags: int,
         p: float,
     ) -> None:
@@ -2699,7 +2694,7 @@ class DeferredArray(NumPyThunk):
         self,
         handle: int,
         generatorType: BitGeneratorType,
-        seed: Union[int, None],
+        seed: int | None,
         flags: int,
         dfnum: float,
         dfden: float,
@@ -2734,7 +2729,7 @@ class DeferredArray(NumPyThunk):
         self,
         handle: int,
         generatorType: BitGeneratorType,
-        seed: Union[int, None],
+        seed: int | None,
         flags: int,
         df: float,
         nonc: float,
@@ -2768,7 +2763,7 @@ class DeferredArray(NumPyThunk):
         self,
         handle: int,
         generatorType: BitGeneratorType,
-        seed: Union[int, None],
+        seed: int | None,
         flags: int,
         k: float,
         theta: float,
@@ -2802,7 +2797,7 @@ class DeferredArray(NumPyThunk):
         self,
         handle: int,
         generatorType: BitGeneratorType,
-        seed: Union[int, None],
+        seed: int | None,
         flags: int,
         df: float,
     ) -> None:
@@ -2835,7 +2830,7 @@ class DeferredArray(NumPyThunk):
         self,
         handle: int,
         generatorType: BitGeneratorType,
-        seed: Union[int, None],
+        seed: int | None,
         flags: int,
         ngood: int,
         nbad: int,
@@ -2863,7 +2858,7 @@ class DeferredArray(NumPyThunk):
         self,
         handle: int,
         generatorType: BitGeneratorType,
-        seed: Union[int, None],
+        seed: int | None,
         flags: int,
         mu: float,
         kappa: float,
@@ -2897,7 +2892,7 @@ class DeferredArray(NumPyThunk):
         self,
         handle: int,
         generatorType: BitGeneratorType,
-        seed: Union[int, None],
+        seed: int | None,
         flags: int,
         alpha: float,
     ) -> None:
@@ -2921,7 +2916,7 @@ class DeferredArray(NumPyThunk):
         self,
         handle: int,
         generatorType: BitGeneratorType,
-        seed: Union[int, None],
+        seed: int | None,
         flags: int,
         p: float,
     ) -> None:
@@ -2947,7 +2942,7 @@ class DeferredArray(NumPyThunk):
         self,
         handle: int,
         generatorType: BitGeneratorType,
-        seed: Union[int, None],
+        seed: int | None,
         flags: int,
         mean: float,
         scale: float,
@@ -2981,7 +2976,7 @@ class DeferredArray(NumPyThunk):
         self,
         handle: int,
         generatorType: BitGeneratorType,
-        seed: Union[int, None],
+        seed: int | None,
         flags: int,
         ntrials: int,
         p: float,
@@ -3009,7 +3004,7 @@ class DeferredArray(NumPyThunk):
         self,
         handle: int,
         generatorType: BitGeneratorType,
-        seed: Union[int, None],
+        seed: int | None,
         flags: int,
         ntrials: int,
         p: float,
@@ -3058,8 +3053,8 @@ class DeferredArray(NumPyThunk):
 
     def random_integer(
         self,
-        low: Union[int, npt.NDArray[Any]],
-        high: Union[int, npt.NDArray[Any]],
+        low: int | npt.NDArray[Any],
+        high: int | npt.NDArray[Any],
     ) -> None:
         assert self.dtype.kind == "i"
         args = (Scalar(low, self.base.type), Scalar(high, self.base.type))
@@ -3073,7 +3068,7 @@ class DeferredArray(NumPyThunk):
         src: Any,
         where: Any,
         args: tuple[Scalar, ...] = (),
-        multiout: Optional[Any] = None,
+        multiout: Any | None = None,
     ) -> None:
         lhs = self.base
         src = src._copy_if_overlapping(self)
@@ -3107,13 +3102,13 @@ class DeferredArray(NumPyThunk):
         op: UnaryRedCode,
         src: Any,
         where: Any,
-        orig_axis: Union[int, None],
+        orig_axis: int | None,
         axes: tuple[int, ...],
         keepdims: bool,
         args: tuple[Scalar, ...],
         initial: Any,
     ) -> None:
-        lhs_array: Union[NumPyThunk, DeferredArray] = self
+        lhs_array: NumPyThunk | DeferredArray = self
         rhs_array = src
         assert lhs_array.ndim <= rhs_array.ndim
 
@@ -3276,7 +3271,7 @@ class DeferredArray(NumPyThunk):
         op: BinaryOpCode,
         src1: Any,
         src2: Any,
-        broadcast: Union[NdShape, None],
+        broadcast: NdShape | None,
         args: tuple[Scalar, ...],
     ) -> None:
         lhs = self.base
@@ -3370,7 +3365,7 @@ class DeferredArray(NumPyThunk):
         op: int,
         rhs: Any,
         axis: int,
-        dtype: Optional[npt.DTypeLike],
+        dtype: npt.DTypeLike | None,
         nan_to_identity: bool,
     ) -> None:
         # local sum
@@ -3479,9 +3474,9 @@ class DeferredArray(NumPyThunk):
         self,
         rhs: Any,
         argsort: bool = False,
-        axis: Union[int, None] = -1,
+        axis: int | None = -1,
         kind: SortType = "quicksort",
-        order: Union[None, str, list[str]] = None,
+        order: str | list[str] | None = None,
     ) -> None:
         if kind == "stable":
             stable = True
@@ -3502,11 +3497,11 @@ class DeferredArray(NumPyThunk):
     def partition(
         self,
         rhs: Any,
-        kth: Union[int, Sequence[int]],
+        kth: int | Sequence[int],
         argpartition: bool = False,
-        axis: Union[int, None] = -1,
+        axis: int | None = -1,
         kind: SelectKind = "introselect",
-        order: Union[None, str, list[str]] = None,
+        order: str | list[str] | None = None,
     ) -> None:
         if order is not None:
             raise NotImplementedError(
@@ -3531,9 +3526,7 @@ class DeferredArray(NumPyThunk):
         task.execute()
 
     @auto_convert("src")
-    def packbits(
-        self, src: Any, axis: Union[int, None], bitorder: BitOrder
-    ) -> None:
+    def packbits(self, src: Any, axis: int | None, bitorder: BitOrder) -> None:
         bitorder_code = getattr(Bitorder, bitorder.upper())
         task = legate_runtime.create_auto_task(
             self.library, CuNumericOpCode.PACKBITS
@@ -3550,7 +3543,7 @@ class DeferredArray(NumPyThunk):
 
     @auto_convert("src")
     def unpackbits(
-        self, src: Any, axis: Union[int, None], bitorder: BitOrder
+        self, src: Any, axis: int | None, bitorder: BitOrder
     ) -> None:
         bitorder_code = getattr(Bitorder, bitorder.upper())
         task = legate_runtime.create_auto_task(

@@ -24,17 +24,7 @@ from types import (
     MethodType,
     ModuleType,
 )
-from typing import (
-    Any,
-    Callable,
-    Container,
-    Iterable,
-    Mapping,
-    Optional,
-    Protocol,
-    Union,
-    cast,
-)
+from typing import Any, Callable, Container, Iterable, Mapping, Protocol, cast
 
 from legate.core import track_provenance
 from legate.core.utils import OrderedSet
@@ -61,7 +51,7 @@ UFUNC_METHODS = ("at", "accumulate", "outer", "reduce", "reduceat")
 def filter_namespace(
     ns: Mapping[str, Any],
     *,
-    omit_names: Optional[Container[str]] = None,
+    omit_names: Container[str] | None = None,
     omit_types: tuple[type, ...] = (),
 ) -> dict[str, Any]:
     omit_names = omit_names or OrderedSet()
@@ -149,7 +139,7 @@ def unimplemented(
     prefix: str,
     name: str,
     reporting: bool = True,
-    fallback: Union[Callable[[Any], Any], None] = None,
+    fallback: Callable[[Any], Any] | None = None,
 ) -> CuWrapped:
     name = f"{prefix}.{name}"
 
@@ -209,7 +199,7 @@ def unimplemented(
 def clone_module(
     origin_module: ModuleType,
     new_globals: dict[str, Any],
-    fallback: Union[Callable[[Any], Any], None] = None,
+    fallback: Callable[[Any], Any] | None = None,
     include_builtin_function_type: bool = False,
 ) -> None:
     """Copy attributes from one module to another, excluding submodules
@@ -225,7 +215,7 @@ def clone_module(
     new_globals : dict
         A globals() dict for the new module to clone into
 
-    fallback : Union[Callable[[Any], Any], None]
+    fallback :Callable[[Any], Any] | None
         A function that will be applied to each argument before calling into
         the original module, to handle unimplemented functions. The function
         will be called recursively on list/tuple/dict containers, and should
@@ -321,8 +311,8 @@ def should_wrap(obj: object) -> bool:
 
 def clone_class(
     origin_class: type,
-    omit_names: Union[Iterable[str], None] = None,
-    fallback: Union[Callable[[Any], Any], None] = None,
+    omit_names: Iterable[str] | None = None,
+    fallback: Callable[[Any], Any] | None = None,
 ) -> Callable[[type], type]:
     """Copy attributes from one class to another
 

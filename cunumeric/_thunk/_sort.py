@@ -14,7 +14,7 @@
 #
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Union, cast
+from typing import TYPE_CHECKING, cast
 
 from legate.core import get_legate_runtime, types as ty
 from numpy.core.multiarray import (  # type: ignore [attr-defined]
@@ -121,7 +121,7 @@ def sort_deferred(
     output: DeferredArray,
     input: DeferredArray,
     argsort: bool,
-    axis: Union[int, None] = -1,
+    axis: int | None = -1,
     stable: bool = False,
 ) -> None:
     if axis is None and input.ndim > 1:

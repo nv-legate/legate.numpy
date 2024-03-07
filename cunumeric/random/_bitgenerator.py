@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import time
 from abc import abstractproperty
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING
 
 import numpy as np
 
@@ -33,7 +33,7 @@ if TYPE_CHECKING:
 class BitGenerator:
     def __init__(
         self,
-        seed: Union[int, None] = None,
+        seed: int | None = None,
         forceBuild: bool = False,
     ) -> None:
         """
@@ -44,7 +44,7 @@ class BitGenerator:
 
         Parameters
         ----------
-        seed : {None, int}, optional
+        seed : {int, None}, optional
             A seed to initialize the `BitGenerator`. If None, then fresh,
             unpredictable entropy will be pulled from the OS.
 
@@ -76,7 +76,7 @@ class BitGenerator:
             runtime.bitgenerator_destroy(self.handle, disposing=True)
 
     # when output is false => skip ahead
-    def random_raw(self, shape: Union[NdShapeLike, None] = None) -> ndarray:
+    def random_raw(self, shape: NdShapeLike | None = None) -> ndarray:
         if shape is None:
             shape = (1,)
         if not isinstance(shape, tuple):
@@ -90,8 +90,8 @@ class BitGenerator:
     def integers(
         self,
         low: int,
-        high: Union[int, None] = None,
-        shape: Union[NdShapeLike, None] = None,
+        high: int | None = None,
+        shape: NdShapeLike | None = None,
         type: npt.DTypeLike = np.int64,
         endpoint: bool = False,
     ) -> ndarray:
@@ -112,9 +112,9 @@ class BitGenerator:
 
     def random(
         self,
-        shape: Union[NdShapeLike, None] = None,
+        shape: NdShapeLike | None = None,
         dtype: npt.DTypeLike = np.float64,
-        res: Union[ndarray, None] = None,
+        res: ndarray | None = None,
     ) -> ndarray:
         if shape is None:
             shape = (1,)
@@ -131,7 +131,7 @@ class BitGenerator:
         self,
         mean: float = 0.0,
         sigma: float = 1.0,
-        shape: Union[NdShapeLike, None] = None,
+        shape: NdShapeLike | None = None,
         dtype: npt.DTypeLike = np.float64,
     ) -> ndarray:
         if shape is None:
@@ -148,7 +148,7 @@ class BitGenerator:
         self,
         mean: float = 0.0,
         sigma: float = 1.0,
-        shape: Union[NdShapeLike, None] = None,
+        shape: NdShapeLike | None = None,
         dtype: npt.DTypeLike = np.float64,
     ) -> ndarray:
         if shape is None:
@@ -165,7 +165,7 @@ class BitGenerator:
         self,
         low: float = 0.0,
         high: float = 1.0,
-        shape: Union[NdShapeLike, None] = None,
+        shape: NdShapeLike | None = None,
         dtype: npt.DTypeLike = np.float64,
     ) -> ndarray:
         if shape is None:
@@ -178,9 +178,7 @@ class BitGenerator:
         )
         return res
 
-    def poisson(
-        self, lam: float, shape: Union[NdShapeLike, None] = None
-    ) -> ndarray:
+    def poisson(self, lam: float, shape: NdShapeLike | None = None) -> ndarray:
         if shape is None:
             shape = (1,)
         if not isinstance(shape, tuple):
@@ -194,7 +192,7 @@ class BitGenerator:
     def exponential(
         self,
         scale: float = 1.0,
-        shape: Union[NdShapeLike, None] = None,
+        shape: NdShapeLike | None = None,
         dtype: npt.DTypeLike = np.float64,
     ) -> ndarray:
         if shape is None:
@@ -211,7 +209,7 @@ class BitGenerator:
         self,
         mu: float = 0.0,
         beta: float = 1.0,
-        shape: Union[NdShapeLike, None] = None,
+        shape: NdShapeLike | None = None,
         dtype: npt.DTypeLike = np.float64,
     ) -> ndarray:
         if shape is None:
@@ -228,7 +226,7 @@ class BitGenerator:
         self,
         mu: float = 0.0,
         beta: float = 1.0,
-        shape: Union[NdShapeLike, None] = None,
+        shape: NdShapeLike | None = None,
         dtype: npt.DTypeLike = np.float64,
     ) -> ndarray:
         if shape is None:
@@ -245,7 +243,7 @@ class BitGenerator:
         self,
         mu: float = 0.0,
         beta: float = 1.0,
-        shape: Union[NdShapeLike, None] = None,
+        shape: NdShapeLike | None = None,
         dtype: npt.DTypeLike = np.float64,
     ) -> ndarray:
         if shape is None:
@@ -261,7 +259,7 @@ class BitGenerator:
     def pareto(
         self,
         alpha: float,
-        shape: Union[NdShapeLike, None] = None,
+        shape: NdShapeLike | None = None,
         dtype: npt.DTypeLike = np.float64,
     ) -> ndarray:
         if shape is None:
@@ -277,7 +275,7 @@ class BitGenerator:
     def power(
         self,
         alpha: float,
-        shape: Union[NdShapeLike, None] = None,
+        shape: NdShapeLike | None = None,
         dtype: npt.DTypeLike = np.float64,
     ) -> ndarray:
         if shape is None:
@@ -293,7 +291,7 @@ class BitGenerator:
     def rayleigh(
         self,
         sigma: float,
-        shape: Union[NdShapeLike, None] = None,
+        shape: NdShapeLike | None = None,
         dtype: npt.DTypeLike = np.float64,
     ) -> ndarray:
         if shape is None:
@@ -310,7 +308,7 @@ class BitGenerator:
         self,
         x0: float,
         gamma: float,
-        shape: Union[NdShapeLike, None] = None,
+        shape: NdShapeLike | None = None,
         dtype: npt.DTypeLike = np.float64,
     ) -> ndarray:
         if shape is None:
@@ -328,7 +326,7 @@ class BitGenerator:
         a: float,
         b: float,
         c: float,
-        shape: Union[NdShapeLike, None] = None,
+        shape: NdShapeLike | None = None,
         dtype: npt.DTypeLike = np.float64,
     ) -> ndarray:
         if shape is None:
@@ -345,7 +343,7 @@ class BitGenerator:
         self,
         lam: float,
         k: float,
-        shape: Union[NdShapeLike, None] = None,
+        shape: NdShapeLike | None = None,
         dtype: npt.DTypeLike = np.float64,
     ) -> ndarray:
         if shape is None:
@@ -358,7 +356,7 @@ class BitGenerator:
         )
         return res
 
-    def bytes(self, length: Union[int, tuple[int, ...]]) -> ndarray:
+    def bytes(self, length: int | tuple[int, ...]) -> ndarray:
         if not isinstance(length, tuple):
             length = (length,)
         res = ndarray(length, dtype=np.dtype(np.uint8))
@@ -374,7 +372,7 @@ class BitGenerator:
         self,
         a: float,
         b: float,
-        shape: Union[NdShapeLike, None] = None,
+        shape: NdShapeLike | None = None,
         dtype: npt.DTypeLike = np.float64,
     ) -> ndarray:
         if shape is None:
@@ -391,7 +389,7 @@ class BitGenerator:
         self,
         dfnum: float,
         dfden: float,
-        shape: Union[NdShapeLike, None] = None,
+        shape: NdShapeLike | None = None,
         dtype: npt.DTypeLike = np.float64,
     ) -> ndarray:
         if shape is None:
@@ -412,7 +410,7 @@ class BitGenerator:
     def logseries(
         self,
         p: float,
-        shape: Union[NdShapeLike, None] = None,
+        shape: NdShapeLike | None = None,
         dtype: npt.DTypeLike = np.uint32,
     ) -> ndarray:
         if shape is None:
@@ -430,7 +428,7 @@ class BitGenerator:
         dfnum: float,
         dfden: float,
         nonc: float,
-        shape: Union[NdShapeLike, None] = None,
+        shape: NdShapeLike | None = None,
         dtype: npt.DTypeLike = np.float64,
     ) -> ndarray:
         if shape is None:
@@ -453,7 +451,7 @@ class BitGenerator:
         self,
         df: float,
         nonc: float = 0.0,
-        shape: Union[NdShapeLike, None] = None,
+        shape: NdShapeLike | None = None,
         dtype: npt.DTypeLike = np.float64,
     ) -> ndarray:
         if shape is None:
@@ -470,7 +468,7 @@ class BitGenerator:
         self,
         k: float,
         theta: float = 1.0,
-        shape: Union[NdShapeLike, None] = None,
+        shape: NdShapeLike | None = None,
         dtype: npt.DTypeLike = np.float64,
     ) -> ndarray:
         if shape is None:
@@ -486,7 +484,7 @@ class BitGenerator:
     def standard_t(
         self,
         df: float,
-        shape: Union[NdShapeLike, None] = None,
+        shape: NdShapeLike | None = None,
         dtype: npt.DTypeLike = np.float64,
     ) -> ndarray:
         if shape is None:
@@ -504,7 +502,7 @@ class BitGenerator:
         ngood: int,
         nbad: int,
         nsample: int,
-        shape: Union[NdShapeLike, None] = None,
+        shape: NdShapeLike | None = None,
         dtype: npt.DTypeLike = np.uint32,
     ) -> ndarray:
         if shape is None:
@@ -527,7 +525,7 @@ class BitGenerator:
         self,
         mu: float,
         kappa: float,
-        shape: Union[NdShapeLike, None] = None,
+        shape: NdShapeLike | None = None,
         dtype: npt.DTypeLike = np.float64,
     ) -> ndarray:
         if shape is None:
@@ -543,7 +541,7 @@ class BitGenerator:
     def zipf(
         self,
         alpha: float,
-        shape: Union[NdShapeLike, None] = None,
+        shape: NdShapeLike | None = None,
         dtype: npt.DTypeLike = np.uint32,
     ) -> ndarray:
         if shape is None:
@@ -559,7 +557,7 @@ class BitGenerator:
     def geometric(
         self,
         p: float,
-        shape: Union[NdShapeLike, None] = None,
+        shape: NdShapeLike | None = None,
         dtype: npt.DTypeLike = np.uint32,
     ) -> ndarray:
         if shape is None:
@@ -576,7 +574,7 @@ class BitGenerator:
         self,
         mean: float,
         scale: float,
-        shape: Union[NdShapeLike, None] = None,
+        shape: NdShapeLike | None = None,
         dtype: npt.DTypeLike = np.float64,
     ) -> ndarray:
         if shape is None:
@@ -593,7 +591,7 @@ class BitGenerator:
         self,
         ntrials: int,
         p: float,
-        shape: Union[NdShapeLike, None] = None,
+        shape: NdShapeLike | None = None,
         dtype: npt.DTypeLike = np.uint32,
     ) -> ndarray:
         if shape is None:
@@ -610,7 +608,7 @@ class BitGenerator:
         self,
         ntrials: int,
         p: float,
-        shape: Union[NdShapeLike, None] = None,
+        shape: NdShapeLike | None = None,
         dtype: npt.DTypeLike = np.uint32,
     ) -> ndarray:
         if shape is None:

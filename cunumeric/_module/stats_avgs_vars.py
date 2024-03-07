@@ -14,7 +14,7 @@
 #
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Optional, Union
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
@@ -27,11 +27,11 @@ if TYPE_CHECKING:
 @add_boilerplate("a")
 def mean(
     a: ndarray,
-    axis: Optional[Union[int, tuple[int, ...]]] = None,
-    dtype: Optional[np.dtype[Any]] = None,
-    out: Optional[ndarray] = None,
+    axis: int | tuple[int, ...] | None = None,
+    dtype: np.dtype[Any] | None = None,
+    out: ndarray | None = None,
     keepdims: bool = False,
-    where: Optional[ndarray] = None,
+    where: ndarray | None = None,
 ) -> ndarray:
     """
 
@@ -99,11 +99,11 @@ def mean(
 @add_boilerplate("a")
 def nanmean(
     a: ndarray,
-    axis: Optional[Union[int, tuple[int, ...]]] = None,
-    dtype: Optional[np.dtype[Any]] = None,
-    out: Optional[ndarray] = None,
+    axis: int | tuple[int, ...] | None = None,
+    dtype: np.dtype[Any] | None = None,
+    out: ndarray | None = None,
     keepdims: bool = False,
-    where: Optional[ndarray] = None,
+    where: ndarray | None = None,
 ) -> ndarray:
     """
 
@@ -166,13 +166,13 @@ def nanmean(
 @add_boilerplate("a")
 def var(
     a: ndarray,
-    axis: Optional[Union[int, tuple[int, ...]]] = None,
-    dtype: Optional[np.dtype[Any]] = None,
-    out: Optional[ndarray] = None,
+    axis: int | tuple[int, ...] | None = None,
+    dtype: np.dtype[Any] | None = None,
+    out: ndarray | None = None,
     ddof: int = 0,
     keepdims: bool = False,
     *,
-    where: Union[ndarray, None] = None,
+    where: ndarray | None = None,
 ) -> ndarray:
     """
     Compute the variance along the specified axis.

@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import warnings
 from functools import lru_cache, reduce
-from typing import TYPE_CHECKING, Any, Optional, Sequence, TypeGuard, Union
+from typing import TYPE_CHECKING, Any, Sequence, TypeGuard
 
 import legate.core.types as ty
 import numpy as np
@@ -177,11 +177,11 @@ class Runtime(object):
 
     def bitgenerator_populate_task(
         self,
-        task: Union[AutoTask, ManualTask],
+        task: AutoTask | ManualTask,
         taskop: int,
         generatorID: int,
         generatorType: int = 0,
-        seed: Union[int, None] = 0,
+        seed: int | None = 0,
         flags: int = 0,
     ) -> None:
         task.add_scalar_arg(taskop, ty.int32)
@@ -193,7 +193,7 @@ class Runtime(object):
     def bitgenerator_create(
         self,
         generatorType: int,
-        seed: Union[int, None],
+        seed: int | None,
         flags: int,
         forceCreate: bool = False,
     ) -> int:
@@ -253,9 +253,9 @@ class Runtime(object):
 
     def get_numpy_thunk(
         self,
-        obj: Union[ndarray, npt.NDArray[Any]],
+        obj: ndarray | npt.NDArray[Any],
         share: bool = False,
-        dtype: Optional[np.dtype[Any]] = None,
+        dtype: np.dtype[Any] | None = None,
     ) -> NumPyThunk:
         # Check to see if this object implements the Legate data interface
         if hasattr(obj, "__legate_data_interface__"):
@@ -299,7 +299,7 @@ class Runtime(object):
     @staticmethod
     def compute_parent_child_mapping(
         array: npt.NDArray[Any],
-    ) -> Union[tuple[Union[slice, None], ...], None]:
+    ) -> tuple[slice | None, ...] | None:
         # We need an algorithm for figuring out how to compute the
         # slice object that was used to generate a child array from
         # a parent array so we can build the same mapping from a
@@ -324,7 +324,7 @@ class Runtime(object):
             offsets.append((ptr_diff % mod) // div)
         assert div == array.dtype.itemsize
         # Now build the view and dimmap for the parent to create the view
-        key: tuple[Union[slice, None], ...] = ()
+        key: tuple[slice | None, ...] = ()
         child_idx = 0
         child_strides = tuple(array.strides)
         parent_strides = tuple(array.base.strides)
@@ -453,7 +453,7 @@ class Runtime(object):
         self,
         shape: NdShape,
         dtype: ty.Type,
-        inputs: Optional[Sequence[NumPyThunk]] = None,
+        inputs: Sequence[NumPyThunk] | None = None,
     ) -> NumPyThunk:
         from ._thunk.deferred import DeferredArray
 
@@ -512,7 +512,7 @@ class Runtime(object):
         return volume <= self.max_eager_volume
 
     @staticmethod
-    def are_all_eager_inputs(inputs: Optional[Sequence[NumPyThunk]]) -> bool:
+    def are_all_eager_inputs(inputs: Sequence[NumPyThunk] | None) -> bool:
         from ._thunk.eager import EagerArray
         from ._thunk.thunk import NumPyThunk
 
@@ -532,7 +532,7 @@ class Runtime(object):
 
     @staticmethod
     def is_deferred_array(
-        array: Optional[NumPyThunk],
+        array: NumPyThunk | None,
     ) -> TypeGuard[DeferredArray]:
         from ._thunk.deferred import DeferredArray
 

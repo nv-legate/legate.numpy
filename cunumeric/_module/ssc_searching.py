@@ -14,7 +14,7 @@
 #
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional, Union
+from typing import TYPE_CHECKING
 
 from .._array.array import ndarray
 from .._array.thunk import perform_where
@@ -28,10 +28,10 @@ if TYPE_CHECKING:
 @add_boilerplate("a")
 def searchsorted(
     a: ndarray,
-    v: Union[int, float, ndarray],
+    v: int | float | ndarray,
     side: SortSide = "left",
-    sorter: Optional[ndarray] = None,
-) -> Union[int, ndarray]:
+    sorter: ndarray | None = None,
+) -> int | ndarray:
     """
 
     Find the indices into a sorted array a such that, if the corresponding
@@ -69,8 +69,8 @@ def searchsorted(
 @add_boilerplate("a")
 def argmax(
     a: ndarray,
-    axis: Optional[int] = None,
-    out: Optional[ndarray] = None,
+    axis: int | None = None,
+    out: ndarray | None = None,
     *,
     keepdims: bool = False,
 ) -> ndarray:
@@ -118,8 +118,8 @@ def argmax(
 @add_boilerplate("a")
 def argmin(
     a: ndarray,
-    axis: Optional[int] = None,
-    out: Optional[ndarray] = None,
+    axis: int | None = None,
+    out: ndarray | None = None,
     *,
     keepdims: bool = False,
 ) -> ndarray:
@@ -196,8 +196,8 @@ def flatnonzero(a: ndarray) -> ndarray:
 
 @add_boilerplate("a", "x", "y")
 def where(
-    a: ndarray, x: Optional[ndarray] = None, y: Optional[ndarray] = None
-) -> Union[ndarray, tuple[ndarray, ...]]:
+    a: ndarray, x: ndarray | None = None, y: ndarray | None = None
+) -> ndarray | tuple[ndarray, ...]:
     """
     where(condition, [x, y])
 

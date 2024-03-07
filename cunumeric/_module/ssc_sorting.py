@@ -14,7 +14,7 @@
 #
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional, Sequence, Union
+from typing import TYPE_CHECKING, Sequence
 
 import numpy as np
 
@@ -28,9 +28,9 @@ if TYPE_CHECKING:
 @add_boilerplate("a")
 def argsort(
     a: ndarray,
-    axis: Union[int, None] = -1,
+    axis: int | None = -1,
     kind: SortType = "quicksort",
-    order: Optional[Union[str, list[str]]] = None,
+    order: str | list[str] | None = None,
 ) -> ndarray:
     """
 
@@ -100,9 +100,9 @@ def msort(a: ndarray) -> ndarray:
 @add_boilerplate("a")
 def sort(
     a: ndarray,
-    axis: Union[int, None] = -1,
+    axis: int | None = -1,
     kind: SortType = "quicksort",
-    order: Optional[Union[str, list[str]]] = None,
+    order: str | list[str] | None = None,
 ) -> ndarray:
     """
 
@@ -185,10 +185,10 @@ def sort_complex(a: ndarray) -> ndarray:
 @add_boilerplate("a")
 def argpartition(
     a: ndarray,
-    kth: Union[int, Sequence[int]],
-    axis: Union[int, None] = -1,
+    kth: int | Sequence[int],
+    axis: int | None = -1,
     kind: SelectKind = "introselect",
-    order: Optional[Union[str, list[str]]] = None,
+    order: str | list[str] | None = None,
 ) -> ndarray:
     """
 
@@ -241,10 +241,10 @@ def argpartition(
 @add_boilerplate("a")
 def partition(
     a: ndarray,
-    kth: Union[int, Sequence[int]],
-    axis: Union[int, None] = -1,
+    kth: int | Sequence[int],
+    axis: int | None = -1,
     kind: SelectKind = "introselect",
-    order: Optional[Union[str, list[str]]] = None,
+    order: str | list[str] | None = None,
 ) -> ndarray:
     """
 

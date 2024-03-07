@@ -14,7 +14,7 @@
 #
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional, Tuple
+from typing import TYPE_CHECKING
 
 from .._array.util import add_boilerplate
 from .creation_shape import empty
@@ -25,8 +25,8 @@ if TYPE_CHECKING:
 
 
 def _sanitize_arguments(
-    a: ndarray, axis: Optional[int], bitorder: BitOrder
-) -> Tuple[ndarray, int]:
+    a: ndarray, axis: int | None, bitorder: BitOrder
+) -> tuple[ndarray, int]:
     if axis is None:
         if a.ndim > 1:
             a = a.ravel()
@@ -49,7 +49,7 @@ def _sanitize_arguments(
 
 @add_boilerplate("a")
 def packbits(
-    a: ndarray, axis: Optional[int] = None, bitorder: BitOrder = "big"
+    a: ndarray, axis: int | None = None, bitorder: BitOrder = "big"
 ) -> ndarray:
     """
 
@@ -108,8 +108,8 @@ def packbits(
 @add_boilerplate("a")
 def unpackbits(
     a: ndarray,
-    axis: Optional[int] = None,
-    count: Optional[int] = None,
+    axis: int | None = None,
+    count: int | None = None,
     bitorder: BitOrder = "big",
 ) -> ndarray:
     """

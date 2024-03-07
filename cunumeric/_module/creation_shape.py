@@ -15,7 +15,7 @@
 from __future__ import annotations
 
 import operator
-from typing import TYPE_CHECKING, Any, Optional, Union
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
@@ -59,8 +59,8 @@ def empty(shape: NdShapeLike, dtype: npt.DTypeLike = np.float64) -> ndarray:
 @add_boilerplate("a")
 def empty_like(
     a: ndarray,
-    dtype: Optional[npt.DTypeLike] = None,
-    shape: Optional[NdShapeLike] = None,
+    dtype: npt.DTypeLike | None = None,
+    shape: NdShapeLike | None = None,
 ) -> ndarray:
     """
 
@@ -102,9 +102,9 @@ def empty_like(
 
 def eye(
     N: int,
-    M: Optional[int] = None,
+    M: int | None = None,
     k: int = 0,
-    dtype: Optional[npt.DTypeLike] = np.float64,
+    dtype: npt.DTypeLike | None = np.float64,
 ) -> ndarray:
     """
 
@@ -209,8 +209,8 @@ def ones(shape: NdShapeLike, dtype: npt.DTypeLike = np.float64) -> ndarray:
 
 def ones_like(
     a: ndarray,
-    dtype: Optional[npt.DTypeLike] = None,
-    shape: Optional[NdShapeLike] = None,
+    dtype: npt.DTypeLike | None = None,
+    shape: NdShapeLike | None = None,
 ) -> ndarray:
     """
 
@@ -278,8 +278,8 @@ def zeros(shape: NdShapeLike, dtype: npt.DTypeLike = np.float64) -> ndarray:
 
 def zeros_like(
     a: ndarray,
-    dtype: Optional[npt.DTypeLike] = None,
-    shape: Optional[NdShapeLike] = None,
+    dtype: npt.DTypeLike | None = None,
+    shape: NdShapeLike | None = None,
 ) -> ndarray:
     """
 
@@ -317,7 +317,7 @@ def zeros_like(
 def full(
     shape: NdShapeLike,
     value: Any,
-    dtype: Optional[npt.DTypeLike] = None,
+    dtype: npt.DTypeLike | None = None,
 ) -> ndarray:
     """
 
@@ -358,9 +358,9 @@ def full(
 
 def full_like(
     a: ndarray,
-    value: Union[int, float],
-    dtype: Optional[npt.DTypeLike] = None,
-    shape: Optional[NdShapeLike] = None,
+    value: int | float,
+    dtype: npt.DTypeLike | None = None,
+    shape: NdShapeLike | None = None,
 ) -> ndarray:
     """
 

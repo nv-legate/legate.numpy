@@ -14,7 +14,7 @@
 #
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Union
+from typing import TYPE_CHECKING, Any
 
 from .._array.array import ndarray
 from .._array.util import add_boilerplate
@@ -98,9 +98,9 @@ def convolve(a: ndarray, v: ndarray, mode: ConvolveMode = "full") -> ndarray:
 @add_boilerplate("a")
 def clip(
     a: ndarray,
-    a_min: Union[int, float, npt.ArrayLike, None],
-    a_max: Union[int, float, npt.ArrayLike, None],
-    out: Union[npt.NDArray[Any], ndarray, None] = None,
+    a_min: int | float | npt.ArrayLike | None,
+    a_max: int | float | npt.ArrayLike | None,
+    out: npt.NDArray[Any] | ndarray | None = None,
 ) -> ndarray:
     """
 

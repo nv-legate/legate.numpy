@@ -14,7 +14,7 @@
 #
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Optional, Union
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
@@ -33,7 +33,7 @@ _builtin_range = range
 
 @add_boilerplate("x", "weights")
 def bincount(
-    x: ndarray, weights: Optional[ndarray] = None, minlength: int = 0
+    x: ndarray, weights: ndarray | None = None, minlength: int = 0
 ) -> ndarray:
     """
     bincount(x, weights=None, minlength=0)
@@ -132,9 +132,9 @@ def bincount(
 @add_boilerplate("x", "weights")
 def histogram(
     x: ndarray,
-    bins: Union[ndarray, npt.ArrayLike, int] = 10,
-    range: Optional[Union[tuple[int, int], tuple[float, float]]] = None,
-    weights: Optional[ndarray] = None,
+    bins: ndarray | npt.ArrayLike | int = 10,
+    range: tuple[int, int] | tuple[float, float] | None = None,
+    weights: ndarray | None = None,
     density: bool = False,
 ) -> tuple[ndarray, ndarray]:
     """

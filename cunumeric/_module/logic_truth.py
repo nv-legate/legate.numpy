@@ -14,7 +14,7 @@
 #
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional, Union
+from typing import TYPE_CHECKING
 
 from .._array.util import add_boilerplate
 
@@ -25,10 +25,10 @@ if TYPE_CHECKING:
 @add_boilerplate("a")
 def all(
     a: ndarray,
-    axis: Optional[Union[int, tuple[int, ...]]] = None,
-    out: Optional[ndarray] = None,
+    axis: int | tuple[int, ...] | None = None,
+    out: ndarray | None = None,
     keepdims: bool = False,
-    where: Optional[ndarray] = None,
+    where: ndarray | None = None,
 ) -> ndarray:
     """
     Test whether all array elements along a given axis evaluate to True.
@@ -83,10 +83,10 @@ def all(
 @add_boilerplate("a")
 def any(
     a: ndarray,
-    axis: Optional[Union[int, tuple[int, ...]]] = None,
-    out: Optional[ndarray] = None,
+    axis: int | tuple[int, ...] | None = None,
+    out: ndarray | None = None,
     keepdims: bool = False,
-    where: Optional[ndarray] = None,
+    where: ndarray | None = None,
 ) -> ndarray:
     """
     Test whether any array element along a given axis evaluates to True.

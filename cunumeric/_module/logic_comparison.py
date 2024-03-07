@@ -14,7 +14,7 @@
 #
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING
 
 import numpy as np
 from legate.core import Scalar, types as ty
@@ -162,7 +162,7 @@ def isclose(
 @add_boilerplate("a1", "a2")
 def array_equal(
     a1: ndarray, a2: ndarray, equal_nan: bool = False
-) -> Union[bool, ndarray]:
+) -> bool | ndarray:
     """
 
     True if two arrays have the same shape and elements, False otherwise.

@@ -14,7 +14,7 @@
 #
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Union
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
@@ -25,9 +25,7 @@ if TYPE_CHECKING:
     import numpy.typing as npt
 
 
-def split(
-    a: ndarray, indices: Union[int, ndarray], axis: int = 0
-) -> list[ndarray]:
+def split(a: ndarray, indices: int | ndarray, axis: int = 0) -> list[ndarray]:
     """
 
     Split an array into multiple sub-arrays as views into `ary`.
@@ -78,7 +76,7 @@ def split(
 
 def array_split(
     a: ndarray,
-    indices: Union[int, tuple[int], ndarray, npt.NDArray[Any]],
+    indices: int | tuple[int] | ndarray | npt.NDArray[Any],
     axis: int = 0,
     equal: bool = False,
 ) -> list[ndarray]:
@@ -151,7 +149,7 @@ def array_split(
     start_idx = 0
     end_idx = 0
     out_shape = []
-    in_shape: list[Union[int, slice]] = []
+    in_shape: list[int | slice] = []
 
     for i in range(array.ndim):
         if i != axis:
@@ -188,7 +186,7 @@ def array_split(
     return result
 
 
-def dsplit(a: ndarray, indices: Union[int, ndarray]) -> list[ndarray]:
+def dsplit(a: ndarray, indices: int | ndarray) -> list[ndarray]:
     """
 
     Split array into multiple sub-arrays along the 3rd axis (depth).
@@ -208,7 +206,7 @@ def dsplit(a: ndarray, indices: Union[int, ndarray]) -> list[ndarray]:
     return split(a, indices, axis=2)
 
 
-def hsplit(a: ndarray, indices: Union[int, ndarray]) -> list[ndarray]:
+def hsplit(a: ndarray, indices: int | ndarray) -> list[ndarray]:
     """
 
     Split an array into multiple sub-arrays horizontally (column-wise).
@@ -228,7 +226,7 @@ def hsplit(a: ndarray, indices: Union[int, ndarray]) -> list[ndarray]:
     return split(a, indices, axis=1)
 
 
-def vsplit(a: ndarray, indices: Union[int, ndarray]) -> list[ndarray]:
+def vsplit(a: ndarray, indices: int | ndarray) -> list[ndarray]:
     """
 
     Split an array into multiple sub-arrays vertically (row-wise).

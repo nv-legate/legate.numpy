@@ -15,7 +15,7 @@
 from __future__ import annotations
 
 from itertools import chain
-from typing import TYPE_CHECKING, Any, Optional, Sequence, Union
+from typing import TYPE_CHECKING, Any, Sequence
 
 import numpy as np
 from numpy.core.multiarray import (  # type: ignore [attr-defined]
@@ -112,7 +112,7 @@ def check_shape_with_axis(
 def check_shape_dtype_without_axis(
     inputs: Sequence[ndarray],
     func_name: str,
-    dtype: Optional[npt.DTypeLike] = None,
+    dtype: npt.DTypeLike | None = None,
     casting: CastingKind = "same_kind",
 ) -> tuple[list[ndarray], ArrayInfo]:
     if len(inputs) == 0:
@@ -139,7 +139,7 @@ def check_shape_dtype_without_axis(
 
 
 def _block_collect_slices(
-    arr: Union[ndarray, Sequence[ndarray]], cur_depth: int, depth: int
+    arr: ndarray | Sequence[ndarray], cur_depth: int, depth: int
 ) -> tuple[list[Any], list[tuple[slice, ...]], Sequence[ndarray]]:
     # collects slices for each array in `arr`
     # the outcome will be slices on every dimension of the output array
@@ -230,8 +230,8 @@ def _concatenate(
     inputs: Sequence[ndarray],
     common_info: ArrayInfo,
     axis: int = 0,
-    out: Optional[ndarray] = None,
-    dtype: Optional[npt.DTypeLike] = None,
+    out: ndarray | None = None,
+    dtype: npt.DTypeLike | None = None,
     casting: CastingKind = "same_kind",
 ) -> ndarray:
     if axis < 0:
@@ -261,9 +261,7 @@ def _concatenate(
     return out_array
 
 
-def append(
-    arr: ndarray, values: ndarray, axis: Optional[int] = None
-) -> ndarray:
+def append(arr: ndarray, values: ndarray, axis: int | None = None) -> ndarray:
     """
 
     Append values to the end of an array.
@@ -362,9 +360,9 @@ def block(arrays: Sequence[Any]) -> ndarray:
 
 def concatenate(
     inputs: Sequence[ndarray],
-    axis: Union[int, None] = 0,
-    out: Optional[ndarray] = None,
-    dtype: Optional[npt.DTypeLike] = None,
+    axis: int | None = 0,
+    out: ndarray | None = None,
+    dtype: npt.DTypeLike | None = None,
     casting: CastingKind = "same_kind",
 ) -> ndarray:
     """
@@ -443,7 +441,7 @@ def concatenate(
 
 
 def stack(
-    arrays: Sequence[ndarray], axis: int = 0, out: Optional[ndarray] = None
+    arrays: Sequence[ndarray], axis: int = 0, out: ndarray | None = None
 ) -> ndarray:
     """
 

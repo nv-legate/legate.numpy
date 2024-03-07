@@ -19,7 +19,7 @@ import platform
 from abc import abstractmethod
 from ctypes import CDLL, RTLD_GLOBAL
 from enum import IntEnum, unique
-from typing import TYPE_CHECKING, Any, Union, cast
+from typing import TYPE_CHECKING, Any, cast
 
 import cffi  # type: ignore
 import numpy as np
@@ -663,7 +663,7 @@ class FFTType:
         input_dtype: npt.DTypeLike,
         output_dtype: npt.DTypeLike,
         single_precision: bool,
-        complex_type: Union[FFTType, None] = None,
+        complex_type: FFTType | None = None,
     ) -> None:
         self._name = name
         self._type_id = type_id
@@ -802,7 +802,7 @@ class FFTNormalization(IntEnum):
     ORTHOGONAL = 3
 
     @staticmethod
-    def from_string(in_string: str) -> Union[FFTNormalization, None]:
+    def from_string(in_string: str) -> FFTNormalization | None:
         if in_string == "forward":
             return FFTNormalization.FORWARD
         elif in_string == "ortho":
@@ -813,7 +813,7 @@ class FFTNormalization(IntEnum):
             return None
 
     @staticmethod
-    def reverse(in_string: Union[str, None]) -> str:
+    def reverse(in_string: str | None) -> str:
         if in_string == "forward":
             return "backward"
         elif in_string == "backward" or in_string is None:

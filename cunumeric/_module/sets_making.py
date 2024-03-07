@@ -14,7 +14,7 @@
 #
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 from .._array.util import add_boilerplate
 
@@ -30,7 +30,7 @@ def unique(
     return_index: bool = False,
     return_inverse: bool = False,
     return_counts: bool = False,
-    axis: Optional[int] = None,
+    axis: int | None = None,
 ) -> ndarray:
     """
 

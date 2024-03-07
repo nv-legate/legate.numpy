@@ -14,7 +14,7 @@
 #
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Sequence, Union
+from typing import TYPE_CHECKING, Sequence
 
 import numpy as np
 from numpy.core.multiarray import (  # type: ignore [attr-defined]
@@ -30,8 +30,6 @@ from .._ufunc.math import add, sqrt as _sqrt
 from ._exception import LinAlgError
 
 if TYPE_CHECKING:
-    from typing import Optional
-
     import numpy.typing as npt
 
 
@@ -85,7 +83,7 @@ def cholesky(a: ndarray) -> ndarray:
 
 
 @add_boilerplate("a", "b")
-def solve(a: ndarray, b: ndarray, out: Optional[ndarray] = None) -> ndarray:
+def solve(a: ndarray, b: ndarray, out: ndarray | None = None) -> ndarray:
     """
     Solve a linear matrix equation, or system of linear scalar equations.
 
@@ -225,8 +223,8 @@ def matrix_power(a: ndarray, n: int) -> ndarray:
     # Use binary decomposition to reduce the number of matrix multiplications.
     # Here, we iterate over the bits of n, from LSB to MSB, raise `a` to
     # increasing powers of 2, and multiply into the result as needed.
-    z: Union[ndarray, None] = None
-    result: Union[ndarray, None] = None
+    z: ndarray | None = None
+    result: ndarray | None = None
     while n > 0:
         z = a if z is None else matmul(z, z)
         n, bit = divmod(n, 2)
@@ -240,7 +238,7 @@ def matrix_power(a: ndarray, n: int) -> ndarray:
 
 # This implementation is adapted closely from NumPy
 def multi_dot(
-    arrays: Sequence[ndarray], *, out: Union[ndarray, None] = None
+    arrays: Sequence[ndarray], *, out: ndarray | None = None
 ) -> ndarray:
     """
     Compute the dot product of two or more arrays in a single function call,
@@ -317,7 +315,7 @@ def multi_dot(
 
 
 def _multi_dot_three(
-    A: ndarray, B: ndarray, C: ndarray, out: Union[ndarray, None] = None
+    A: ndarray, B: ndarray, C: ndarray, out: ndarray | None = None
 ) -> ndarray:
     """
     Find the best order for three arrays and do the multiplication.
@@ -377,7 +375,7 @@ def _multi_dot(
     order: npt.NDArray[np.int64],
     i: int,
     j: int,
-    out: Union[ndarray, None] = None,
+    out: ndarray | None = None,
 ) -> ndarray:
     """Actually do the multiplication with the given order."""
     if i == j:
@@ -397,10 +395,10 @@ def _multi_dot(
 @add_boilerplate("x")
 def norm(
     x: ndarray,
-    ord: Union[str, int, float, None] = None,
-    axis: Union[int, tuple[int, int], None] = None,
+    ord: str | int | float | None = None,
+    axis: int | tuple[int, int] | None = None,
     keepdims: bool = False,
-) -> Union[float, ndarray]:
+) -> float | ndarray:
     """
     Matrix or vector norm.
 
@@ -635,7 +633,7 @@ def _thunk_cholesky(a: ndarray, no_tril: bool = False) -> ndarray:
 
 
 def _thunk_solve(
-    a: ndarray, b: ndarray, output: Optional[ndarray] = None
+    a: ndarray, b: ndarray, output: ndarray | None = None
 ) -> ndarray:
     if a.dtype.kind not in ("f", "c"):
         a = a.astype("float64")

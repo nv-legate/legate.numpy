@@ -17,7 +17,7 @@ from __future__ import annotations
 import operator
 import warnings
 from functools import reduce
-from typing import TYPE_CHECKING, Any, Optional, Sequence, Union, cast
+from typing import TYPE_CHECKING, Any, Sequence, cast
 
 import numpy as np
 from legate.core import Field, LogicalArray, Scalar
@@ -92,12 +92,12 @@ class ndarray:
         self,
         shape: Any,
         dtype: npt.DTypeLike = np.float64,
-        buffer: Union[Any, None] = None,
+        buffer: Any | None = None,
         offset: int = 0,
-        strides: Union[tuple[int], None] = None,
-        order: Union[OrderType, None] = None,
-        thunk: Union[NumPyThunk, None] = None,
-        inputs: Union[Any, None] = None,
+        strides: tuple[int] | None = None,
+        order: OrderType | None = None,
+        thunk: NumPyThunk | None = None,
+        inputs: Any | None = None,
         writeable: bool = True,
     ) -> None:
         # `inputs` being a cuNumeric ndarray is definitely a bug
@@ -134,7 +134,7 @@ class ndarray:
                 )
         else:
             self._thunk = thunk
-        self._legate_data: Union[dict[str, Any], None] = None
+        self._legate_data: dict[str, Any] | None = None
 
         self._writeable = writeable
 
@@ -284,7 +284,7 @@ class ndarray:
         return self.transpose()
 
     @property
-    def base(self) -> Union[npt.NDArray[Any], None]:
+    def base(self) -> npt.NDArray[Any] | None:
         """
         Returns dtype for the base element of the subarrays,
         regardless of their dimension or shape.
@@ -610,7 +610,7 @@ class ndarray:
         return _ufunc.bitwise_and(self, rhs)
 
     def __array__(
-        self, dtype: Union[np.dtype[Any], None] = None
+        self, dtype: np.dtype[Any] | None = None
     ) -> npt.NDArray[Any]:
         """a.__array__([dtype], /)
 
@@ -686,7 +686,7 @@ class ndarray:
         result._thunk.copy(self._thunk, deep=False)
         return result
 
-    def __deepcopy__(self, memo: Union[Any, None] = None) -> ndarray:
+    def __deepcopy__(self, memo: Any | None = None) -> ndarray:
         """a.__deepcopy__(memo, /)
 
         Deep copy of array.
@@ -1232,9 +1232,7 @@ class ndarray:
             "cunumeric.ndarray doesn't support __rdivmod__ yet"
         )
 
-    def __reduce__(
-        self, *args: Any, **kwargs: Any
-    ) -> Union[str, tuple[str, ...]]:
+    def __reduce__(self, *args: Any, **kwargs: Any) -> str | tuple[str, ...]:
         """a.__reduce__(/)
 
         For pickling.
@@ -1244,7 +1242,7 @@ class ndarray:
 
     def __reduce_ex__(
         self, *args: Any, **kwargs: Any
-    ) -> Union[str, tuple[str, ...]]:
+    ) -> str | tuple[str, ...]:
         return self.__array__().__reduce_ex__(*args, **kwargs)
 
     def __repr__(self) -> str:
@@ -1459,10 +1457,10 @@ class ndarray:
     def all(
         self,
         axis: Any = None,
-        out: Union[ndarray, None] = None,
+        out: ndarray | None = None,
         keepdims: bool = False,
-        initial: Union[int, float, None] = None,
-        where: Union[ndarray, None] = None,
+        initial: int | float | None = None,
+        where: ndarray | None = None,
     ) -> ndarray:
         """a.all(axis=None, out=None, keepdims=False, initial=None, where=True)
 
@@ -1494,10 +1492,10 @@ class ndarray:
     def any(
         self,
         axis: Any = None,
-        out: Union[ndarray, None] = None,
+        out: ndarray | None = None,
         keepdims: bool = False,
-        initial: Union[int, float, None] = None,
-        where: Union[ndarray, None] = None,
+        initial: int | float | None = None,
+        where: ndarray | None = None,
     ) -> ndarray:
         """a.any(axis=None, out=None, keepdims=False, initial=None, where=True)
 
@@ -1529,7 +1527,7 @@ class ndarray:
     def argmax(
         self,
         axis: Any = None,
-        out: Union[ndarray, None] = None,
+        out: ndarray | None = None,
         keepdims: bool = False,
     ) -> ndarray:
         """a.argmax(axis=None, out=None)
@@ -1564,7 +1562,7 @@ class ndarray:
     def argmin(
         self,
         axis: Any = None,
-        out: Union[ndarray, None] = None,
+        out: ndarray | None = None,
         keepdims: bool = False,
     ) -> ndarray:
         """a.argmin(axis=None, out=None)
@@ -1693,7 +1691,7 @@ class ndarray:
         self,
         indices: Any,
         axis: Any = None,
-        out: Union[ndarray, None] = None,
+        out: ndarray | None = None,
         mode: BoundsMode = "raise",
     ) -> ndarray:
         """a.take(indices, axis=None, out=None, mode="raise")
@@ -1773,7 +1771,7 @@ class ndarray:
     def choose(
         self,
         choices: Any,
-        out: Union[ndarray, None] = None,
+        out: ndarray | None = None,
         mode: BoundsMode = "raise",
     ) -> ndarray:
         """a.choose(choices, out=None, mode='raise')
@@ -1875,7 +1873,7 @@ class ndarray:
         self,
         condition: ndarray,
         axis: Any = None,
-        out: Union[ndarray, None] = None,
+        out: ndarray | None = None,
     ) -> ndarray:
         """a.compress(self, condition, axis=None, out=None)
 
@@ -1934,9 +1932,9 @@ class ndarray:
     @add_boilerplate()
     def clip(
         self,
-        min: Union[int, float, npt.ArrayLike, None] = None,
-        max: Union[int, float, npt.ArrayLike, None] = None,
-        out: Union[npt.NDArray[Any], ndarray, None] = None,
+        min: int | float | npt.ArrayLike | None = None,
+        max: int | float | npt.ArrayLike | None = None,
+        out: npt.NDArray[Any] | ndarray | None = None,
     ) -> ndarray:
         """a.clip(min=None, max=None, out=None)
 
@@ -2040,8 +2038,8 @@ class ndarray:
     def cumsum(
         self,
         axis: Any = None,
-        dtype: Union[np.dtype[Any], None] = None,
-        out: Union[ndarray, None] = None,
+        dtype: np.dtype[Any] | None = None,
+        out: ndarray | None = None,
     ) -> ndarray:
         return perform_scan(
             ScanCode.SUM,
@@ -2056,8 +2054,8 @@ class ndarray:
     def cumprod(
         self,
         axis: Any = None,
-        dtype: Union[np.dtype[Any], None] = None,
-        out: Union[ndarray, None] = None,
+        dtype: np.dtype[Any] | None = None,
+        out: ndarray | None = None,
     ) -> ndarray:
         return perform_scan(
             ScanCode.PROD,
@@ -2072,8 +2070,8 @@ class ndarray:
     def nancumsum(
         self,
         axis: Any = None,
-        dtype: Union[np.dtype[Any], None] = None,
-        out: Union[ndarray, None] = None,
+        dtype: np.dtype[Any] | None = None,
+        out: ndarray | None = None,
     ) -> ndarray:
         return perform_scan(
             ScanCode.SUM,
@@ -2088,8 +2086,8 @@ class ndarray:
     def nancumprod(
         self,
         axis: Any = None,
-        dtype: Union[np.dtype[Any], None] = None,
-        out: Union[ndarray, None] = None,
+        dtype: np.dtype[Any] | None = None,
+        out: ndarray | None = None,
     ) -> ndarray:
         return perform_scan(
             ScanCode.PROD,
@@ -2107,11 +2105,11 @@ class ndarray:
     def _diag_helper(
         self,
         offset: int = 0,
-        axes: Union[Any, None] = None,
+        axes: Any | None = None,
         extract: bool = True,
         trace: bool = False,
-        out: Union[ndarray, None] = None,
-        dtype: Union[np.dtype[Any], None] = None,
+        out: ndarray | None = None,
+        dtype: np.dtype[Any] | None = None,
     ) -> ndarray:
         # _diag_helper can be used only for arrays with dim>=1
         if self.ndim < 1:
@@ -2322,8 +2320,8 @@ class ndarray:
         offset: int = 0,
         axis1: Any = None,
         axis2: Any = None,
-        dtype: Union[np.dtype[Any], None] = None,
-        out: Union[ndarray, None] = None,
+        dtype: np.dtype[Any] | None = None,
+        out: ndarray | None = None,
     ) -> ndarray:
         """a.trace(offset=0, axis1=None, axis2=None, dtype = None, out = None)
 
@@ -2365,7 +2363,7 @@ class ndarray:
         return res
 
     @add_boilerplate("rhs")
-    def dot(self, rhs: ndarray, out: Union[ndarray, None] = None) -> ndarray:
+    def dot(self, rhs: ndarray, out: ndarray | None = None) -> ndarray:
         """a.dot(rhs, out=None)
 
         Return the dot product of this array with ``rhs``.
@@ -2398,7 +2396,7 @@ class ndarray:
             casting="unsafe",
         )
 
-    def dump(self, file: Union[str, Path]) -> None:
+    def dump(self, file: str | Path) -> None:
         """a.dump(file)
 
         Dump a pickle of the array to the specified file.
@@ -2462,7 +2460,7 @@ class ndarray:
     def fft(
         self,
         s: Any,
-        axes: Union[Sequence[int], None],
+        axes: Sequence[int] | None,
         kind: FFTType,
         direction: FFTDirection,
         norm: Any,
@@ -2737,10 +2735,10 @@ class ndarray:
     def max(
         self,
         axis: Any = None,
-        out: Union[ndarray, None] = None,
+        out: ndarray | None = None,
         keepdims: bool = False,
-        initial: Union[int, float, None] = None,
-        where: Union[ndarray, None] = None,
+        initial: int | float | None = None,
+        where: ndarray | None = None,
     ) -> ndarray:
         """a.max(axis=None, out=None, keepdims=False, initial=<no value>,
                  where=True)
@@ -2768,7 +2766,7 @@ class ndarray:
             where=where,
         )
 
-    def _count_nonzero(self, axis: Any = None) -> Union[int, ndarray]:
+    def _count_nonzero(self, axis: Any = None) -> int | ndarray:
         if self.size == 0:
             return 0
         return perform_unary_reduction(
@@ -2778,9 +2776,7 @@ class ndarray:
             axis=axis,
         )
 
-    def _summation_dtype(
-        self, dtype: Optional[np.dtype[Any]]
-    ) -> np.dtype[Any]:
+    def _summation_dtype(self, dtype: np.dtype[Any] | None) -> np.dtype[Any]:
         # Pick our dtype if it wasn't picked yet
         if dtype is None:
             if self.dtype.kind != "f" and self.dtype.kind != "c":
@@ -2795,7 +2791,7 @@ class ndarray:
         axis: Any,
         ddof: int = 0,
         keepdims: bool = False,
-        where: Union[ndarray, None] = None,
+        where: ndarray | None = None,
     ) -> None:
         dtype = sum_array.dtype
         if axis is None:
@@ -2831,10 +2827,10 @@ class ndarray:
     def mean(
         self,
         axis: Any = None,
-        dtype: Optional[np.dtype[Any]] = None,
-        out: Optional[ndarray] = None,
+        dtype: np.dtype[Any] | None = None,
+        out: ndarray | None = None,
         keepdims: bool = False,
-        where: Union[ndarray, None] = None,
+        where: ndarray | None = None,
     ) -> ndarray:
         """a.mean(axis=None, dtype=None, out=None, keepdims=False)
 
@@ -2889,11 +2885,11 @@ class ndarray:
 
     def _nanmean(
         self,
-        axis: Optional[Union[int, tuple[int, ...]]] = None,
-        dtype: Union[np.dtype[Any], None] = None,
-        out: Union[ndarray, None] = None,
+        axis: int | tuple[int, ...] | None = None,
+        dtype: np.dtype[Any] | None = None,
+        out: ndarray | None = None,
         keepdims: bool = False,
-        where: Union[ndarray, None] = None,
+        where: ndarray | None = None,
     ) -> ndarray:
         if np.issubdtype(dtype, np.integer) or np.issubdtype(dtype, np.bool_):
             return self.mean(
@@ -2916,13 +2912,13 @@ class ndarray:
     @add_boilerplate()
     def var(
         self,
-        axis: Optional[Union[int, tuple[int, ...]]] = None,
-        dtype: Optional[np.dtype[Any]] = None,
-        out: Optional[ndarray] = None,
+        axis: int | tuple[int, ...] | None = None,
+        dtype: np.dtype[Any] | None = None,
+        out: ndarray | None = None,
         ddof: int = 0,
         keepdims: bool = False,
         *,
-        where: Union[ndarray, None] = None,
+        where: ndarray | None = None,
     ) -> ndarray:
         """a.var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=False)
 
@@ -3012,10 +3008,10 @@ class ndarray:
     def min(
         self,
         axis: Any = None,
-        out: Union[ndarray, None] = None,
+        out: ndarray | None = None,
         keepdims: bool = False,
-        initial: Union[int, float, None] = None,
-        where: Union[ndarray, None] = None,
+        initial: int | float | None = None,
+        where: ndarray | None = None,
     ) -> ndarray:
         """a.min(axis=None, out=None, keepdims=False, initial=<no value>,
                  where=True)
@@ -3046,10 +3042,10 @@ class ndarray:
     @add_boilerplate()
     def partition(
         self,
-        kth: Union[int, Sequence[int]],
+        kth: int | Sequence[int],
         axis: Any = -1,
         kind: SelectKind = "introselect",
-        order: Union[OrderType, None] = None,
+        order: OrderType | None = None,
     ) -> None:
         """a.partition(kth, axis=-1, kind='introselect', order=None)
 
@@ -3074,10 +3070,10 @@ class ndarray:
     @add_boilerplate()
     def argpartition(
         self,
-        kth: Union[int, Sequence[int]],
+        kth: int | Sequence[int],
         axis: Any = -1,
         kind: SelectKind = "introselect",
-        order: Union[OrderType, None] = None,
+        order: OrderType | None = None,
     ) -> ndarray:
         """a.argpartition(kth, axis=-1, kind='introselect', order=None)
 
@@ -3109,11 +3105,11 @@ class ndarray:
     def prod(
         self,
         axis: Any = None,
-        dtype: Union[np.dtype[Any], None] = None,
-        out: Union[ndarray, None] = None,
+        dtype: np.dtype[Any] | None = None,
+        out: ndarray | None = None,
         keepdims: bool = False,
-        initial: Union[int, float, None] = None,
-        where: Union[ndarray, None] = None,
+        initial: int | float | None = None,
+        where: ndarray | None = None,
     ) -> ndarray:
         """a.prod(axis=None, dtype=None, out=None, keepdims=False, initial=1,
         where=True)
@@ -3257,9 +3253,9 @@ class ndarray:
 
     def setflags(
         self,
-        write: Union[bool, None] = None,
-        align: Union[bool, None] = None,
-        uic: Union[bool, None] = None,
+        write: bool | None = None,
+        align: bool | None = None,
+        uic: bool | None = None,
     ) -> None:
         """a.setflags(write=None, align=None, uic=None)
 
@@ -3322,10 +3318,10 @@ class ndarray:
     @add_boilerplate()
     def searchsorted(
         self: ndarray,
-        v: Union[int, float, ndarray],
+        v: int | float | ndarray,
         side: SortSide = "left",
-        sorter: Optional[ndarray] = None,
-    ) -> Union[int, ndarray]:
+        sorter: ndarray | None = None,
+    ) -> int | ndarray:
         """a.searchsorted(v, side='left', sorter=None)
 
         Find the indices into a sorted array a such that, if the corresponding
@@ -3397,7 +3393,7 @@ class ndarray:
         self,
         axis: Any = -1,
         kind: SortType = "quicksort",
-        order: Union[OrderType, None] = None,
+        order: OrderType | None = None,
     ) -> None:
         """a.sort(axis=-1, kind=None, order=None)
 
@@ -3421,7 +3417,7 @@ class ndarray:
         self,
         axis: Any = -1,
         kind: SortType = "quicksort",
-        order: Union[OrderType, None] = None,
+        order: OrderType | None = None,
     ) -> ndarray:
         """a.argsort(axis=-1, kind=None, order=None)
 
@@ -3479,11 +3475,11 @@ class ndarray:
     def sum(
         self,
         axis: Any = None,
-        dtype: Union[np.dtype[Any], None] = None,
-        out: Union[ndarray, None] = None,
+        dtype: np.dtype[Any] | None = None,
+        out: ndarray | None = None,
         keepdims: bool = False,
-        initial: Union[int, float, None] = None,
-        where: Union[ndarray, None] = None,
+        initial: int | float | None = None,
+        where: ndarray | None = None,
     ) -> ndarray:
         """a.sum(axis=None, dtype=None, out=None, keepdims=False, initial=0,
         where=None)
@@ -3526,10 +3522,10 @@ class ndarray:
         self,
         axis: Any = None,
         dtype: Any = None,
-        out: Union[ndarray, None] = None,
+        out: ndarray | None = None,
         keepdims: bool = False,
-        initial: Optional[Union[int, float]] = None,
-        where: Optional[ndarray] = None,
+        initial: int | float | None = None,
+        where: ndarray | None = None,
     ) -> ndarray:
         # Note that np.nansum and np.sum allow complex datatypes
         # so there are no "disallowed types" for this API
@@ -3790,8 +3786,8 @@ class ndarray:
 
     def view(
         self,
-        dtype: Union[npt.DTypeLike, None] = None,
-        type: Union[type, None] = None,
+        dtype: npt.DTypeLike | None = None,
+        type: type | None = None,
     ) -> ndarray:
         """
         New view of array with the same data.
