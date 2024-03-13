@@ -3,11 +3,11 @@
     "legate_core_internal" : {
       "repo": "legate.core.internal",
       "artifact_name": "${{ inputs.platform }}-${{ inputs.build-type }}-<<repo>>-${{ inputs.target-device }}-release-gcc-<<git_tag>>",
-      "version": "24.01.00",
+      "version": "24.05.00",
       "git_url" : "https://github.com/nv-legate/legate.core.internal.git",
       "git_shallow": false,
       "always_download": false,
-      "git_tag" : "2d257d20acfe034337a674f689d17488d6b2ba06"
+      "git_tag" : "1d29d332e1b59357e734dc1cabdbb3b0c6f2a254"
     }
   }
 }
