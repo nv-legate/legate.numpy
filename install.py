@@ -153,7 +153,6 @@ def install_cunumeric(
     spy,
     tblis_dir,
     thread_count,
-    thrust_dir,
     unknown,
     verbose,
 ):
@@ -198,7 +197,6 @@ def install_cunumeric(
         print("spy: ", spy)
         print("tblis_dir: ", tblis_dir)
         print("thread_count: ", thread_count)
-        print("thrust_dir: ", thrust_dir)
         print("unknown: ", unknown)
         print("verbose: ", verbose)
 
@@ -225,7 +223,6 @@ def install_cunumeric(
     cuda_dir = validate_path(cuda_dir)
     nccl_dir = validate_path(nccl_dir)
     tblis_dir = validate_path(tblis_dir)
-    thrust_dir = validate_path(thrust_dir)
     curand_dir = validate_path(curand_dir)
     gasnet_dir = validate_path(gasnet_dir)
     cusolvermp_dir = validate_path(cusolvermp_dir)
@@ -247,7 +244,6 @@ def install_cunumeric(
         print("nccl_dir: ", nccl_dir)
         print("tblis_dir: ", tblis_dir)
         print("legate_dir: ", legate_dir)
-        print("thrust_dir: ", thrust_dir)
         print("curand_dir: ", curand_dir)
         print("gasnet_dir: ", gasnet_dir)
         print("cusolvermp_dir: ", cusolvermp_dir)
@@ -369,8 +365,6 @@ def install_cunumeric(
         cmake_flags += ["-DGASNet_CONDUIT=%s" % conduit]
     if tblis_dir:
         cmake_flags += ["-Dtblis_ROOT=%s" % tblis_dir]
-    if thrust_dir:
-        cmake_flags += ["-DThrust_ROOT=%s" % thrust_dir]
     if openblas_dir:
         cmake_flags += ["-DBLAS_DIR=%s" % openblas_dir]
     if cusolvermp_dir:
@@ -506,14 +500,6 @@ def driver():
         required=False,
         default=os.environ.get("CUTENSOR_PATH"),
         help="Path to cuTensor installation directory.",
-    )
-    parser.add_argument(
-        "--with-thrust",
-        dest="thrust_dir",
-        metavar="DIR",
-        required=False,
-        default=os.environ.get("THRUST_PATH"),
-        help="Path to Thrust installation directory.",
     )
     parser.add_argument(
         "--with-nccl",

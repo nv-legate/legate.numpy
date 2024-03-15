@@ -20,6 +20,10 @@
 #include "cunumeric/arg.h"
 #include "cunumeric/arg.inl"
 
+#ifdef __NVCC__
+#include "thrust/complex.h"
+#endif
+
 #define _USE_MATH_DEFINES
 
 #include <math.h>

@@ -51,7 +51,7 @@ void cub_local_sort(const VAL* values_in,
       keys_in.ptr(0), values_out, sizeof(VAL) * volume, cudaMemcpyDeviceToDevice, stream));
   }
 
-  auto multiply = [=] __device__(auto const& input) { return input * sort_dim_size; };
+  auto multiply = [=] __host__ __device__(int x) { return x * sort_dim_size; };
 
   size_t temp_storage_bytes = 0;
   if (indices_out == nullptr) {
