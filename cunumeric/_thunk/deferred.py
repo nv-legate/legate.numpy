@@ -1941,12 +1941,34 @@ class DeferredArray(NumPyThunk):
     def repeat(
         self, repeats: Any, axis: int, scalar_repeats: bool
     ) -> DeferredArray:
-        out = runtime.create_unbound_thunk(self.base.type, ndim=self.ndim)
         task = legate_runtime.create_auto_task(
             self.library, CuNumericOpCode.REPEAT
         )
-        p_self = task.add_input(self.base)
-        task.add_output(out.base)
+        if scalar_repeats:
+            out_shape = tuple(
+                self.shape[dim] * repeats if dim == axis else self.shape[dim]
+                for dim in range(self.ndim)
+            )
+            out = cast(
+                DeferredArray,
+                runtime.create_empty_thunk(
+                    out_shape,
+                    dtype=self.base.type,
+                    inputs=[self],
+                ),
+            )
+            p_self = task.declare_partition()
+            p_out = task.declare_partition()
+            task.add_input(self.base, p_self)
+            task.add_output(out.base, p_out)
+            factors = tuple(
+                repeats if dim == axis else 1 for dim in range(self.ndim)
+            )
+            task.add_constraint(scale(factors, p_self, p_out))
+        else:
+            out = runtime.create_unbound_thunk(self.base.type, ndim=self.ndim)
+            p_self = task.add_input(self.base)
+            task.add_output(out.base)
         # We pass axis now but don't use for 1D case (will use for ND case
         task.add_scalar_arg(axis, ty.int32)
         task.add_scalar_arg(scalar_repeats, ty.bool_)
