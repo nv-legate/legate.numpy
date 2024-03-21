@@ -30,7 +30,7 @@ from numpy.core.numeric import (  # type: ignore [attr-defined]
 )
 
 from .. import _ufunc
-from .._utils.array import calculate_volume, to_core_dtype
+from .._utils.array import calculate_volume, to_core_type
 from .._utils.coverage import FALLBACK_WARNING, clone_class, is_implemented
 from .._utils.linalg import dot_modes
 from .._utils.structure import deep_apply
@@ -128,7 +128,7 @@ class ndarray:
                         for inp in inputs
                         if isinstance(inp, ndarray)
                     ]
-                core_dtype = to_core_dtype(dtype)
+                core_dtype = to_core_type(dtype)
                 self._thunk = runtime.create_empty_thunk(
                     sanitized_shape, core_dtype, inputs
                 )
@@ -660,7 +660,7 @@ class ndarray:
             args = (np.array(item, dtype=self.dtype),)
         if args[0].size != 1:
             raise ValueError("contains needs scalar item")
-        core_dtype = to_core_dtype(self.dtype)
+        core_dtype = to_core_type(self.dtype)
         return perform_unary_reduction(
             UnaryRedCode.CONTAINS,
             self,
@@ -1975,7 +1975,7 @@ class ndarray:
                 return convert_to_cunumeric_ndarray(
                     self.__array__().clip(args[0], args[1])
                 )
-        core_dtype = to_core_dtype(self.dtype)
+        core_dtype = to_core_type(self.dtype)
         extra_args = (Scalar(min, core_dtype), Scalar(max, core_dtype))
         return perform_unary_op(
             UnaryOpCode.CLIP, self, out=out, extra_args=extra_args
@@ -2971,7 +2971,7 @@ class ndarray:
                 # FIXME(wonchanl): the following code blocks on mu to convert
                 # it to a Scalar object. We need to get rid of this blocking by
                 # allowing the extra arguments to be Legate stores
-                args=(Scalar(mu.__array__(), to_core_dtype(self.dtype)),),
+                args=(Scalar(mu.__array__(), to_core_type(self.dtype)),),
             )
         else:
             # TODO(https://github.com/nv-legate/cunumeric/issues/591)

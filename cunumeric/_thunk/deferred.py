@@ -49,7 +49,7 @@ from numpy.core.numeric import (  # type: ignore [attr-defined]
     normalize_axis_tuple,
 )
 
-from .._utils.array import is_advanced_indexing, to_core_dtype
+from .._utils.array import is_advanced_indexing, to_core_type
 from ..config import (
     BinaryOpCode,
     BitGeneratorDistribution,
@@ -1701,7 +1701,7 @@ class DeferredArray(NumPyThunk):
             c_arr = c._broadcast(self.shape)
             task.add_input(c_arr)
             task.add_alignment(c_arr, out_arr)
-        task.add_scalar_arg(default, to_core_dtype(default.dtype))
+        task.add_scalar_arg(default, to_core_type(default.dtype))
         task.execute()
 
     # Create or extract a diagonal from a matrix

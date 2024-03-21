@@ -98,7 +98,7 @@ class TestArgSort(object):
         #     if self.deferred is None:
         #         if self.parent is None:
         #
-        # > assert self.runtime.is_supported_type(self.array.dtype)
+        # > assert self.runtime.is_supported_dtype(self.array.dtype)
         # E
         # AssertionError
         #

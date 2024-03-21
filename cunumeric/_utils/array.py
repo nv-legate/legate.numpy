@@ -40,11 +40,24 @@ SUPPORTED_DTYPES = {
 }
 
 
-def is_supported_type(dtype: str | np.dtype[Any]) -> bool:
+def is_supported_dtype(dtype: str | np.dtype[Any]) -> bool:
+    """
+    Whether a NumPy dtype is supported by cuNumeric
+
+    Parameters
+    ----------
+    dtype : data-type
+        The dtype to query
+
+    Returns
+    -------
+    res : bool
+        True if `dtype` is a supported dtype
+    """
     return np.dtype(dtype) in SUPPORTED_DTYPES
 
 
-def to_core_dtype(dtype: str | np.dtype[Any]) -> ty.Type:
+def to_core_type(dtype: str | np.dtype[Any]) -> ty.Type:
     core_dtype = SUPPORTED_DTYPES.get(np.dtype(dtype))
     if core_dtype is None:
         raise TypeError(f"cuNumeric does not support dtype={dtype}")

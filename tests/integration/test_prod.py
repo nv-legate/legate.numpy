@@ -222,7 +222,7 @@ class TestProdPositive(object):
         # allclose hits assertion error:
         # File "/legate/cunumeric/cunumeric/eager.py", line 293,
         # in to_deferred_array
-        #   assert self.runtime.is_supported_type(self.array.dtype)
+        #   assert self.runtime.is_supported_dtype(self.array.dtype)
         #   AssertionError
         assert allclose(out_np, out_num)
 
