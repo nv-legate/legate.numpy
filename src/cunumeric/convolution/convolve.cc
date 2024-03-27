@@ -26,7 +26,7 @@ namespace cunumeric {
 #if 0
 template <Type::Code CODE, int DIM>
 struct ConvolveImplBody<VariantKind::CPU, CODE, DIM> {
-  using VAL = legate_type_of<CODE>;
+  using VAL = type_of<CODE>;
 
   void operator()(AccessorWO<VAL, DIM> out,
                   AccessorRO<VAL, DIM> filter,
@@ -75,7 +75,7 @@ struct ConvolveImplBody<VariantKind::CPU, CODE, DIM> {
 
 template <Type::Code CODE, int DIM>
 struct ConvolveImplBody<VariantKind::CPU, CODE, DIM> {
-  using VAL = legate_type_of<CODE>;
+  using VAL = type_of<CODE>;
 
   void operator()(AccessorWO<VAL, DIM> out,
                   AccessorRO<VAL, DIM> filter,
@@ -84,11 +84,12 @@ struct ConvolveImplBody<VariantKind::CPU, CODE, DIM> {
                   const Rect<DIM>& subrect,
                   const Rect<DIM>& filter_rect) const
   {
-    const Point<DIM> zero = Point<DIM>::ZEROES();
-    const Point<DIM> one  = Point<DIM>::ONES();
-    Point<DIM> extents    = filter_rect.hi - filter_rect.lo + one;
+    const Point<DIM> one = Point<DIM>::ONES();
+    Point<DIM> extents   = filter_rect.hi - filter_rect.lo + one;
     Point<DIM> centers;
-    for (int d = 0; d < DIM; d++) centers[d] = extents[d] / 2;
+    for (int d = 0; d < DIM; d++) {
+      centers[d] = extents[d] / 2;
+    }
 
     // Compute the tiles for the L2 cache
     Point<DIM> l2_output_tile, l2_filter_tile;
@@ -103,11 +104,13 @@ struct ConvolveImplBody<VariantKind::CPU, CODE, DIM> {
     compute_filter_tile<VAL, DIM>(
       l2_filter_tile, filter_bounds, l2_output_tile, 3 * L2_CACHE_SIZE / 4);
     unsigned total_l2_filters = 1;
-    for (int d = 0; d < DIM; d++)
+    for (int d = 0; d < DIM; d++) {
       total_l2_filters *= ((extents[d] + l2_filter_tile[d] - 1) / l2_filter_tile[d]);
+    }
     unsigned total_l2_outputs = 1;
-    for (int d = 0; d < DIM; d++)
+    for (int d = 0; d < DIM; d++) {
       total_l2_outputs *= ((output_bounds[d] + l2_output_tile[d] - 1) / l2_output_tile[d]);
+    }
 
     // Compute the tiles for the L1 cache
     Point<DIM> l1_output_tile, l1_filter_tile;
@@ -120,11 +123,13 @@ struct ConvolveImplBody<VariantKind::CPU, CODE, DIM> {
     compute_filter_tile<VAL, DIM>(
       l1_filter_tile, filter_bounds, l1_output_tile, 3 * L1_CACHE_SIZE / 4);
     unsigned total_l1_filters = 1;
-    for (int d = 0; d < DIM; d++)
+    for (int d = 0; d < DIM; d++) {
       total_l1_filters *= ((l2_filter_tile[d] + l1_filter_tile[d] - 1) / l1_filter_tile[d]);
+    }
     unsigned total_l1_outputs = 1;
-    for (int d = 0; d < DIM; d++)
+    for (int d = 0; d < DIM; d++) {
       total_l1_outputs *= ((l2_output_tile[d] + l1_output_tile[d] - 1) / l1_output_tile[d]);
+    }
 
     // Zero out the output data since we're going to be doing sum accumulations
     Point<DIM> output         = subrect.lo;
@@ -133,10 +138,11 @@ struct ConvolveImplBody<VariantKind::CPU, CODE, DIM> {
       out[output] = VAL{0};
       for (int d = DIM - 1; d >= 0; d--) {
         output[d]++;
-        if (subrect.hi[d] < output[d])
+        if (subrect.hi[d] < output[d]) {
           output[d] = subrect.lo[d];
-        else
+        } else {
           break;
+        }
       }
     }
 
@@ -149,9 +155,10 @@ struct ConvolveImplBody<VariantKind::CPU, CODE, DIM> {
       if (!filter_rect.contains(l2_filter_rect)) {
         l2_filter_rect   = filter_rect.intersection(l2_filter_rect);
         local_l1_filters = 1;
-        for (int d = 0; d < DIM; d++)
+        for (int d = 0; d < DIM; d++) {
           local_l1_filters *=
             ((l2_filter_rect.hi[d] - l2_filter_rect.lo[d] + l1_filter_tile[d]) / l1_filter_tile[d]);
+        }
       }
       // Now iterate the tiles for the L2 outputs
       Point<DIM> l2_output = subrect.lo;
@@ -161,9 +168,10 @@ struct ConvolveImplBody<VariantKind::CPU, CODE, DIM> {
         if (!subrect.contains(l2_output_rect)) {
           l2_output_rect   = subrect.intersection(l2_output_rect);
           local_l1_outputs = 1;
-          for (int d = 0; d < DIM; d++)
+          for (int d = 0; d < DIM; d++) {
             local_l1_outputs *= ((l2_output_rect.hi[d] - l2_output_rect.lo[d] + l1_output_tile[d]) /
                                  l1_output_tile[d]);
+          }
         }
         // Do a quick check here to see if all the inputs are contained for
         // this particular tile
@@ -190,67 +198,74 @@ struct ConvolveImplBody<VariantKind::CPU, CODE, DIM> {
               Point<DIM> filter_point = l1_filter_rect.lo;
               for (unsigned fidx = 0; fidx < l1_filter_points; fidx++) {
                 Point<DIM> input = output + extents - filter_point - one - centers;
-                if (input_contained || root_rect.contains(input))
+                if (input_contained || root_rect.contains(input)) {
                   acc += in[input] * filter[filter_point];
+                }
                 // Step to the next filter point
                 for (int d = DIM - 1; d >= 0; d--) {
                   filter_point[d]++;
-                  if (l1_filter_rect.hi[d] < filter_point[d])
+                  if (l1_filter_rect.hi[d] < filter_point[d]) {
                     filter_point[d] = l1_filter_rect.lo[d];
-                  else
+                  } else {
                     break;
+                  }
                 }
               }
               out[output] += acc;
               // Step to the next output point
               for (int d = DIM - 1; d >= 0; d--) {
                 output[d]++;
-                if (l1_output_rect.hi[d] < output[d])
+                if (l1_output_rect.hi[d] < output[d]) {
                   output[d] = l1_output_rect.lo[d];
-                else
+                } else {
                   break;
+                }
               }
             }
             // Step to the next L1 filter
             for (int d = DIM - 1; d >= 0; d--) {
               l1_filter[d] += l1_filter_tile[d];
-              if (l2_filter_rect.hi[d] < l1_filter[d])
+              if (l2_filter_rect.hi[d] < l1_filter[d]) {
                 l1_filter[d] = l2_filter_rect.lo[d];
-              else
+              } else {
                 break;
+              }
             }
           }
           // Step to the next L1 output tile
           for (int d = DIM - 1; d >= 0; d--) {
             l1_output[d] += l1_output_tile[d];
-            if (l2_output_rect.hi[d] < l1_output[d])
+            if (l2_output_rect.hi[d] < l1_output[d]) {
               l1_output[d] = l2_output_rect.lo[d];
-            else
+            } else {
               break;
+            }
           }
         }
         // Step to the next output tile
         for (int d = DIM - 1; d >= 0; d--) {
           l2_output[d] += l2_output_tile[d];
-          if (subrect.hi[d] < l2_output[d])
+          if (subrect.hi[d] < l2_output[d]) {
             l2_output[d] = subrect.lo[d];
-          else
+          } else {
             break;
+          }
         }
       }
       // Step to the next l2 filter
       for (int d = DIM - 1; d >= 0; d--) {
         l2_filter[d] += l2_filter_tile[d];
-        if (filter_rect.hi[d] < l2_filter[d])
+        if (filter_rect.hi[d] < l2_filter[d]) {
           l2_filter[d] = filter_rect.lo[d];
-        else
+        } else {
           break;
+        }
       }
     }
   }
 };
 
-/*static*/ void ConvolveTask::cpu_variant(TaskContext& context)
+/*static*/ void ConvolveTask::cpu_variant(TaskContext context)
 {
   convolve_template<VariantKind::CPU>(context);
 }

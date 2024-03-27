@@ -28,7 +28,7 @@ using namespace legate;
 
 template <VariantKind KIND, Type::Code CODE, int DIM>
 struct Putmask {
-  using T      = legate_type_of<CODE>;
+  using T      = type_of<CODE>;
   using IN     = AccessorRW<T, DIM>;
   using MASK   = AccessorRO<bool, DIM>;
   using VALUES = AccessorRO<T, DIM>;
@@ -56,8 +56,10 @@ struct Putmask {
     mask   = args.mask.read_accessor<bool, DIM>(rect);
     values = args.values.read_accessor<T, DIM>(rect);
     volume = pitches.flatten(rect);
-    if (volume == 0) return;
-#ifndef LEGATE_BOUNDS_CHECKS
+    if (volume == 0) {
+      return;
+    }
+#if !LegateDefined(LEGATE_BOUNDS_CHECKS)
     dense = input.accessor.is_dense_row_major(rect) && mask.accessor.is_dense_row_major(rect);
     dense = dense && values.accessor.is_dense_row_major(rect);
     if (dense) {
@@ -70,19 +72,25 @@ struct Putmask {
 
   __CUDA_HD__ void operator()(const size_t idx, DenseTag) const noexcept
   {
-    if (maskptr[idx]) inputptr[idx] = valptr[idx];
+    if (maskptr[idx]) {
+      inputptr[idx] = valptr[idx];
+    }
   }
 
   __CUDA_HD__ void operator()(const size_t idx, SparseTag) const noexcept
   {
     auto p = pitches.unflatten(idx, rect.lo);
-    if (mask[p]) input[p] = values[p];
+    if (mask[p]) {
+      input[p] = values[p];
+    }
   }
 
   void execute() const noexcept
   {
-#ifndef LEGATE_BOUNDS_CHECKS
-    if (dense) { return ParallelLoopPolicy<KIND, DenseTag>()(rect, *this); }
+#if !LegateDefined(LEGATE_BOUNDS_CHECKS)
+    if (dense) {
+      return ParallelLoopPolicy<KIND, DenseTag>()(rect, *this);
+    }
 #endif
     return ParallelLoopPolicy<KIND, SparseTag>()(rect, *this);
   }
@@ -103,8 +111,8 @@ struct PutmaskImpl {
 template <VariantKind KIND>
 static void putmask_template(TaskContext& context)
 {
-  auto& inputs = context.inputs();
-  PutmaskArgs args{context.outputs()[0], inputs[1], inputs[2]};
+  auto inputs = context.inputs();
+  PutmaskArgs args{context.output(0), inputs[1], inputs[2]};
   int dim = std::max(1, args.input.dim());
   double_dispatch(dim, args.input.code(), PutmaskImpl<KIND>{}, args);
 }

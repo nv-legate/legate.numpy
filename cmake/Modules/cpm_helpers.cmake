@@ -40,7 +40,7 @@ function(get_cpm_git_args _out_var)
   endif()
   if(GIT_REPOSITORY MATCHES "github\.com")
     # If retrieving from github use `.zip` URL to download faster
-    set(cpm_git_args URL "${GIT_REPOSITORY}/archive/refs/${gh_tag_prefix}/${repo_tag}.zip")
+    set(cpm_git_args URL "${GIT_REPOSITORY}/archive/${repo_tag}.zip")
   elseif(GIT_REPOSITORY MATCHES "gitlab\.com")
     # GitLab archive URIs replace slashes with dashes
     string(REPLACE "/" "-" archive_tag "${repo_tag}")

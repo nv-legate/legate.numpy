@@ -16,14 +16,14 @@
 
 #pragma once
 
-#include "cunumeric/cunumeric.h"
+#include "cunumeric/cunumeric_task.h"
 
 namespace cunumeric {
 
 struct PutmaskArgs {
-  const Array& input;
-  const Array& mask;
-  const Array& values;
+  legate::PhysicalStore input;
+  legate::PhysicalStore mask;
+  legate::PhysicalStore values;
 };
 
 class PutmaskTask : public CuNumericTask<PutmaskTask> {
@@ -31,12 +31,12 @@ class PutmaskTask : public CuNumericTask<PutmaskTask> {
   static const int TASK_ID = CUNUMERIC_PUTMASK;
 
  public:
-  static void cpu_variant(legate::TaskContext& context);
-#ifdef LEGATE_USE_OPENMP
-  static void omp_variant(legate::TaskContext& context);
+  static void cpu_variant(legate::TaskContext context);
+#if LegateDefined(LEGATE_USE_OPENMP)
+  static void omp_variant(legate::TaskContext context);
 #endif
-#ifdef LEGATE_USE_CUDA
-  static void gpu_variant(legate::TaskContext& context);
+#if LegateDefined(LEGATE_USE_CUDA)
+  static void gpu_variant(legate::TaskContext context);
 #endif
 };
 

@@ -38,7 +38,7 @@ struct UnpackbitsImplBody<VariantKind::CPU, DIM, BITORDER> {
   }
 };
 
-/*static*/ void UnpackbitsTask::cpu_variant(TaskContext& context)
+/*static*/ void UnpackbitsTask::cpu_variant(TaskContext context)
 {
   unpackbits_template<VariantKind::CPU>(context);
 }

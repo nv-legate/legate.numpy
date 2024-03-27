@@ -26,7 +26,7 @@ struct ReadImplBody<VariantKind::CPU, VAL> {
   void operator()(AccessorWO<VAL, 1> out, AccessorRO<VAL, 1> in) const { out[0] = in[0]; }
 };
 
-/*static*/ void ReadTask::cpu_variant(TaskContext& context)
+/*static*/ void ReadTask::cpu_variant(TaskContext context)
 {
   read_template<VariantKind::CPU>(context);
 }

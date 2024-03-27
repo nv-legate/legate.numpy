@@ -16,15 +16,15 @@
 
 #pragma once
 
-#include "cunumeric/cunumeric.h"
+#include "cunumeric/cunumeric_task.h"
 
 #include <thrust/sort.h>
 
 namespace cunumeric {
 
 struct SortArgs {
-  const Array& input;
-  Array& output;
+  legate::PhysicalStore input;
+  legate::PhysicalStore output;
   bool argsort;
   bool stable;
   size_t segment_size_g;
@@ -66,7 +66,9 @@ struct SegmentSampleComparator
       return lhs.segment < rhs.segment;
     } else {
       // special case for unused samples
-      if (lhs.rank < 0 || rhs.rank < 0) { return rhs.rank < 0 && lhs.rank >= 0; }
+      if (lhs.rank < 0 || rhs.rank < 0) {
+        return rhs.rank < 0 && lhs.rank >= 0;
+      }
 
       if (lhs.value != rhs.value) {
         return lhs.value < rhs.value;
@@ -95,12 +97,12 @@ class SortTask : public CuNumericTask<SortTask> {
   static const int TASK_ID = CUNUMERIC_SORT;
 
  public:
-  static void cpu_variant(legate::TaskContext& context);
-#ifdef LEGATE_USE_OPENMP
-  static void omp_variant(legate::TaskContext& context);
+  static void cpu_variant(legate::TaskContext context);
+#if LegateDefined(LEGATE_USE_OPENMP)
+  static void omp_variant(legate::TaskContext context);
 #endif
-#ifdef LEGATE_USE_CUDA
-  static void gpu_variant(legate::TaskContext& context);
+#if LegateDefined(LEGATE_USE_CUDA)
+  static void gpu_variant(legate::TaskContext context);
 #endif
 };
 

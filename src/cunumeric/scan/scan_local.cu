@@ -33,19 +33,21 @@ static __global__ void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM)
   lazy_kernel(RES* out, RES* sum_val)
 {
   const size_t idx = blockIdx.x * blockDim.x + threadIdx.x;
-  if (idx >= 1) return;
+  if (idx >= 1) {
+    return;
+  }
   sum_val[0] = out[0];
 }
 
 template <ScanCode OP_CODE, Type::Code CODE, int DIM>
 struct ScanLocalImplBody<VariantKind::GPU, OP_CODE, CODE, DIM> {
   using OP  = ScanOp<OP_CODE, CODE>;
-  using VAL = legate_type_of<CODE>;
+  using VAL = type_of<CODE>;
 
   void operator()(OP func,
                   const AccessorWO<VAL, DIM>& out,
                   const AccessorRO<VAL, DIM>& in,
-                  Array& sum_vals,
+                  legate::PhysicalStore& sum_vals,
                   const Pitches<DIM - 1>& pitches,
                   const Rect<DIM>& rect) const
   {
@@ -80,7 +82,7 @@ struct ScanLocalImplBody<VariantKind::GPU, OP_CODE, CODE, DIM> {
 template <ScanCode OP_CODE, Type::Code CODE, int DIM>
 struct ScanLocalNanImplBody<VariantKind::GPU, OP_CODE, CODE, DIM> {
   using OP  = ScanOp<OP_CODE, CODE>;
-  using VAL = legate_type_of<CODE>;
+  using VAL = type_of<CODE>;
 
   struct convert_nan_func {
     __device__ VAL operator()(VAL x)
@@ -92,7 +94,7 @@ struct ScanLocalNanImplBody<VariantKind::GPU, OP_CODE, CODE, DIM> {
   void operator()(OP func,
                   const AccessorWO<VAL, DIM>& out,
                   const AccessorRO<VAL, DIM>& in,
-                  Array& sum_vals,
+                  legate::PhysicalStore& sum_vals,
                   const Pitches<DIM - 1>& pitches,
                   const Rect<DIM>& rect) const
   {
@@ -128,7 +130,7 @@ struct ScanLocalNanImplBody<VariantKind::GPU, OP_CODE, CODE, DIM> {
   }
 };
 
-/*static*/ void ScanLocalTask::gpu_variant(TaskContext& context)
+/*static*/ void ScanLocalTask::gpu_variant(TaskContext context)
 {
   scan_local_template<VariantKind::GPU>(context);
 }

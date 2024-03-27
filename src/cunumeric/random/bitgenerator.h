@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "cunumeric/cunumeric.h"
+#include "cunumeric/cunumeric_task.h"
 #include "cunumeric/random/bitgenerator_util.h"
 
 namespace cunumeric {
@@ -35,8 +35,8 @@ struct BitGeneratorArgs {
   std::vector<float> floatparams;
   std::vector<double> doubleparams;
 
-  std::vector<legate::Store> output;  // size 0 or 1
-  std::vector<legate::Store> args;
+  std::vector<legate::PhysicalStore> output;  // size 0 or 1
+  std::vector<legate::PhysicalStore> args;
 
   BitGeneratorArgs() {}
   static BitGeneratorArgs destroy(int32_t id)
@@ -60,8 +60,8 @@ struct BitGeneratorArgs {
                    std::vector<float>&& floatparams,
                    std::vector<double>&& doubleparams,
 
-                   std::vector<legate::Store>&& output,  // size 0 or 1
-                   std::vector<legate::Store>&& args)
+                   std::vector<legate::PhysicalStore>&& output,  // size 0 or 1
+                   std::vector<legate::PhysicalStore>&& args)
     : bitgen_op(bitgen_op),
       generatorID(generatorID),
       generatorType(generatorType),
@@ -83,14 +83,14 @@ class BitGeneratorTask : public CuNumericTask<BitGeneratorTask> {
   static const int TASK_ID = CUNUMERIC_BITGENERATOR;
 
  public:
-  static void cpu_variant(legate::TaskContext& context);
-#ifdef LEGATE_USE_OPENMP
+  static void cpu_variant(legate::TaskContext context);
+#if LegateDefined(LEGATE_USE_OPENMP)
   // TODO: Fully parallelized OpenMP implementation for BitGenerator
   // Doing it this way is safe, but only one thread is being used out of the OpenMP pool.
-  static void omp_variant(legate::TaskContext& context) { BitGeneratorTask::cpu_variant(context); }
+  static void omp_variant(legate::TaskContext context) { BitGeneratorTask::cpu_variant(context); }
 #endif
-#ifdef LEGATE_USE_CUDA
-  static void gpu_variant(legate::TaskContext& context);
+#if LegateDefined(LEGATE_USE_CUDA)
+  static void gpu_variant(legate::TaskContext context);
 #endif
 };
 

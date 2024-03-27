@@ -32,15 +32,16 @@ struct WrapImpl {
   template <int DIM>
   void operator()(WrapArgs& args) const
   {
-    using VAL     = Point<DIM>;
     auto rect_out = args.out.shape<1>();  // output array is always 1D
     auto out      = args.out.write_accessor<Point<DIM>, 1>(rect_out);
 
     Pitches<0> pitches_out;
     size_t volume_out = pitches_out.flatten(rect_out);
-    if (volume_out == 0) return;
+    if (volume_out == 0) {
+      return;
+    }
 
-#ifndef LEGATE_BOUNDS_CHECKS
+#if !LegateDefined(LEGATE_BOUNDS_CHECKS)
     bool dense = out.accessor.is_dense_row_major(rect_out);
 #else
     bool dense = false;
@@ -53,10 +54,12 @@ struct WrapImpl {
     }
     Rect<DIM> rect_base(point_lo, point_hi);
 
-    Pitches<DIM - 1> pitches_base;
+    Pitches<DIM - 1> pitches_base{};
     size_t volume_base = pitches_base.flatten(rect_base);
 #ifdef DEBUG_CUNUMERIC
     assert(volume_base != 0);
+#else
+    static_cast<void>(volume_base);
 #endif
 
     if (args.has_input) {
@@ -79,16 +82,13 @@ struct WrapImpl {
 template <VariantKind KIND>
 static void wrap_template(TaskContext& context)
 {
-  auto shape        = context.scalars()[0].value<DomainPoint>();
+  auto shape        = context.scalar(0).value<DomainPoint>();
   int dim           = shape.dim;
-  bool has_input    = context.scalars()[1].value<bool>();
-  bool check_bounds = context.scalars()[2].value<bool>();
-  Array tmp_array   = Array();
-  WrapArgs args{context.outputs()[0],
-                shape,
-                has_input,
-                check_bounds,
-                has_input ? context.inputs()[0] : tmp_array};
+  bool has_input    = context.scalar(1).value<bool>();
+  bool check_bounds = context.scalar(2).value<bool>();
+  legate::PhysicalStore tmp_array{};
+  WrapArgs args{
+    context.output(0), shape, has_input, check_bounds, has_input ? context.input(0) : tmp_array};
   dim_dispatch(dim, WrapImpl<KIND>{}, args);
 }
 

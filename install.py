@@ -134,6 +134,7 @@ def install_cunumeric(
     cuda_dir,
     cuda,
     curand_dir,
+    cusolvermp_dir,
     cutensor_dir,
     debug_release,
     debug,
@@ -178,6 +179,7 @@ def install_cunumeric(
         print("cuda_dir: ", cuda_dir)
         print("cuda: ", cuda)
         print("curand_dir: ", curand_dir)
+        print("cusolvermp_dir: ", cusolvermp_dir)
         print("cutensor_dir: ", cutensor_dir)
         print("debug_release: ", debug_release)
         print("debug: ", debug)
@@ -226,6 +228,7 @@ def install_cunumeric(
     thrust_dir = validate_path(thrust_dir)
     curand_dir = validate_path(curand_dir)
     gasnet_dir = validate_path(gasnet_dir)
+    cusolvermp_dir = validate_path(cusolvermp_dir)
     cutensor_dir = validate_path(cutensor_dir)
     openblas_dir = validate_path(openblas_dir)
 
@@ -247,6 +250,7 @@ def install_cunumeric(
         print("thrust_dir: ", thrust_dir)
         print("curand_dir: ", curand_dir)
         print("gasnet_dir: ", gasnet_dir)
+        print("cusolvermp_dir: ", cusolvermp_dir)
         print("cutensor_dir: ", cutensor_dir)
         print("openblas_dir: ", openblas_dir)
 
@@ -341,7 +345,6 @@ def install_cunumeric(
     "Debug" if debug else "RelWithDebInfo" if debug_release else "Release"
 )}
 -DBUILD_SHARED_LIBS=ON
--DBUILD_MARCH={str(march)}
 -DCMAKE_CUDA_ARCHITECTURES={str(arch)}
 -DLegion_MAX_DIM={str(maxdim)}
 -DLegion_MAX_FIELDS={str(maxfields)}
@@ -354,6 +357,8 @@ def install_cunumeric(
 -DLegion_USE_HDF5={("ON" if hdf else "OFF")}
 """.splitlines()
 
+    if march:
+        cmake_flags += [f"-DBUILD_MARCH={march}"]
     if cuda_dir:
         cmake_flags += ["-DCUDAToolkit_ROOT=%s" % cuda_dir]
     if nccl_dir:
@@ -368,6 +373,8 @@ def install_cunumeric(
         cmake_flags += ["-DThrust_ROOT=%s" % thrust_dir]
     if openblas_dir:
         cmake_flags += ["-DBLAS_DIR=%s" % openblas_dir]
+    if cusolvermp_dir:
+        cmake_flags += ["-DCUSOLVERMP_DIR=%s" % cusolvermp_dir]
     if cutensor_dir:
         cmake_flags += ["-Dcutensor_DIR=%s" % cutensor_dir]
     # A custom path to cuRAND is ignored when CUDA support is available
@@ -375,6 +382,7 @@ def install_cunumeric(
         cmake_flags += ["-Dcunumeric_cuRAND_INCLUDE_DIR=%s" % curand_dir]
 
     cmake_flags += ["-Dlegate_core_ROOT=%s" % legate_dir]
+    cmake_flags += ["-DCMAKE_BUILD_PARALLEL_LEVEL=%s" % thread_count]
 
     cmake_flags += extra_flags
     build_flags = [f"-j{str(thread_count)}"]
@@ -481,6 +489,16 @@ def driver():
         help="Path to cuRAND installation directory. This flag is ignored "
         "if Legate Core was built with CUDA support.",
     )
+    # TODO(jfaibussowit) maybe split to --with-cusolvermp [bool]
+    # and a --with-cusolvermp-dir [dir]
+    parser.add_argument(
+        "--with-cusolvermp",
+        dest="cusolvermp_dir",
+        metavar="DIR",
+        required=False,
+        default=os.environ.get("CUSOLVERMP_PATH"),
+        help="Path to cuSolverMp installation directory.",
+    )
     parser.add_argument(
         "--with-cutensor",
         dest="cutensor_dir",
@@ -556,7 +574,7 @@ def driver():
         "--march",
         dest="march",
         required=False,
-        default=("haswell" if platform.machine() == "x86_64" else "native"),
+        default=("haswell" if platform.machine() == "x86_64" else None),
         help="Specify the target CPU architecture.",
     )
     parser.add_argument(

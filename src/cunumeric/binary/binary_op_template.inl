@@ -34,7 +34,7 @@ struct BinaryOpImpl {
   void operator()(BinaryOpArgs& args) const
   {
     using OP   = BinaryOp<OP_CODE, CODE>;
-    using RHS1 = legate_type_of<CODE>;
+    using RHS1 = type_of<CODE>;
     using RHS2 = rhs2_of_binary_op<OP_CODE, CODE>;
     using LHS  = std::result_of_t<OP(RHS1, RHS2)>;
 
@@ -43,13 +43,15 @@ struct BinaryOpImpl {
     Pitches<DIM - 1> pitches;
     size_t volume = pitches.flatten(rect);
 
-    if (volume == 0) return;
+    if (volume == 0) {
+      return;
+    }
 
     auto out = args.out.write_accessor<LHS, DIM>(rect);
     auto in1 = args.in1.read_accessor<RHS1, DIM>(rect);
     auto in2 = args.in2.read_accessor<RHS2, DIM>(rect);
 
-#ifndef LEGATE_BOUNDS_CHECKS
+#if !LegateDefined(LEGATE_BOUNDS_CHECKS)
     // Check to see if this is dense or not
     bool dense = out.accessor.is_dense_row_major(rect) && in1.accessor.is_dense_row_major(rect) &&
                  in2.accessor.is_dense_row_major(rect);
@@ -82,12 +84,15 @@ struct BinaryOpDispatch {
 template <VariantKind KIND>
 static void binary_op_template(TaskContext& context)
 {
-  auto& inputs  = context.inputs();
-  auto& outputs = context.outputs();
+  auto inputs   = context.inputs();
+  auto outputs  = context.outputs();
   auto& scalars = context.scalars();
 
-  std::vector<Store> extra_args;
-  for (size_t idx = 2; idx < inputs.size(); ++idx) extra_args.push_back(std::move(inputs[idx]));
+  std::vector<Scalar> extra_args;
+  extra_args.reserve(scalars.size() - 1);
+  for (size_t idx = 1; idx < scalars.size(); ++idx) {
+    extra_args.emplace_back(scalars[idx]);
+  }
 
   BinaryOpArgs args{
     inputs[0], inputs[1], outputs[0], scalars[0].value<BinaryOpCode>(), std::move(extra_args)};

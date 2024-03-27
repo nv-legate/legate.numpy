@@ -24,7 +24,7 @@ using namespace legate;
 template <BinaryOpCode OP_CODE, Type::Code CODE, int DIM>
 struct BinaryRedImplBody<VariantKind::CPU, OP_CODE, CODE, DIM> {
   using OP  = BinaryOp<OP_CODE, CODE>;
-  using ARG = legate_type_of<CODE>;
+  using ARG = type_of<CODE>;
 
   template <typename AccessorRD>
   void operator()(OP func,
@@ -39,11 +39,12 @@ struct BinaryRedImplBody<VariantKind::CPU, OP_CODE, CODE, DIM> {
     if (dense) {
       auto in1ptr = in1.ptr(rect);
       auto in2ptr = in2.ptr(rect);
-      for (size_t idx = 0; idx < volume; ++idx)
+      for (size_t idx = 0; idx < volume; ++idx) {
         if (!func(in1ptr[idx], in2ptr[idx])) {
           out.reduce(0, false);
           return;
         }
+      }
     } else {
       for (size_t idx = 0; idx < volume; ++idx) {
         auto point = pitches.unflatten(idx, rect.lo);
@@ -58,7 +59,7 @@ struct BinaryRedImplBody<VariantKind::CPU, OP_CODE, CODE, DIM> {
   }
 };
 
-/*static*/ void BinaryRedTask::cpu_variant(TaskContext& context)
+/*static*/ void BinaryRedTask::cpu_variant(TaskContext context)
 {
   binary_red_template<VariantKind::CPU>(context);
 }

@@ -16,13 +16,13 @@
 
 #pragma once
 
-#include "cunumeric/cunumeric.h"
+#include "cunumeric/cunumeric_task.h"
 
 namespace cunumeric {
 
 struct ArgWhereArgs {
-  Array& out;
-  const Array& in;
+  legate::PhysicalStore out;
+  legate::PhysicalStore in;
 };
 
 class ArgWhereTask : public CuNumericTask<ArgWhereTask> {
@@ -30,12 +30,12 @@ class ArgWhereTask : public CuNumericTask<ArgWhereTask> {
   static const int TASK_ID = CUNUMERIC_ARGWHERE;
 
  public:
-  static void cpu_variant(legate::TaskContext& context);
-#ifdef LEGATE_USE_OPENMP
-  static void omp_variant(legate::TaskContext& context);
+  static void cpu_variant(legate::TaskContext context);
+#if LegateDefined(LEGATE_USE_OPENMP)
+  static void omp_variant(legate::TaskContext context);
 #endif
-#ifdef LEGATE_USE_CUDA
-  static void gpu_variant(legate::TaskContext& context);
+#if LegateDefined(LEGATE_USE_CUDA)
+  static void gpu_variant(legate::TaskContext context);
 #endif
 };
 

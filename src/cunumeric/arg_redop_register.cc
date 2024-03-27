@@ -57,15 +57,13 @@ DEFINE_IDENTITIES(uint64_t)
 
 }  // namespace cunumeric
 
-#ifndef LEGATE_USE_CUDA
-
+#if !LegateDefined(LEGATE_USE_CUDA)
 extern "C" {
 
-void cunumeric_register_reduction_op(int32_t type_uid, int32_t _elem_type_code)
+ReductionOpIds cunumeric_register_reduction_ops(int32_t code)
 {
-  auto elem_type_code = static_cast<legate::Type::Code>(_elem_type_code);
-  legate::type_dispatch(elem_type_code, cunumeric::register_reduction_op_fn{}, type_uid);
+  return legate::type_dispatch(static_cast<legate::Type::Code>(code),
+                               cunumeric::register_reduction_op_fn{});
 }
 }
-
 #endif

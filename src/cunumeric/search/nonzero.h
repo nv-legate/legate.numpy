@@ -16,13 +16,13 @@
 
 #pragma once
 
-#include "cunumeric/cunumeric.h"
+#include "cunumeric/cunumeric_task.h"
 
 namespace cunumeric {
 
 struct NonzeroArgs {
-  const Array& input;
-  std::vector<Array>& results;
+  legate::PhysicalStore input;
+  std::vector<legate::PhysicalStore> results;
 };
 
 class NonzeroTask : public CuNumericTask<NonzeroTask> {
@@ -30,12 +30,12 @@ class NonzeroTask : public CuNumericTask<NonzeroTask> {
   static const int TASK_ID = CUNUMERIC_NONZERO;
 
  public:
-  static void cpu_variant(legate::TaskContext& context);
-#ifdef LEGATE_USE_OPENMP
-  static void omp_variant(legate::TaskContext& context);
+  static void cpu_variant(legate::TaskContext context);
+#if LegateDefined(LEGATE_USE_OPENMP)
+  static void omp_variant(legate::TaskContext context);
 #endif
-#ifdef LEGATE_USE_CUDA
-  static void gpu_variant(legate::TaskContext& context);
+#if LegateDefined(LEGATE_USE_CUDA)
+  static void gpu_variant(legate::TaskContext context);
 #endif
 };
 

@@ -18,7 +18,7 @@
 
 #define _USE_MATH_DEFINES
 
-#include "cunumeric/cunumeric.h"
+#include "cunumeric/cunumeric_task.h"
 #include <math.h>
 
 extern double i0(double);

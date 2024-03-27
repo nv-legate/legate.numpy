@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "cunumeric/cunumeric.h"
+#include "cunumeric/cunumeric_task.h"
 #include "cunumeric/arg.h"
 #include "cunumeric/arg.inl"
 #include "cunumeric/unary/isnan.h"
@@ -110,7 +110,7 @@ template <legate::Type::Code TYPE_CODE>
 struct UnaryRedOp<UnaryRedCode::ALL, TYPE_CODE> {
   static constexpr bool valid = TYPE_CODE != legate::Type::Code::COMPLEX128;
 
-  using RHS = legate::legate_type_of<TYPE_CODE>;
+  using RHS = legate::type_of<TYPE_CODE>;
   using VAL = bool;
   using OP  = legate::ProdReduction<VAL>;
 
@@ -133,7 +133,7 @@ template <legate::Type::Code TYPE_CODE>
 struct UnaryRedOp<UnaryRedCode::ANY, TYPE_CODE> {
   static constexpr bool valid = TYPE_CODE != legate::Type::Code::COMPLEX128;
 
-  using RHS = legate::legate_type_of<TYPE_CODE>;
+  using RHS = legate::type_of<TYPE_CODE>;
   using VAL = bool;
   using OP  = legate::SumReduction<VAL>;
 
@@ -156,7 +156,7 @@ template <legate::Type::Code TYPE_CODE>
 struct UnaryRedOp<UnaryRedCode::COUNT_NONZERO, TYPE_CODE> {
   static constexpr bool valid = true;
 
-  using RHS = legate::legate_type_of<TYPE_CODE>;
+  using RHS = legate::type_of<TYPE_CODE>;
   using VAL = uint64_t;
   using OP  = legate::SumReduction<VAL>;
 
@@ -182,7 +182,7 @@ template <legate::Type::Code TYPE_CODE>
 struct UnaryRedOp<UnaryRedCode::MAX, TYPE_CODE> {
   static constexpr bool valid = !legate::is_complex<TYPE_CODE>::value;
 
-  using RHS = legate::legate_type_of<TYPE_CODE>;
+  using RHS = legate::type_of<TYPE_CODE>;
   using VAL = RHS;
   using OP  = legate::MaxReduction<VAL>;
 
@@ -205,7 +205,7 @@ template <legate::Type::Code TYPE_CODE>
 struct UnaryRedOp<UnaryRedCode::MIN, TYPE_CODE> {
   static constexpr bool valid = !legate::is_complex<TYPE_CODE>::value;
 
-  using RHS = legate::legate_type_of<TYPE_CODE>;
+  using RHS = legate::type_of<TYPE_CODE>;
   using VAL = RHS;
   using OP  = legate::MinReduction<VAL>;
 
@@ -228,7 +228,7 @@ template <legate::Type::Code TYPE_CODE>
 struct UnaryRedOp<UnaryRedCode::PROD, TYPE_CODE> {
   static constexpr bool valid = TYPE_CODE != legate::Type::Code::COMPLEX128;
 
-  using RHS = legate::legate_type_of<TYPE_CODE>;
+  using RHS = legate::type_of<TYPE_CODE>;
   using VAL = RHS;
   using OP  = legate::ProdReduction<VAL>;
 
@@ -251,7 +251,7 @@ template <legate::Type::Code TYPE_CODE>
 struct UnaryRedOp<UnaryRedCode::SUM, TYPE_CODE> {
   static constexpr bool valid = true;
 
-  using RHS = legate::legate_type_of<TYPE_CODE>;
+  using RHS = legate::type_of<TYPE_CODE>;
   using VAL = RHS;
   using OP  = legate::SumReduction<VAL>;
 
@@ -274,7 +274,7 @@ template <legate::Type::Code TYPE_CODE>
 struct UnaryRedOp<UnaryRedCode::SUM_SQUARES, TYPE_CODE> {
   static constexpr bool valid = true;
 
-  using RHS = legate::legate_type_of<TYPE_CODE>;
+  using RHS = legate::type_of<TYPE_CODE>;
   using VAL = RHS;
   using OP  = Legion::SumReduction<VAL>;
 
@@ -297,7 +297,7 @@ template <legate::Type::Code TYPE_CODE>
 struct UnaryRedOp<UnaryRedCode::VARIANCE, TYPE_CODE> {
   static constexpr bool valid = true;
 
-  using RHS = legate::legate_type_of<TYPE_CODE>;
+  using RHS = legate::type_of<TYPE_CODE>;
   using VAL = RHS;
   using OP  = Legion::SumReduction<VAL>;
 
@@ -320,7 +320,7 @@ template <legate::Type::Code TYPE_CODE>
 struct UnaryRedOp<UnaryRedCode::ARGMAX, TYPE_CODE> {
   static constexpr bool valid = !legate::is_complex<TYPE_CODE>::value;
 
-  using RHS = legate::legate_type_of<TYPE_CODE>;
+  using RHS = legate::type_of<TYPE_CODE>;
   using VAL = Argval<RHS>;
   using OP  = ArgmaxReduction<RHS>;
 
@@ -346,7 +346,9 @@ struct UnaryRedOp<UnaryRedCode::ARGMAX, TYPE_CODE> {
                                  const RHS& rhs)
   {
     int64_t idx = 0;
-    for (int32_t dim = 0; dim < DIM; ++dim) idx = idx * shape[dim] + point[dim];
+    for (int32_t dim = 0; dim < DIM; ++dim) {
+      idx = idx * shape[dim] + point[dim];
+    }
     return VAL(idx, rhs);
   }
 };
@@ -355,7 +357,7 @@ template <legate::Type::Code TYPE_CODE>
 struct UnaryRedOp<UnaryRedCode::ARGMIN, TYPE_CODE> {
   static constexpr bool valid = !legate::is_complex<TYPE_CODE>::value;
 
-  using RHS = legate::legate_type_of<TYPE_CODE>;
+  using RHS = legate::type_of<TYPE_CODE>;
   using VAL = Argval<RHS>;
   using OP  = ArgminReduction<RHS>;
 
@@ -381,7 +383,9 @@ struct UnaryRedOp<UnaryRedCode::ARGMIN, TYPE_CODE> {
                                  const RHS& rhs)
   {
     int64_t idx = 0;
-    for (int32_t dim = 0; dim < DIM; ++dim) idx = idx * shape[dim] + point[dim];
+    for (int32_t dim = 0; dim < DIM; ++dim) {
+      idx = idx * shape[dim] + point[dim];
+    }
     return VAL(idx, rhs);
   }
 };
@@ -394,7 +398,7 @@ template <legate::Type::Code TYPE_CODE>
 struct UnaryRedOp<UnaryRedCode::NANARGMAX, TYPE_CODE, enabled_for_floating<TYPE_CODE>> {
   static constexpr bool valid = true;
 
-  using RHS = legate::legate_type_of<TYPE_CODE>;
+  using RHS = legate::type_of<TYPE_CODE>;
   using VAL = Argval<RHS>;
   using OP  = ArgmaxReduction<RHS>;
 
@@ -421,7 +425,9 @@ struct UnaryRedOp<UnaryRedCode::NANARGMAX, TYPE_CODE, enabled_for_floating<TYPE_
   {
     int64_t idx = 0;
 
-    for (int32_t dim = 0; dim < DIM; ++dim) idx = idx * shape[dim] + point[dim];
+    for (int32_t dim = 0; dim < DIM; ++dim) {
+      idx = idx * shape[dim] + point[dim];
+    }
     return is_nan(rhs) ? identity : VAL(idx, rhs);
   }
 };
@@ -430,7 +436,7 @@ template <legate::Type::Code TYPE_CODE>
 struct UnaryRedOp<UnaryRedCode::NANARGMIN, TYPE_CODE, enabled_for_floating<TYPE_CODE>> {
   static constexpr bool valid = true;
 
-  using RHS = legate::legate_type_of<TYPE_CODE>;
+  using RHS = legate::type_of<TYPE_CODE>;
   using VAL = Argval<RHS>;
   using OP  = ArgminReduction<RHS>;
 
@@ -457,7 +463,9 @@ struct UnaryRedOp<UnaryRedCode::NANARGMIN, TYPE_CODE, enabled_for_floating<TYPE_
   {
     int64_t idx = 0;
 
-    for (int32_t dim = 0; dim < DIM; ++dim) idx = idx * shape[dim] + point[dim];
+    for (int32_t dim = 0; dim < DIM; ++dim) {
+      idx = idx * shape[dim] + point[dim];
+    }
     return is_nan(rhs) ? identity : VAL(idx, rhs);
   }
 };
@@ -466,7 +474,7 @@ template <legate::Type::Code TYPE_CODE>
 struct UnaryRedOp<UnaryRedCode::NANMIN, TYPE_CODE, enabled_for_floating<TYPE_CODE>> {
   static constexpr bool valid = true;
 
-  using RHS = legate::legate_type_of<TYPE_CODE>;
+  using RHS = legate::type_of<TYPE_CODE>;
   using VAL = RHS;
   using OP  = legate::MinReduction<VAL>;
 
@@ -495,7 +503,7 @@ template <legate::Type::Code TYPE_CODE>
 struct UnaryRedOp<UnaryRedCode::NANMAX, TYPE_CODE, enabled_for_floating<TYPE_CODE>> {
   static constexpr bool valid = true;
 
-  using RHS = legate::legate_type_of<TYPE_CODE>;
+  using RHS = legate::type_of<TYPE_CODE>;
   using VAL = RHS;
   using OP  = legate::MaxReduction<VAL>;
 
@@ -529,7 +537,7 @@ template <legate::Type::Code TYPE_CODE>
 struct UnaryRedOp<UnaryRedCode::NANPROD, TYPE_CODE, enabled_for_floating_or_complex64<TYPE_CODE>> {
   static constexpr bool valid = true;
 
-  using RHS = legate::legate_type_of<TYPE_CODE>;
+  using RHS = legate::type_of<TYPE_CODE>;
   using VAL = RHS;
   using OP  = legate::ProdReduction<VAL>;
 
@@ -563,7 +571,7 @@ template <legate::Type::Code TYPE_CODE>
 struct UnaryRedOp<UnaryRedCode::NANSUM, TYPE_CODE, enabled_for_floating_or_complex<TYPE_CODE>> {
   static constexpr bool valid = true;
 
-  using RHS = legate::legate_type_of<TYPE_CODE>;
+  using RHS = legate::type_of<TYPE_CODE>;
   using VAL = RHS;
   using OP  = legate::SumReduction<VAL>;
 
@@ -594,7 +602,7 @@ struct UnaryRedOp<UnaryRedCode::CONTAINS, TYPE_CODE> {
   static constexpr bool valid = false;
   // This class only provides the typedefs necessary to match the other operators.
   // It does not provide fold/convert functions.
-  using RHS     = legate::legate_type_of<TYPE_CODE>;
+  using RHS     = legate::type_of<TYPE_CODE>;
   using VAL     = bool;
   using _RED_OP = UnaryRedOp<UnaryRedCode::SUM, legate::Type::Code::BOOL>;
   using OP      = _RED_OP::OP;

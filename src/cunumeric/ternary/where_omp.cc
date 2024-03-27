@@ -23,7 +23,7 @@ using namespace legate;
 
 template <Type::Code CODE, int DIM>
 struct WhereImplBody<VariantKind::OMP, CODE, DIM> {
-  using VAL = legate_type_of<CODE>;
+  using VAL = type_of<CODE>;
 
   void operator()(AccessorWO<VAL, DIM> out,
                   AccessorRO<bool, DIM> mask,
@@ -41,8 +41,9 @@ struct WhereImplBody<VariantKind::OMP, CODE, DIM> {
       auto in1ptr   = in1.ptr(rect);
       auto in2ptr   = in2.ptr(rect);
 #pragma omp parallel for schedule(static)
-      for (size_t idx = 0; idx < volume; ++idx)
+      for (size_t idx = 0; idx < volume; ++idx) {
         outptr[idx] = maskptr[idx] ? in1ptr[idx] : in2ptr[idx];
+      }
     } else {
 #pragma omp parallel for schedule(static)
       for (size_t idx = 0; idx < volume; ++idx) {
@@ -53,7 +54,7 @@ struct WhereImplBody<VariantKind::OMP, CODE, DIM> {
   }
 };
 
-/*static*/ void WhereTask::omp_variant(TaskContext& context)
+/*static*/ void WhereTask::omp_variant(TaskContext context)
 {
   where_template<VariantKind::OMP>(context);
 }

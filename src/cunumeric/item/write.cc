@@ -29,7 +29,7 @@ struct WriteImplBody<VariantKind::CPU, VAL> {
   }
 };
 
-/*static*/ void WriteTask::cpu_variant(TaskContext& context)
+/*static*/ void WriteTask::cpu_variant(TaskContext context)
 {
   write_template<VariantKind::CPU>(context);
 }

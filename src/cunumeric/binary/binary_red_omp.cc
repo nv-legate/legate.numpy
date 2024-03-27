@@ -24,7 +24,7 @@ using namespace legate;
 template <BinaryOpCode OP_CODE, Type::Code CODE, int DIM>
 struct BinaryRedImplBody<VariantKind::OMP, OP_CODE, CODE, DIM> {
   using OP  = BinaryOp<OP_CODE, CODE>;
-  using ARG = legate_type_of<CODE>;
+  using ARG = type_of<CODE>;
 
   template <typename AccessorRD>
   void operator()(OP func,
@@ -41,13 +41,18 @@ struct BinaryRedImplBody<VariantKind::OMP, OP_CODE, CODE, DIM> {
       auto in1ptr = in1.ptr(rect);
       auto in2ptr = in2.ptr(rect);
 #pragma omp parallel for schedule(static)
-      for (size_t idx = 0; idx < volume; ++idx)
-        if (!func(in1ptr[idx], in2ptr[idx])) result = false;
+      for (size_t idx = 0; idx < volume; ++idx) {
+        if (!func(in1ptr[idx], in2ptr[idx])) {
+          result = false;
+        }
+      }
     } else {
 #pragma omp parallel for schedule(static)
       for (size_t idx = 0; idx < volume; ++idx) {
         auto point = pitches.unflatten(idx, rect.lo);
-        if (!func(in1[point], in2[point])) result = false;
+        if (!func(in1[point], in2[point])) {
+          result = false;
+        }
       }
     }
 
@@ -55,7 +60,7 @@ struct BinaryRedImplBody<VariantKind::OMP, OP_CODE, CODE, DIM> {
   }
 };
 
-/*static*/ void BinaryRedTask::omp_variant(TaskContext& context)
+/*static*/ void BinaryRedTask::omp_variant(TaskContext context)
 {
   binary_red_template<VariantKind::OMP>(context);
 }

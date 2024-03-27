@@ -26,7 +26,9 @@ static __global__ void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM)
   dense_kernel(size_t volume, VAL* out, const bool* mask, const VAL* in1, const VAL* in2)
 {
   const size_t idx = global_tid_1d();
-  if (idx >= volume) return;
+  if (idx >= volume) {
+    return;
+  }
   out[idx] = mask[idx] ? in1[idx] : in2[idx];
 }
 
@@ -35,14 +37,16 @@ static __global__ void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM) gen
   size_t volume, WriteAcc out, MaskAcc mask, ReadAcc in1, ReadAcc in2, Pitches pitches, Rect rect)
 {
   const size_t idx = global_tid_1d();
-  if (idx >= volume) return;
+  if (idx >= volume) {
+    return;
+  }
   auto point = pitches.unflatten(idx, rect.lo);
   out[point] = mask[point] ? in1[point] : in2[point];
 }
 
 template <Type::Code CODE, int DIM>
 struct WhereImplBody<VariantKind::GPU, CODE, DIM> {
-  using VAL = legate_type_of<CODE>;
+  using VAL = type_of<CODE>;
 
   void operator()(AccessorWO<VAL, DIM> out,
                   AccessorRO<bool, DIM> mask,
@@ -71,7 +75,7 @@ struct WhereImplBody<VariantKind::GPU, CODE, DIM> {
   }
 };
 
-/*static*/ void WhereTask::gpu_variant(TaskContext& context)
+/*static*/ void WhereTask::gpu_variant(TaskContext context)
 {
   where_template<VariantKind::GPU>(context);
 }

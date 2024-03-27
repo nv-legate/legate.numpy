@@ -30,10 +30,10 @@ using namespace legate;
 
 template <Type::Code CODE, int32_t DIM>
 struct SortImplBody<VariantKind::CPU, CODE, DIM> {
-  using VAL = legate_type_of<CODE>;
+  using VAL = type_of<CODE>;
 
-  void operator()(const Array& input_array,
-                  Array& output_array,
+  void operator()(const legate::PhysicalStore& input_array,
+                  legate::PhysicalStore& output_array,
                   const Pitches<DIM - 1>& pitches,
                   const Rect<DIM>& rect,
                   const size_t volume,
@@ -65,7 +65,7 @@ struct SortImplBody<VariantKind::CPU, CODE, DIM> {
   }
 };
 
-/*static*/ void SortTask::cpu_variant(TaskContext& context)
+/*static*/ void SortTask::cpu_variant(TaskContext context)
 {
   sort_template<VariantKind::CPU>(context);
 }

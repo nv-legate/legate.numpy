@@ -20,7 +20,7 @@
 
 namespace cunumeric {
 
-/*static*/ void PutmaskTask::omp_variant(TaskContext& context)
+/*static*/ void PutmaskTask::omp_variant(TaskContext context)
 {
   putmask_template<VariantKind::OMP>(context);
 }

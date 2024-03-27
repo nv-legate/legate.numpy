@@ -21,7 +21,7 @@ from legate.core import LEGATE_MAX_DIM
 from utils.generators import mk_seq_array
 
 import cunumeric as num
-from cunumeric.eager import diagonal_reference
+from cunumeric._thunk.eager import diagonal_reference
 
 
 class TestChoose1d:
@@ -268,6 +268,133 @@ class TestChooseErrors:
             num.choose(self.a, self.choices, out=aout)
 
 
+DIM = 7
+
+SELECT_SHAPES = (
+    (DIM,),
+    (1, 1),
+    (1, DIM),
+    (DIM, 1),
+    (DIM, 0),
+    (DIM, DIM),
+    (1, 1, 1),
+    (1, 0, DIM),
+    (DIM, 1, 1),
+    (1, DIM, 1),
+    (1, 1, DIM),
+    (DIM, DIM, DIM),
+)
+
+DEFAULTS = (0, -100, 5)
+
+
+@pytest.mark.parametrize("size", SELECT_SHAPES)
+def test_select(size):
+    # test with 2 conditions/choices + no default passed
+    arr = np.random.randint(-15, 15, size=size)
+    cond_np1 = arr > 1
+    cond_num1 = num.array(cond_np1)
+    cond_np2 = arr < 0
+    cond_num2 = num.array(cond_np2)
+    choice_np1 = arr * 10
+    choice_num1 = num.array(choice_np1)
+    choice_np2 = arr * 2
+    choice_num2 = num.array(choice_np2)
+    res_np = np.select(
+        (
+            cond_np1,
+            cond_np2,
+        ),
+        (
+            choice_np1,
+            choice_np2,
+        ),
+    )
+    res_num = num.select(
+        (
+            cond_num1,
+            cond_num2,
+        ),
+        (
+            choice_num1,
+            choice_num2,
+        ),
+    )
+    assert np.array_equal(res_np, res_num)
+
+    # test with all False
+    cond_np = arr > 100
+    cond_num = num.array(cond_np)
+    choice_np = arr * 100
+    choice_num = num.array(choice_np)
+    res_np = np.select(cond_np, choice_np)
+    res_num = num.select(cond_num, choice_num)
+    assert np.array_equal(res_np, res_num)
+
+    # test with all True
+    cond_np = arr < 100
+    cond_num = num.array(cond_np)
+    choice_np = arr * 10
+    choice_num = num.array(choice_np)
+    res_np = np.select(cond_np, choice_np)
+    res_num = num.select(cond_num, choice_num)
+    assert np.array_equal(res_np, res_num)
+
+
+def test_select_maxdim():
+    for ndim in range(2, LEGATE_MAX_DIM + 1):
+        a_shape = tuple(np.random.randint(1, 9) for i in range(ndim))
+        arr = mk_seq_array(np, a_shape)
+        condlist_np = list()
+        choicelist_np = list()
+        condlist_num = list()
+        choicelist_num = list()
+        nlist = np.random.randint(1, 5)
+        for nl in range(0, nlist):
+            arr_con = arr > nl * 2
+            arr_ch = arr * nl
+            condlist_np += (arr_con,)
+            choicelist_np += (arr_ch,)
+            condlist_num += (num.array(arr_con),)
+            choicelist_num += (num.array(arr_ch),)
+        res_np = np.select(condlist_np, choicelist_np)
+        res_num = num.select(condlist_num, choicelist_num)
+        assert np.array_equal(res_np, res_num)
+
+
+@pytest.mark.parametrize("size", SELECT_SHAPES)
+@pytest.mark.parametrize("default", DEFAULTS)
+def test_select_default(size, default):
+    arr_np = np.random.randint(-5, 5, size=size)
+    cond_np = arr_np > 1
+    cond_num = num.array(cond_np)
+    choice_np = arr_np**2
+    choice_num = num.array(choice_np)
+    res_np = np.select(cond_np, choice_np, default)
+    res_num = num.select(cond_num, choice_num, default)
+    assert np.array_equal(res_np, res_num)
+
+
+SELECT_ZERO_SHAPES = (
+    (0,),
+    (0, 1),
+)
+
+
+@pytest.mark.parametrize("size", SELECT_ZERO_SHAPES)
+def test_select_zero_shape(size):
+    arr_np = np.random.randint(-15, 15, size=size)
+    cond_np = arr_np > 1
+    cond_num = num.array(cond_np)
+    choice_np = arr_np * 10
+    choice_num = num.array(choice_np)
+    msg = "select with an empty condition list is not possible"
+    with pytest.raises(ValueError, match=msg):
+        np.select(cond_np, choice_np)
+    with pytest.raises(ValueError, match=msg):
+        num.select(cond_num, choice_num)
+
+
 def test_diagonal():
     ad = np.arange(24).reshape(4, 3, 2)
     num_ad = num.array(ad)
@@ -298,8 +425,8 @@ def test_diagonal():
         num_array = mk_seq_array(num, a_shape)
         for num_axes in range(3, ndim + 1):
             for axes in permutations(range(ndim), num_axes):
-                res_num = num.diagonal(
-                    num_array, offset=0, extract=True, axes=axes
+                res_num = num_array._diag_helper(
+                    offset=0, extract=True, axes=axes
                 )
                 res_ref = diagonal_reference(np_array, axes)
                 assert np.array_equal(res_num, res_ref)
@@ -425,32 +552,17 @@ class TestDiagonalErrors:
             num.diagonal(self.a, 0, None, 0)
 
     @pytest.mark.diff
-    def test_scalar_axes(self):
-        # NumPy does not have axes arg
-        with pytest.raises(ValueError):
-            num.diagonal(self.a, axes=(0,))
-
-    @pytest.mark.diff
-    def test_duplicate_axes(self):
-        # NumPy does not have axes arg
-        expected_exc = ValueError
-        with pytest.raises(expected_exc):
-            num.diagonal(self.a, axis1=1, axes=(0, 1))
-        with pytest.raises(expected_exc):
-            num.diagonal(self.a, axis1=1, axis2=0, axes=(0, 1))
-
-    @pytest.mark.diff
     def test_extra_axes(self):
         # NumPy does not have axes arg
         axes = num.arange(self.a.ndim + 1, dtype=int)
         with pytest.raises(ValueError):
-            num.diagonal(self.a, axes=axes)
+            self.a._diag_helper(self.a, axes=axes)
 
     @pytest.mark.diff
     def test_n_axes_offset(self):
         # NumPy does not have axes arg
         with pytest.raises(ValueError):
-            num.diagonal(self.a, offset=1, axes=(2, 1, 0))
+            self.a._diag_helper(offset=1, axes=(2, 1, 0))
 
     @pytest.mark.parametrize(
         "k",

@@ -30,7 +30,9 @@ __global__ static void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM)
                 int volume)
 {
   const size_t idx = global_tid_1d();
-  if (idx >= volume) return;
+  if (idx >= volume) {
+    return;
+  }
   auto p = pitches.unflatten(idx, rect.lo);
   out[p] = choices[index_arr[p]][p];
 }
@@ -41,13 +43,15 @@ __global__ static void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM) cho
   VAL* outptr, const int64_t* indexptr, Buffer<const VAL*, 1> choices, int volume)
 {
   const size_t idx = global_tid_1d();
-  if (idx >= volume) return;
+  if (idx >= volume) {
+    return;
+  }
   outptr[idx] = choices[indexptr[idx]][idx];
 }
 
 template <Type::Code CODE, int DIM>
 struct ChooseImplBody<VariantKind::GPU, CODE, DIM> {
-  using VAL = legate_type_of<CODE>;
+  using VAL = type_of<CODE>;
 
   void operator()(const AccessorWO<VAL, DIM>& out,
                   const AccessorRO<int64_t, DIM>& index_arr,
@@ -62,7 +66,9 @@ struct ChooseImplBody<VariantKind::GPU, CODE, DIM> {
     auto stream = get_cached_stream();
     if (dense) {
       auto ch_arr = create_buffer<const VAL*>(choices.size(), legate::Memory::Kind::Z_COPY_MEM);
-      for (uint32_t idx = 0; idx < choices.size(); ++idx) ch_arr[idx] = choices[idx].ptr(rect);
+      for (uint32_t idx = 0; idx < choices.size(); ++idx) {
+        ch_arr[idx] = choices[idx].ptr(rect);
+      }
       VAL* outptr             = out.ptr(rect);
       const int64_t* indexptr = index_arr.ptr(rect);
       choose_kernel_dense<VAL>
@@ -70,7 +76,9 @@ struct ChooseImplBody<VariantKind::GPU, CODE, DIM> {
     } else {
       auto ch_arr =
         create_buffer<AccessorRO<VAL, DIM>>(choices.size(), legate::Memory::Kind::Z_COPY_MEM);
-      for (uint32_t idx = 0; idx < choices.size(); ++idx) ch_arr[idx] = choices[idx];
+      for (uint32_t idx = 0; idx < choices.size(); ++idx) {
+        ch_arr[idx] = choices[idx];
+      }
       choose_kernel<VAL, DIM>
         <<<blocks, THREADS_PER_BLOCK, 0, stream>>>(out, index_arr, ch_arr, rect, pitches, volume);
     }
@@ -78,7 +86,7 @@ struct ChooseImplBody<VariantKind::GPU, CODE, DIM> {
   }
 };
 
-/*static*/ void ChooseTask::gpu_variant(TaskContext& context)
+/*static*/ void ChooseTask::gpu_variant(TaskContext context)
 {
   choose_template<VariantKind::GPU>(context);
 }

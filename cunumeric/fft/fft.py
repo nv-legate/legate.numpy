@@ -14,21 +14,21 @@
 #
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Sequence, Union
+from typing import TYPE_CHECKING, Sequence
 
 import numpy as np
 
+from .._array.util import add_boilerplate
 from ..config import FFT_C2C, FFT_Z2Z, FFTCode, FFTDirection, FFTNormalization
-from ..module import add_boilerplate
 
 if TYPE_CHECKING:
-    from ..array import ndarray
+    from .._array.array import ndarray
 
 
 def _sanitize_user_axes(
     a: ndarray,
-    s: Union[Sequence[int], None],
-    axes: Union[Sequence[int], None],
+    s: Sequence[int] | None,
+    axes: Sequence[int] | None,
     is_c2r: bool = False,
 ) -> tuple[list[int], Sequence[int]]:
     if s is None:
@@ -58,9 +58,9 @@ def _operate_by_axes(a: ndarray, axes: Sequence[int]) -> bool:
 @add_boilerplate("a")
 def fft(
     a: ndarray,
-    n: Union[int, None] = None,
+    n: int | None = None,
     axis: int = -1,
-    norm: Union[str, None] = None,
+    norm: str | None = None,
 ) -> ndarray:
     """
     Compute the one-dimensional discrete Fourier Transform.
@@ -114,9 +114,9 @@ def fft(
 @add_boilerplate("a")
 def fft2(
     a: ndarray,
-    s: Union[Sequence[int], None] = None,
+    s: Sequence[int] | None = None,
     axes: Sequence[int] = (-2, -1),
-    norm: Union[str, None] = None,
+    norm: str | None = None,
 ) -> ndarray:
     """
     Compute the 2-dimensional discrete Fourier Transform.
@@ -172,9 +172,9 @@ def fft2(
 @add_boilerplate("a")
 def fftn(
     a: ndarray,
-    s: Union[Sequence[int], None] = None,
-    axes: Union[Sequence[int], None] = None,
-    norm: Union[str, None] = None,
+    s: Sequence[int] | None = None,
+    axes: Sequence[int] | None = None,
+    norm: str | None = None,
 ) -> ndarray:
     """
     Compute the N-dimensional discrete Fourier Transform.
@@ -248,9 +248,9 @@ def fftn(
 @add_boilerplate("a")
 def ifft(
     a: ndarray,
-    n: Union[int, None] = None,
+    n: int | None = None,
     axis: int = -1,
-    norm: Union[str, None] = None,
+    norm: str | None = None,
 ) -> ndarray:
     """
     Compute the one-dimensional inverse discrete Fourier Transform.
@@ -319,9 +319,9 @@ def ifft(
 @add_boilerplate("a")
 def ifft2(
     a: ndarray,
-    s: Union[Sequence[int], None] = None,
+    s: Sequence[int] | None = None,
     axes: Sequence[int] = (-2, -1),
-    norm: Union[str, None] = None,
+    norm: str | None = None,
 ) -> ndarray:
     """
     Compute the 2-dimensional inverse discrete Fourier Transform.
@@ -384,9 +384,9 @@ def ifft2(
 @add_boilerplate("a")
 def ifftn(
     a: ndarray,
-    s: Union[Sequence[int], None] = None,
-    axes: Union[Sequence[int], None] = None,
-    norm: Union[str, None] = None,
+    s: Sequence[int] | None = None,
+    axes: Sequence[int] | None = None,
+    norm: str | None = None,
 ) -> ndarray:
     """
     Compute the N-dimensional inverse discrete Fourier Transform.
@@ -470,9 +470,9 @@ def ifftn(
 @add_boilerplate("a")
 def rfft(
     a: ndarray,
-    n: Union[int, None] = None,
+    n: int | None = None,
     axis: int = -1,
-    norm: Union[str, None] = None,
+    norm: str | None = None,
 ) -> ndarray:
     """
     Compute the one-dimensional discrete Fourier Transform for real input.
@@ -528,9 +528,9 @@ def rfft(
 @add_boilerplate("a")
 def rfft2(
     a: ndarray,
-    s: Union[Sequence[int], None] = None,
+    s: Sequence[int] | None = None,
     axes: Sequence[int] = (-2, -1),
-    norm: Union[str, None] = None,
+    norm: str | None = None,
 ) -> ndarray:
     """
     Compute the 2-dimensional FFT of a real array.
@@ -573,9 +573,9 @@ def rfft2(
 @add_boilerplate("a")
 def rfftn(
     a: ndarray,
-    s: Union[Sequence[int], None] = None,
-    axes: Union[Sequence[int], None] = None,
-    norm: Union[str, None] = None,
+    s: Sequence[int] | None = None,
+    axes: Sequence[int] | None = None,
+    norm: str | None = None,
 ) -> ndarray:
     """
     Compute the N-dimensional discrete Fourier Transform for real input.
@@ -670,9 +670,9 @@ def rfftn(
 @add_boilerplate("a")
 def irfft(
     a: ndarray,
-    n: Union[int, None] = None,
+    n: int | None = None,
     axis: int = -1,
-    norm: Union[str, None] = None,
+    norm: str | None = None,
 ) -> ndarray:
     """
     Computes the inverse of `rfft`.
@@ -738,9 +738,9 @@ def irfft(
 @add_boilerplate("a")
 def irfft2(
     a: ndarray,
-    s: Union[Sequence[int], None] = None,
+    s: Sequence[int] | None = None,
     axes: Sequence[int] = (-2, -1),
-    norm: Union[str, None] = None,
+    norm: str | None = None,
 ) -> ndarray:
     """
     Computes the inverse of `rfft2`.
@@ -785,9 +785,9 @@ def irfft2(
 @add_boilerplate("a")
 def irfftn(
     a: ndarray,
-    s: Union[Sequence[int], None] = None,
-    axes: Union[Sequence[int], None] = None,
-    norm: Union[str, None] = None,
+    s: Sequence[int] | None = None,
+    axes: Sequence[int] | None = None,
+    norm: str | None = None,
 ) -> ndarray:
     """
     Computes the inverse of `rfftn`.
@@ -895,9 +895,9 @@ def irfftn(
 @add_boilerplate("a")
 def hfft(
     a: ndarray,
-    n: Union[int, None] = None,
+    n: int | None = None,
     axis: int = -1,
-    norm: Union[str, None] = None,
+    norm: str | None = None,
 ) -> ndarray:
     """
     Compute the FFT of a signal that has Hermitian symmetry, i.e., a real
@@ -960,9 +960,9 @@ def hfft(
 @add_boilerplate("a")
 def ihfft(
     a: ndarray,
-    n: Union[int, None] = None,
+    n: int | None = None,
     axis: int = -1,
-    norm: Union[str, None] = None,
+    norm: str | None = None,
 ) -> ndarray:
     """
     Compute the inverse FFT of a signal that has Hermitian symmetry.

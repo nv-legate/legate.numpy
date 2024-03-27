@@ -48,7 +48,9 @@ struct ZipImplBody<VariantKind::OMP, DIM, N> {
           for (size_t i = 0; i < N; i++) {
             auto pair    = compute_idx_omp(indx_ptrs[i][idx], shape[i]);
             new_point[i] = pair.first;
-            if (pair.second) is_out_of_bounds = true;
+            if (pair.second) {
+              is_out_of_bounds = true;
+            }
           }
           outptr[idx] = new_point;
         }
@@ -60,7 +62,9 @@ struct ZipImplBody<VariantKind::OMP, DIM, N> {
           for (size_t i = 0; i < N; i++) {
             auto pair    = compute_idx_omp(index_arrays[i][p], shape[i]);
             new_point[i] = pair.first;
-            if (pair.second) is_out_of_bounds = true;
+            if (pair.second) {
+              is_out_of_bounds = true;
+            }
           }
           out[p] = new_point;
         }
@@ -73,11 +77,15 @@ struct ZipImplBody<VariantKind::OMP, DIM, N> {
       for (size_t idx = 0; idx < volume; ++idx) {
         auto p = pitches.unflatten(idx, rect.lo);
         Point<N> new_point;
-        for (size_t i = 0; i < start_index; i++) { new_point[i] = p[i]; }
+        for (int64_t i = 0; i < start_index; i++) {
+          new_point[i] = p[i];
+        }
         for (size_t i = 0; i < index_arrays.size(); i++) {
           auto pair                  = compute_idx_omp(index_arrays[i][p], shape[start_index + i]);
           new_point[start_index + i] = pair.first;
-          if (pair.second) is_out_of_bounds = true;
+          if (pair.second) {
+            is_out_of_bounds = true;
+          }
         }
         for (size_t i = (start_index + index_arrays.size()); i < N; i++) {
           int64_t j    = key_dim + i - index_arrays.size();
@@ -86,11 +94,13 @@ struct ZipImplBody<VariantKind::OMP, DIM, N> {
         out[p] = new_point;
       }
     }
-    if (is_out_of_bounds) throw legate::TaskException("index is out of bounds in index array");
+    if (is_out_of_bounds) {
+      throw legate::TaskException("index is out of bounds in index array");
+    }
   }
 };
 
-/*static*/ void ZipTask::omp_variant(TaskContext& context)
+/*static*/ void ZipTask::omp_variant(TaskContext context)
 {
   zip_template<VariantKind::OMP>(context);
 }

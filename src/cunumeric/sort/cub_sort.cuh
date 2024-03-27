@@ -182,10 +182,14 @@ void cub_local_sort(const VAL* values_in,
                                                stream);
       temp_storage.destroy();
     }
-    if (indices_in == indices_out) idx_in.destroy();
+    if (indices_in == indices_out) {
+      idx_in.destroy();
+    }
   }
 
-  if (values_in == values_out) keys_in.destroy();
+  if (values_in == values_out) {
+    keys_in.destroy();
+  }
 }
 
 }  // namespace detail

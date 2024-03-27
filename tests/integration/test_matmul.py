@@ -24,7 +24,7 @@ from utils.contractions import (
 )
 
 import cunumeric as num
-from cunumeric.utils import matmul_modes
+from cunumeric._utils.linalg import matmul_modes
 
 
 @pytest.mark.parametrize("a_ndim", range(1, LEGATE_MAX_DIM + 1))

@@ -100,9 +100,9 @@ void rebalance_data(SegmentMergePiece<VAL>& merge_buffer,
     {
       if (num_segments_l > 1) {
         auto* p_segments = merge_buffer.segments.ptr(0);
-        int64_t position = 0;
-        int64_t count    = 0;
-        for (int64_t segment = 0; segment < num_segments_l; ++segment) {
+        size_t position  = 0;
+        size_t count     = 0;
+        for (size_t segment = 0; segment < num_segments_l; ++segment) {
           while (position < merge_buffer.size && p_segments[position] == segment) {
             position++;
             count++;
@@ -116,7 +116,9 @@ void rebalance_data(SegmentMergePiece<VAL>& merge_buffer,
     }
 
     merge_buffer.segments.destroy();
-    if (argsort) { merge_buffer.values.destroy(); }
+    if (argsort) {
+      merge_buffer.values.destroy();
+    }
 
 #ifdef DEBUG_CUNUMERIC
     {
@@ -145,14 +147,15 @@ void rebalance_data(SegmentMergePiece<VAL>& merge_buffer,
         rdispls[sort_ranks[sort_rank]]   = sort_rank * num_segments_l;
       }
 
-      comm::coll::collAlltoallv(segment_diff.ptr(0),
-                                comm_size.ptr(0),  // num_segments_l for all in sort group
-                                sdispls.ptr(0),    // zero for all
-                                segment_diff_buffers.ptr(0),
-                                comm_size.ptr(0),  // num_segments_l for all in sort group
-                                rdispls.ptr(0),    // exclusive_scan of recv size
-                                comm::coll::CollDataType::CollInt64,
-                                comm);
+      static_cast<void>(
+        comm::coll::collAlltoallv(segment_diff.ptr(0),
+                                  comm_size.ptr(0),  // num_segments_l for all in sort group
+                                  sdispls.ptr(0),    // zero for all
+                                  segment_diff_buffers.ptr(0),
+                                  comm_size.ptr(0),  // num_segments_l for all in sort group
+                                  rdispls.ptr(0),    // exclusive_scan of recv size
+                                  comm::coll::CollDataType::CollInt64,
+                                  comm));
 
       comm_size.destroy();
       sdispls.destroy();
@@ -163,8 +166,8 @@ void rebalance_data(SegmentMergePiece<VAL>& merge_buffer,
     auto segment_diff_2d = create_buffer<int64_t>(num_segments_l * num_sort_ranks);
     {
       int pos = 0;
-      for (int64_t segment = 0; segment < num_segments_l; ++segment) {
-        for (int64_t sort_rank = 0; sort_rank < num_sort_ranks; ++sort_rank) {
+      for (size_t segment = 0; segment < num_segments_l; ++segment) {
+        for (size_t sort_rank = 0; sort_rank < num_sort_ranks; ++sort_rank) {
           segment_diff_2d[pos++] = segment_diff_buffers[sort_rank * num_segments_l + segment];
         }
       }
@@ -208,7 +211,7 @@ void rebalance_data(SegmentMergePiece<VAL>& merge_buffer,
                            segment_diff_2d_ptr,
                            segment_diff_2d_ptr + num_segments_l * num_sort_ranks,
                            segment_diff_2d_scan_ptr);
-    for (int64_t segment = 0; segment < num_segments_l; ++segment) {
+    for (size_t segment = 0; segment < num_segments_l; ++segment) {
       send_right[segment] = segment_diff_2d_scan_ptr[segment * num_sort_ranks + my_sort_rank];
     }
 
@@ -228,15 +231,17 @@ void rebalance_data(SegmentMergePiece<VAL>& merge_buffer,
     size_t recv_left_size  = 0;
     size_t send_right_size = 0;
     size_t recv_right_size = 0;
-    for (int64_t segment = 0; segment < num_segments_l; ++segment) {
-      if (send_left[segment] > 0)
+    for (size_t segment = 0; segment < num_segments_l; ++segment) {
+      if (send_left[segment] > 0) {
         send_left_size += send_left[segment];
-      else
+      } else {
         recv_left_size -= send_left[segment];
-      if (send_right[segment] > 0)
+      }
+      if (send_right[segment] > 0) {
         send_right_size += send_right[segment];
-      else
+      } else {
         recv_right_size -= send_right[segment];
+      }
     }
 
     SortPiece<VAL> send_leftright_data, recv_leftright_data;
@@ -260,14 +265,15 @@ void rebalance_data(SegmentMergePiece<VAL>& merge_buffer,
         // copy left
         if (send_left[segment] > 0) {
           size_t size = send_left[segment];
-          if (argsort)
+          if (argsort) {
             std::memcpy(send_leftright_data.indices.ptr(send_left_pos),
                         merge_buffer.indices.ptr(segment_start),
                         size * sizeof(int64_t));
-          else
+          } else {
             std::memcpy(send_leftright_data.values.ptr(send_left_pos),
                         merge_buffer.values.ptr(segment_start),
                         size * sizeof(VAL));
+          }
           send_left_pos += size;
         }
 
@@ -276,14 +282,15 @@ void rebalance_data(SegmentMergePiece<VAL>& merge_buffer,
         // copy right
         if (send_right[segment] > 0) {
           size_t size = send_right[segment];
-          if (argsort)
+          if (argsort) {
             std::memcpy(send_leftright_data.indices.ptr(send_right_pos),
                         merge_buffer.indices.ptr(segment_start - size),
                         size * sizeof(int64_t));
-          else
+          } else {
             std::memcpy(send_leftright_data.values.ptr(send_right_pos),
                         merge_buffer.values.ptr(segment_start - size),
                         size * sizeof(VAL));
+          }
           send_right_pos += size;
         }
       }
@@ -325,23 +332,23 @@ void rebalance_data(SegmentMergePiece<VAL>& merge_buffer,
       }
 
       if (argsort) {
-        comm::coll::collAlltoallv(send_leftright_data.indices.ptr(0),
-                                  comm_send_size.ptr(0),
-                                  sdispls.ptr(0),
-                                  recv_leftright_data.indices.ptr(0),
-                                  comm_recv_size.ptr(0),
-                                  rdispls.ptr(0),
-                                  comm::coll::CollDataType::CollInt8,
-                                  comm);
+        static_cast<void>(comm::coll::collAlltoallv(send_leftright_data.indices.ptr(0),
+                                                    comm_send_size.ptr(0),
+                                                    sdispls.ptr(0),
+                                                    recv_leftright_data.indices.ptr(0),
+                                                    comm_recv_size.ptr(0),
+                                                    rdispls.ptr(0),
+                                                    comm::coll::CollDataType::CollInt8,
+                                                    comm));
       } else {
-        comm::coll::collAlltoallv(send_leftright_data.values.ptr(0),
-                                  comm_send_size.ptr(0),
-                                  sdispls.ptr(0),
-                                  recv_leftright_data.values.ptr(0),
-                                  comm_recv_size.ptr(0),
-                                  rdispls.ptr(0),
-                                  comm::coll::CollDataType::CollInt8,
-                                  comm);
+        static_cast<void>(comm::coll::collAlltoallv(send_leftright_data.values.ptr(0),
+                                                    comm_send_size.ptr(0),
+                                                    sdispls.ptr(0),
+                                                    recv_leftright_data.values.ptr(0),
+                                                    comm_recv_size.ptr(0),
+                                                    rdispls.ptr(0),
+                                                    comm::coll::CollDataType::CollInt8,
+                                                    comm));
       }
 
       comm_send_size.destroy();
@@ -389,7 +396,9 @@ void rebalance_data(SegmentMergePiece<VAL>& merge_buffer,
             offset_src = send_left[segment];
             copy_size -= offset_src;
           }
-          if (send_right[segment] > 0) copy_size -= send_right[segment];
+          if (send_right[segment] > 0) {
+            copy_size -= send_right[segment];
+          }
 
           if (argsort) {
             std::memcpy(output_indices + target_pos,
@@ -442,25 +451,26 @@ void rebalance_data(SegmentMergePiece<VAL>& merge_buffer,
 }
 
 template <Type::Code CODE, typename DerivedPolicy>
-void sample_sort_nd(SortPiece<legate_type_of<CODE>> local_sorted,
-                    Array& output_array_unbound,  // only for unbound usage when !rebalance
-                    void* output_ptr,
-                    /* global domain information */
-                    size_t my_rank,  // global rank
-                    size_t num_ranks,
-                    size_t segment_size_g,
-                    /* domain information in sort dimension */
-                    size_t my_sort_rank,    // local rank id in sort dimension
-                    size_t num_sort_ranks,  // #ranks that share a sort dimension
-                    size_t* sort_ranks,     // rank ids that share a sort dimension with us
-                    size_t segment_size_l,  // (local) segment size
-                    /* other */
-                    bool rebalance,
-                    bool argsort,
-                    const DerivedPolicy& exec,
-                    comm::coll::CollComm comm)
+void sample_sort_nd(
+  SortPiece<type_of<CODE>> local_sorted,
+  legate::PhysicalStore output_array_unbound,  // only for unbound usage when !rebalance
+  void* output_ptr,
+  /* global domain information */
+  size_t my_rank,  // global rank
+  size_t num_ranks,
+  size_t segment_size_g,
+  /* domain information in sort dimension */
+  size_t my_sort_rank,    // local rank id in sort dimension
+  size_t num_sort_ranks,  // #ranks that share a sort dimension
+  size_t* sort_ranks,     // rank ids that share a sort dimension with us
+  size_t segment_size_l,  // (local) segment size
+  /* other */
+  bool rebalance,
+  bool argsort,
+  const DerivedPolicy& exec,
+  comm::coll::CollComm comm)
 {
-  using VAL = legate_type_of<CODE>;
+  using VAL = type_of<CODE>;
 
   size_t volume              = local_sorted.size;
   bool is_unbound_1d_storage = output_array_unbound.is_unbound_store();
@@ -478,14 +488,17 @@ void sample_sort_nd(SortPiece<legate_type_of<CODE>> local_sorted,
   {
     auto worker_counts     = create_buffer<int32_t>(num_ranks);
     worker_counts[my_rank] = (segment_size_l > 0 ? 1 : 0);
-    comm::coll::collAllgather(
-      worker_counts.ptr(my_rank), worker_counts.ptr(0), 1, comm::coll::CollDataType::CollInt, comm);
+    static_cast<void>(comm::coll::collAllgather(worker_counts.ptr(my_rank),
+                                                worker_counts.ptr(0),
+                                                1,
+                                                comm::coll::CollDataType::CollInt,
+                                                comm));
 
     auto p_worker_count = worker_counts.ptr(0);
     int32_t worker_count =
       std::accumulate(p_worker_count, p_worker_count + num_ranks, 0, std::plus<int32_t>());
 
-    if (worker_count < num_ranks) {
+    if (static_cast<size_t>(worker_count) < num_ranks) {
       const size_t number_sort_groups = num_ranks / num_sort_ranks;
       num_sort_ranks                  = worker_count / number_sort_groups;
 
@@ -568,14 +581,15 @@ void sample_sort_nd(SortPiece<legate_type_of<CODE>> local_sorted,
       auto p_comm_size = comm_size.ptr(0);
       thrust::exclusive_scan(exec, p_comm_size, p_comm_size + num_ranks, rdispls.ptr(0), 0);
 
-      comm::coll::collAlltoallv(samples_l.ptr(0),
-                                comm_size.ptr(0),  // num_samples_l*size for all in sort group
-                                sdispls.ptr(0),    // zero for all
-                                p_samples,
-                                comm_size.ptr(0),  // num_samples_l*size for all in sort group
-                                rdispls.ptr(0),    // exclusive_scan of recv size
-                                comm::coll::CollDataType::CollUint8,
-                                comm);
+      static_cast<void>(
+        comm::coll::collAlltoallv(samples_l.ptr(0),
+                                  comm_size.ptr(0),  // num_samples_l*size for all in sort group
+                                  sdispls.ptr(0),    // zero for all
+                                  p_samples,
+                                  comm_size.ptr(0),  // num_samples_l*size for all in sort group
+                                  rdispls.ptr(0),    // exclusive_scan of recv size
+                                  comm::coll::CollDataType::CollUint8,
+                                  comm));
 
       samples_l.destroy();
       comm_size.destroy();
@@ -596,17 +610,12 @@ void sample_sort_nd(SortPiece<legate_type_of<CODE>> local_sorted,
   // check whether we have invalid samples (in case one participant did not have enough)
   int32_t num_usable_samples_per_segment = num_samples_per_segment_g;
   for (int32_t i = num_samples_per_segment_g - 1; i >= 0; i--) {
-    if (p_samples[i].rank != -1)
+    if (p_samples[i].rank != -1) {
       break;
-    else
+    } else {
       num_usable_samples_per_segment--;
+    }
   }
-
-  SegmentSample<VAL> init_sample;
-  init_sample.rank = -1;
-  auto lower_bound = std::lower_bound(
-    p_samples, p_samples + num_samples_per_segment_g, init_sample, SegmentSampleComparator<VAL>());
-  int32_t num_usable_samples = lower_bound - p_samples;
 
   // segment_blocks[r][segment]->global position in data for segment and r
   // perform blocksize wide scan on size_send[r][block*blocksize] within warp
@@ -618,22 +627,22 @@ void sample_sort_nd(SortPiece<legate_type_of<CODE>> local_sorted,
   std::fill(p_size_send, p_size_send + num_sort_ranks * (num_segments_l + 1), 0);
 
   {
-    for (int32_t segment = 0; segment < num_segments_l; ++segment) {
+    for (size_t segment = 0; segment < num_segments_l; ++segment) {
       int32_t start_position = segment_size_l * segment;
-      for (int32_t sort_rank = 0; sort_rank < num_sort_ranks; ++sort_rank) {
+      for (size_t sort_rank = 0; sort_rank < num_sort_ranks; ++sort_rank) {
         int32_t end_position = (segment + 1) * segment_size_l;
         if (sort_rank < num_sort_ranks - 1) {
           // actually search for split position in data
           const int32_t index =
             (sort_rank + 1) * num_usable_samples_per_segment / (num_sort_ranks)-1;
           auto& splitter = p_samples[segment * num_samples_per_segment_g + index];
-          if (my_sort_rank > splitter.rank) {
+          if (my_sort_rank > static_cast<size_t>(splitter.rank)) {
             // position of the last position with smaller value than splitter.value + 1
             end_position =
               std::lower_bound(
                 local_values + start_position, local_values + end_position, splitter.value) -
               local_values;
-          } else if (my_sort_rank < splitter.rank) {
+          } else if (my_sort_rank < static_cast<size_t>(splitter.rank)) {
             // position of the first position with value larger than splitter.value
             end_position =
               std::upper_bound(
@@ -663,7 +672,7 @@ void sample_sort_nd(SortPiece<legate_type_of<CODE>> local_sorted,
 
 #ifdef DEBUG_CUNUMERIC
   {
-    int32_t total_send = 0;
+    size_t total_send = 0;
     for (size_t r = 0; r < num_sort_ranks; ++r) {
       total_send += size_send[r * (num_segments_l + 1) + num_segments_l];
     }
@@ -690,7 +699,7 @@ void sample_sort_nd(SortPiece<legate_type_of<CODE>> local_sorted,
     auto p_comm_size = comm_size.ptr(0);
     thrust::exclusive_scan(exec, p_comm_size, p_comm_size + num_ranks, displs.ptr(0), 0);
 
-    comm::coll::collAlltoallv(
+    static_cast<void>(comm::coll::collAlltoallv(
       size_send.ptr(0),
       comm_size.ptr(0),  // (num_segments_l+1)*size for all in sort group
       displs.ptr(0),     // exclusive_scan of comm_size
@@ -698,7 +707,7 @@ void sample_sort_nd(SortPiece<legate_type_of<CODE>> local_sorted,
       comm_size.ptr(0),  // (num_segments_l+1)*valuesize for all in sort group
       displs.ptr(0),     // exclusive_scan of comm_size
       comm::coll::CollDataType::CollInt,
-      comm);
+      comm));
 
     comm_size.destroy();
     displs.destroy();
@@ -711,15 +720,15 @@ void sample_sort_nd(SortPiece<legate_type_of<CODE>> local_sorted,
 
   auto positions = create_buffer<int32_t>(num_sort_ranks);
   positions[0]   = 0;
-  for (int32_t sort_rank = 1; sort_rank < num_sort_ranks; ++sort_rank) {
+  for (size_t sort_rank = 1; sort_rank < num_sort_ranks; ++sort_rank) {
     positions[sort_rank] =
       positions[sort_rank - 1] + size_send[(sort_rank - 1) * (num_segments_l + 1) + num_segments_l];
   }
 
   // fill send buffers
   {
-    for (int32_t segment = 0; segment < num_segments_l; ++segment) {
-      for (int32_t sort_rank = 0; sort_rank < num_sort_ranks; ++sort_rank) {
+    for (size_t segment = 0; segment < num_segments_l; ++segment) {
+      for (size_t sort_rank = 0; sort_rank < num_sort_ranks; ++sort_rank) {
         int32_t start_position = segment_blocks[sort_rank * num_segments_l + segment];
         int32_t size           = size_send[sort_rank * (num_segments_l + 1) + segment];
         std::memcpy(val_send_buffer.ptr(0) + positions[sort_rank],
@@ -736,7 +745,9 @@ void sample_sort_nd(SortPiece<legate_type_of<CODE>> local_sorted,
   }
 
   local_sorted.values.destroy();
-  if (argsort) local_sorted.indices.destroy();
+  if (argsort) {
+    local_sorted.indices.destroy();
+  }
   segment_blocks.destroy();
   positions.destroy();
 
@@ -753,8 +764,8 @@ void sample_sort_nd(SortPiece<legate_type_of<CODE>> local_sorted,
       auto* p_segments = merge_buffer.segments.ptr(0);
       // initialize segment information
       int32_t start_pos = 0;
-      for (int32_t sort_rank = 0; sort_rank < num_sort_ranks; ++sort_rank) {
-        for (int32_t segment = 0; segment < num_segments_l; ++segment) {
+      for (size_t sort_rank = 0; sort_rank < num_sort_ranks; ++sort_rank) {
+        for (size_t segment = 0; segment < num_segments_l; ++segment) {
           int32_t size = size_recv[sort_rank * (num_segments_l + 1) + segment];
           std::fill(p_segments + start_pos, p_segments + start_pos + size, segment);
           start_pos += size;
@@ -791,14 +802,14 @@ void sample_sort_nd(SortPiece<legate_type_of<CODE>> local_sorted,
     thrust::exclusive_scan(
       exec, p_recv_size_total, p_recv_size_total + num_ranks, rdispls.ptr(0), 0);
 
-    comm::coll::collAlltoallv(val_send_buffer.ptr(0),
-                              send_size_total.ptr(0),
-                              sdispls.ptr(0),
-                              merge_buffer.values.ptr(0),
-                              recv_size_total.ptr(0),
-                              rdispls.ptr(0),
-                              comm::coll::CollDataType::CollUint8,
-                              comm);
+    static_cast<void>(comm::coll::collAlltoallv(val_send_buffer.ptr(0),
+                                                send_size_total.ptr(0),
+                                                sdispls.ptr(0),
+                                                merge_buffer.values.ptr(0),
+                                                recv_size_total.ptr(0),
+                                                rdispls.ptr(0),
+                                                comm::coll::CollDataType::CollUint8,
+                                                comm));
 
     if (argsort) {
       for (size_t sort_rank = 0; sort_rank < num_sort_ranks; ++sort_rank) {
@@ -812,14 +823,14 @@ void sample_sort_nd(SortPiece<legate_type_of<CODE>> local_sorted,
         exec, p_send_size_total, p_send_size_total + num_ranks, sdispls.ptr(0), 0);
       thrust::exclusive_scan(
         exec, p_recv_size_total, p_recv_size_total + num_ranks, rdispls.ptr(0), 0);
-      comm::coll::collAlltoallv(idc_send_buffer.ptr(0),
-                                send_size_total.ptr(0),
-                                sdispls.ptr(0),
-                                merge_buffer.indices.ptr(0),
-                                recv_size_total.ptr(0),
-                                rdispls.ptr(0),
-                                comm::coll::CollDataType::CollInt64,
-                                comm);
+      static_cast<void>(comm::coll::collAlltoallv(idc_send_buffer.ptr(0),
+                                                  send_size_total.ptr(0),
+                                                  sdispls.ptr(0),
+                                                  merge_buffer.indices.ptr(0),
+                                                  recv_size_total.ptr(0),
+                                                  rdispls.ptr(0),
+                                                  comm::coll::CollDataType::CollInt64,
+                                                  comm));
     }
 
     send_size_total.destroy();
@@ -832,7 +843,9 @@ void sample_sort_nd(SortPiece<legate_type_of<CODE>> local_sorted,
   size_send.destroy();
   size_recv.destroy();
   val_send_buffer.destroy();
-  if (argsort) idc_send_buffer.destroy();
+  if (argsort) {
+    idc_send_buffer.destroy();
+  }
 
   /////////////////////////////////////////////////////////////////////////////////////////////////
   /////////////// Part 4: merge data
@@ -896,11 +909,11 @@ void sample_sort_nd(SortPiece<legate_type_of<CODE>> local_sorted,
 
 template <Type::Code CODE, int32_t DIM>
 struct SortImplBodyCpu {
-  using VAL = legate_type_of<CODE>;
+  using VAL = type_of<CODE>;
 
   template <typename DerivedPolicy>
-  void operator()(const Array& input_array,
-                  Array& output_array,
+  void operator()(legate::PhysicalStore input_array,
+                  legate::PhysicalStore output_array,
                   const Pitches<DIM - 1>& pitches,
                   const Rect<DIM>& rect,
                   const size_t volume,
@@ -977,7 +990,9 @@ struct SortImplBodyCpu {
     if (volume > 0) {
       // sort data (locally)
       auto* src = input.ptr(rect.lo);
-      if (src != values_ptr) std::copy(src, src + volume, values_ptr);
+      if (src != values_ptr) {
+        std::copy(src, src + volume, values_ptr);
+      }
       thrust_local_sort_inplace(values_ptr, indices_ptr, volume, segment_size_l, stable, exec);
     }
 
@@ -986,7 +1001,9 @@ struct SortImplBodyCpu {
         assert(is_index_space || is_unbound_1d_storage);
         std::vector<size_t> sort_ranks(num_sort_ranks);
         size_t rank_group = local_rank / num_sort_ranks;
-        for (int r = 0; r < num_sort_ranks; ++r) sort_ranks[r] = rank_group * num_sort_ranks + r;
+        for (size_t r = 0; r < num_sort_ranks; ++r) {
+          sort_ranks[r] = rank_group * num_sort_ranks + r;
+        }
 
         void* output_ptr = nullptr;
         // in case the storage *is NOT* unbound -- we provide a target pointer

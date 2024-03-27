@@ -25,9 +25,9 @@ using namespace legate;
 
 template <Type::Code CODE, int DIM>
 struct ArgWhereImplBody<VariantKind::OMP, CODE, DIM> {
-  using VAL = legate_type_of<CODE>;
+  using VAL = type_of<CODE>;
 
-  void operator()(Array& out_array,
+  void operator()(legate::PhysicalStore& out_array,
                   AccessorRO<VAL, DIM> input,
                   const Pitches<DIM - 1>& pitches,
                   const Rect<DIM>& rect,
@@ -39,7 +39,9 @@ struct ArgWhereImplBody<VariantKind::OMP, CODE, DIM> {
     ThreadLocalStorage<int64_t> offsets(max_threads);
     {
       ThreadLocalStorage<int64_t> sizes(max_threads);
-      for (auto idx = 0; idx < max_threads; ++idx) sizes[idx] = 0;
+      for (auto idx = 0; idx < max_threads; ++idx) {
+        sizes[idx] = 0;
+      }
 #pragma omp parallel
       {
         const int tid = omp_get_thread_num();
@@ -49,9 +51,13 @@ struct ArgWhereImplBody<VariantKind::OMP, CODE, DIM> {
           sizes[tid] += input[in_p] != VAL(0);
         }
       }
-      for (auto idx = 0; idx < max_threads; ++idx) size += sizes[idx];
+      for (auto idx = 0; idx < max_threads; ++idx) {
+        size += sizes[idx];
+      }
       offsets[0] = 0;
-      for (auto idx = 1; idx < max_threads; ++idx) offsets[idx] = offsets[idx - 1] + sizes[idx - 1];
+      for (auto idx = 1; idx < max_threads; ++idx) {
+        offsets[idx] = offsets[idx - 1] + sizes[idx - 1];
+      }
     }
 
     auto out = out_array.create_output_buffer<int64_t, 2>(Point<2>(size, DIM), true);
@@ -65,7 +71,9 @@ struct ArgWhereImplBody<VariantKind::OMP, CODE, DIM> {
         auto in_p = pitches.unflatten(idx, rect.lo);
 
         if (input[in_p] != VAL(0)) {
-          for (int i = 0; i < DIM; ++i) { out[Point<2>(out_idx, i)] = in_p[i]; }
+          for (int i = 0; i < DIM; ++i) {
+            out[Point<2>(out_idx, i)] = in_p[i];
+          }
           out_idx++;
         }
       }
@@ -74,7 +82,7 @@ struct ArgWhereImplBody<VariantKind::OMP, CODE, DIM> {
   }
 };
 
-/*static*/ void ArgWhereTask::omp_variant(TaskContext& context)
+/*static*/ void ArgWhereTask::omp_variant(TaskContext context)
 {
   argwhere_template<VariantKind::OMP>(context);
 }

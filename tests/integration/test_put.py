@@ -154,7 +154,7 @@ def test_ndim_default_mode(ndim):
     assert np.array_equal(np_arr, num_arr)
 
 
-INDICES = ([1, 2, 3.2, 100], [[2, 2], [3, 100]], [1], [100])
+INDICES = ([1, 2, 3.2, 100], [[2, 1], [3, 100]], [1], [100])
 
 
 @pytest.mark.parametrize("ndim", range(1, LEGATE_MAX_DIM + 1))

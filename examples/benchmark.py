@@ -17,8 +17,7 @@
 
 import math
 from functools import reduce
-
-from typing_extensions import Protocol
+from typing import Protocol
 
 
 class Timer(Protocol):
@@ -35,18 +34,18 @@ class Timer(Protocol):
 
 class CuNumericTimer(Timer):
     def __init__(self):
-        self._start_future = None
+        self._start_time = None
 
     def start(self):
         from legate.timing import time
 
-        self._start_future = time()
+        self._start_time = time("us")
 
     def stop(self):
         from legate.timing import time
 
-        end_future = time()
-        return (end_future - self._start_future) / 1000.0
+        end_future = time("us")
+        return (end_future - self._start_time) / 1000.0
 
 
 class CuPyTimer(Timer):

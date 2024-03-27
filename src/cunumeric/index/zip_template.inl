@@ -32,21 +32,22 @@ struct ZipImpl {
   template <int DIM, int N>
   void operator()(ZipArgs& args) const
   {
-    using VAL       = int64_t;
-    auto out_rect   = args.out.shape<DIM>();
-    auto out        = args.out.write_accessor<Point<N>, DIM>(out_rect);
-    auto index_rect = args.inputs[0].shape<DIM>();
+    using VAL     = int64_t;
+    auto out_rect = args.out.shape<DIM>();
+    auto out      = args.out.write_accessor<Point<N>, DIM>(out_rect);
     Pitches<DIM - 1> pitches;
     size_t volume = pitches.flatten(out_rect);
-    if (volume == 0) return;
+    if (volume == 0) {
+      return;
+    }
 
-#ifndef LEGATE_BOUNDS_CHECKS
+#if !LegateDefined(LEGATE_BOUNDS_CHECKS)
     bool dense = out.accessor.is_dense_row_major(out_rect);
 #else
     bool dense = false;
 #endif
     std::vector<AccessorRO<VAL, DIM>> index_arrays;
-    for (int i = 0; i < args.inputs.size(); i++) {
+    for (uint32_t i = 0; i < args.inputs.size(); i++) {
       index_arrays.push_back(args.inputs[i].read_accessor<VAL, DIM>(args.inputs[i].shape<DIM>()));
       dense = dense && index_arrays[i].accessor.is_dense_row_major(out_rect);
     }
@@ -89,14 +90,20 @@ static void zip_template(TaskContext& context)
   // key_dim = 3
   // start_index = 1
 
-  int64_t N           = context.scalars()[0].value<int64_t>();
-  int64_t key_dim     = context.scalars()[1].value<int64_t>();
-  int64_t start_index = context.scalars()[2].value<int64_t>();
-  auto shape          = context.scalars()[3].value<DomainPoint>();
-  ZipArgs args{context.outputs()[0], context.inputs(), N, key_dim, start_index, shape};
+  int64_t N           = context.scalar(0).value<int64_t>();
+  int64_t key_dim     = context.scalar(1).value<int64_t>();
+  int64_t start_index = context.scalar(2).value<int64_t>();
+  auto shape          = context.scalar(3).value<DomainPoint>();
+  std::vector<legate::PhysicalStore> inputs;
+  for (auto& input : context.inputs()) {
+    inputs.emplace_back(input);
+  }
+  ZipArgs args{context.output(0), std::move(inputs), N, key_dim, start_index, shape};
   int dim = args.inputs[0].dim();
   // if scalar passed as an input, convert it to the array size 1
-  if (dim == 0) { dim = 1; }
+  if (dim == 0) {
+    dim = 1;
+  }
 
   double_dispatch(dim, N, ZipImpl<KIND>{}, args);
 }

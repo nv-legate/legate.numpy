@@ -34,20 +34,22 @@ struct ConvertImpl {
   void operator()(ConvertArgs& args) const
   {
     using OP  = ConvertOp<NAN_OP, DST_TYPE, SRC_TYPE>;
-    using SRC = legate_type_of<SRC_TYPE>;
-    using DST = legate_type_of<DST_TYPE>;
+    using SRC = type_of<SRC_TYPE>;
+    using DST = type_of<DST_TYPE>;
 
     auto rect = args.out.shape<DIM>();
 
     Pitches<DIM - 1> pitches;
     size_t volume = pitches.flatten(rect);
 
-    if (volume == 0) return;
+    if (volume == 0) {
+      return;
+    }
 
     auto out = args.out.write_accessor<DST, DIM>(rect);
     auto in  = args.in.read_accessor<SRC, DIM>(rect);
 
-#ifndef LEGATE_BOUNDS_CHECKS
+#if !LegateDefined(LEGATE_BOUNDS_CHECKS)
     // Check to see if this is dense or not
     bool dense = out.accessor.is_dense_row_major(rect) && in.accessor.is_dense_row_major(rect);
 #else
@@ -100,8 +102,7 @@ struct SourceTypeDispatch {
 template <VariantKind KIND>
 static void convert_template(TaskContext& context)
 {
-  ConvertArgs args{
-    context.outputs()[0], context.inputs()[0], context.scalars()[0].value<ConvertCode>()};
+  ConvertArgs args{context.output(0), context.input(0), context.scalar(0).value<ConvertCode>()};
   type_dispatch(args.in.code(), SourceTypeDispatch<KIND>{}, args);
 }
 

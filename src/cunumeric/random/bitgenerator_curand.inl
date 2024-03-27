@@ -35,8 +35,6 @@ using namespace legate;
 template <VariantKind kind>
 struct CURANDGeneratorBuilder;
 
-#pragma region wrapper to randutil
-
 struct CURANDGenerator {
   randutilGenerator_t gen_;
   uint64_t seed_;
@@ -45,7 +43,7 @@ struct CURANDGenerator {
 
  protected:
   CURANDGenerator(BitGeneratorType gentype, uint64_t seed, uint64_t generatorId)
-    : type_(get_curandRngType(gentype)), seed_(seed), generatorId_(generatorId)
+    : seed_(seed), generatorId_(generatorId), type_(get_curandRngType(gentype))
   {
     randutil_log().debug() << "CURANDGenerator::create";
   }
@@ -271,11 +269,9 @@ struct CURANDGenerator {
   }
 };
 
-#pragma endregion
-
 struct generate_fn {
   template <int32_t DIM>
-  size_t operator()(CURANDGenerator& gen, legate::Store& output)
+  size_t operator()(CURANDGenerator& gen, legate::PhysicalStore output)
   {
     auto rect       = output.shape<DIM>();
     uint64_t volume = rect.volume();
@@ -294,10 +290,6 @@ struct generate_fn {
     return volume;
   }
 };
-
-#pragma region generators
-
-#pragma region integer
 
 template <typename output_t>
 struct integer_generator;
@@ -350,10 +342,6 @@ struct integer_generator<int16_t> {
   }
 };
 
-#pragma endregion
-
-#pragma region uniform
-
 template <typename output_t>
 struct uniform_generator;
 template <>
@@ -388,10 +376,6 @@ struct uniform_generator<float> {
     gen.generate_uniform_32(count, p, low_, high_);
   }
 };
-
-#pragma endregion
-
-#pragma region lognormal
 
 template <typename output_t>
 struct lognormal_generator;
@@ -428,10 +412,6 @@ struct lognormal_generator<float> {
   }
 };
 
-#pragma endregion
-
-#pragma region normal
-
 template <typename output_t>
 struct normal_generator;
 template <>
@@ -467,10 +447,6 @@ struct normal_generator<float> {
   }
 };
 
-#pragma endregion
-
-#pragma region poisson
-
 template <typename output_t>
 struct poisson_generator;
 template <>
@@ -489,10 +465,6 @@ struct poisson_generator<uint32_t> {
     gen.generate_poisson(count, p, lam_);
   }
 };
-
-#pragma endregion
-
-#pragma region exponential
 
 template <typename output_t>
 struct exponential_generator;
@@ -529,10 +501,6 @@ struct exponential_generator<float> {
   }
 };
 
-#pragma endregion
-
-#pragma region gumbel
-
 template <typename output_t>
 struct gumbel_generator;
 template <>
@@ -567,10 +535,6 @@ struct gumbel_generator<float> {
     gen.generate_gumbel_32(count, p, mu_, beta_);
   }
 };
-
-#pragma endregion
-
-#pragma region laplace
 
 template <typename output_t>
 struct laplace_generator;
@@ -607,10 +571,6 @@ struct laplace_generator<float> {
   }
 };
 
-#pragma endregion
-
-#pragma region logistic
-
 template <typename output_t>
 struct logistic_generator;
 template <>
@@ -645,10 +605,6 @@ struct logistic_generator<float> {
     gen.generate_logistic_32(count, p, mu_, beta_);
   }
 };
-
-#pragma endregion
-
-#pragma region pareto
 
 template <typename output_t>
 struct pareto_generator;
@@ -685,10 +641,6 @@ struct pareto_generator<float> {
   }
 };
 
-#pragma endregion
-
-#pragma region power
-
 template <typename output_t>
 struct power_generator;
 template <>
@@ -723,10 +675,6 @@ struct power_generator<float> {
     gen.generate_power_32(count, p, alpha_);
   }
 };
-
-#pragma endregion
-
-#pragma region rayleigh
 
 template <typename output_t>
 struct rayleigh_generator;
@@ -763,10 +711,6 @@ struct rayleigh_generator<float> {
   }
 };
 
-#pragma endregion
-
-#pragma region cauchy
-
 template <typename output_t>
 struct cauchy_generator;
 template <>
@@ -801,10 +745,6 @@ struct cauchy_generator<float> {
     gen.generate_cauchy_32(count, p, x0_, gamma_);
   }
 };
-
-#pragma endregion
-
-#pragma region triangular
 
 template <typename output_t>
 struct triangular_generator;
@@ -841,10 +781,6 @@ struct triangular_generator<float> {
   }
 };
 
-#pragma endregion
-
-#pragma region weibull
-
 template <typename output_t>
 struct weibull_generator;
 template <>
@@ -880,10 +816,6 @@ struct weibull_generator<float> {
   }
 };
 
-#pragma endregion
-
-#pragma region bytes
-
 template <typename output_t>
 struct bytes_generator;
 template <>
@@ -900,10 +832,6 @@ struct bytes_generator<unsigned char> {
     gen.generate_integer_32((count + 3) / 4, (int32_t*)p, -2147483648, 2147483647);
   }
 };
-
-#pragma endregion
-
-#pragma region beta
 
 template <typename output_t>
 struct beta_generator;
@@ -940,10 +868,6 @@ struct beta_generator<float> {
   }
 };
 
-#pragma endregion
-
-#pragma region f
-
 template <typename output_t>
 struct f_generator;
 template <>
@@ -979,10 +903,6 @@ struct f_generator<float> {
   }
 };
 
-#pragma endregion
-
-#pragma region logseries
-
 template <typename output_t>
 struct logseries_generator;
 template <>
@@ -1001,10 +921,6 @@ struct logseries_generator<unsigned> {
     gen.generate_logseries(count, p, p_);
   }
 };
-
-#pragma endregion
-
-#pragma region noncentral_f
 
 template <typename output_t>
 struct noncentral_f_generator;
@@ -1041,10 +957,6 @@ struct noncentral_f_generator<float> {
   }
 };
 
-#pragma endregion
-
-#pragma region chisquare
-
 template <typename output_t>
 struct chisquare_generator;
 template <>
@@ -1079,10 +991,6 @@ struct chisquare_generator<float> {
     gen.generate_chisquare_32(count, p, df_, nonc_);
   }
 };
-
-#pragma endregion
-
-#pragma region gamma
 
 template <typename output_t>
 struct gamma_generator;
@@ -1119,10 +1027,6 @@ struct gamma_generator<float> {
   }
 };
 
-#pragma endregion
-
-#pragma region hypergeometric
-
 template <typename output_t>
 struct hypergeometric_generator;
 template <>
@@ -1141,10 +1045,6 @@ struct hypergeometric_generator<unsigned> {
     gen.generate_hypergeometric(count, p, ngood_, nbad_, nsample_);
   }
 };
-
-#pragma endregion
-
-#pragma region zipf
 
 template <typename output_t>
 struct zipf_generator;
@@ -1165,10 +1065,6 @@ struct zipf_generator<unsigned> {
   }
 };
 
-#pragma endregion
-
-#pragma region geometric
-
 template <typename output_t>
 struct geometric_generator;
 template <>
@@ -1187,10 +1083,6 @@ struct geometric_generator<unsigned> {
     gen.generate_geometric(count, p, p_);
   }
 };
-
-#pragma endregion
-
-#pragma region standard_t
 
 template <typename output_t>
 struct standard_t_generator;
@@ -1227,10 +1119,6 @@ struct standard_t_generator<float> {
   }
 };
 
-#pragma endregion
-
-#pragma region vonmises
-
 template <typename output_t>
 struct vonmises_generator;
 template <>
@@ -1265,10 +1153,6 @@ struct vonmises_generator<float> {
     gen.generate_vonmises_32(count, p, mu_, kappa_);
   }
 };
-
-#pragma endregion
-
-#pragma region wald
 
 template <typename output_t>
 struct wald_generator;
@@ -1305,10 +1189,6 @@ struct wald_generator<float> {
   }
 };
 
-#pragma endregion
-
-#pragma region binomial
-
 template <typename output_t>
 struct binomial_generator;
 template <>
@@ -1328,10 +1208,6 @@ struct binomial_generator<uint32_t> {
     gen.generate_binomial(count, p, n_, p_);
   }
 };
-
-#pragma endregion
-
-#pragma region negative_binomial
 
 template <typename output_t>
 struct negative_binomial_generator;
@@ -1353,10 +1229,6 @@ struct negative_binomial_generator<uint32_t> {
   }
 };
 
-#pragma endregion
-
-#pragma endregion
-
 template <typename output_t, typename generator_t>
 struct generate_distribution {
   const generator_t& generator_;
@@ -1364,7 +1236,7 @@ struct generate_distribution {
   generate_distribution(const generator_t& generator) : generator_(generator) {}
 
   template <int32_t DIM>
-  size_t operator()(CURANDGenerator& gen, legate::Store& output)
+  size_t operator()(CURANDGenerator& gen, legate::PhysicalStore output)
   {
     auto rect       = output.shape<DIM>();
     uint64_t volume = rect.volume();
@@ -1383,7 +1255,7 @@ struct generate_distribution {
     return volume;
   }
 
-  static void generate(legate::Store& res,
+  static void generate(legate::PhysicalStore res,
                        CURANDGenerator& cugen,
                        const std::vector<int64_t>& intparams,
                        const std::vector<float>& floatparams,
@@ -1449,9 +1321,10 @@ struct generator_map {
       if (m_generators.find(generatorID) != m_generators.end()) {
         cugenptr = m_generators[generatorID];
         m_generators.erase(generatorID);
-      } else
+      } else {
         // in some cases, destroy is forced, but processor never created the instance
         return;
+      }
     }
 
     CURANDGeneratorBuilder<kind>::destroy(cugenptr);
@@ -1489,8 +1362,8 @@ struct BitGeneratorImplBody {
                   std::vector<int64_t> intparams,
                   std::vector<float> floatparams,
                   std::vector<double> doubleparams,
-                  std::vector<legate::Store>& output,
-                  std::vector<legate::Store>& args)
+                  std::vector<legate::PhysicalStore>& output,
+                  std::vector<legate::PhysicalStore>& args)
   {
     generator_map_t& genmap = get_generator_map();
     switch (op) {
@@ -1508,24 +1381,28 @@ struct BitGeneratorImplBody {
       }
       case BitGeneratorOperation::RAND_RAW: {
         // allow for lazy initialization
-        if (!genmap.has(generatorID)) genmap.create(generatorID, generatorType, seed, flags);
+        if (!genmap.has(generatorID)) {
+          genmap.create(generatorID, generatorType, seed, flags);
+        }
         // get the generator
         CURANDGenerator* genptr = genmap.get(generatorID);
         if (output.size() != 0) {
-          legate::Store& res     = output[0];
-          CURANDGenerator& cugen = *genptr;
+          legate::PhysicalStore& res = output[0];
+          CURANDGenerator& cugen     = *genptr;
           dim_dispatch(res.dim(), generate_fn{}, cugen, res);
         }
         break;
       }
       case BitGeneratorOperation::DISTRIBUTION: {
         // allow for lazy initialization
-        if (!genmap.has(generatorID)) genmap.create(generatorID, generatorType, seed, flags);
+        if (!genmap.has(generatorID)) {
+          genmap.create(generatorID, generatorType, seed, flags);
+        }
         // get the generator
         CURANDGenerator* genptr = genmap.get(generatorID);
         if (output.size() != 0) {
-          legate::Store& res     = output[0];
-          CURANDGenerator& cugen = *genptr;
+          legate::PhysicalStore& res = output[0];
+          CURANDGenerator& cugen     = *genptr;
           switch (distribution) {
             case BitGeneratorDistribution::INTEGERS_16:
               generate_distribution<int16_t, integer_generator<int16_t>>::generate(
@@ -1739,12 +1616,12 @@ struct BitGeneratorImplBody {
               generate_distribution<uint32_t, negative_binomial_generator<uint32_t>>::generate(
                 res, cugen, intparams, floatparams, doubleparams);
               break;
-            default: LEGATE_ABORT;
+            default: LEGATE_ABORT("Unknown random distribution");
           }
         }
         break;
       }
-      default: LEGATE_ABORT;
+      default: LEGATE_ABORT("Unknown bitgenerator operation");
     }
   }
 };

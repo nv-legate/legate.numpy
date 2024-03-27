@@ -32,7 +32,7 @@ struct ArgWhereImpl {
   template <Type::Code CODE, int DIM>
   void operator()(ArgWhereArgs& args) const
   {
-    using VAL = legate_type_of<CODE>;
+    using VAL = type_of<CODE>;
 
     auto rect_in = args.in.shape<DIM>();
 
@@ -52,7 +52,7 @@ struct ArgWhereImpl {
 template <VariantKind KIND>
 static void argwhere_template(TaskContext& context)
 {
-  ArgWhereArgs args{context.outputs()[0], context.inputs()[0]};
+  ArgWhereArgs args{context.output(0), context.input(0)};
   double_dispatch(args.in.dim(), args.in.code(), ArgWhereImpl<KIND>{}, args);
 }
 

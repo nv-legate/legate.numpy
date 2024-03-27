@@ -110,15 +110,17 @@ struct MatMulImplBody<KIND, Type::Code::FLOAT16> {
     auto rhs1_copy = allocate_buffer(m * k);
     auto rhs2_copy = allocate_buffer(k * n);
 
-    if (rhs1_transposed)
+    if (rhs1_transposed) {
       half_matrix_to_float(rhs1_copy, rhs1, k, m, rhs1_stride);
-    else
+    } else {
       half_matrix_to_float(rhs1_copy, rhs1, m, k, rhs1_stride);
+    }
 
-    if (rhs2_transposed)
+    if (rhs2_transposed) {
       half_matrix_to_float(rhs2_copy, rhs2, n, k, rhs2_stride);
-    else
+    } else {
       half_matrix_to_float(rhs2_copy, rhs2, k, n, rhs2_stride);
+    }
 
     cblas_sgemm(CblasRowMajor,
                 rhs1_transposed ? CblasTrans : CblasNoTrans,

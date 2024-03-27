@@ -14,7 +14,7 @@
  *
  */
 
-#include "cunumeric/cunumeric.h"
+#include "cunumeric/cunumeric_task.h"
 #include "cunumeric/matrix/batched_cholesky.h"
 #include "cunumeric/matrix/batched_cholesky_template.inl"
 
@@ -34,7 +34,7 @@ void CopyBlockImpl<VariantKind::OMP>::operator()(void* dst, const void* src, siz
 
 template <Type::Code CODE>
 struct BatchedTransposeImplBody<VariantKind::OMP, CODE> {
-  using VAL = legate_type_of<CODE>;
+  using VAL = type_of<CODE>;
 
   static constexpr int tile_size = 64;
 
@@ -67,14 +67,16 @@ struct BatchedTransposeImplBody<VariantKind::OMP, CODE> {
         }
 
         for (int r = c_start, tr = 0; r < c_stop; ++r, ++tr) {
-          for (int c = r_start, tc = 0; c < r_stop; ++c, ++tc) { out[r * n + c] = tile[tc][tr]; }
+          for (int c = r_start, tc = 0; c < r_stop; ++c, ++tc) {
+            out[r * n + c] = tile[tc][tr];
+          }
         }
       }
     }
   }
 };
 
-/*static*/ void BatchedCholeskyTask::omp_variant(TaskContext& context)
+/*static*/ void BatchedCholeskyTask::omp_variant(TaskContext context)
 {
   openblas_set_num_threads(omp_get_max_threads());
   batched_cholesky_task_context_dispatch<VariantKind::OMP>(context);

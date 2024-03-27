@@ -16,15 +16,15 @@
 
 #pragma once
 
-#include "cunumeric/cunumeric.h"
+#include "cunumeric/cunumeric_task.h"
 
 namespace cunumeric {
 
 struct DiagArgs {
   int naxes;
   bool extract;
-  const Array& matrix;
-  const Array& diag;
+  legate::PhysicalStore matrix;
+  legate::PhysicalStore diag;
 };
 
 class DiagTask : public CuNumericTask<DiagTask> {
@@ -32,12 +32,12 @@ class DiagTask : public CuNumericTask<DiagTask> {
   static const int TASK_ID = CUNUMERIC_DIAG;
 
  public:
-  static void cpu_variant(legate::TaskContext& context);
-#ifdef LEGATE_USE_OPENMP
-  static void omp_variant(legate::TaskContext& context);
+  static void cpu_variant(legate::TaskContext context);
+#if LegateDefined(LEGATE_USE_OPENMP)
+  static void omp_variant(legate::TaskContext context);
 #endif
-#ifdef LEGATE_USE_CUDA
-  static void gpu_variant(legate::TaskContext& context);
+#if LegateDefined(LEGATE_USE_CUDA)
+  static void gpu_variant(legate::TaskContext context);
 #endif
 };
 

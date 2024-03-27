@@ -39,12 +39,14 @@ struct FillImpl {
     Pitches<DIM - 1> pitches;
     size_t volume = pitches.flatten(rect);
 
-    if (volume == 0) return;
+    if (volume == 0) {
+      return;
+    }
 
     auto out        = args.out.write_accessor<VAL, DIM>(rect);
     auto fill_value = args.fill_value.read_accessor<VAL, 1>();
 
-#ifndef LEGATE_BOUNDS_CHECKS
+#if !LegateDefined(LEGATE_BOUNDS_CHECKS)
     // Check to see if this is dense or not
     bool dense = out.accessor.is_dense_row_major(rect);
 #else
@@ -57,29 +59,16 @@ struct FillImpl {
   template <Type::Code CODE, int DIM>
   void operator()(FillArgs& args) const
   {
-    if (args.is_argval) {
-      using VAL = Argval<legate_type_of<CODE>>;
-      fill<VAL, DIM>(args);
-    } else {
-      using VAL = legate_type_of<CODE>;
-      fill<VAL, DIM>(args);
-    }
+    using VAL = type_of<CODE>;
+    fill<VAL, DIM>(args);
   }
 };
 
 template <VariantKind KIND>
 static void fill_template(TaskContext& context)
 {
-  FillArgs args{context.outputs()[0], context.inputs()[0], context.scalars()[0].value<bool>()};
-  Type::Code code{args.out.code()};
-  if (Type::Code::STRUCT == code) {
-#ifdef DEBUG_CUNUMERIC
-    assert(args.is_argval);
-#endif
-    auto& field_type = static_cast<const StructType&>(args.out.type()).field_type(1);
-    code             = field_type.code;
-  }
-  double_dispatch(args.out.dim(), code, FillImpl<KIND>{}, args);
+  FillArgs args{context.output(0), context.input(0)};
+  double_dispatch(std::max<int32_t>(args.out.dim(), 1), args.out.code(), FillImpl<KIND>{}, args);
 }
 
 }  // namespace cunumeric

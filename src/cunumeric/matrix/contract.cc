@@ -240,7 +240,7 @@ struct ContractImplBody<VariantKind::CPU, Type::Code::COMPLEX128> {
   }
 };
 
-/*static*/ void ContractTask::cpu_variant(legate::TaskContext& context)
+/*static*/ void ContractTask::cpu_variant(legate::TaskContext context)
 {
   contract_template<VariantKind::CPU>(context);
 }

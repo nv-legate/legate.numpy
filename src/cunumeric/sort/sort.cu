@@ -50,8 +50,8 @@ template <>
 struct support_cub<Type::Code::COMPLEX128> : std::false_type {};
 
 template <Type::Code CODE, std::enable_if_t<support_cub<CODE>::value>* = nullptr>
-void local_sort(const legate_type_of<CODE>* values_in,
-                legate_type_of<CODE>* values_out,
+void local_sort(const type_of<CODE>* values_in,
+                type_of<CODE>* values_out,
                 const int64_t* indices_in,
                 int64_t* indices_out,
                 const size_t volume,
@@ -59,7 +59,7 @@ void local_sort(const legate_type_of<CODE>* values_in,
                 const bool stable,  // cub sort is always stable
                 cudaStream_t stream)
 {
-  using VAL = legate_type_of<CODE>;
+  using VAL = type_of<CODE>;
   // fallback to thrust approach as segmented radix sort is not suited for small segments
   if (volume == sort_dim_size || sort_dim_size > SEGMENT_THRESHOLD_RADIX_SORT) {
     cub_local_sort(values_in, values_out, indices_in, indices_out, volume, sort_dim_size, stream);
@@ -70,8 +70,8 @@ void local_sort(const legate_type_of<CODE>* values_in,
 }
 
 template <Type::Code CODE, std::enable_if_t<!support_cub<CODE>::value>* = nullptr>
-void local_sort(const legate_type_of<CODE>* values_in,
-                legate_type_of<CODE>* values_out,
+void local_sort(const type_of<CODE>* values_in,
+                type_of<CODE>* values_out,
                 const int64_t* indices_in,
                 int64_t* indices_out,
                 const size_t volume,
@@ -79,16 +79,18 @@ void local_sort(const legate_type_of<CODE>* values_in,
                 const bool stable,
                 cudaStream_t stream)
 {
-  using VAL = legate_type_of<CODE>;
+  using VAL = type_of<CODE>;
   thrust_local_sort(
     values_in, values_out, indices_in, indices_out, volume, sort_dim_size, stable, stream);
 }
 
+namespace {
 // auto align to multiples of 16 bytes
 auto get_16b_aligned = [](auto bytes) { return std::max<size_t>(16, (bytes + 15) / 16 * 16); };
 auto get_16b_aligned_count = [](auto count, auto element_bytes) {
   return (get_16b_aligned(count * element_bytes) + element_bytes - 1) / element_bytes;
 };
+}  // namespace
 
 // increase number of columns computed per block as long as either
 // 1. we have more threads in block than elements in row
@@ -146,7 +148,9 @@ __global__ static void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM)
                                    const size_t my_sort_rank)
 {
   const size_t splitter_idx_g = blockIdx.x * blockDim.x + threadIdx.x;
-  if (splitter_idx_g >= num_splitters) return;
+  if (splitter_idx_g >= num_splitters) {
+    return;
+  }
 
   const size_t num_splitters_per_segment = num_splitters / num_segments_l;
   const size_t splitter_pos              = splitter_idx_g % num_splitters_per_segment;
@@ -182,7 +186,9 @@ __global__ static void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM)
                           const size_t num_send_parts)
 {
   const size_t send_part = blockIdx.x * blockDim.x + threadIdx.x;
-  if (send_part >= num_send_parts) return;
+  if (send_part >= num_send_parts) {
+    return;
+  }
 
   const size_t rank    = send_part / num_segments_l;
   const size_t segment = send_part % num_segments_l;
@@ -251,7 +257,9 @@ __global__ static void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM)
     }
   }
   // also store sum of all in last element
-  if (threadId == 0) { size_send[rank * num_segments_l_aligned + num_segments_l] = prefix_op(0); }
+  if (threadId == 0) {
+    size_send[rank * num_segments_l_aligned + num_segments_l] = prefix_op(0);
+  }
 }
 
 __global__ static void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM)
@@ -261,12 +269,16 @@ __global__ static void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM)
                                      const size_t num_segment_ids)
 {
   const size_t segment_idx = blockIdx.x * blockDim.x + threadIdx.x;
-  if (segment_idx >= num_segments_l) return;
+  if (segment_idx >= num_segments_l) {
+    return;
+  }
 
   unsigned long long int* ptr = (unsigned long long int*)segment_ids;
 
   const size_t position = start_positions[segment_idx];
-  if (position < num_segment_ids) atomicAdd(&(ptr[position]), (unsigned long long int)1l);
+  if (position < num_segment_ids) {
+    atomicAdd(&(ptr[position]), (unsigned long long int)1l);
+  }
 }
 
 __global__ static void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM)
@@ -277,7 +289,9 @@ __global__ static void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM)
                         const size_t segments_size_l)
 {
   const size_t segment_idx = blockIdx.x * blockDim.x + threadIdx.x;
-  if (segment_idx >= num_segments_l) return;
+  if (segment_idx >= num_segments_l) {
+    return;
+  }
 
   if (num_segments_l == 1) {
     segments_diff[segment_idx] = size - segments_size_l;
@@ -306,7 +320,9 @@ __global__ static void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM)
   const size_t thread_offset    = blockIdx.x * blockDim.x + threadIdx.x;
   const size_t threadgroup_size = blockDim.x * gridDim.x;
   const size_t segment_id       = blockIdx.y * blockDim.y + threadIdx.y;
-  if (segment_id >= num_segments_l) return;
+  if (segment_id >= num_segments_l) {
+    return;
+  }
 
   size_t source_offset = segment_size_l * segment_id;
   for (int r = 0; r < num_sort_ranks; ++r) {
@@ -331,7 +347,9 @@ __global__ static void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM)
   const size_t thread_offset    = blockIdx.x * blockDim.x + threadIdx.x;
   const size_t threadgroup_size = blockDim.x * gridDim.x;
   const size_t rank_id          = blockIdx.y * blockDim.y + threadIdx.y;
-  if (rank_id >= num_sort_ranks) return;
+  if (rank_id >= num_sort_ranks) {
+    return;
+  }
 
   size_t target_offset = target_offsets[rank_id];
   size_t local_size    = (rank_id == num_sort_ranks - 1)
@@ -362,7 +380,9 @@ __global__ static void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM)
   const size_t thread_offset    = blockIdx.x * blockDim.x + threadIdx.x;
   const size_t threadgroup_size = blockDim.x * gridDim.x;
   const size_t segment_id       = blockIdx.y * blockDim.y + threadIdx.y;
-  if (segment_id >= num_segments_l) return;
+  if (segment_id >= num_segments_l) {
+    return;
+  }
 
   // copy left
   {
@@ -411,7 +431,9 @@ __global__ static void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM)
   const size_t thread_offset    = blockIdx.x * blockDim.x + threadIdx.x;
   const size_t threadgroup_size = blockDim.x * gridDim.x;
   const size_t segment_id       = blockIdx.y * blockDim.y + threadIdx.y;
-  if (segment_id >= num_segments_l) return;
+  if (segment_id >= num_segments_l) {
+    return;
+  }
 
   size_t target_offset = segment_id * segment_size_l;
   size_t source_start  = segment_size_l * segment_id + segment_diff_pos[segment_id];
@@ -422,8 +444,12 @@ __global__ static void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM)
   int64_t recv_left_size  = send_left[segment_id] * -1;
   int64_t recv_right_size = send_right[segment_id] * -1;
 
-  if (recv_left_size < 0) source_start -= recv_left_size;
-  if (recv_right_size < 0) source_end += recv_right_size;
+  if (recv_left_size < 0) {
+    source_start -= recv_left_size;
+  }
+  if (recv_right_size < 0) {
+    source_end += recv_right_size;
+  }
 
   // copy from left
   {
@@ -476,7 +502,9 @@ __global__ static void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM)
 {
   const size_t sample_idx    = blockIdx.x * blockDim.x + threadIdx.x;
   const size_t num_samples_l = num_samples_per_segment_l * num_segments_l;
-  if (sample_idx >= num_samples_l) return;
+  if (sample_idx >= num_samples_l) {
+    return;
+  }
 
   const size_t segment_id_l       = sample_idx / num_samples_per_segment_l;
   const size_t segment_sample_idx = sample_idx % num_samples_per_segment_l;
@@ -567,14 +595,14 @@ struct negative_plus : public thrust::binary_function<int64_t, int64_t, int64_t>
 /////////////////////////////////////////////////////////////////////////////////////////////////
 
 template <Type::Code CODE>
-SegmentMergePiece<legate_type_of<CODE>> merge_all_buffers(
-  std::vector<SegmentMergePiece<legate_type_of<CODE>>>& merge_buffers,
+SegmentMergePiece<type_of<CODE>> merge_all_buffers(
+  std::vector<SegmentMergePiece<type_of<CODE>>>& merge_buffers,
   bool segmented,
   bool argsort,
   ThrustAllocator& alloc,
   cudaStream_t stream)
 {
-  using VAL = legate_type_of<CODE>;
+  using VAL = type_of<CODE>;
 
   // fallback to full sort for 1D and > 64 parts
   if (!segmented && merge_buffers.size() > 64) {
@@ -587,7 +615,7 @@ SegmentMergePiece<legate_type_of<CODE>> merge_all_buffers(
       create_buffer<size_t>(num_sort_ranks, legate::Memory::Z_COPY_MEM);
 
     // loop comparably small -> no init kernel
-    for (int i = 0; i < num_sort_ranks; ++i) {
+    for (size_t i = 0; i < num_sort_ranks; ++i) {
       target_offsets[i] = merged_size;
       merged_size += merge_buffers[i].size;
     }
@@ -628,10 +656,12 @@ SegmentMergePiece<legate_type_of<CODE>> merge_all_buffers(
       target_offsets.destroy();
 
       // destroy buffers
-      for (int i = 0; i < num_sort_ranks; ++i) {
+      for (size_t i = 0; i < num_sort_ranks; ++i) {
         SegmentMergePiece<VAL> piece = merge_buffers[i];
         piece.values.destroy();
-        if (argsort) { piece.indices.destroy(); }
+        if (argsort) {
+          piece.indices.destroy();
+        }
       }
       merge_buffers.clear();
     }
@@ -729,11 +759,15 @@ SegmentMergePiece<legate_type_of<CODE>> merge_all_buffers(
       }
 
       // destroy buffers only after each sweep
-      for (int i = 0; i < destroy_queue.size(); ++i) {
+      for (size_t i = 0; i < destroy_queue.size(); ++i) {
         SegmentMergePiece<VAL> piece = destroy_queue[i];
         piece.values.destroy();
-        if (segmented) { piece.segments.destroy(); }
-        if (argsort) { piece.indices.destroy(); }
+        if (segmented) {
+          piece.segments.destroy();
+        }
+        if (argsort) {
+          piece.indices.destroy();
+        }
       }
       destroy_queue.clear();
     }
@@ -795,7 +829,9 @@ void rebalance_data(SegmentMergePiece<VAL>& merge_buffer,
     }
 
     merge_buffer.segments.destroy();
-    if (argsort) { merge_buffer.values.destroy(); }
+    if (argsort) {
+      merge_buffer.values.destroy();
+    }
 
 #ifdef DEBUG_CUNUMERIC
     {
@@ -1188,25 +1224,26 @@ void rebalance_data(SegmentMergePiece<VAL>& merge_buffer,
 /////////////////////////////////////////////////////////////////////////////////////////////////
 
 template <Type::Code CODE>
-void sample_sort_nccl_nd(SortPiece<legate_type_of<CODE>> local_sorted,
-                         Array& output_array_unbound,  // only for unbound usage when !rebalance
-                         void* output_ptr,
-                         /* global domain information */
-                         size_t my_rank,  // global NCCL rank
-                         size_t num_ranks,
-                         size_t segment_size_g,
-                         /* domain information in sort dimension */
-                         size_t my_sort_rank,    // local rank id in sort dimension
-                         size_t num_sort_ranks,  // #ranks that share a sort dimension
-                         size_t* sort_ranks,     // rank ids that share a sort dimension with us
-                         size_t segment_size_l,  // (local) segment size
-                         /* other */
-                         bool rebalance,
-                         bool argsort,
-                         cudaStream_t stream,
-                         ncclComm_t* comm)
+void sample_sort_nccl_nd(
+  SortPiece<type_of<CODE>> local_sorted,
+  legate::PhysicalStore& output_array_unbound,  // only for unbound usage when !rebalance
+  void* output_ptr,
+  /* global domain information */
+  size_t my_rank,  // global NCCL rank
+  size_t num_ranks,
+  size_t segment_size_g,
+  /* domain information in sort dimension */
+  size_t my_sort_rank,    // local rank id in sort dimension
+  size_t num_sort_ranks,  // #ranks that share a sort dimension
+  size_t* sort_ranks,     // rank ids that share a sort dimension with us
+  size_t segment_size_l,  // (local) segment size
+  /* other */
+  bool rebalance,
+  bool argsort,
+  cudaStream_t stream,
+  ncclComm_t* comm)
 {
-  using VAL = legate_type_of<CODE>;
+  using VAL = type_of<CODE>;
 
   size_t volume              = local_sorted.size;
   bool is_unbound_1d_storage = output_array_unbound.is_unbound_store();
@@ -1221,7 +1258,7 @@ void sample_sort_nccl_nd(SortPiece<legate_type_of<CODE>> local_sorted,
   // a full sort group being empty, this should not affect local sort rank size.
   {
     auto worker_count_d = create_buffer<int32_t>(1, legate::Memory::GPU_FB_MEM);
-    int worker_count    = (segment_size_l > 0 ? 1 : 0);
+    size_t worker_count = (segment_size_l > 0 ? 1 : 0);
     CHECK_CUDA(cudaMemcpyAsync(
       worker_count_d.ptr(0), &worker_count, sizeof(int32_t), cudaMemcpyHostToDevice, stream));
     CHECK_NCCL(ncclAllReduce(
@@ -1510,7 +1547,9 @@ void sample_sort_nccl_nd(SortPiece<legate_type_of<CODE>> local_sorted,
     }
 
     local_sorted.values.destroy();
-    if (argsort) local_sorted.indices.destroy();
+    if (argsort) {
+      local_sorted.indices.destroy();
+    }
     segment_blocks.destroy();
   }
 
@@ -1564,36 +1603,40 @@ void sample_sort_nccl_nd(SortPiece<legate_type_of<CODE>> local_sorted,
   // communicate all2all (in sort dimension)
   CHECK_NCCL(ncclGroupStart());
   for (size_t r = 0; r < num_sort_ranks; r++) {
-    if (size_send_total[r] > 0)
+    if (size_send_total[r] > 0) {
       CHECK_NCCL(ncclSend(val_send_buffers[r].ptr(0),
                           size_send_total[r] * sizeof(VAL),
                           ncclInt8,
                           sort_ranks[r],
                           *comm,
                           stream));
-    if (merge_buffers[r].size > 0)
+    }
+    if (merge_buffers[r].size > 0) {
       CHECK_NCCL(ncclRecv(merge_buffers[r].values.ptr(0),
                           merge_buffers[r].size * sizeof(VAL),
                           ncclInt8,
                           sort_ranks[r],
                           *comm,
                           stream));
+    }
   }
   CHECK_NCCL(ncclGroupEnd());
 
   if (argsort) {
     CHECK_NCCL(ncclGroupStart());
     for (size_t r = 0; r < num_sort_ranks; r++) {
-      if (size_send_total[r] > 0)
+      if (size_send_total[r] > 0) {
         CHECK_NCCL(ncclSend(
           idc_send_buffers[r].ptr(0), size_send_total[r], ncclInt64, sort_ranks[r], *comm, stream));
-      if (merge_buffers[r].size > 0)
+      }
+      if (merge_buffers[r].size > 0) {
         CHECK_NCCL(ncclRecv(merge_buffers[r].indices.ptr(0),
                             merge_buffers[r].size,
                             ncclInt64,
                             sort_ranks[r],
                             *comm,
                             stream));
+      }
     }
     CHECK_NCCL(ncclGroupEnd());
   }
@@ -1605,7 +1648,9 @@ void sample_sort_nccl_nd(SortPiece<legate_type_of<CODE>> local_sorted,
   size_recv_total.destroy();
   for (size_t r = 0; r < num_sort_ranks; r++) {
     val_send_buffers[r].destroy();
-    if (argsort) idc_send_buffers[r].destroy();
+    if (argsort) {
+      idc_send_buffers[r].destroy();
+    }
   }
   CHECK_CUDA_STREAM(stream);
 
@@ -1660,10 +1705,10 @@ void sample_sort_nccl_nd(SortPiece<legate_type_of<CODE>> local_sorted,
 
 template <Type::Code CODE, int32_t DIM>
 struct SortImplBody<VariantKind::GPU, CODE, DIM> {
-  using VAL = legate_type_of<CODE>;
+  using VAL = type_of<CODE>;
 
-  void operator()(const Array& input_array,
-                  Array& output_array,
+  void operator()(const legate::PhysicalStore& input_array,
+                  legate::PhysicalStore& output_array,
                   const Pitches<DIM - 1>& pitches,
                   const Rect<DIM>& rect,
                   const size_t volume,
@@ -1757,7 +1802,9 @@ struct SortImplBody<VariantKind::GPU, CODE, DIM> {
         assert(is_index_space || is_unbound_1d_storage);
         std::vector<size_t> sort_ranks(num_sort_ranks);
         size_t rank_group = local_rank / num_sort_ranks;
-        for (int r = 0; r < num_sort_ranks; ++r) sort_ranks[r] = rank_group * num_sort_ranks + r;
+        for (size_t r = 0; r < num_sort_ranks; ++r) {
+          sort_ranks[r] = rank_group * num_sort_ranks + r;
+        }
 
         void* output_ptr = nullptr;
         // in case the storage *is NOT* unbound -- we provide a target pointer
@@ -1806,7 +1853,7 @@ struct SortImplBody<VariantKind::GPU, CODE, DIM> {
   }
 };
 
-/*static*/ void SortTask::gpu_variant(TaskContext& context)
+/*static*/ void SortTask::gpu_variant(TaskContext context)
 {
   sort_template<VariantKind::GPU>(context);
 }

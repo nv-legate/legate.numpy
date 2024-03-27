@@ -23,7 +23,7 @@ using namespace legate;
 
 template <Type::Code CODE, int DIM, typename OUT_TYPE>
 struct AdvancedIndexingImplBody<VariantKind::CPU, CODE, DIM, OUT_TYPE> {
-  using VAL = legate_type_of<CODE>;
+  using VAL = type_of<CODE>;
 
   template <typename OUT_T>
   void compute_output(Buffer<OUT_T, DIM>& out,
@@ -41,22 +41,26 @@ struct AdvancedIndexingImplBody<VariantKind::CPU, CODE, DIM, OUT_TYPE> {
       if (index[p] == true) {
         Point<DIM> out_p;
         out_p[0] = out_idx;
-        for (size_t i = 0; i < DIM - key_dim; i++) {
+        for (int32_t i = 0; i < static_cast<int32_t>(DIM - key_dim); i++) {
           size_t j     = key_dim + i;
           out_p[i + 1] = p[j];
         }
-        for (size_t i = DIM - key_dim + 1; i < DIM; i++) out_p[i] = 0;
+        for (int32_t i = DIM - key_dim + 1; i < DIM; i++) {
+          out_p[i] = 0;
+        }
         fill_out(out[out_p], p, input[p]);
         // The logic below is based on the assumtion that
         // pitches enumerate points in C-order, but this might
         // change in the future
         // TODO: replace with the order-aware interator when available
-        if ((idx + 1) % skip_size == 0) out_idx++;
+        if ((idx + 1) % skip_size == 0) {
+          out_idx++;
+        }
       }
     }
   }
 
-  void operator()(Array& out_arr,
+  void operator()(legate::PhysicalStore& out_arr,
                   const AccessorRO<VAL, DIM>& input,
                   const AccessorRO<bool, DIM>& index,
                   const Pitches<DIM - 1>& pitches,
@@ -67,7 +71,9 @@ struct AdvancedIndexingImplBody<VariantKind::CPU, CODE, DIM, OUT_TYPE> {
     size_t skip_size = 1;
     for (size_t i = key_dim; i < DIM; i++) {
       auto diff = 1 + rect.hi[i] - rect.lo[i];
-      if (diff != 0) skip_size *= diff;
+      if (diff != 0) {
+        skip_size *= diff;
+      }
     }
 
     // calculate size of the key_dim-1 extend in output region
@@ -75,24 +81,30 @@ struct AdvancedIndexingImplBody<VariantKind::CPU, CODE, DIM, OUT_TYPE> {
     size_t size         = 0;
     for (size_t idx = 0; idx < volume; idx += skip_size) {
       auto p = pitches.unflatten(idx, rect.lo);
-      if (index[p] == true) { size++; }
+      if (index[p] == true) {
+        size++;
+      }
     }
 
     // calculating the shape of the output region for this sub-task
     Point<DIM> extents;
     extents[0] = size;
-    for (size_t i = 0; i < DIM - key_dim; i++) {
+    for (int32_t i = 0; i < static_cast<int32_t>(DIM - key_dim); i++) {
       size_t j       = key_dim + i;
       extents[i + 1] = 1 + rect.hi[j] - rect.lo[j];
     }
-    for (size_t i = DIM - key_dim + 1; i < DIM; i++) extents[i] = 1;
+    for (int32_t i = DIM - key_dim + 1; i < DIM; i++) {
+      extents[i] = 1;
+    }
 
     auto out = out_arr.create_output_buffer<OUT_TYPE, DIM>(extents, true);
-    if (size > 0) compute_output(out, input, index, pitches, rect, volume, key_dim, skip_size);
+    if (size > 0) {
+      compute_output(out, input, index, pitches, rect, volume, key_dim, skip_size);
+    }
   }
 };
 
-/*static*/ void AdvancedIndexingTask::cpu_variant(TaskContext& context)
+/*static*/ void AdvancedIndexingTask::cpu_variant(TaskContext context)
 {
   advanced_indexing_template<VariantKind::CPU>(context);
 }

@@ -49,7 +49,9 @@ static inline void solve_template(GetrfBufferSize getrf_buffer_size,
   CHECK_CUSOLVER(getrf(handle, m, n, a, m, buffer.ptr(0), ipiv.ptr(0), info.ptr(0)));
   CHECK_CUDA(cudaStreamSynchronize(stream));
 
-  if (info[0] != 0) throw legate::TaskException(SolveTask::ERROR_MESSAGE);
+  if (info[0] != 0) {
+    throw legate::TaskException(SolveTask::ERROR_MESSAGE);
+  }
 
   CHECK_CUSOLVER(getrs(handle, trans, n, nrhs, a, m, ipiv.ptr(0), b, n, info.ptr(0)));
 
@@ -108,7 +110,7 @@ struct SolveImplBody<VariantKind::GPU, Type::Code::COMPLEX128> {
   }
 };
 
-/*static*/ void SolveTask::gpu_variant(TaskContext& context)
+/*static*/ void SolveTask::gpu_variant(TaskContext context)
 {
   solve_template<VariantKind::GPU>(context);
 }

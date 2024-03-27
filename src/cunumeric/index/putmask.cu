@@ -20,7 +20,7 @@
 
 namespace cunumeric {
 
-/*static*/ void PutmaskTask::gpu_variant(TaskContext& context)
+/*static*/ void PutmaskTask::gpu_variant(TaskContext context)
 {
   putmask_template<VariantKind::GPU>(context);
 }

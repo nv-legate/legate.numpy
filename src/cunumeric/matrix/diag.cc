@@ -23,7 +23,7 @@ using namespace legate;
 
 template <Type::Code CODE, int DIM>
 struct DiagImplBody<VariantKind::CPU, CODE, DIM, true> {
-  using VAL = legate_type_of<CODE>;
+  using VAL = type_of<CODE>;
 
   void operator()(const AccessorRD<SumReduction<VAL>, true, DIM>& out,
                   const AccessorRO<VAL, DIM>& in,
@@ -35,15 +35,19 @@ struct DiagImplBody<VariantKind::CPU, CODE, DIM, true> {
   {
     size_t skip_size = 1;
 
-    for (int i = 0; i < naxes; i++) {
+    for (size_t i = 0; i < naxes; i++) {
       auto diff = 1 + m_shape.hi[DIM - i - 1] - m_shape.lo[DIM - i - 1];
-      if (diff != 0) skip_size *= diff;
+      if (diff != 0) {
+        skip_size *= diff;
+      }
     }
     const size_t volume = m_shape.volume();
     for (size_t idx = 0; idx < volume; idx += skip_size) {
       Point<DIM> p = m_pitches.unflatten(idx, m_shape.lo);
       for (coord_t d = 0; d < distance; ++d) {
-        for (size_t i = DIM - naxes; i < DIM; i++) { p[i] = start + d; }
+        for (size_t i = DIM - naxes; i < DIM; i++) {
+          p[i] = start + d;
+        }
         auto v = in[p];
         out.reduce(p, v);
       }
@@ -54,7 +58,7 @@ struct DiagImplBody<VariantKind::CPU, CODE, DIM, true> {
 // not extract (create a new 2D matrix with diagonal from vector)
 template <Type::Code CODE>
 struct DiagImplBody<VariantKind::CPU, CODE, 2, false> {
-  using VAL = legate_type_of<CODE>;
+  using VAL = type_of<CODE>;
 
   void operator()(const AccessorRO<VAL, 2>& in,
                   const AccessorRW<VAL, 2>& out,
@@ -68,7 +72,7 @@ struct DiagImplBody<VariantKind::CPU, CODE, 2, false> {
   }
 };
 
-/*static*/ void DiagTask::cpu_variant(TaskContext& context)
+/*static*/ void DiagTask::cpu_variant(TaskContext context)
 {
   diag_template<VariantKind::CPU>(context);
 }

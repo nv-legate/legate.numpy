@@ -143,11 +143,15 @@ RANDUTIL_QUALIFIERS double rk_standard_gamma(rk_state* state, double shape)
       V = rk_standard_exponential(state);
       if (U <= 1.0 - shape) {
         X = pow(U, 1. / shape);
-        if (X <= V) { return X; }
+        if (X <= V) {
+          return X;
+        }
       } else {
         Y = -log((1 - U) / shape);
         X = pow(1.0 - shape + shape * Y, 1. / shape);
-        if (X <= (V + Y)) { return X; }
+        if (X <= (V + Y)) {
+          return X;
+        }
       }
     }
   } else {
@@ -160,8 +164,12 @@ RANDUTIL_QUALIFIERS double rk_standard_gamma(rk_state* state, double shape)
       } while (V <= 0.0);
       V = V * V * V;
       U = rk_double(state);
-      if (U < 1.0 - 0.0331 * (X * X) * (X * X)) return (b * V);
-      if (log(U) < 0.5 * X * X + b * (1. - V + log(V))) return (b * V);
+      if (U < 1.0 - 0.0331 * (X * X) * (X * X)) {
+        return (b * V);
+      }
+      if (log(U) < 0.5 * X * X + b * (1. - V + log(V))) {
+        return (b * V);
+      }
     }
   }
 }
@@ -221,8 +229,12 @@ RANDUTIL_QUALIFIERS long rk_poisson_ptrs(rk_state* state, double lam)
     V  = rk_double(state);
     us = 0.5 - fabs(U);
     k  = (long)floor((2 * a / us + b) * U + lam + 0.43);
-    if ((us >= 0.07) && (V <= vr)) { return k; }
-    if ((k < 0) || ((us < 0.013) && (V > us))) { continue; }
+    if ((us >= 0.07) && (V <= vr)) {
+      return k;
+    }
+    if ((k < 0) || ((us < 0.013) && (V > us))) {
+      continue;
+    }
     if ((log(V) + log(invalpha) - log(a / (us * us) + b)) <= (-lam + k * loglam - loggam(k + 1))) {
       return k;
     }
@@ -272,7 +284,9 @@ RANDUTIL_QUALIFIERS double rk_chisquare(rk_state* state, double df)
 template <typename rk_state>
 RANDUTIL_QUALIFIERS double rk_noncentral_chisquare(rk_state* state, double df, double nonc)
 {
-  if (nonc == 0) { return rk_chisquare(state, df); }
+  if (nonc == 0) {
+    return rk_chisquare(state, df);
+  }
   if (1 < df) {
     const double Chi2 = rk_chisquare(state, df - 1);
     const double N    = rk_gauss(state) + sqrt(nonc);
@@ -304,7 +318,9 @@ RANDUTIL_QUALIFIERS long rk_logseries(rk_state* state, double p)
   r = log(1.0 - p);
   while (1) {
     V = rk_double(state);
-    if (V >= p) { return 1; }
+    if (V >= p) {
+      return 1;
+    }
     U = rk_double(state);
     q = 1.0 - exp(r * U);
     if (V <= q * q) {
@@ -315,7 +331,9 @@ RANDUTIL_QUALIFIERS long rk_logseries(rk_state* state, double p)
         return result;
       }
     }
-    if (V >= q) { return 1; }
+    if (V >= q) {
+      return 1;
+    }
     return 2;
   }
 }
@@ -325,8 +343,6 @@ RANDUTIL_QUALIFIERS double rk_standard_t(rk_state* state, double df)
 {
   return sqrt(df / 2) * rk_gauss(state) / sqrt(rk_standard_gamma(state, df / 2));
 }
-
-#pragma region geometric
 
 template <typename rk_state>
 RANDUTIL_QUALIFIERS long rk_geometric_search(rk_state* state, double p)
@@ -373,9 +389,13 @@ RANDUTIL_QUALIFIERS long rk_zipf(rk_state* state, double a)
     U = 1.0 - rk_double(state);
     V = rk_double(state);
     X = floor(pow(U, -1.0 / am1));
-    if (X < 1.0) { continue; }
+    if (X < 1.0) {
+      continue;
+    }
     T = pow(1.0 + 1.0 / X, am1);
-    if (V * X * (T - 1.0) / (b - 1.0) <= T / b) { return (long)X; }
+    if (V * X * (T - 1.0) / (b - 1.0) <= T / b) {
+      return (long)X;
+    }
   }
 }
 
@@ -407,23 +427,25 @@ RANDUTIL_QUALIFIERS double rk_vonmises(rk_state* state, double mu, double kappa)
       W = (1 + s * Z) / (s + Z);
       Y = kappa * (s - W);
       V = rk_double(state);
-      if ((Y * (2 - Y) - V >= 0) || (log(Y / V) + 1 - Y >= 0)) { break; }
+      if ((Y * (2 - Y) - V >= 0) || (log(Y / V) + 1 - Y >= 0)) {
+        break;
+      }
     }
     U      = rk_double(state);
     result = acos(W);
-    if (U < 0.5) { result = -result; }
+    if (U < 0.5) {
+      result = -result;
+    }
     result += mu;
     neg = (result < 0);
     mod = fabs(result);
     mod = (fmod(mod + M_PI, 2 * M_PI) - M_PI);
-    if (neg) { mod *= -1; }
+    if (neg) {
+      mod *= -1;
+    }
     return mod;
   }
 }
-
-#pragma endregion
-
-#pragma region hypergeometric
 
 RANDUTIL_QUALIFIERS long long_min(long a, long b) { return a < b ? a : b; }
 RANDUTIL_QUALIFIERS long long_max(long a, long b) { return a > b ? a : b; }
@@ -441,10 +463,14 @@ RANDUTIL_QUALIFIERS long rk_hypergeometric_hyp(rk_state* state, long good, long 
     U = rk_double(state);
     Y -= (long)floor(U + Y / (d1 + K));
     K--;
-    if (K == 0) break;
+    if (K == 0) {
+      break;
+    }
   }
   Z = (long)(d2 - Y);
-  if (good > bad) Z = sample - Z;
+  if (good > bad) {
+    Z = sample - Z;
+  }
   return Z;
 }
 /* D1 = 2*sqrt(2/e) */
@@ -477,20 +503,32 @@ RANDUTIL_QUALIFIERS long rk_hypergeometric_hrua(rk_state* state, long good, long
     Y = rk_double(state);
     W = d6 + d8 * (Y - 0.5) / X;
     /* fast rejection: */
-    if ((W < 0.0) || (W >= d11)) continue;
+    if ((W < 0.0) || (W >= d11)) {
+      continue;
+    }
     Z = (long)floor(W);
     T = d10 - (loggam(Z + 1) + loggam(mingoodbad - Z + 1) + loggam(m - Z + 1) +
                loggam(maxgoodbad - m + Z + 1));
     /* fast acceptance: */
-    if ((X * (4.0 - X) - 3.0) <= T) break;
+    if ((X * (4.0 - X) - 3.0) <= T) {
+      break;
+    }
     /* fast rejection: */
-    if (X * (X - T) >= 1) continue;
-    if (2.0 * log(X) <= T) break; /* acceptance */
+    if (X * (X - T) >= 1) {
+      continue;
+    }
+    if (2.0 * log(X) <= T) {
+      break; /* acceptance */
+    }
   }
   /* this is a correction to HRUA* by Ivan Frohne in rv.py */
-  if (good > bad) Z = m - Z;
+  if (good > bad) {
+    Z = m - Z;
+  }
   /* another fix from rv.py to allow sample to exceed popsize/2 */
-  if (m < sample) Z = good - Z;
+  if (m < sample) {
+    Z = good - Z;
+  }
   return Z;
 }
 #undef D1
@@ -504,10 +542,6 @@ RANDUTIL_QUALIFIERS long rk_hypergeometric(rk_state* state, long good, long bad,
     return rk_hypergeometric_hyp(state, good, bad, sample);
   }
 }
-
-#pragma endregion
-
-#pragma region binomial
 
 template <typename rk_state>
 RANDUTIL_QUALIFIERS unsigned rk_binomial_btpe(rk_state* state, unsigned n, double p)
@@ -539,45 +573,69 @@ Step10:
   nrq = n * r * q;
   u   = rk_double(state) * p4;
   v   = rk_double(state);
-  if (u > p1) goto Step20;
+  if (u > p1) {
+    goto Step20;
+  }
   y = (long)floor(xm - p1 * v + u);
   goto Step60;
 Step20:
-  if (u > p2) goto Step30;
+  if (u > p2) {
+    goto Step30;
+  }
   x = xl + (u - p1) / c;
   v = v * c + 1.0 - fabs(m - x + 0.5) / p1;
-  if (v > 1.0) goto Step10;
+  if (v > 1.0) {
+    goto Step10;
+  }
   y = (long)floor(x);
   goto Step50;
 Step30:
-  if (u > p3) goto Step40;
+  if (u > p3) {
+    goto Step40;
+  }
   y = (long)floor(xl + log(v) / laml);
-  if (y < 0) goto Step10;
+  if (y < 0) {
+    goto Step10;
+  }
   v = v * (u - p2) * laml;
   goto Step50;
 Step40:
   y = (long)floor(xr - log(v) / lamr);
-  if (y > n) goto Step10;
+  if (y > n) {
+    goto Step10;
+  }
   v = v * (u - p3) * lamr;
 Step50:
   k = labs(y - m);
-  if ((k > 20) && (k < ((nrq) / 2.0 - 1))) goto Step52;
+  if ((k > 20) && (k < ((nrq) / 2.0 - 1))) {
+    goto Step52;
+  }
   s = r / q;
   a = s * (n + 1);
   F = 1.0;
   if (m < y) {
-    for (i = m + 1; i <= y; i++) { F *= (a / i - s); }
+    for (i = m + 1; i <= y; i++) {
+      F *= (a / i - s);
+    }
   } else if (m > y) {
-    for (i = y + 1; i <= m; i++) { F /= (a / i - s); }
+    for (i = y + 1; i <= m; i++) {
+      F /= (a / i - s);
+    }
   }
-  if (v > F) goto Step10;
+  if (v > F) {
+    goto Step10;
+  }
   goto Step60;
 Step52:
   rho = (k / (nrq)) * ((k * (k / 3.0 + 0.625) + 0.16666666666666666) / nrq + 0.5);
   t   = -k * k / (2 * nrq);
   A   = log(v);
-  if (A < (t - rho)) goto Step60;
-  if (A > (t + rho)) goto Step10;
+  if (A < (t - rho)) {
+    goto Step60;
+  }
+  if (A > (t + rho)) {
+    goto Step10;
+  }
   x1 = y + 1;
   f1 = m + 1;
   z  = n + 1 - m;
@@ -594,7 +652,9 @@ Step52:
     goto Step10;
   }
 Step60:
-  if (p > 0.5) { y = n - y; }
+  if (p > 0.5) {
+    y = n - y;
+  }
   return (unsigned)y;
 }
 
@@ -645,5 +705,3 @@ RANDUTIL_QUALIFIERS unsigned rk_binomial(rk_state* state, unsigned n, double p)
     }
   }
 }
-
-#pragma endregion

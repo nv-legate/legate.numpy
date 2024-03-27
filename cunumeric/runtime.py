@@ -14,122 +14,136 @@
 #
 from __future__ import annotations
 
-import struct
 import warnings
-from functools import reduce
-from typing import TYPE_CHECKING, Any, Optional, Sequence, Union
+from functools import lru_cache, reduce
+from typing import TYPE_CHECKING, Any, Sequence, TypeGuard
 
 import legate.core.types as ty
 import numpy as np
-from legate.core import LEGATE_MAX_DIM, ProcessorKind, Rect, get_legate_runtime
-from legate.core.context import Context as LegateContext
+from legate.core import LEGATE_MAX_DIM, Scalar, TaskTarget, get_legate_runtime
 from legate.settings import settings as legate_settings
-from typing_extensions import TypeGuard
 
+from ._utils.array import calculate_volume, is_supported_type, to_core_dtype
+from ._utils.stack import find_last_user_stacklevel
 from .config import (
     BitGeneratorOperation,
     CuNumericOpCode,
     CuNumericTunable,
-    cunumeric_context,
+    TransferType,
     cunumeric_lib,
 )
-from .deferred import DeferredArray
-from .eager import EagerArray
-from .settings import settings
-from .thunk import NumPyThunk
-from .types import NdShape
-from .utils import calculate_volume, find_last_user_stacklevel, to_core_dtype
+
+# We need to be careful about importing from other cunumeric modules here. The
+# runtime is global and used in many places, but also depends on many of the
+# other modules. Things like config and utils are OK, but imports for thunks,
+# array types, etc. need to be deferred in order to avoid circular imports.
+
 
 if TYPE_CHECKING:
     import numpy.typing as npt
-    from legate.core._legion.future import Future
-    from legate.core.operation import AutoTask, ManualTask
+    from legate.core import AutoTask, ManualTask
 
-    from .array import ndarray
-
+    from ._array.array import ndarray
+    from ._thunk.deferred import DeferredArray
+    from ._thunk.eager import EagerArray
+    from ._thunk.thunk import NumPyThunk
+    from .types import NdShape
 
 DIMENSION = int
 
+legate_runtime = get_legate_runtime()
+
+
+def thunk_from_scalar(
+    bytes: bytes, shape: NdShape, dtype: np.dtype[Any]
+) -> DeferredArray:
+    from ._thunk.deferred import DeferredArray
+
+    store = legate_runtime.create_store_from_scalar(
+        Scalar(bytes, to_core_dtype(dtype)),
+        shape=shape,
+    )
+    return DeferredArray(store)
+
+
+@lru_cache
+def cached_thunk_from_scalar(
+    bytes: bytes, shape: NdShape, dtype: np.dtype[Any]
+) -> DeferredArray:
+    return thunk_from_scalar(bytes, shape, dtype)
+
 
 class Runtime(object):
-    def __init__(self, legate_context: LegateContext) -> None:
-        self.legate_context = legate_context
-        self.legate_runtime = get_legate_runtime()
+    def __init__(self) -> None:
+        self.library = legate_runtime.find_library(cunumeric_lib.name)
         self.current_random_epoch = 0
         self.current_random_bitgenid = 0
         self.current_random_bitgen_zombies: tuple[Any, ...] = ()
         self.destroyed = False
         self.api_calls: list[tuple[str, str, bool]] = []
 
-        self.max_eager_volume = int(
-            self.legate_context.get_tunable(
-                CuNumericTunable.MAX_EAGER_VOLUME,
-                ty.int32,
-            )
+        max_eager_volume = self.library.get_tunable(
+            CuNumericTunable.MAX_EAGER_VOLUME,
+            ty.int32,
         )
+        self.max_eager_volume = int(np.asarray(max_eager_volume))
 
-        # Make sure that our CuNumericLib object knows about us so it can
-        # destroy us
-        cunumeric_lib.set_runtime(self)
         assert cunumeric_lib.shared_object is not None
         self.cunumeric_lib = cunumeric_lib.shared_object
         self.has_curand = cunumeric_lib.shared_object.cunumeric_has_curand()
+        self.has_cusolvermp = (
+            cunumeric_lib.shared_object.cunumeric_has_cusolvermp()
+        )
+
+        from .settings import settings
 
         settings.warn = settings.warn() or legate_settings.test()
 
         if self.num_gpus > 0 and settings.preload_cudalibs():
             self._load_cudalibs()
 
-        # Maps dimensions to point types
-        self._cached_point_types: dict[DIMENSION, ty.Dtype] = dict()
         # Maps value types to struct types used in argmin/argmax
-        self._cached_argred_types: dict[ty.Dtype, ty.Dtype] = dict()
+        self._cached_argred_types: dict[ty.Type, ty.Type] = dict()
 
     @property
     def num_procs(self) -> int:
-        return len(self.legate_runtime.machine)
+        return len(legate_runtime.machine)
 
     @property
     def num_gpus(self) -> int:
-        return self.legate_runtime.machine.count(ProcessorKind.GPU)
-
-    def get_point_type(self, dim: DIMENSION) -> ty.Dtype:
-        cached = self._cached_point_types.get(dim)
-        if cached is not None:
-            return cached
-        point_dtype = ty.array_type(ty.int64, dim) if dim > 1 else ty.int64
-        self._cached_point_types[dim] = point_dtype
-        return point_dtype
+        return legate_runtime.machine.count(TaskTarget.GPU)
 
     def record_api_call(
         self, name: str, location: str, implemented: bool
     ) -> None:
+        from .settings import settings
+
         assert settings.report_coverage()
         self.api_calls.append((name, location, implemented))
 
     def _load_cudalibs(self) -> None:
-        task = self.legate_context.create_manual_task(
+        task = legate_runtime.create_manual_task(
+            self.library,
             CuNumericOpCode.LOAD_CUDALIBS,
-            launch_domain=Rect(lo=(0,), hi=(self.num_gpus,)),
+            [self.num_gpus],
         )
         task.execute()
-        self.legate_runtime.issue_execution_fence(block=True)
+        legate_runtime.issue_execution_fence(block=True)
 
-    def _unload_cudalibs(self) -> None:
-        task = self.legate_context.create_manual_task(
-            CuNumericOpCode.UNLOAD_CUDALIBS,
-            launch_domain=Rect(lo=(0,), hi=(self.num_gpus,)),
-        )
-        task.execute()
-
-    def get_argred_type(self, value_dtype: ty.Dtype) -> ty.Dtype:
+    def get_argred_type(self, value_dtype: ty.Type) -> ty.Type:
         cached = self._cached_argred_types.get(value_dtype)
         if cached is not None:
             return cached
         argred_dtype = ty.struct_type([ty.int64, value_dtype], True)
         self._cached_argred_types[value_dtype] = argred_dtype
-        self.cunumeric_lib.cunumeric_register_reduction_op(
-            argred_dtype.uid, value_dtype.code
+        ids = self.cunumeric_lib.cunumeric_register_reduction_ops(
+            value_dtype.code
+        )
+        argred_dtype.record_reduction_op(
+            ty.ReductionOp.MAX, ids.argmax_redop_id
+        )
+        argred_dtype.record_reduction_op(
+            ty.ReductionOp.MIN, ids.argmin_redop_id
         )
         return argred_dtype
 
@@ -145,6 +159,8 @@ class Runtime(object):
                 f"({implemented / total * 100}%)"
             )
 
+        from .settings import settings
+
         if (dump_csv := settings.report_dump_csv()) is not None:
             with open(dump_csv, "w") as f:
                 print("function_name,location,implemented", file=f)
@@ -152,46 +168,20 @@ class Runtime(object):
                     print(f"{func_name},{loc},{impl}", file=f)
 
     def destroy(self) -> None:
+        from .settings import settings
+
         assert not self.destroyed
-        if self.num_gpus > 0:
-            self._unload_cudalibs()
         if settings.report_coverage():
             self._report_coverage()
         self.destroyed = True
 
-    def create_scalar(
-        self,
-        array: Union[memoryview, npt.NDArray[Any]],
-        shape: Optional[NdShape] = None,
-    ) -> Future:
-        data = array.tobytes()
-        buf = struct.pack(f"{len(data)}s", data)
-        return self.legate_runtime.create_future(buf, len(buf))
-
-    def create_wrapped_scalar(
-        self,
-        array: Union[memoryview, npt.NDArray[Any]],
-        dtype: np.dtype[Any],
-        shape: NdShape,
-    ) -> DeferredArray:
-        future = self.create_scalar(array, shape)
-        assert all(extent == 1 for extent in shape)
-        core_dtype = to_core_dtype(dtype)
-        store = self.legate_context.create_store(
-            core_dtype,
-            shape=shape,
-            storage=future,
-            optimize_scalar=True,
-        )
-        return DeferredArray(self, store)
-
     def bitgenerator_populate_task(
         self,
-        task: Union[AutoTask, ManualTask],
+        task: AutoTask | ManualTask,
         taskop: int,
         generatorID: int,
         generatorType: int = 0,
-        seed: Union[int, None] = 0,
+        seed: int | None = 0,
         flags: int = 0,
     ) -> None:
         task.add_scalar_arg(taskop, ty.int32)
@@ -203,15 +193,16 @@ class Runtime(object):
     def bitgenerator_create(
         self,
         generatorType: int,
-        seed: Union[int, None],
+        seed: int | None,
         flags: int,
         forceCreate: bool = False,
     ) -> int:
         self.current_random_bitgenid = self.current_random_bitgenid + 1
         if forceCreate:
-            task = self.legate_context.create_manual_task(
+            task = legate_runtime.create_manual_task(
+                self.library,
                 CuNumericOpCode.BITGENERATOR,
-                launch_domain=Rect(lo=(0,), hi=(self.num_procs,)),
+                (self.num_procs,),
             )
             self.bitgenerator_populate_task(
                 task,
@@ -226,7 +217,7 @@ class Runtime(object):
             )
             self.current_random_bitgen_zombies = ()
             task.execute()
-            self.legate_runtime.issue_execution_fence()
+            legate_runtime.issue_execution_fence()
         return self.current_random_bitgenid
 
     def bitgenerator_destroy(
@@ -237,10 +228,11 @@ class Runtime(object):
             self.current_random_bitgen_zombies += (handle,)
         else:
             # with explicit destruction, do schedule a task
-            self.legate_runtime.issue_execution_fence()
-            task = self.legate_context.create_manual_task(
+            legate_runtime.issue_execution_fence()
+            task = legate_runtime.create_manual_task(
+                self.library,
                 CuNumericOpCode.BITGENERATOR,
-                launch_domain=Rect(lo=(0,), hi=(self.num_procs,)),
+                (self.num_procs,),
             )
             self.bitgenerator_populate_task(
                 task, BitGeneratorOperation.DESTROY, handle
@@ -261,9 +253,9 @@ class Runtime(object):
 
     def get_numpy_thunk(
         self,
-        obj: Union[ndarray, npt.NDArray[Any]],
+        obj: ndarray | npt.NDArray[Any],
         share: bool = False,
-        dtype: Optional[np.dtype[Any]] = None,
+        dtype: np.dtype[Any] | None = None,
     ) -> NumPyThunk:
         # Check to see if this object implements the Legate data interface
         if hasattr(obj, "__legate_data_interface__"):
@@ -277,13 +269,14 @@ class Runtime(object):
                 raise ValueError("Legate data must be array-like")
             field = next(iter(data))
             array = data[field]
-            stores = array.stores()
-            if len(stores) != 2:
-                raise ValueError("Legate data must be array-like")
-            if stores[0] is not None:
-                raise NotImplementedError("Need support for masked arrays")
-            store = stores[1]
-            return DeferredArray(self, store)
+            if array.nested or array.nullable:
+                raise NotImplementedError(
+                    "Array must be non-nullable and not nested"
+                )
+
+            from ._thunk.deferred import DeferredArray
+
+            return DeferredArray(array.data)
         # See if this is a normal numpy array
         # Make sure to convert numpy matrices to numpy arrays here
         # as the former doesn't behave quite like the latter
@@ -297,16 +290,16 @@ class Runtime(object):
             obj = obj.astype(dtype)
         elif not share:
             obj = obj.copy()
-        return self.find_or_create_array_thunk(obj, share=share)
-
-    def has_external_attachment(self, array: Any) -> bool:
-        assert array.base is None or not isinstance(array.base, np.ndarray)
-        return self.legate_runtime.has_attachment(array.data)
+        # We can't attach NumPy ndarrays in shared mode unless they are
+        # writeable
+        share = share and obj.flags["W"]
+        transfer = TransferType.SHARE if share else TransferType.MAKE_COPY
+        return self.find_or_create_array_thunk(obj, transfer)
 
     @staticmethod
     def compute_parent_child_mapping(
         array: npt.NDArray[Any],
-    ) -> Union[tuple[Union[slice, None], ...], None]:
+    ) -> tuple[slice | None, ...] | None:
         # We need an algorithm for figuring out how to compute the
         # slice object that was used to generate a child array from
         # a parent array so we can build the same mapping from a
@@ -331,7 +324,7 @@ class Runtime(object):
             offsets.append((ptr_diff % mod) // div)
         assert div == array.dtype.itemsize
         # Now build the view and dimmap for the parent to create the view
-        key: tuple[Union[slice, None], ...] = ()
+        key: tuple[slice | None, ...] = ()
         child_idx = 0
         child_strides = tuple(array.strides)
         parent_strides = tuple(array.base.strides)
@@ -375,25 +368,32 @@ class Runtime(object):
             return key
 
     def find_or_create_array_thunk(
-        self, array: npt.NDArray[Any], share: bool = False, defer: bool = False
+        self,
+        array: npt.NDArray[Any],
+        transfer: TransferType,
+        read_only: bool = False,
+        defer: bool = False,
     ) -> NumPyThunk:
+        from ._thunk.deferred import DeferredArray
+
         assert isinstance(array, np.ndarray)
+        if not is_supported_type(array.dtype):
+            raise TypeError(f"cuNumeric does not support dtype={array.dtype}")
+
         # We have to be really careful here to handle the case of
         # aliased numpy arrays that are passed in from the application
         # In case of aliasing we need to make sure that they are
         # mapped to the same logical region. The way we handle this
         # is to always create the thunk for the root array and
         # then create sub-thunks that mirror the array views
-        if array.base is not None and isinstance(array.base, np.ndarray):
+        if (
+            transfer == TransferType.SHARE
+            and array.base is not None
+            and isinstance(array.base, np.ndarray)
+        ):
             key = self.compute_parent_child_mapping(array)
             if key is None:
                 # This base array wasn't made with a view
-                if not share:
-                    return self.find_or_create_array_thunk(
-                        array.copy(),
-                        share=False,
-                        defer=defer,
-                    )
                 raise NotImplementedError(
                     "cuNumeric does not currently know "
                     + "how to attach to array views that are not affine "
@@ -401,76 +401,86 @@ class Runtime(object):
                 )
             parent_thunk = self.find_or_create_array_thunk(
                 array.base,
-                share=share,
-                defer=defer,
+                transfer,
+                read_only,
+                defer,
             )
-            # Don't store this one in the ptr_to_thunk as we only want to
-            # store the root ones
             return parent_thunk.get_item(key)
 
         # Once it's a normal numpy array we can make it into one of our arrays
         # Check to see if it is a type that we support for doing deferred
         # execution and big enough to be worth off-loading onto Legion
-        dtype = to_core_dtype(array.dtype)
-        if (
-            defer
-            or not self.is_eager_shape(array.shape)
-            or self.has_external_attachment(array)
-        ):
-            if array.size == 1 and not share:
-                # This is a single value array
-                # We didn't attach to this so we don't need to save it
-                return self.create_wrapped_scalar(
-                    array.data,
-                    array.dtype,
-                    array.shape,
-                )
+        if defer or not self.is_eager_shape(array.shape):
+            if array.size == 1 and transfer != TransferType.SHARE:
+                # This is a single value array that we're not attaching to.
+                # We cache these, but only if the user has promised not to
+                # write-through them.
+                # TODO(mpapadakis): Also mark the Store as read-only, whenever
+                # the Core supports that.
+                if read_only:
+                    return cached_thunk_from_scalar(
+                        array.tobytes(), array.shape, array.dtype
+                    )
+                else:
+                    return thunk_from_scalar(
+                        array.tobytes(), array.shape, array.dtype
+                    )
 
-            # This is not a scalar so make a field
-            store = self.legate_context.create_store(
-                dtype,
-                shape=array.shape,
-                optimize_scalar=False,
-            )
-            store.attach_external_allocation(
-                array.data,
-                share,
+            # This is not a scalar so make a field.
+            # We won't try to cache these bigger arrays.
+            store = legate_runtime.create_store_from_buffer(
+                to_core_dtype(array.dtype),
+                array.shape,
+                array.copy() if transfer == TransferType.MAKE_COPY else array,
+                # This argument should really be called "donate"
+                read_only=(transfer != TransferType.SHARE),
             )
             return DeferredArray(
-                self,
                 store,
-                numpy_array=array if share else None,
+                numpy_array=(
+                    array if transfer == TransferType.SHARE else None
+                ),
             )
 
-        # Make this into an eager evaluated thunk
-        return EagerArray(self, array)
+        from ._thunk.eager import EagerArray
+
+        # Make this into an eagerly evaluated thunk
+        return EagerArray(
+            array.copy() if transfer == TransferType.MAKE_COPY else array
+        )
 
     def create_empty_thunk(
         self,
         shape: NdShape,
-        dtype: ty.Dtype,
-        inputs: Optional[Sequence[NumPyThunk]] = None,
+        dtype: ty.Type,
+        inputs: Sequence[NumPyThunk] | None = None,
     ) -> NumPyThunk:
+        from ._thunk.deferred import DeferredArray
+
         if self.is_eager_shape(shape) and self.are_all_eager_inputs(inputs):
             return self.create_eager_thunk(shape, dtype.to_numpy_dtype())
 
-        store = self.legate_context.create_store(
+        store = legate_runtime.create_store(
             dtype, shape=shape, optimize_scalar=True
         )
-        return DeferredArray(self, store)
+        return DeferredArray(store)
 
     def create_eager_thunk(
         self,
         shape: NdShape,
         dtype: np.dtype[Any],
     ) -> NumPyThunk:
-        return EagerArray(self, np.empty(shape, dtype=dtype))
+        from ._thunk.eager import EagerArray
+
+        return EagerArray(np.empty(shape, dtype=dtype))
 
     def create_unbound_thunk(
-        self, dtype: ty.Dtype, ndim: int = 1
+        self, dtype: ty.Type, ndim: int = 1
     ) -> DeferredArray:
-        store = self.legate_context.create_store(dtype, ndim=ndim)
-        return DeferredArray(self, store)
+        from ._thunk.deferred import DeferredArray
+
+        store = legate_runtime.create_store(dtype, ndim=ndim)
+        return DeferredArray(store)
 
     def is_eager_shape(self, shape: NdShape) -> bool:
         volume = calculate_volume(shape)
@@ -484,6 +494,8 @@ class Runtime(object):
         # Arrays with more dimensions than what Legion was compiled for
         if len(shape) > LEGATE_MAX_DIM:
             return True
+
+        from .settings import settings
 
         # CUNUMERIC_FORCE_THUNK == "eager"
         if settings.force_thunk() == "eager":
@@ -500,7 +512,10 @@ class Runtime(object):
         return volume <= self.max_eager_volume
 
     @staticmethod
-    def are_all_eager_inputs(inputs: Optional[Sequence[NumPyThunk]]) -> bool:
+    def are_all_eager_inputs(inputs: Sequence[NumPyThunk] | None) -> bool:
+        from ._thunk.eager import EagerArray
+        from ._thunk.thunk import NumPyThunk
+
         if inputs is None:
             return True
         for inp in inputs:
@@ -511,35 +526,54 @@ class Runtime(object):
 
     @staticmethod
     def is_eager_array(array: NumPyThunk) -> TypeGuard[EagerArray]:
+        from ._thunk.eager import EagerArray
+
         return isinstance(array, EagerArray)
 
     @staticmethod
     def is_deferred_array(
-        array: Optional[NumPyThunk],
+        array: NumPyThunk | None,
     ) -> TypeGuard[DeferredArray]:
+        from ._thunk.deferred import DeferredArray
+
         return isinstance(array, DeferredArray)
 
     def to_eager_array(self, array: NumPyThunk) -> EagerArray:
+        from ._thunk.eager import EagerArray
+
         if self.is_eager_array(array):
             return array
         elif self.is_deferred_array(array):
-            return EagerArray(self, array.__numpy_array__())
+            return EagerArray(array.__numpy_array__())
         else:
             raise RuntimeError("invalid array type")
 
-    def to_deferred_array(self, array: NumPyThunk) -> DeferredArray:
+    def to_deferred_array(
+        self,
+        array: NumPyThunk,
+        read_only: bool,
+    ) -> DeferredArray:
         if self.is_deferred_array(array):
             return array
         elif self.is_eager_array(array):
-            return array.to_deferred_array()
+            return array.to_deferred_array(read_only)
         else:
             raise RuntimeError("invalid array type")
 
     def warn(self, msg: str, category: type = UserWarning) -> None:
+        from .settings import settings
+
         if not settings.warn():
             return
         stacklevel = find_last_user_stacklevel()
         warnings.warn(msg, stacklevel=stacklevel, category=category)
 
 
-runtime = Runtime(cunumeric_context)
+runtime = Runtime()
+
+
+def _shutdown_callback() -> None:
+    runtime.destroy()
+
+
+legate_runtime.add_shutdown_callback(_shutdown_callback)

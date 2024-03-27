@@ -70,7 +70,7 @@ std::map<legate::Processor, std::unique_ptr<generator_map<VariantKind::CPU>>>
 template <>
 std::mutex BitGeneratorImplBody<VariantKind::CPU>::lock_generators = {};
 
-/*static*/ void BitGeneratorTask::cpu_variant(TaskContext& context)
+/*static*/ void BitGeneratorTask::cpu_variant(TaskContext context)
 {
   bitgenerator_template<VariantKind::CPU>(context);
 }

@@ -23,9 +23,9 @@ using namespace legate;
 
 template <Type::Code CODE, int DIM>
 struct ArgWhereImplBody<VariantKind::CPU, CODE, DIM> {
-  using VAL = legate_type_of<CODE>;
+  using VAL = type_of<CODE>;
 
-  void operator()(Array& out_array,
+  void operator()(legate::PhysicalStore& out_array,
                   AccessorRO<VAL, DIM> input,
                   const Pitches<DIM - 1>& pitches,
                   const Rect<DIM>& rect,
@@ -44,16 +44,18 @@ struct ArgWhereImplBody<VariantKind::CPU, CODE, DIM> {
       auto in_p = pitches.unflatten(idx, rect.lo);
 
       if (input[in_p] != VAL(0)) {
-        for (int i = 0; i < DIM; ++i) { out[Point<2>(out_idx, i)] = in_p[i]; }
+        for (int i = 0; i < DIM; ++i) {
+          out[Point<2>(out_idx, i)] = in_p[i];
+        }
         out_idx++;
       }
     }
 
-    assert(size == out_idx);
+    assert(static_cast<size_t>(size) == out_idx);
   }
 };
 
-/*static*/ void ArgWhereTask::cpu_variant(TaskContext& context)
+/*static*/ void ArgWhereTask::cpu_variant(TaskContext context)
 {
   argwhere_template<VariantKind::CPU>(context);
 }

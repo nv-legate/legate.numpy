@@ -16,7 +16,7 @@
 import pytest
 from mock import patch
 
-import cunumeric.random.bitgenerator as m  # module under test
+import cunumeric.random._bitgenerator as m  # module under test
 from cunumeric.config import BitGeneratorType
 
 

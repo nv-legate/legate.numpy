@@ -16,15 +16,15 @@
 
 #pragma once
 
-#include "cunumeric/cunumeric.h"
+#include "cunumeric/cunumeric_task.h"
 
 namespace cunumeric {
 
 struct WhereArgs {
-  const Array& out;
-  const Array& mask;
-  const Array& in1;
-  const Array& in2;
+  legate::PhysicalStore out;
+  legate::PhysicalStore mask;
+  legate::PhysicalStore in1;
+  legate::PhysicalStore in2;
 };
 
 class WhereTask : public CuNumericTask<WhereTask> {
@@ -32,12 +32,12 @@ class WhereTask : public CuNumericTask<WhereTask> {
   static const int TASK_ID = CUNUMERIC_WHERE;
 
  public:
-  static void cpu_variant(legate::TaskContext& context);
-#ifdef LEGATE_USE_OPENMP
-  static void omp_variant(legate::TaskContext& context);
+  static void cpu_variant(legate::TaskContext context);
+#if LegateDefined(LEGATE_USE_OPENMP)
+  static void omp_variant(legate::TaskContext context);
 #endif
-#ifdef LEGATE_USE_CUDA
-  static void gpu_variant(legate::TaskContext& context);
+#if LegateDefined(LEGATE_USE_CUDA)
+  static void gpu_variant(legate::TaskContext context);
 #endif
 };
 

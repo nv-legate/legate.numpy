@@ -16,7 +16,7 @@
 
 #include "core/data/buffer.h"
 #include "cunumeric/matrix/util.h"
-#ifdef LEGATE_USE_OPENMP
+#if LegateDefined(LEGATE_USE_OPENMP)
 #include <omp.h>
 #endif
 
@@ -54,7 +54,7 @@ size_t stride_for_blas(size_t m, size_t n, size_t x_stride, size_t y_stride, boo
     // the matrix represents the transpose of a row-major nxm matrix. We then tell the BLAS library
     // that we are passing a row-major nxm matrix, and ask for the matrix to be transposed.
 #ifdef DEBUG_CUNUMERIC
-    assert(x_stride == 1 && y_stride > 1 || y_stride == 1 && x_stride > 1);
+    assert((x_stride == 1 && y_stride > 1) || (y_stride == 1 && x_stride > 1));
 #endif
     blas_stride = std::max(x_stride, y_stride);
     transpose   = x_stride == 1;
@@ -66,7 +66,9 @@ int64_t calculate_volume(size_t ndim, const int64_t* shape, int64_t* strides)
 {
   int64_t volume = 1;
   for (int d = ndim - 1; d >= 0; --d) {
-    if (strides != nullptr) { strides[d] = volume; }
+    if (strides != nullptr) {
+      strides[d] = volume;
+    }
     volume *= shape[d];
   }
   return volume;
@@ -80,35 +82,45 @@ float* allocate_buffer(size_t size)
 
 void half_vector_to_float(float* out, const __half* ptr, size_t n)
 {
-#ifdef LEGATE_USE_OPENMP
+#if LegateDefined(LEGATE_USE_OPENMP)
   if (legate::Processor::get_executing_processor().kind() == legate::Processor::OMP_PROC) {
 #pragma omp parallel for schedule(static)
-    for (size_t idx = 0; idx < n; idx++) out[idx] = ptr[idx];
+    for (size_t idx = 0; idx < n; idx++) {
+      out[idx] = ptr[idx];
+    }
     return;
   }
 #endif
-  for (size_t idx = 0; idx < n; idx++) out[idx] = ptr[idx];
+  for (size_t idx = 0; idx < n; idx++) {
+    out[idx] = ptr[idx];
+  }
 }
 
 void half_matrix_to_float(float* out, const __half* ptr, size_t m, size_t n, size_t pitch)
 {
-#ifdef LEGATE_USE_OPENMP
+#if LegateDefined(LEGATE_USE_OPENMP)
   if (legate::Processor::get_executing_processor().kind() == legate::Processor::OMP_PROC) {
 #pragma omp parallel for schedule(static)
-    for (size_t i = 0; i < m; i++)
-      for (size_t j = 0; j < n; j++) out[i * n + j] = ptr[i * pitch + j];
+    for (size_t i = 0; i < m; i++) {
+      for (size_t j = 0; j < n; j++) {
+        out[i * n + j] = ptr[i * pitch + j];
+      }
+    }
     return;
   }
 #endif
-  for (size_t i = 0; i < m; i++)
-    for (size_t j = 0; j < n; j++) out[i * n + j] = ptr[i * pitch + j];
+  for (size_t i = 0; i < m; i++) {
+    for (size_t j = 0; j < n; j++) {
+      out[i * n + j] = ptr[i * pitch + j];
+    }
+  }
 }
 
 void half_tensor_to_float(
   float* out, const __half* in, size_t ndim, const int64_t* shape, const int64_t* in_strides)
 {
   int64_t volume = calculate_volume(ndim, shape);
-#ifdef LEGATE_USE_OPENMP
+#if LegateDefined(LEGATE_USE_OPENMP)
   if (legate::Processor::get_executing_processor().kind() == legate::Processor::OMP_PROC) {
 #pragma omp parallel for schedule(static)
     for (int64_t out_idx = 0; out_idx < volume; ++out_idx) {
@@ -128,7 +140,7 @@ void float_tensor_to_half(
   __half* out, const float* in, size_t ndim, const int64_t* shape, const int64_t* out_strides)
 {
   int64_t volume = calculate_volume(ndim, shape);
-#ifdef LEGATE_USE_OPENMP
+#if LegateDefined(LEGATE_USE_OPENMP)
   if (legate::Processor::get_executing_processor().kind() == legate::Processor::OMP_PROC) {
 #pragma omp parallel for schedule(static)
     for (int64_t in_idx = 0; in_idx < volume; ++in_idx) {

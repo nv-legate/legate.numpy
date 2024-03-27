@@ -24,30 +24,24 @@ namespace cunumeric {
 
 struct register_reduction_op_fn {
   template <legate::Type::Code CODE, std::enable_if_t<!legate::is_complex<CODE>::value>* = nullptr>
-  void operator()(int32_t type_uid)
+  ReductionOpIds operator()()
   {
-    using VAL = legate::legate_type_of<CODE>;
-
+    using VAL = legate::type_of<CODE>;
+    ReductionOpIds result;
     auto runtime = legate::Runtime::get_runtime();
     auto context = runtime->find_library("cunumeric");
-    {
-      auto redop_id =
-        context->register_reduction_operator<ArgmaxReduction<VAL>>(next_reduction_operator_id());
-      auto op_kind = static_cast<int32_t>(legate::ReductionOpKind::MAX);
-      runtime->record_reduction_operator(type_uid, op_kind, redop_id);
-    }
-    {
-      auto redop_id =
-        context->register_reduction_operator<ArgminReduction<VAL>>(next_reduction_operator_id());
-      auto op_kind = static_cast<int32_t>(legate::ReductionOpKind::MIN);
-      runtime->record_reduction_operator(type_uid, op_kind, redop_id);
-    }
+    result.argmax_redop_id =
+      context.register_reduction_operator<ArgmaxReduction<VAL>>(next_reduction_operator_id());
+    result.argmin_redop_id =
+      context.register_reduction_operator<ArgminReduction<VAL>>(next_reduction_operator_id());
+    return result;
   }
 
   template <legate::Type::Code CODE, std::enable_if_t<legate::is_complex<CODE>::value>* = nullptr>
-  void operator()(int32_t type_uid)
+  ReductionOpIds operator()()
   {
-    LEGATE_ABORT;
+    LEGATE_ABORT("Should never get here");
+    return ReductionOpIds{};
   }
 
   static int32_t next_reduction_operator_id();

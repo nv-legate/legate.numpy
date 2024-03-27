@@ -66,7 +66,9 @@ struct ZipImplBody<VariantKind::CPU, DIM, N> {
       for (size_t idx = 0; idx < volume; ++idx) {
         auto p = pitches.unflatten(idx, rect.lo);
         Point<N> new_point;
-        for (size_t i = 0; i < start_index; i++) { new_point[i] = p[i]; }
+        for (int64_t i = 0; i < start_index; i++) {
+          new_point[i] = p[i];
+        }
         for (size_t i = 0; i < index_arrays.size(); i++) {
           new_point[start_index + i] = compute_idx(index_arrays[i][p], shape[start_index + i]);
         }
@@ -80,7 +82,7 @@ struct ZipImplBody<VariantKind::CPU, DIM, N> {
   }
 };
 
-/*static*/ void ZipTask::cpu_variant(TaskContext& context)
+/*static*/ void ZipTask::cpu_variant(TaskContext context)
 {
   zip_template<VariantKind::CPU>(context);
 }

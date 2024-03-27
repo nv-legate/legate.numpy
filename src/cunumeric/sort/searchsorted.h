@@ -16,14 +16,14 @@
 
 #pragma once
 
-#include "cunumeric/cunumeric.h"
+#include "cunumeric/cunumeric_task.h"
 
 namespace cunumeric {
 
 struct SearchSortedArgs {
-  const Array& input_base;
-  const Array& input_values;
-  const Array& output_reduction;
+  legate::PhysicalStore input_base;
+  legate::PhysicalStore input_values;
+  legate::PhysicalStore output_reduction;
   bool left;
   int64_t global_volume;
   bool is_index_space;
@@ -34,12 +34,12 @@ class SearchSortedTask : public CuNumericTask<SearchSortedTask> {
   static const int TASK_ID = CUNUMERIC_SEARCHSORTED;
 
  public:
-  static void cpu_variant(legate::TaskContext& context);
-#ifdef LEGATE_USE_OPENMP
-  static void omp_variant(legate::TaskContext& context);
+  static void cpu_variant(legate::TaskContext context);
+#if LegateDefined(LEGATE_USE_OPENMP)
+  static void omp_variant(legate::TaskContext context);
 #endif
-#ifdef LEGATE_USE_CUDA
-  static void gpu_variant(legate::TaskContext& context);
+#if LegateDefined(LEGATE_USE_CUDA)
+  static void gpu_variant(legate::TaskContext context);
 #endif
 };
 

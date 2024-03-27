@@ -24,8 +24,8 @@ using namespace legate;
 template <ConvertCode NAN_OP, Type::Code DST_TYPE, Type::Code SRC_TYPE, int DIM>
 struct ConvertImplBody<VariantKind::OMP, NAN_OP, DST_TYPE, SRC_TYPE, DIM> {
   using OP  = ConvertOp<NAN_OP, DST_TYPE, SRC_TYPE>;
-  using SRC = legate_type_of<SRC_TYPE>;
-  using DST = legate_type_of<DST_TYPE>;
+  using SRC = type_of<SRC_TYPE>;
+  using DST = type_of<DST_TYPE>;
 
   void operator()(OP func,
                   AccessorWO<DST, DIM> out,
@@ -39,7 +39,9 @@ struct ConvertImplBody<VariantKind::OMP, NAN_OP, DST_TYPE, SRC_TYPE, DIM> {
       auto outptr = out.ptr(rect);
       auto inptr  = in.ptr(rect);
 #pragma omp parallel for schedule(static)
-      for (size_t idx = 0; idx < volume; ++idx) outptr[idx] = func(inptr[idx]);
+      for (size_t idx = 0; idx < volume; ++idx) {
+        outptr[idx] = func(inptr[idx]);
+      }
     } else {
 #pragma omp parallel for schedule(static)
       for (size_t idx = 0; idx < volume; ++idx) {
@@ -50,7 +52,7 @@ struct ConvertImplBody<VariantKind::OMP, NAN_OP, DST_TYPE, SRC_TYPE, DIM> {
   }
 };
 
-/*static*/ void ConvertTask::omp_variant(TaskContext& context)
+/*static*/ void ConvertTask::omp_variant(TaskContext context)
 {
   convert_template<VariantKind::OMP>(context);
 }

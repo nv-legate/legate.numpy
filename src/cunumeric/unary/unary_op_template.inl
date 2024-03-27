@@ -47,12 +47,14 @@ struct UnaryOpImpl {
     Pitches<DIM - 1> pitches;
     size_t volume = pitches.flatten(rect);
 
-    if (volume == 0) return;
+    if (volume == 0) {
+      return;
+    }
 
     auto out = args.out.write_accessor<RES, DIM>(rect);
     auto in  = args.in.read_accessor<ARG, DIM>(rect);
 
-#ifndef LEGATE_BOUNDS_CHECKS
+#if !LegateDefined(LEGATE_BOUNDS_CHECKS)
     // Check to see if this is dense or not
     bool dense = out.accessor.is_dense_row_major(rect) && in.accessor.is_dense_row_major(rect);
 #else
@@ -88,13 +90,15 @@ struct MultiOutUnaryOpImpl {
     Pitches<DIM - 1> pitches;
     size_t volume = pitches.flatten(rect);
 
-    if (volume == 0) return;
+    if (volume == 0) {
+      return;
+    }
 
     auto lhs  = args.out1.write_accessor<LHS, DIM>(rect);
     auto rhs1 = args.in.read_accessor<RHS1, DIM>(rect);
     auto rhs2 = args.out2.write_accessor<RHS2, DIM>(rect);
 
-#ifndef LEGATE_BOUNDS_CHECKS
+#if !LegateDefined(LEGATE_BOUNDS_CHECKS)
     // Check to see if this is dense or not
     bool dense = lhs.accessor.is_dense_row_major(rect) && rhs1.accessor.is_dense_row_major(rect) &&
                  rhs2.accessor.is_dense_row_major(rect);
@@ -122,7 +126,7 @@ struct UnaryCopyImpl {
   template <Type::Code CODE, int DIM>
   void operator()(UnaryOpArgs& args) const
   {
-    using VAL = legate_type_of<CODE>;
+    using VAL = type_of<CODE>;
     execute_copy<VAL, DIM>(args);
   }
 
@@ -141,12 +145,14 @@ struct UnaryCopyImpl {
     Pitches<DIM - 1> pitches;
     size_t volume = pitches.flatten(rect);
 
-    if (volume == 0) return;
+    if (volume == 0) {
+      return;
+    }
 
     auto out = args.out.write_accessor<VAL, DIM>(rect);
     auto in  = args.in.read_accessor<VAL, DIM>(rect);
 
-#ifndef LEGATE_BOUNDS_CHECKS
+#if !LegateDefined(LEGATE_BOUNDS_CHECKS)
     // Check to see if this is dense or not
     bool dense = out.accessor.is_dense_row_major(rect) && in.accessor.is_dense_row_major(rect);
 #else
@@ -165,7 +171,7 @@ struct UnaryOpDispatch {
   {
     auto dim = std::max(args.in.dim(), 1);
     if ((OP_CODE == UnaryOpCode::COPY) && (args.in.code() == Type::Code::FIXED_ARRAY)) {
-      auto& type = static_cast<const FixedArrayType&>(args.in.type());
+      auto type = args.in.type().as_fixed_array_type();
       cunumeric::double_dispatch(dim, type.num_elements(), UnaryCopyImpl<KIND>{}, args);
     } else {
       auto code = OP_CODE == UnaryOpCode::GETARG ? args.out.code() : args.in.code();
@@ -177,8 +183,8 @@ struct UnaryOpDispatch {
 template <VariantKind KIND>
 static void unary_op_template(TaskContext& context)
 {
-  auto& inputs  = context.inputs();
-  auto& outputs = context.outputs();
+  auto inputs   = context.inputs();
+  auto outputs  = context.outputs();
   auto& scalars = context.scalars();
 
   auto op_code = scalars[0].value<UnaryOpCode>();
@@ -198,8 +204,10 @@ static void unary_op_template(TaskContext& context)
       break;
     }
     default: {
-      std::vector<Store> extra_args;
-      for (size_t idx = 1; idx < inputs.size(); ++idx) extra_args.push_back(std::move(inputs[idx]));
+      std::vector<Scalar> extra_args;
+      for (size_t idx = 1; idx < scalars.size(); ++idx) {
+        extra_args.push_back(scalars[idx]);
+      }
 
       UnaryOpArgs args{inputs[0], outputs[0], op_code, std::move(extra_args)};
       op_dispatch(args.op_code, UnaryOpDispatch<KIND>{}, args);

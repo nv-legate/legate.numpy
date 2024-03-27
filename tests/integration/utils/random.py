@@ -26,11 +26,11 @@ class ModuleGenerator:
         self.bit_generator = num.random.XORWOW(seed)
 
     def random_raw(self, shape):
-        gen = num.random.generator.get_static_generator()
+        gen = num.random._generator.get_static_generator()
         return gen.bit_generator.random_raw(shape)
 
     def integers(self, low, high, size, dtype, endpoint):
-        return num.random.generator.get_static_generator().integers(
+        return num.random._generator.get_static_generator().integers(
             low, high, size, dtype, endpoint
         )
 

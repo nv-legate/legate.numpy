@@ -16,7 +16,7 @@
 import pytest
 
 import cunumeric as num
-from cunumeric.utils import SUPPORTED_DTYPES
+from cunumeric._utils.array import SUPPORTED_DTYPES
 
 DTYPES = SUPPORTED_DTYPES.keys()
 

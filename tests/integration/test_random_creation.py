@@ -14,7 +14,7 @@
 #
 
 import os
-from typing import Any, Tuple
+from typing import Any
 
 import numpy as np
 import pytest
@@ -41,14 +41,14 @@ def test_randn():
 
 def reseed_and_gen_random(
     func: str, seed: Any, *args: Any, **kwargs: Any
-) -> Tuple[Any, Any]:
+) -> tuple[Any, Any]:
     """Reseeed singleton rng and generate random in NumPy and cuNumeric."""
     return gen_random_from_both(func, *args, **kwargs)
 
 
 def gen_random_from_both(
     func: str, *args: Any, **kwargs: Any
-) -> Tuple[Any, Any]:
+) -> tuple[Any, Any]:
     """Call the same random function from both NumPy and cuNumeric."""
     return (
         getattr(np.random, func)(*args, **kwargs),

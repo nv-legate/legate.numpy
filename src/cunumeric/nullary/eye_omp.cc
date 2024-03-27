@@ -28,11 +28,13 @@ struct EyeImplBody<VariantKind::OMP, VAL> {
                   const coord_t distance) const
   {
 #pragma omp parallel for
-    for (coord_t idx = 0; idx < distance; idx++) out[start[0] + idx][start[1] + idx] = VAL{1};
+    for (coord_t idx = 0; idx < distance; idx++) {
+      out[start[0] + idx][start[1] + idx] = VAL{1};
+    }
   }
 };
 
-/*static*/ void EyeTask::omp_variant(TaskContext& context)
+/*static*/ void EyeTask::omp_variant(TaskContext context)
 {
   eye_template<VariantKind::OMP>(context);
 }

@@ -18,7 +18,7 @@
 
 // Useful for IDEs
 #include <core/task/exception.h>
-#include "cunumeric/cunumeric.h"
+#include "cunumeric/cunumeric_task.h"
 #include "cunumeric/matrix/batched_cholesky.h"
 #include "cunumeric/matrix/potrf_template.inl"
 #include "cunumeric/matrix/transpose_template.inl"
@@ -44,7 +44,7 @@ struct CopyBlockImpl {
 
 template <VariantKind KIND, Type::Code CODE>
 struct BatchedTransposeImplBody {
-  using VAL = legate_type_of<CODE>;
+  using VAL = type_of<CODE>;
 
   void operator()(VAL* array, int32_t n);
 };
@@ -57,10 +57,10 @@ struct _cholesky_supported {
 
 template <VariantKind KIND>
 struct BatchedCholeskyImpl {
-  template <Type::Code CODE, int DIM>
+  template <Type::Code CODE, int32_t DIM, std::enable_if_t<(DIM > 2)>* = nullptr>
   void operator()(Array& input_array, Array& output_array) const
   {
-    using VAL = legate_type_of<CODE>;
+    using VAL = type_of<CODE>;
 
     auto shape = input_array.shape<DIM>();
     if (shape != output_array.shape<DIM>()) {
@@ -71,7 +71,9 @@ struct BatchedCholeskyImpl {
     Pitches<DIM - 1> pitches;
     size_t volume = pitches.flatten(shape);
 
-    if (volume == 0) return;
+    if (volume == 0) {
+      return;
+    }
 
     auto ncols = shape.hi[DIM - 1] - shape.lo[DIM - 1] + 1;
 
@@ -92,10 +94,14 @@ struct BatchedCholeskyImpl {
         "dense with stride == 1");
     }
 
-    if (shape.empty()) return;
+    if (shape.empty()) {
+      return;
+    }
 
-    int num_blocks = 1;
-    for (int i = 0; i < (DIM - 2); ++i) { num_blocks *= (shape.hi[i] - shape.lo[i] + 1); }
+    int32_t num_blocks = 1;
+    for (int32_t i = 0; i < (DIM - 2); ++i) {
+      num_blocks *= (shape.hi[i] - shape.lo[i] + 1);
+    }
 
     auto m = static_cast<int32_t>(shape.hi[DIM - 2] - shape.lo[DIM - 2] + 1);
     auto n = static_cast<int32_t>(shape.hi[DIM - 1] - shape.lo[DIM - 1] + 1);
@@ -103,7 +109,7 @@ struct BatchedCholeskyImpl {
 
     auto block_stride = m * n;
 
-    for (int i = 0; i < num_blocks; ++i) {
+    for (int32_t i = 0; i < num_blocks; ++i) {
       if constexpr (_cholesky_supported<CODE>::value) {
         CopyBlockImpl<KIND>()(output, input, sizeof(VAL) * block_stride);
         PotrfImplBody<KIND, CODE>()(output, m, n);
@@ -119,14 +125,20 @@ struct BatchedCholeskyImpl {
       }
     }
   }
+
+  template <Type::Code CODE, int32_t DIM, std::enable_if_t<DIM <= 2>* = nullptr>
+  void operator()(Array& input_array, Array& output_array) const
+  {
+    assert(false);
+  }
 };
 
 template <VariantKind KIND>
 static void batched_cholesky_task_context_dispatch(TaskContext& context)
 {
-  auto& batched_input  = context.inputs()[0];
-  auto& batched_output = context.outputs()[0];
-  if (batched_input.code() != batched_output.code()) {
+  legate::PhysicalStore batched_input  = context.input(0);
+  legate::PhysicalStore batched_output = context.output(0);
+  if (batched_input.type() != batched_output.type()) {
     throw legate::TaskException(
       "batched cholesky is not yet supported when input/output types differ");
   }
@@ -138,7 +150,7 @@ static void batched_cholesky_task_context_dispatch(TaskContext& context)
       "internal error: batched cholesky input does not have more than 2 dims");
   }
   double_dispatch(batched_input.dim(),
-                  batched_input.code(),
+                  batched_input.type().code(),
                   BatchedCholeskyImpl<KIND>{},
                   batched_input,
                   batched_output);

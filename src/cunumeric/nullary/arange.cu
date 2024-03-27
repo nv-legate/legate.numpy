@@ -26,7 +26,9 @@ __global__ static void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM) ara
   const AccessorWO<VAL, 1> out, const coord_t lo, const VAL start, const VAL step, const size_t max)
 {
   const size_t offset = blockIdx.x * blockDim.x + threadIdx.x;
-  if (offset >= max) return;
+  if (offset >= max) {
+    return;
+  }
   const auto p = lo + offset;
   out[p]       = static_cast<VAL>(p) * step + start;
 }
@@ -47,7 +49,7 @@ struct ArangeImplBody<VariantKind::GPU, VAL> {
   }
 };
 
-/*static*/ void ArangeTask::gpu_variant(TaskContext& context)
+/*static*/ void ArangeTask::gpu_variant(TaskContext context)
 {
   arange_template<VariantKind::GPU>(context);
 }

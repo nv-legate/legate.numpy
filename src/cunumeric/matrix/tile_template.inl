@@ -29,8 +29,9 @@ __CUDA_HD__ inline Point<IN_DIM> get_tile_point(const Point<OUT_DIM>& point,
                                                 const Point<IN_DIM>& strides)
 {
   Point<IN_DIM> result;
-  for (int32_t out_idx = OUT_DIM - 1, in_idx = IN_DIM - 1; in_idx >= 0; --out_idx, --in_idx)
+  for (int32_t out_idx = OUT_DIM - 1, in_idx = IN_DIM - 1; in_idx >= 0; --out_idx, --in_idx) {
     result[in_idx] = point[out_idx] % strides[in_idx];
+  }
   return result;
 }
 
@@ -46,7 +47,9 @@ struct TileImpl {
     Pitches<OUT_DIM - 1> out_pitches;
     auto out_volume = out_pitches.flatten(out_rect);
 
-    if (out_volume == 0) return;
+    if (out_volume == 0) {
+      return;
+    }
 
     const auto in_rect       = args.in.shape<IN_DIM>();
     Point<IN_DIM> in_strides = in_rect.hi + Point<IN_DIM>::ONES();
@@ -70,7 +73,7 @@ struct TileDispatch {
   template <Type::Code CODE>
   void operator()(TileArgs& args) const
   {
-    using VAL = legate_type_of<CODE>;
+    using VAL = type_of<CODE>;
     double_dispatch(args.out.dim(), args.in.dim(), TileImpl<KIND, VAL>{}, args);
   }
 };
@@ -78,7 +81,7 @@ struct TileDispatch {
 template <VariantKind KIND>
 static void tile_template(TaskContext& context)
 {
-  TileArgs args{context.inputs()[0], context.outputs()[0]};
+  TileArgs args{context.input(0), context.output(0)};
   type_dispatch(args.in.code(), TileDispatch<KIND>{}, args);
 }
 

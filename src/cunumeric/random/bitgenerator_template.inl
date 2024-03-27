@@ -50,8 +50,8 @@ struct BitGeneratorImpl {
 template <VariantKind KIND>
 static void bitgenerator_template(TaskContext& context)
 {
-  auto& inputs       = context.inputs();
-  auto& outputs      = context.outputs();
+  auto inputs        = context.inputs();
+  auto outputs       = context.outputs();
   auto& scalars      = context.scalars();
   auto bitgen_op     = scalars[0].value<BitGeneratorOperation>();
   auto generatorID   = scalars[1].value<int32_t>();
@@ -59,7 +59,7 @@ static void bitgenerator_template(TaskContext& context)
   auto seed          = scalars[3].value<uint64_t>();
   auto flags         = scalars[4].value<uint32_t>();
 
-  BitGeneratorDistribution distribution;
+  BitGeneratorDistribution distribution{};
   std::vector<int64_t> intparams;
   std::vector<float> floatparams;
   std::vector<double> doubleparams;
@@ -69,11 +69,15 @@ static void bitgenerator_template(TaskContext& context)
   switch (bitgen_op) {
     case BitGeneratorOperation::DESTROY:  // gather same parameters as CREATE
     case BitGeneratorOperation::CREATE: {
-      if (scalars.size() > 5) todestroy = scalars[5].values<int32_t>();
+      if (scalars.size() > 5) {
+        todestroy = scalars[5].values<int32_t>();
+      }
       break;
     }
     case BitGeneratorOperation::RAND_RAW: {
-      if (scalars.size() > 5) strides = scalars[5].value<DomainPoint>();
+      if (scalars.size() > 5) {
+        strides = scalars[5].value<DomainPoint>();
+      }
       break;
     }
     case BitGeneratorOperation::DISTRIBUTION: {
@@ -90,14 +94,18 @@ static void bitgenerator_template(TaskContext& context)
       doubleparams.insert(doubleparams.end(), _doubleparams.begin(), _doubleparams.end());
       break;
     }
-    default: LEGATE_ABORT;
+    default: LEGATE_ABORT("Unknown bitgenerator op");
   }
 
-  std::vector<Store> extra_args;
-  for (auto& input : inputs) extra_args.push_back(std::move(input));
+  std::vector<PhysicalStore> extra_args;
+  for (auto& input : inputs) {
+    extra_args.push_back(std::move(input));
+  }
 
-  std::vector<Store> optional_output;
-  for (auto& output : outputs) optional_output.push_back(std::move(output));
+  std::vector<PhysicalStore> optional_output;
+  for (auto& output : outputs) {
+    optional_output.push_back(std::move(output));
+  }
 
   // destroy ?
   for (auto& idx : todestroy) {

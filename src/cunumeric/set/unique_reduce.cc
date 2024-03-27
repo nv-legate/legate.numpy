@@ -19,7 +19,7 @@
 
 namespace cunumeric {
 
-/*static*/ void UniqueReduceTask::cpu_variant(TaskContext& context)
+/*static*/ void UniqueReduceTask::cpu_variant(TaskContext context)
 {
   unique_reduce_template(context, thrust::host);
 }

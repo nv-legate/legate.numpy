@@ -14,8 +14,7 @@
 #
 from __future__ import annotations
 
-from cunumeric.config import BinaryOpCode, UnaryOpCode, UnaryRedCode
-
+from ..config import BinaryOpCode, UnaryOpCode, UnaryRedCode
 from .ufunc import (
     all_but_boolean,
     all_dtypes,

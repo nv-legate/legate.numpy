@@ -1,0 +1,33 @@
+name: merge-public
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '*/15 * * * *' # Run every 15 mins
+
+jobs:
+  merge:
+    if: ${{ github.repository_owner == 'nv-legate' }}
+    runs-on: linux-amd64-cpu4
+    steps:
+    - name: Cunumeric Internal repository
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.NV_LEGATE_INTER_REPOS_ACCESS }}
+
+    - name: Merge the branches
+      run: |
+        DEFAULT_BRANCH=$(git remote show origin | awk '/HEAD branch/ {print $NF}')
+        git fetch origin
+        git checkout $DEFAULT_BRANCH
+        git reset --hard origin/$DEFAULT_BRANCH
+        git config --local user.name 'SyncAction'
+        git config --local user.email 'sync@nowhere'
+        git remote add GhCunumericPublic  https://github.com/nv-legate/cunumeric.git || true
+        git branch -a
+        git remote show origin
+        git remote set-url --push origin https://github.com/nv-legate/cunumeric.internal.git
+        git remote show origin
+        . .github/workflows/merge-branches.sh GhCunumericPublic
+        git push origin --tags
+

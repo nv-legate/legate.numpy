@@ -51,6 +51,8 @@ enum CuNumericOpCode {
   CUNUMERIC_LOAD_CUDALIBS,
   CUNUMERIC_MATMUL,
   CUNUMERIC_MATVECMUL,
+  CUNUMERIC_MP_POTRF,
+  CUNUMERIC_MP_SOLVE,
   CUNUMERIC_NONZERO,
   CUNUMERIC_PACKBITS,
   CUNUMERIC_POTRF,
@@ -60,6 +62,7 @@ enum CuNumericOpCode {
   CUNUMERIC_REPEAT,
   CUNUMERIC_SCALAR_UNARY_RED,
   CUNUMERIC_SEARCHSORTED,
+  CUNUMERIC_SELECT,
   CUNUMERIC_SOLVE,
   CUNUMERIC_SORT,
   CUNUMERIC_SYRK,
@@ -333,9 +336,16 @@ enum CuNumericBitorder { CUNUMERIC_BITORDER_BIG = 0, CUNUMERIC_BITORDER_LITTLE =
 extern "C" {
 #endif
 
+typedef struct ReductionOpIds {
+  int argmax_redop_id;
+  int argmin_redop_id;
+} ReductionOpIds;
+
 void cunumeric_perform_registration();
 bool cunumeric_has_curand();
-void cunumeric_register_reduction_op(int32_t type_uid, int32_t elem_type_code);
+bool cunumeric_has_cusolvermp();
+
+struct ReductionOpIds cunumeric_register_reduction_ops(int32_t code);
 
 #ifdef __cplusplus
 }

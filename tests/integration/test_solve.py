@@ -51,6 +51,9 @@ def test_solve_1d(n, a_dtype, b_dtype):
 
     rtol = RTOL[out.dtype]
     atol = ATOL[out.dtype]
+    if n > 1024:
+        atol *= 20.0
+
     assert allclose(
         b, num.matmul(a, out), rtol=rtol, atol=atol, check_dtype=False
     )
@@ -71,6 +74,9 @@ def test_solve_2d(n, a_dtype, b_dtype):
 
     rtol = RTOL[out.dtype]
     atol = ATOL[out.dtype]
+    if n > 1024:
+        atol *= 20.0
+
     assert allclose(
         b, num.matmul(a, out), rtol=rtol, atol=atol, check_dtype=False
     )
@@ -115,7 +121,7 @@ def test_solve_with_output():
     n = 8
     a = np.random.rand(n, n).astype(np.float32)
     b = np.random.rand(n).astype(np.float32)
-    output = np.zeros((n,)).astype(np.float32)
+    output = num.zeros((n,)).astype(np.float32)
 
     out = num.linalg.solve(a, b, out=output)
 

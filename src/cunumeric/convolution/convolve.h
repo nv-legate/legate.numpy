@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "cunumeric/cunumeric.h"
+#include "cunumeric/cunumeric_task.h"
 
 // We'll make some assumptions here about cache size
 // that should hold up against most CPUs out there today
@@ -30,9 +30,9 @@
 namespace cunumeric {
 
 struct ConvolveArgs {
-  Array out;
-  Array filter;
-  std::vector<Array> inputs;
+  legate::PhysicalStore out;
+  legate::PhysicalStore filter;
+  std::vector<legate::PhysicalStore> inputs;
   legate::Domain root_domain;
 };
 
@@ -41,12 +41,12 @@ class ConvolveTask : public CuNumericTask<ConvolveTask> {
   static const int TASK_ID = CUNUMERIC_CONVOLVE;
 
  public:
-  static void cpu_variant(legate::TaskContext& context);
-#ifdef LEGATE_USE_OPENMP
-  static void omp_variant(legate::TaskContext& context);
+  static void cpu_variant(legate::TaskContext context);
+#if LegateDefined(LEGATE_USE_OPENMP)
+  static void omp_variant(legate::TaskContext context);
 #endif
-#ifdef LEGATE_USE_CUDA
-  static void gpu_variant(legate::TaskContext& context);
+#if LegateDefined(LEGATE_USE_CUDA)
+  static void gpu_variant(legate::TaskContext context);
 #endif
 };
 

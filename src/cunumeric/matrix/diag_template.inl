@@ -32,13 +32,15 @@ struct DiagImpl {
   template <Type::Code CODE, int DIM>
   void operator()(DiagArgs& args) const
   {
-    using VAL = legate_type_of<CODE>;
+    using VAL = type_of<CODE>;
 
     if (args.extract) {
       auto shape_in = args.matrix.shape<DIM>();
       Pitches<DIM - 1> pitches_in;
       size_t volume_in = pitches_in.flatten(shape_in);
-      if (volume_in == 0) return;
+      if (volume_in == 0) {
+        return;
+      }
       auto shape_out        = args.diag.shape<DIM>();
       size_t diag_start_dim = DIM - args.naxes;
       coord_t start         = shape_in.lo[diag_start_dim];
@@ -49,7 +51,9 @@ struct DiagImpl {
         end   = std::min(end, shape_in.hi[i]);
       }
       coord_t distance = end - start + 1;
-      if (distance < 0) return;
+      if (distance < 0) {
+        return;
+      }
 
       auto in  = args.matrix.read_accessor<VAL, DIM>(shape_in);
       auto out = args.diag.reduce_accessor<SumReduction<VAL>, true, DIM>(shape_out);
@@ -67,7 +71,9 @@ struct DiagImpl {
       // y >= shape.lo[1]
       const Point<2> start2(shape.lo[1], shape.lo[1]);
       // See if our shape intersects with the diagonal
-      if (!shape.contains(start1) && !shape.contains(start2)) return;
+      if (!shape.contains(start1) && !shape.contains(start2)) {
+        return;
+      }
 
       // Pick whichever one fits in our rect
       const Point<2> start = shape.contains(start1) ? start1 : start2;
@@ -101,10 +107,10 @@ struct DiagImpl {
 template <VariantKind KIND>
 static void diag_template(TaskContext& context)
 {
-  int naxes     = context.scalars()[0].value<int>();
-  bool extract  = context.scalars()[1].value<bool>();
-  Array& matrix = extract ? context.inputs()[0] : context.outputs()[0];
-  Array& diag   = extract ? context.reductions()[0] : context.inputs()[0];
+  int naxes                    = context.scalar(0).value<int>();
+  bool extract                 = context.scalar(1).value<bool>();
+  legate::PhysicalStore matrix = extract ? context.input(0) : context.output(0);
+  legate::PhysicalStore diag   = extract ? context.reduction(0) : context.input(0);
   DiagArgs args{naxes, extract, matrix, diag};
   double_dispatch(matrix.dim(), matrix.code(), DiagImpl<KIND>{}, args);
 }

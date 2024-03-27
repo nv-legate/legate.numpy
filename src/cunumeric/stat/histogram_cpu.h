@@ -31,7 +31,7 @@
 
 #include "cunumeric/stat/histogram_gen.h"
 
-#ifndef LEGATE_USE_CUDA
+#if !LegateDefined(LEGATE_USE_CUDA)
 using cudaStream_t = void*;
 #endif
 
@@ -61,7 +61,7 @@ struct segmented_sum_t<exe_policy_t,
   }
   void operator()(void)
   {
-    for (auto interval_index = 0; interval_index < n_intervals_; ++interval_index) {
+    for (size_t interval_index = 0; interval_index < n_intervals_; ++interval_index) {
       auto next_index = interval_index + 1;
 
       ptr_hist_[interval_index] = thrust::reduce(thrust::seq,

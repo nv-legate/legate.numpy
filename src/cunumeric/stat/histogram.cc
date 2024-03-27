@@ -35,7 +35,7 @@ using namespace legate;
 
 template <Type::Code CODE>
 struct HistogramImplBody<VariantKind::CPU, CODE> {
-  using VAL = legate_type_of<CODE>;
+  using VAL = type_of<CODE>;
 
   // for now, it has been decided to hardcode these types:
   //
@@ -62,7 +62,7 @@ struct HistogramImplBody<VariantKind::CPU, CODE> {
   }
 };
 
-/*static*/ void HistogramTask::cpu_variant(TaskContext& context)
+/*static*/ void HistogramTask::cpu_variant(TaskContext context)
 {
   histogram_template<VariantKind::CPU>(context);
 }

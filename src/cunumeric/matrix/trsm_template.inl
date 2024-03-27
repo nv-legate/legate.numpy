@@ -40,14 +40,16 @@ struct support_trsm<Type::Code::COMPLEX128> : std::true_type {};
 template <VariantKind KIND>
 struct TrsmImpl {
   template <Type::Code CODE, std::enable_if_t<support_trsm<CODE>::value>* = nullptr>
-  void operator()(Array& lhs_array, Array& rhs_array) const
+  void operator()(legate::PhysicalStore lhs_array, legate::PhysicalStore rhs_array) const
   {
-    using VAL = legate_type_of<CODE>;
+    using VAL = type_of<CODE>;
 
     auto lhs_shape = lhs_array.shape<2>();
     auto rhs_shape = rhs_array.shape<2>();
 
-    if (lhs_shape.empty()) return;
+    if (lhs_shape.empty()) {
+      return;
+    }
 
     size_t lhs_strides[2];
     size_t rhs_strides[2];
@@ -63,7 +65,7 @@ struct TrsmImpl {
   }
 
   template <Type::Code CODE, std::enable_if_t<!support_trsm<CODE>::value>* = nullptr>
-  void operator()(Array& lhs_array, Array& rhs_array) const
+  void operator()(legate::PhysicalStore lhs_array, legate::PhysicalStore rhs_array) const
   {
     assert(false);
   }
@@ -72,10 +74,10 @@ struct TrsmImpl {
 template <VariantKind KIND>
 static void trsm_template(TaskContext& context)
 {
-  auto& lhs = context.outputs()[0];
-  auto& rhs = context.inputs()[0];
+  auto lhs = context.output(0);
+  auto rhs = context.input(0);
 
-  type_dispatch(lhs.code(), TrsmImpl<KIND>{}, lhs, rhs);
+  type_dispatch(lhs.type().code(), TrsmImpl<KIND>{}, lhs, rhs);
 }
 
 }  // namespace cunumeric

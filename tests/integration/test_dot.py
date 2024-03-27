@@ -19,7 +19,7 @@ from utils.contractions import check_default
 from utils.generators import mk_0to1_array
 
 import cunumeric as num
-from cunumeric.utils import dot_modes
+from cunumeric._utils.linalg import dot_modes
 
 
 @pytest.mark.parametrize("b_ndim", range(LEGATE_MAX_DIM + 1))

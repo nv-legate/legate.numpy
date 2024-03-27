@@ -16,14 +16,14 @@
 
 #pragma once
 
-#include "cunumeric/cunumeric.h"
+#include "cunumeric/cunumeric_task.h"
 #include "cunumeric/fft/fft_util.h"
 
 namespace cunumeric {
 
 struct FFTArgs {
-  Array output;
-  Array input;
+  legate::PhysicalStore output;
+  legate::PhysicalStore input;
   CuNumericFFTType type;
   CuNumericFFTDirection direction;
   bool operate_over_axes;
@@ -35,8 +35,8 @@ class FFTTask : public CuNumericTask<FFTTask> {
   static const int TASK_ID = CUNUMERIC_FFT;
 
  public:
-#ifdef LEGATE_USE_CUDA
-  static void gpu_variant(legate::TaskContext& context);
+#if LegateDefined(LEGATE_USE_CUDA)
+  static void gpu_variant(legate::TaskContext context);
 #endif
 };
 

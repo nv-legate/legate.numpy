@@ -23,9 +23,9 @@ using namespace legate;
 
 template <Type::Code CODE, int32_t DIM>
 struct UniqueImplBody<VariantKind::CPU, CODE, DIM> {
-  using VAL = legate_type_of<CODE>;
+  using VAL = type_of<CODE>;
 
-  void operator()(Array& output,
+  void operator()(legate::PhysicalStore& output,
                   const AccessorRO<VAL, DIM>& in,
                   const Pitches<DIM - 1>& pitches,
                   const Rect<DIM>& rect,
@@ -43,11 +43,13 @@ struct UniqueImplBody<VariantKind::CPU, CODE, DIM> {
 
     auto result = output.create_output_buffer<VAL, 1>(dedup_set.size(), true);
     size_t pos  = 0;
-    for (auto e : dedup_set) result[pos++] = e;
+    for (auto e : dedup_set) {
+      result[pos++] = e;
+    }
   }
 };
 
-/*static*/ void UniqueTask::cpu_variant(TaskContext& context)
+/*static*/ void UniqueTask::cpu_variant(TaskContext context)
 {
   unique_template<VariantKind::CPU>(context);
 }

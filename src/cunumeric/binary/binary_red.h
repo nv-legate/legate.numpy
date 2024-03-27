@@ -16,17 +16,17 @@
 
 #pragma once
 
-#include "cunumeric/cunumeric.h"
+#include "cunumeric/cunumeric_task.h"
 #include "cunumeric/binary/binary_op_util.h"
 
 namespace cunumeric {
 
 struct BinaryRedArgs {
-  const Array& out;
-  const Array& in1;
-  const Array& in2;
+  legate::PhysicalStore out;
+  legate::PhysicalStore in1;
+  legate::PhysicalStore in2;
   BinaryOpCode op_code;
-  std::vector<legate::Store> args;
+  std::vector<legate::Scalar> args;
 };
 
 class BinaryRedTask : public CuNumericTask<BinaryRedTask> {
@@ -34,12 +34,12 @@ class BinaryRedTask : public CuNumericTask<BinaryRedTask> {
   static const int TASK_ID = CUNUMERIC_BINARY_RED;
 
  public:
-  static void cpu_variant(legate::TaskContext& context);
-#ifdef LEGATE_USE_OPENMP
-  static void omp_variant(legate::TaskContext& context);
+  static void cpu_variant(legate::TaskContext context);
+#if LegateDefined(LEGATE_USE_OPENMP)
+  static void omp_variant(legate::TaskContext context);
 #endif
-#ifdef LEGATE_USE_CUDA
-  static void gpu_variant(legate::TaskContext& context);
+#if LegateDefined(LEGATE_USE_CUDA)
+  static void gpu_variant(legate::TaskContext context);
 #endif
 };
 

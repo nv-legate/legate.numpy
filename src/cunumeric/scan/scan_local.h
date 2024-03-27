@@ -16,15 +16,15 @@
 
 #pragma once
 
-#include "cunumeric/scan/scan_local_util.h"
-#include "cunumeric/cunumeric.h"
+#include "cunumeric/scan/scan_util.h"
+#include "cunumeric/cunumeric_task.h"
 
 namespace cunumeric {
 
 struct ScanLocalArgs {
-  const Array& out;
-  const Array& in;
-  Array& sum_vals;
+  legate::PhysicalStore out;
+  legate::PhysicalStore in;
+  legate::PhysicalStore sum_vals;
   ScanCode op_code;
   bool nan_to_identity;
 };
@@ -34,12 +34,12 @@ class ScanLocalTask : public CuNumericTask<ScanLocalTask> {
   static const int TASK_ID = CUNUMERIC_SCAN_LOCAL;
 
  public:
-  static void cpu_variant(legate::TaskContext& context);
-#ifdef LEGATE_USE_OPENMP
-  static void omp_variant(legate::TaskContext& context);
+  static void cpu_variant(legate::TaskContext context);
+#if LegateDefined(LEGATE_USE_OPENMP)
+  static void omp_variant(legate::TaskContext context);
 #endif
-#ifdef LEGATE_USE_CUDA
-  static void gpu_variant(legate::TaskContext& context);
+#if LegateDefined(LEGATE_USE_CUDA)
+  static void gpu_variant(legate::TaskContext context);
 #endif
 };
 

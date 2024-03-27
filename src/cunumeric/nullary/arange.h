@@ -16,15 +16,14 @@
 
 #pragma once
 
-#include "cunumeric/cunumeric.h"
+#include "cunumeric/cunumeric_task.h"
 
 namespace cunumeric {
 
 struct ArangeArgs {
-  const Array& out;
-  const Array& start;
-  const Array& stop;
-  const Array& step;
+  legate::PhysicalStore out;
+  legate::Scalar start;
+  legate::Scalar step;
 };
 
 class ArangeTask : public CuNumericTask<ArangeTask> {
@@ -32,12 +31,12 @@ class ArangeTask : public CuNumericTask<ArangeTask> {
   static const int TASK_ID = CUNUMERIC_ARANGE;
 
  public:
-  static void cpu_variant(legate::TaskContext& context);
-#ifdef LEGATE_USE_OPENMP
-  static void omp_variant(legate::TaskContext& context);
+  static void cpu_variant(legate::TaskContext context);
+#if LegateDefined(LEGATE_USE_OPENMP)
+  static void omp_variant(legate::TaskContext context);
 #endif
-#ifdef LEGATE_USE_CUDA
-  static void gpu_variant(legate::TaskContext& context);
+#if LegateDefined(LEGATE_USE_CUDA)
+  static void gpu_variant(legate::TaskContext context);
 #endif
 };
 

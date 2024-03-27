@@ -31,7 +31,9 @@ __global__ static void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM)
               const AccessorRO<VAL, IN_DIM> in)
 {
   const size_t out_idx = blockIdx.x * blockDim.x + threadIdx.x;
-  if (out_idx >= out_volume) return;
+  if (out_idx >= out_volume) {
+    return;
+  }
 
   const auto out_point = out_pitches.unflatten(out_idx, out_rect.lo);
   const auto in_point  = get_tile_point(out_point, in_strides);
@@ -55,7 +57,7 @@ struct TileImplBody<VariantKind::GPU, VAL, OUT_DIM, IN_DIM> {
   }
 };
 
-/*static*/ void TileTask::gpu_variant(TaskContext& context)
+/*static*/ void TileTask::gpu_variant(TaskContext context)
 {
   tile_template<VariantKind::GPU>(context);
 }

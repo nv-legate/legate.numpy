@@ -81,7 +81,7 @@ struct SyrkImplBody<VariantKind::GPU, Type::Code::COMPLEX128> {
   }
 };
 
-/*static*/ void SyrkTask::gpu_variant(TaskContext& context)
+/*static*/ void SyrkTask::gpu_variant(TaskContext context)
 {
   syrk_template<VariantKind::GPU>(context);
 }

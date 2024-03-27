@@ -59,7 +59,6 @@ Data Type
    :toctree: generated/
 
    ndarray.dtype
-   ndarray.find_common_type
 
 Other Attributes
 ~~~~~~~~~~~~~~~~

@@ -32,7 +32,9 @@ class Pitches {
     size_t volume = 1;
     for (int d = DIM; d >= 0; --d) {
       // Quick exit for empty rectangle dimensions
-      if (rect.lo[d] > rect.hi[d]) return 0;
+      if (rect.lo[d] > rect.hi[d]) {
+        return 0;
+      }
       const size_t diff = rect.hi[d] - rect.lo[d] + 1;
       volume *= diff;
       if (d > 0) {
@@ -68,7 +70,9 @@ class Pitches<DIM, false /*C_ORDER*/> {
     size_t volume = 1;
     for (int d = 0; d <= DIM; ++d) {
       // Quick exit for empty rectangle dimensions
-      if (rect.lo[d] > rect.hi[d]) return 0;
+      if (rect.lo[d] > rect.hi[d]) {
+        return 0;
+      }
       const size_t diff = rect.hi[d] - rect.lo[d] + 1;
       volume *= diff;
       if (d < DIM) {
@@ -101,10 +105,11 @@ class Pitches<0, C_ORDER> {
   __CUDA_HD__
   inline size_t flatten(const legate::Rect<1>& rect)
   {
-    if (rect.lo[0] > rect.hi[0])
+    if (rect.lo[0] > rect.hi[0]) {
       return 0;
-    else
+    } else {
       return (rect.hi[0] - rect.lo[0] + 1);
+    }
   }
   __CUDA_HD__
   inline legate::Point<1> unflatten(size_t index, const legate::Point<1>& lo) const

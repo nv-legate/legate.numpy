@@ -6,23 +6,23 @@ build_cunumeric_cpp() {
     # Build + package cuNumeric C++ libs
     local cmake_args=(${CMAKE_ARGS:-});
     cmake_args+=(-DBUILD_SHARED_LIBS=ON);
-    cmake_args+=(-DBUILD_MARCH=${BUILD_MARCH:-haswell});
+    cmake_args+=(-DBUILD_MARCH=${BUILD_MARCH});
     cmake_args+=(-DCMAKE_BUILD_TYPE=Release);
     cmake_args+=(-DCMAKE_CUDA_ARCHITECTURES=RAPIDS);
     cmake_args+=(-DCMAKE_BUILD_PARALLEL_LEVEL=${JOBS:-$(nproc --ignore=1)});
     cmake_args+=(${@});
 
-    cmake -S ~/cunumeric -B ~/cunumeric/build ${cmake_args[@]} -GNinja;
+    cmake -S "${REPO_DIR}" -B "${REPO_DIR}/build" ${cmake_args[@]} -GNinja;
 
     sccache --show-stats;
 
-    time cmake --build ~/cunumeric/build --verbose --parallel ${JOBS:-$(nproc --ignore=1)};
+    time cmake --build "${REPO_DIR}/build" --verbose --parallel ${JOBS:-$(nproc --ignore=1)};
 
     sccache --show-stats;
 
     (
     mkdir -p /tmp/out;
-    cd ~/cunumeric/build;
+    cd "${REPO_DIR}/build";
     cpack -G TGZ;
     cp ./*-Linux.tar.gz /tmp/out/;
     );

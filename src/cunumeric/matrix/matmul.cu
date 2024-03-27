@@ -250,7 +250,7 @@ struct MatMulImplBody<VariantKind::GPU, Type::Code::COMPLEX128> {
   }
 };
 
-/*static*/ void MatMulTask::gpu_variant(TaskContext& context)
+/*static*/ void MatMulTask::gpu_variant(TaskContext context)
 {
   matmul_template<VariantKind::GPU>(context);
 }

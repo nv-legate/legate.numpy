@@ -20,7 +20,7 @@
 // generators
 
 // also allow usage of generators on host
-#ifdef LEGATE_USE_CUDA
+#if LegateDefined(LEGATE_USE_CUDA)
 
 #define QUALIFIERS static __forceinline__ __device__ __host__
 #define RANDUTIL_QUALIFIERS __forceinline__ __device__ __host__

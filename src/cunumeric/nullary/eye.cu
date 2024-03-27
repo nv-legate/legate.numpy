@@ -25,7 +25,9 @@ __global__ static void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM)
   eye_kernel(const AccessorWO<VAL, 2> out, const Point<2> start, const size_t max)
 {
   const size_t offset = blockIdx.x * blockDim.x + threadIdx.x;
-  if (offset >= max) return;
+  if (offset >= max) {
+    return;
+  }
   out[start[0] + offset][start[1] + offset] = 1;
 }
 
@@ -42,7 +44,7 @@ struct EyeImplBody<VariantKind::GPU, VAL> {
   }
 };
 
-/*static*/ void EyeTask::gpu_variant(TaskContext& context)
+/*static*/ void EyeTask::gpu_variant(TaskContext context)
 {
   eye_template<VariantKind::GPU>(context);
 }

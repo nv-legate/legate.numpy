@@ -40,15 +40,19 @@ struct support_gemm<Type::Code::COMPLEX128> : std::true_type {};
 template <VariantKind KIND>
 struct GemmImpl {
   template <Type::Code CODE, std::enable_if_t<support_gemm<CODE>::value>* = nullptr>
-  void operator()(Array& lhs_array, Array& rhs1_array, Array& rhs2_array) const
+  void operator()(legate::PhysicalStore lhs_array,
+                  legate::PhysicalStore rhs1_array,
+                  legate::PhysicalStore rhs2_array) const
   {
-    using VAL = legate_type_of<CODE>;
+    using VAL = type_of<CODE>;
 
     auto lhs_shape  = lhs_array.shape<2>();
     auto rhs1_shape = rhs1_array.shape<2>();
     auto rhs2_shape = rhs2_array.shape<2>();
 
-    if (lhs_shape.empty()) return;
+    if (lhs_shape.empty()) {
+      return;
+    }
 
     size_t lhs_strides[2];
     size_t rhs1_strides[2];
@@ -68,7 +72,9 @@ struct GemmImpl {
   }
 
   template <Type::Code CODE, std::enable_if_t<!support_gemm<CODE>::value>* = nullptr>
-  void operator()(Array& lhs_array, Array& rhs1_array, Array& rhs2_array) const
+  void operator()(legate::PhysicalStore lhs_array,
+                  legate::PhysicalStore rhs1_array,
+                  legate::PhysicalStore rhs2_array) const
   {
     assert(false);
   }
@@ -77,14 +83,14 @@ struct GemmImpl {
 template <VariantKind KIND>
 static void gemm_template(TaskContext& context)
 {
-  auto& inputs  = context.inputs();
-  auto& outputs = context.outputs();
+  auto inputs  = context.inputs();
+  auto outputs = context.outputs();
 
   auto& lhs  = outputs[0];
   auto& rhs1 = inputs[0];
   auto& rhs2 = inputs[1];
 
-  type_dispatch(lhs.code(), GemmImpl<KIND>{}, lhs, rhs1, rhs2);
+  type_dispatch(lhs.type().code(), GemmImpl<KIND>{}, lhs, rhs1, rhs2);
 }
 
 }  // namespace cunumeric

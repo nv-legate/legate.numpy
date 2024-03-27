@@ -32,9 +32,11 @@ using namespace legate;
 template <typename exe_pol_t>
 struct UniqueReduceImpl {
   template <Type::Code CODE>
-  void operator()(Array& output, std::vector<Array>& input_arrs, const exe_pol_t& exe_pol)
+  void operator()(legate::PhysicalStore output,
+                  const std::vector<legate::PhysicalArray>& input_arrs,
+                  exe_pol_t exe_pol)
   {
-    using VAL = legate_type_of<CODE>;
+    using VAL = type_of<CODE>;
 
     size_t res_size = 0;
     for (auto& input_arr : input_arrs) {
@@ -49,7 +51,7 @@ struct UniqueReduceImpl {
       size_t strides[1];
       Rect<1> shape     = input_arr.shape<1>();
       size_t volume     = shape.volume();
-      const VAL* in_ptr = input_arr.read_accessor<VAL, 1>(shape).ptr(shape, strides);
+      const VAL* in_ptr = input_arr.data().read_accessor<VAL, 1>(shape).ptr(shape, strides);
       assert(shape.volume() <= 1 || strides[0] == 1);
       thrust::copy(exe_pol, in_ptr, in_ptr + volume, res_ptr + offset);
       offset += volume;
@@ -65,9 +67,9 @@ struct UniqueReduceImpl {
 template <typename exe_pol_t>
 static void unique_reduce_template(TaskContext& context, const exe_pol_t& exe_pol)
 {
-  auto& inputs = context.inputs();
-  auto& output = context.outputs()[0];
-  type_dispatch(output.code(), UniqueReduceImpl<exe_pol_t>{}, output, inputs, exe_pol);
+  auto inputs = context.inputs();
+  auto output = context.output(0);
+  type_dispatch(output.type().code(), UniqueReduceImpl<exe_pol_t>{}, output, inputs, exe_pol);
 }
 
 }  // namespace cunumeric

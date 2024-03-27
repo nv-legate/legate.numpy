@@ -86,9 +86,9 @@ struct TrsmImplBody<VariantKind::CPU, Type::Code::COMPLEX128> {
   }
 };
 
-/*static*/ void TrsmTask::cpu_variant(TaskContext& context)
+/*static*/ void TrsmTask::cpu_variant(TaskContext context)
 {
-#ifdef LEGATE_USE_OPENMP
+#if LegateDefined(LEGATE_USE_OPENMP)
   openblas_set_num_threads(1);  // make sure this isn't overzealous
 #endif
   trsm_template<VariantKind::CPU>(context);

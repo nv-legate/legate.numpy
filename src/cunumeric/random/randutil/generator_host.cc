@@ -17,7 +17,7 @@
 #include "generator.h"
 #include "generator_create.inl"
 
-#if !defined(LEGATE_USE_CUDA)
+#if !LegateDefined(LEGATE_USE_CUDA)
 // the host code of cuRAND try to extern these variables out of nowhere,
 // so we need to define them somewhere.
 const dim3 blockDim{};
@@ -41,8 +41,6 @@ extern "C" curandStatus_t randutilDestroyGenerator(randutilGenerator_t generator
   delete gen;
   return CURAND_STATUS_SUCCESS;
 }
-
-#pragma region integers
 
 #include "generator_integers.inl"
 
@@ -76,10 +74,6 @@ extern "C" curandStatus_t randutilGenerateIntegers64(
   return randutilimpl::dispatch<decltype(func), int64_t>(gen, func, n, outputPtr);
 }
 
-#pragma endregion
-
-#pragma region lognormal
-
 #include "generator_lognormal.inl"
 
 extern "C" curandStatus_t randutilGenerateLogNormalEx(
@@ -101,10 +95,6 @@ extern "C" curandStatus_t randutilGenerateLogNormalDoubleEx(
   func.stddev = stddev;
   return randutilimpl::dispatch<decltype(func), double>(gen, func, n, outputPtr);
 }
-
-#pragma endregion
-
-#pragma region normal
 
 #include "generator_normal.inl"
 
@@ -128,10 +118,6 @@ extern "C" curandStatus_t randutilGenerateNormalDoubleEx(
   return randutilimpl::dispatch<decltype(func), double>(gen, func, n, outputPtr);
 }
 
-#pragma endregion
-
-#pragma region poisson
-
 #include "generator_poisson.inl"
 
 extern "C" curandStatus_t randutilGeneratePoissonEx(randutilGenerator_t generator,
@@ -145,10 +131,6 @@ extern "C" curandStatus_t randutilGeneratePoissonEx(randutilGenerator_t generato
   return randutilimpl::dispatch<decltype(func), uint32_t>(gen, func, n, outputPtr);
 }
 
-#pragma endregion
-
-#pragma region raw
-
 #include "generator_raw.inl"
 
 extern "C" curandStatus_t randutilGenerateRawUInt32(randutilGenerator_t generator,
@@ -159,10 +141,6 @@ extern "C" curandStatus_t randutilGenerateRawUInt32(randutilGenerator_t generato
   raw<uint32_t> func;
   return randutilimpl::dispatch<decltype(func), uint32_t>(gen, func, n, outputPtr);
 }
-
-#pragma endregion
-
-#pragma region uniform
 
 #include "generator_uniform.inl"
 
@@ -186,5 +164,3 @@ extern "C" curandStatus_t randutilGenerateUniformDoubleEx(
   func.mult   = low - high;
   return randutilimpl::dispatch<decltype(func), double>(gen, func, n, outputPtr);
 }
-
-#pragma endregion

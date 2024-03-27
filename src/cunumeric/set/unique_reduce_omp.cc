@@ -21,7 +21,7 @@
 
 namespace cunumeric {
 
-/*static*/ void UniqueReduceTask::omp_variant(TaskContext& context)
+/*static*/ void UniqueReduceTask::omp_variant(TaskContext context)
 {
   unique_reduce_template(context, thrust::omp::par);
 }

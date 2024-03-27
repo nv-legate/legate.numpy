@@ -14,7 +14,7 @@
 #
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Sequence, Union
+from typing import TYPE_CHECKING, Sequence
 
 import numpy as np
 from numpy.core.multiarray import (  # type: ignore [attr-defined]
@@ -24,15 +24,12 @@ from numpy.core.numeric import (  # type: ignore [attr-defined]
     normalize_axis_tuple,
 )
 
-from cunumeric._ufunc.math import add, sqrt as _sqrt
-from cunumeric.array import add_boilerplate, convert_to_cunumeric_ndarray
-from cunumeric.module import dot, empty_like, eye, matmul, ndarray
-
-from .exception import LinAlgError
+from .._array.util import add_boilerplate, convert_to_cunumeric_ndarray
+from .._module import dot, empty_like, eye, matmul, ndarray
+from .._ufunc.math import add, sqrt as _sqrt
+from ._exception import LinAlgError
 
 if TYPE_CHECKING:
-    from typing import Optional
-
     import numpy.typing as npt
 
 
@@ -82,11 +79,11 @@ def cholesky(a: ndarray) -> ndarray:
     elif shape[-1] != shape[-2]:
         raise ValueError("Last 2 dimensions of the array must be square")
 
-    return _cholesky(a)
+    return _thunk_cholesky(a)
 
 
 @add_boilerplate("a", "b")
-def solve(a: ndarray, b: ndarray, out: Optional[ndarray] = None) -> ndarray:
+def solve(a: ndarray, b: ndarray, out: ndarray | None = None) -> ndarray:
     """
     Solve a linear matrix equation, or system of linear scalar equations.
 
@@ -112,13 +109,17 @@ def solve(a: ndarray, b: ndarray, out: Optional[ndarray] = None) -> ndarray:
     LinAlgError
         If `a` is singular or not square.
 
+    Notes
+    ------
+    Multi-GPU usage is only available when compiled with cusolverMP.
+
     See Also
     --------
     numpy.linalg.solve
 
     Availability
     --------
-    Single GPU, Single CPU
+    Multiple GPUs, Single CPU
     """
     if a.ndim < 2:
         raise LinAlgError(
@@ -154,7 +155,7 @@ def solve(a: ndarray, b: ndarray, out: Optional[ndarray] = None) -> ndarray:
     if a.size == 0 or b.size == 0:
         return empty_like(b)
 
-    return _solve(a, b, out)
+    return _thunk_solve(a, b, out)
 
 
 # This implementation is adapted closely from NumPy
@@ -222,8 +223,8 @@ def matrix_power(a: ndarray, n: int) -> ndarray:
     # Use binary decomposition to reduce the number of matrix multiplications.
     # Here, we iterate over the bits of n, from LSB to MSB, raise `a` to
     # increasing powers of 2, and multiply into the result as needed.
-    z: Union[ndarray, None] = None
-    result: Union[ndarray, None] = None
+    z: ndarray | None = None
+    result: ndarray | None = None
     while n > 0:
         z = a if z is None else matmul(z, z)
         n, bit = divmod(n, 2)
@@ -237,7 +238,7 @@ def matrix_power(a: ndarray, n: int) -> ndarray:
 
 # This implementation is adapted closely from NumPy
 def multi_dot(
-    arrays: Sequence[ndarray], *, out: Union[ndarray, None] = None
+    arrays: Sequence[ndarray], *, out: ndarray | None = None
 ) -> ndarray:
     """
     Compute the dot product of two or more arrays in a single function call,
@@ -314,7 +315,7 @@ def multi_dot(
 
 
 def _multi_dot_three(
-    A: ndarray, B: ndarray, C: ndarray, out: Union[ndarray, None] = None
+    A: ndarray, B: ndarray, C: ndarray, out: ndarray | None = None
 ) -> ndarray:
     """
     Find the best order for three arrays and do the multiplication.
@@ -374,7 +375,7 @@ def _multi_dot(
     order: npt.NDArray[np.int64],
     i: int,
     j: int,
-    out: Union[ndarray, None] = None,
+    out: ndarray | None = None,
 ) -> ndarray:
     """Actually do the multiplication with the given order."""
     if i == j:
@@ -394,10 +395,10 @@ def _multi_dot(
 @add_boilerplate("x")
 def norm(
     x: ndarray,
-    ord: Union[str, int, float, None] = None,
-    axis: Union[int, tuple[int, int], None] = None,
+    ord: str | int | float | None = None,
+    axis: int | tuple[int, int] | None = None,
     keepdims: bool = False,
-) -> Union[float, ndarray]:
+) -> float | ndarray:
     """
     Matrix or vector norm.
 
@@ -583,7 +584,7 @@ def norm(
         raise ValueError("Improper number of dimensions to norm")
 
 
-def _cholesky(a: ndarray, no_tril: bool = False) -> ndarray:
+def _thunk_cholesky(a: ndarray, no_tril: bool = False) -> ndarray:
     """Cholesky decomposition.
 
     Return the Cholesky decomposition, `L * L.H`, of the square matrix `a`,
@@ -631,8 +632,8 @@ def _cholesky(a: ndarray, no_tril: bool = False) -> ndarray:
     return output
 
 
-def _solve(
-    a: ndarray, b: ndarray, output: Optional[ndarray] = None
+def _thunk_solve(
+    a: ndarray, b: ndarray, output: ndarray | None = None
 ) -> ndarray:
     if a.dtype.kind not in ("f", "c"):
         a = a.astype("float64")

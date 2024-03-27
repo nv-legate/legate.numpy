@@ -23,7 +23,7 @@ using namespace legate;
 
 template <Type::Code CODE, int DIM>
 struct ChooseImplBody<VariantKind::OMP, CODE, DIM> {
-  using VAL = legate_type_of<CODE>;
+  using VAL = type_of<CODE>;
 
   void operator()(const AccessorWO<VAL, DIM>& out,
                   const AccessorRO<int64_t, DIM>& index_arr,
@@ -39,7 +39,7 @@ struct ChooseImplBody<VariantKind::OMP, CODE, DIM> {
 #pragma omp parallel for schedule(static)
       for (size_t idx = 0; idx < volume; ++idx) {
 #ifdef DEBUG_CUNUMERIC
-        assert(indexptr[idx] < choices.size());
+        assert(indexptr[idx] < static_cast<int64_t>(choices.size()));
 #endif
         auto chptr  = choices[indexptr[idx]].ptr(rect);
         outptr[idx] = chptr[idx];
@@ -54,7 +54,7 @@ struct ChooseImplBody<VariantKind::OMP, CODE, DIM> {
   }
 };
 
-/*static*/ void ChooseTask::omp_variant(TaskContext& context)
+/*static*/ void ChooseTask::omp_variant(TaskContext context)
 {
   choose_template<VariantKind::OMP>(context);
 }

@@ -32,30 +32,34 @@ struct TriluImpl {
   template <Type::Code CODE, int32_t DIM, std::enable_if_t<(DIM >= 2)>* = nullptr>
   void operator()(TriluArgs& args) const
   {
-    using VAL = legate_type_of<CODE>;
+    using VAL = type_of<CODE>;
 
     auto shape = args.output.shape<DIM>();
-    if (shape.empty()) return;
+    if (shape.empty()) {
+      return;
+    }
 
     auto out = args.output.write_accessor<VAL, DIM>(shape);
     auto in  = args.input.read_accessor<VAL, DIM>(shape);
 
     if (out.accessor.is_dense_col_major(shape)) {
-      Pitches<DIM - 1, false /*C_ORDER*/> pitches;
+      Pitches<DIM - 1, false /*C_ORDER*/> pitches{};
       size_t volume = pitches.flatten(shape);
 
-      if (args.lower)
+      if (args.lower) {
         TriluImplBody<KIND, CODE, DIM, true>()(out, in, pitches, shape.lo, volume, args.k);
-      else
+      } else {
         TriluImplBody<KIND, CODE, DIM, false>()(out, in, pitches, shape.lo, volume, args.k);
+      }
     } else {
-      Pitches<DIM - 1> pitches;
+      Pitches<DIM - 1> pitches{};
       size_t volume = pitches.flatten(shape);
 
-      if (args.lower)
+      if (args.lower) {
         TriluImplBody<KIND, CODE, DIM, true>()(out, in, pitches, shape.lo, volume, args.k);
-      else
+      } else {
         TriluImplBody<KIND, CODE, DIM, false>()(out, in, pitches, shape.lo, volume, args.k);
+      }
     }
   }
 
@@ -72,10 +76,10 @@ static void trilu_template(TaskContext& context)
   auto& scalars = context.scalars();
   auto lower    = scalars[0].value<bool>();
   auto k        = scalars[1].value<int32_t>();
-  auto& input   = context.inputs()[0];
-  auto& output  = context.outputs()[0];
+  auto input    = context.input(0);
+  auto output   = context.output(0);
   TriluArgs args{lower, k, output, input};
-  double_dispatch(args.output.dim(), args.output.code(), TriluImpl<KIND>{}, args);
+  double_dispatch(args.output.dim(), args.output.type().code(), TriluImpl<KIND>{}, args);
 }
 
 }  // namespace cunumeric

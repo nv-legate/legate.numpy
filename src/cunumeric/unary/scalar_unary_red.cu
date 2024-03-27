@@ -1,4 +1,4 @@
-/* Copyright 2021-2022 NVIDIA Corporation
+/* Copyright 2021-2023 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  *
  */
 
-#include "cunumeric/cunumeric.h"
+#include "cunumeric/cunumeric_task.h"
 #include "cunumeric/unary/scalar_unary_red.h"
 #include "cunumeric/unary/scalar_unary_red_template.inl"
 #include "cunumeric/execution_policy/reduction/scalar_reduction.cuh"
@@ -23,7 +23,7 @@ namespace cunumeric {
 
 using namespace legate;
 
-/*static*/ void ScalarUnaryRedTask::gpu_variant(TaskContext& context)
+/*static*/ void ScalarUnaryRedTask::gpu_variant(TaskContext context)
 {
   scalar_unary_red_template<VariantKind::GPU>(context);
 }

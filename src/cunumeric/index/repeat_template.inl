@@ -32,7 +32,7 @@ struct RepeatImpl {
   template <Type::Code CODE, int DIM>
   void operator()(RepeatArgs& args) const
   {
-    using VAL       = legate_type_of<CODE>;
+    using VAL       = type_of<CODE>;
     auto input_rect = args.input.shape<DIM>();
     auto input_arr  = args.input.read_accessor<VAL, DIM>(input_rect);
 
@@ -41,10 +41,10 @@ struct RepeatImpl {
       return;
     }
 
-    if (args.scalar_repeats)
+    if (args.scalar_repeats) {
       RepeatImplBody<KIND, CODE, DIM>{}(
         args.output, input_arr, args.repeats, args.axis, input_rect);
-    else {
+    } else {
       auto repeats_arr = args.repeats_arr.read_accessor<int64_t, DIM>(input_rect);
       RepeatImplBody<KIND, CODE, DIM>{}(args.output, input_arr, repeats_arr, args.axis, input_rect);
     }
@@ -54,16 +54,16 @@ struct RepeatImpl {
 template <VariantKind KIND>
 static void repeat_template(TaskContext& context)
 {
-  bool scalar_repeats = context.scalars()[1].value<bool>();
-  auto axis           = context.scalars()[0].value<int32_t>();
+  bool scalar_repeats = context.scalar(1).value<bool>();
+  auto axis           = context.scalar(0).value<int32_t>();
   if (scalar_repeats) {
-    auto repeats = context.scalars()[2].value<int64_t>();
+    auto repeats = context.scalar(2).value<int64_t>();
     RepeatArgs args{
-      context.outputs()[0], context.inputs()[0], Array(), repeats, axis, scalar_repeats};
+      context.output(0), context.input(0), legate::PhysicalStore(), repeats, axis, scalar_repeats};
     double_dispatch(args.input.dim(), args.input.code(), RepeatImpl<KIND>{}, args);
   } else {
-    auto& repeats = context.inputs()[1];
-    RepeatArgs args{context.outputs()[0], context.inputs()[0], repeats, 0, axis, scalar_repeats};
+    auto repeats = context.input(1);
+    RepeatArgs args{context.output(0), context.input(0), repeats, 0, axis, scalar_repeats};
     double_dispatch(args.input.dim(), args.input.code(), RepeatImpl<KIND>{}, args);
   }
 }

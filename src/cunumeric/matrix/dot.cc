@@ -23,7 +23,7 @@ using namespace legate;
 
 template <Type::Code CODE>
 struct DotImplBody<VariantKind::CPU, CODE> {
-  using VAL = legate_type_of<CODE>;
+  using VAL = type_of<CODE>;
   using ACC = acc_type_of<VAL>;
 
   template <typename AccessorRD>
@@ -37,7 +37,7 @@ struct DotImplBody<VariantKind::CPU, CODE> {
     if (dense) {
       auto rhs1ptr = rhs1.ptr(rect);
       auto rhs2ptr = rhs2.ptr(rect);
-      for (coord_t idx = 0; idx < volume; ++idx) {
+      for (size_t idx = 0; idx < volume; ++idx) {
         const auto prod = static_cast<ACC>(rhs1ptr[idx]) * static_cast<ACC>(rhs2ptr[idx]);
         out.reduce(0, prod);
       }
@@ -50,7 +50,7 @@ struct DotImplBody<VariantKind::CPU, CODE> {
   }
 };
 
-/*static*/ void DotTask::cpu_variant(TaskContext& context)
+/*static*/ void DotTask::cpu_variant(TaskContext context)
 {
   dot_template<VariantKind::CPU>(context);
 }

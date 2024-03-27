@@ -33,7 +33,9 @@ struct FillImplBody<VariantKind::CPU, VAL, DIM> {
     size_t volume   = rect.volume();
     if (dense) {
       auto outptr = out.ptr(rect);
-      for (size_t idx = 0; idx < volume; ++idx) outptr[idx] = fill_value;
+      for (size_t idx = 0; idx < volume; ++idx) {
+        outptr[idx] = fill_value;
+      }
     } else {
       for (size_t idx = 0; idx < volume; ++idx) {
         const auto point = pitches.unflatten(idx, rect.lo);
@@ -43,7 +45,7 @@ struct FillImplBody<VariantKind::CPU, VAL, DIM> {
   }
 };
 
-/*static*/ void FillTask::cpu_variant(TaskContext& context)
+/*static*/ void FillTask::cpu_variant(TaskContext context)
 {
   fill_template<VariantKind::CPU>(context);
 }

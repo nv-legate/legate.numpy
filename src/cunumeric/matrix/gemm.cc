@@ -97,9 +97,9 @@ struct GemmImplBody<VariantKind::CPU, Type::Code::COMPLEX128> {
   }
 };
 
-/*static*/ void GemmTask::cpu_variant(TaskContext& context)
+/*static*/ void GemmTask::cpu_variant(TaskContext context)
 {
-#ifdef LEGATE_USE_OPENMP
+#if LegateDefined(LEGATE_USE_OPENMP)
   openblas_set_num_threads(1);  // make sure this isn't overzealous
 #endif
   gemm_template<VariantKind::CPU>(context);

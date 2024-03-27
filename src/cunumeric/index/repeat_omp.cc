@@ -28,9 +28,9 @@ using namespace legate;
 
 template <Type::Code CODE, int DIM>
 struct RepeatImplBody<VariantKind::OMP, CODE, DIM> {
-  using VAL = legate_type_of<CODE>;
+  using VAL = type_of<CODE>;
 
-  void operator()(Array& out_array,
+  void operator()(legate::PhysicalStore& out_array,
                   const AccessorRO<VAL, DIM>& in,
                   const int64_t repeats,
                   const int32_t axis,
@@ -55,7 +55,7 @@ struct RepeatImplBody<VariantKind::OMP, CODE, DIM> {
     }
   }
 
-  void operator()(Array& out_array,
+  void operator()(legate::PhysicalStore& out_array,
                   const AccessorRO<VAL, DIM>& in,
                   const AccessorRO<int64_t, DIM>& repeats,
                   const int32_t axis,
@@ -66,7 +66,9 @@ struct RepeatImplBody<VariantKind::OMP, CODE, DIM> {
 
     const auto max_threads = omp_get_max_threads();
     ThreadLocalStorage<int64_t> local_sums(max_threads);
-    for (auto idx = 0; idx < max_threads; ++idx) local_sums[idx] = 0;
+    for (auto idx = 0; idx < max_threads; ++idx) {
+      local_sums[idx] = 0;
+    }
 
 #pragma omp parallel
     {
@@ -86,7 +88,9 @@ struct RepeatImplBody<VariantKind::OMP, CODE, DIM> {
     thrust::exclusive_scan(thrust::omp::par, p_offsets, p_offsets + axis_extent, p_offsets);
 
     int64_t sum = 0;
-    for (auto idx = 0; idx < max_threads; ++idx) sum += local_sums[idx];
+    for (auto idx = 0; idx < max_threads; ++idx) {
+      sum += local_sums[idx];
+    }
 
     Point<DIM> extents = in_rect.hi - in_rect.lo + Point<DIM>::ONES();
     extents[axis]      = sum;
@@ -96,7 +100,6 @@ struct RepeatImplBody<VariantKind::OMP, CODE, DIM> {
     Pitches<DIM - 1> in_pitches;
     auto in_volume = in_pitches.flatten(in_rect);
 
-    int64_t axis_base = in_rect.lo[axis];
 #pragma omp parallel for schedule(static)
     for (size_t idx = 0; idx < in_volume; ++idx) {
       auto in_p  = in_pitches.unflatten(idx, in_rect.lo);
@@ -114,7 +117,7 @@ struct RepeatImplBody<VariantKind::OMP, CODE, DIM> {
   }
 };
 
-/*static*/ void RepeatTask::omp_variant(TaskContext& context)
+/*static*/ void RepeatTask::omp_variant(TaskContext context)
 {
   repeat_template<VariantKind::OMP>(context);
 }

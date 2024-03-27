@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "cunumeric/cunumeric.h"
+#include "cunumeric/cunumeric_task.h"
 
 namespace cunumeric {
 
@@ -42,7 +42,9 @@ struct ScalarReductionPolicy<VariantKind::CPU, LG_OP, Tag> {
   void operator()(size_t volume, AccessorRD& out, const LHS& identity, Kernel&& kernel)
   {
     auto result = identity;
-    for (size_t idx = 0; idx < volume; ++idx) { kernel(result, idx, identity, Tag{}); }
+    for (size_t idx = 0; idx < volume; ++idx) {
+      kernel(result, idx, identity, Tag{});
+    }
     out.reduce(0, result);
   }
 };

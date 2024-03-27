@@ -34,7 +34,7 @@ struct EyeImpl {
   template <Type::Code CODE>
   void operator()(EyeArgs& args) const
   {
-    using VAL = legate_type_of<CODE>;
+    using VAL = type_of<CODE>;
 
     const auto rect = args.out.shape<2>();
     auto out        = args.out.write_accessor<VAL, 2>();
@@ -47,7 +47,9 @@ struct EyeImpl {
     // y >= rect.lo[1]
     const Point<2> start2(rect.lo[1] - k, rect.lo[1]);
     // If we don't have a start point then there's nothing for us to do
-    if (!rect.contains(start1) && !rect.contains(start2)) return;
+    if (!rect.contains(start1) && !rect.contains(start2)) {
+      return;
+    }
     // Pick whichever one fits in our rect
     const Point<2> start = rect.contains(start1) ? start1 : start2;
     // Now do the same thing for the end
@@ -69,7 +71,7 @@ struct EyeImpl {
 template <VariantKind KIND>
 static void eye_template(TaskContext& context)
 {
-  EyeArgs args{context.outputs()[0], context.scalars()[0].value<int32_t>()};
+  EyeArgs args{context.output(0), context.scalar(0).value<int32_t>()};
   type_dispatch(args.out.code(), EyeImpl<KIND>{}, args);
 }
 

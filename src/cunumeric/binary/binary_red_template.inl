@@ -34,7 +34,7 @@ struct BinaryRedImpl {
   void operator()(BinaryRedArgs& args) const
   {
     using OP  = BinaryOp<OP_CODE, CODE>;
-    using ARG = legate_type_of<CODE>;
+    using ARG = type_of<CODE>;
 
     // A technical note: unlike region-backed stores that are partitionable, future-backed stores
     // are not partitionable and replicated to all point tasks, including their metadata.
@@ -48,13 +48,15 @@ struct BinaryRedImpl {
     Pitches<DIM - 1> pitches;
     size_t volume = pitches.flatten(rect);
 
-    if (0 == volume) return;
+    if (0 == volume) {
+      return;
+    }
 
     auto out = args.out.reduce_accessor<ProdReduction<bool>, true, 1>();
     auto in1 = args.in1.read_accessor<ARG, DIM>(rect);
     auto in2 = args.in2.read_accessor<ARG, DIM>(rect);
 
-#ifndef LEGATE_BOUNDS_CHECKS
+#if !LegateDefined(LEGATE_BOUNDS_CHECKS)
     // Check to see if this is dense or not
     bool dense = in1.accessor.is_dense_row_major(rect) && in2.accessor.is_dense_row_major(rect);
 #else
@@ -86,13 +88,16 @@ struct BinaryRedDispatch {
 template <VariantKind KIND>
 static void binary_red_template(TaskContext& context)
 {
-  auto& inputs  = context.inputs();
+  auto inputs   = context.inputs();
   auto& scalars = context.scalars();
 
-  std::vector<Store> extra_args;
-  for (size_t idx = 2; idx < inputs.size(); ++idx) extra_args.push_back(std::move(inputs[idx]));
+  std::vector<Scalar> extra_args;
+  extra_args.reserve(scalars.size() - 1);
+  for (size_t idx = 1; idx < scalars.size(); ++idx) {
+    extra_args.emplace_back(scalars[idx]);
+  }
 
-  BinaryRedArgs args{context.reductions()[0],
+  BinaryRedArgs args{context.reduction(0),
                      inputs[0],
                      inputs[1],
                      scalars[0].value<BinaryOpCode>(),

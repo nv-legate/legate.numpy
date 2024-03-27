@@ -39,7 +39,9 @@ struct UnaryOpImplBody<VariantKind::OMP, OP_CODE, CODE, DIM> {
       auto outptr = out.ptr(rect);
       auto inptr  = in.ptr(rect);
 #pragma omp parallel for schedule(static)
-      for (size_t idx = 0; idx < volume; ++idx) outptr[idx] = func(inptr[idx]);
+      for (size_t idx = 0; idx < volume; ++idx) {
+        outptr[idx] = func(inptr[idx]);
+      }
     } else {
 #pragma omp parallel for schedule(static)
       for (size_t idx = 0; idx < volume; ++idx) {
@@ -63,7 +65,9 @@ struct PointCopyImplBody<VariantKind::OMP, VAL, DIM> {
       auto outptr = out.ptr(rect);
       auto inptr  = in.ptr(rect);
 #pragma omp parallel for schedule(static)
-      for (size_t idx = 0; idx < volume; ++idx) outptr[idx] = inptr[idx];
+      for (size_t idx = 0; idx < volume; ++idx) {
+        outptr[idx] = inptr[idx];
+      }
     } else {
 #pragma omp parallel for schedule(static)
       for (size_t idx = 0; idx < volume; ++idx) {
@@ -95,7 +99,9 @@ struct MultiOutUnaryOpImplBody<VariantKind::OMP, OP_CODE, CODE, DIM> {
       auto rhs1ptr = rhs1.ptr(rect);
       auto rhs2ptr = rhs2.ptr(rect);
 #pragma omp parallel for schedule(static)
-      for (size_t idx = 0; idx < volume; ++idx) lhsptr[idx] = func(rhs1ptr[idx], &rhs2ptr[idx]);
+      for (size_t idx = 0; idx < volume; ++idx) {
+        lhsptr[idx] = func(rhs1ptr[idx], &rhs2ptr[idx]);
+      }
     } else {
 #pragma omp parallel for schedule(static)
       for (size_t idx = 0; idx < volume; ++idx) {
@@ -106,7 +112,7 @@ struct MultiOutUnaryOpImplBody<VariantKind::OMP, OP_CODE, CODE, DIM> {
   }
 };
 
-/*static*/ void UnaryOpTask::omp_variant(TaskContext& context)
+/*static*/ void UnaryOpTask::omp_variant(TaskContext context)
 {
   unary_op_template<VariantKind::OMP>(context);
 }

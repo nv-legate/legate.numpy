@@ -37,7 +37,9 @@ __global__ static void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM)
                    const size_t volume)
 {
   size_t offset = blockIdx.x * blockDim.x + threadIdx.x;
-  if (offset >= volume) return;
+  if (offset >= volume) {
+    return;
+  }
   auto point  = pitches.unflatten(offset, lo);
   out[offset] = accessor[point];
 }
@@ -48,7 +50,7 @@ using Piece = std::pair<Buffer<VAL>, size_t>;
 auto get_aligned_size = [](auto size) { return std::max<size_t>(16, (size + 15) / 16 * 16); };
 
 template <typename VAL>
-static Piece<VAL> tree_reduce(Array& output,
+static Piece<VAL> tree_reduce(legate::PhysicalStore& output,
                               Piece<VAL> my_piece,
                               size_t my_id,
                               size_t num_ranks,
@@ -141,9 +143,9 @@ static Piece<VAL> tree_reduce(Array& output,
 
 template <Type::Code CODE, int32_t DIM>
 struct UniqueImplBody<VariantKind::GPU, CODE, DIM> {
-  using VAL = legate_type_of<CODE>;
+  using VAL = type_of<CODE>;
 
-  void operator()(Array& output,
+  void operator()(legate::PhysicalStore& output,
                   const AccessorRO<VAL, DIM>& in,
                   const Pitches<DIM - 1>& pitches,
                   const Rect<DIM>& rect,
@@ -180,9 +182,10 @@ struct UniqueImplBody<VariantKind::GPU, CODE, DIM> {
     auto buf_size = (get_aligned_size(result.second * sizeof(VAL)) + sizeof(VAL) - 1) / sizeof(VAL);
     assert(end - ptr <= buf_size);
     result.first = output.create_output_buffer<VAL, 1>(buf_size);
-    if (result.second > 0)
+    if (result.second > 0) {
       CHECK_CUDA(cudaMemcpyAsync(
         result.first.ptr(0), ptr, sizeof(VAL) * result.second, cudaMemcpyDeviceToDevice, stream));
+    }
 
     if (comms.size() > 0) {
       // The launch domain is 1D because of the output region
@@ -197,7 +200,7 @@ struct UniqueImplBody<VariantKind::GPU, CODE, DIM> {
   }
 };
 
-/*static*/ void UniqueTask::gpu_variant(TaskContext& context)
+/*static*/ void UniqueTask::gpu_variant(TaskContext context)
 {
   unique_template<VariantKind::GPU>(context);
 }

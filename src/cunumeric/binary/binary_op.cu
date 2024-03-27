@@ -26,7 +26,9 @@ static __global__ void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM)
   dense_kernel(size_t volume, Function func, LHS* out, const RHS1* in1, const RHS2* in2)
 {
   const size_t idx = global_tid_1d();
-  if (idx >= volume) return;
+  if (idx >= volume) {
+    return;
+  }
   out[idx] = func(in1[idx], in2[idx]);
 }
 
@@ -46,7 +48,9 @@ static __global__ void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM)
                  Rect rect)
 {
   const size_t idx = global_tid_1d();
-  if (idx >= volume) return;
+  if (idx >= volume) {
+    return;
+  }
   auto point = pitches.unflatten(idx, rect.lo);
   out[point] = func(in1[point], in2[point]);
 }
@@ -54,7 +58,7 @@ static __global__ void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM)
 template <BinaryOpCode OP_CODE, Type::Code CODE, int DIM>
 struct BinaryOpImplBody<VariantKind::GPU, OP_CODE, CODE, DIM> {
   using OP   = BinaryOp<OP_CODE, CODE>;
-  using RHS1 = legate_type_of<CODE>;
+  using RHS1 = type_of<CODE>;
   using RHS2 = rhs2_of_binary_op<OP_CODE, CODE>;
   using LHS  = std::result_of_t<OP(RHS1, RHS2)>;
 
@@ -82,7 +86,7 @@ struct BinaryOpImplBody<VariantKind::GPU, OP_CODE, CODE, DIM> {
   }
 };
 
-/*static*/ void BinaryOpTask::gpu_variant(TaskContext& context)
+/*static*/ void BinaryOpTask::gpu_variant(TaskContext context)
 {
   binary_op_template<VariantKind::GPU>(context);
 }

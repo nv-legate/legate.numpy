@@ -28,12 +28,13 @@ struct ArangeImplBody<VariantKind::CPU, VAL> {
                   const VAL start,
                   const VAL step) const
   {
-    for (coord_t idx = rect.lo[0]; idx <= rect.hi[0]; ++idx)
+    for (coord_t idx = rect.lo[0]; idx <= rect.hi[0]; ++idx) {
       out[idx] = static_cast<VAL>(idx) * step + start;
+    }
   }
 };
 
-/*static*/ void ArangeTask::cpu_variant(TaskContext& context)
+/*static*/ void ArangeTask::cpu_variant(TaskContext context)
 {
   arange_template<VariantKind::CPU>(context);
 }

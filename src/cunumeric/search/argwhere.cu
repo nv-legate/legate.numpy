@@ -32,20 +32,24 @@ static __global__ void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM)
                   Buffer<int64_t, 2> output)
 {
   const size_t tid = blockIdx.x * blockDim.x + threadIdx.x;
-  if (tid >= volume) return;
+  if (tid >= volume) {
+    return;
+  }
 
   auto in_p = pitches.unflatten(tid, origin);
   if (in[in_p] != VAL(0)) {
     auto offset = offsets[tid];
-    for (int32_t dim = 0; dim < DIM; ++dim) output[Point<2>(offset, dim)] = in_p[dim];
+    for (int32_t dim = 0; dim < DIM; ++dim) {
+      output[Point<2>(offset, dim)] = in_p[dim];
+    }
   }
 }
 
 template <Type::Code CODE, int DIM>
 struct ArgWhereImplBody<VariantKind::GPU, CODE, DIM> {
-  using VAL = legate_type_of<CODE>;
+  using VAL = type_of<CODE>;
 
-  void operator()(Array& out_array,
+  void operator()(legate::PhysicalStore& out_array,
                   AccessorRO<VAL, DIM> input,
                   const Pitches<DIM - 1>& pitches,
                   const Rect<DIM>& rect,
@@ -68,7 +72,7 @@ struct ArgWhereImplBody<VariantKind::GPU, CODE, DIM> {
   }
 };
 
-/*static*/ void ArgWhereTask::gpu_variant(TaskContext& context)
+/*static*/ void ArgWhereTask::gpu_variant(TaskContext context)
 {
   argwhere_template<VariantKind::GPU>(context);
 }

@@ -34,7 +34,9 @@ static __global__ void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM)
                  uint32_t axis)
 {
   const size_t idx = global_tid_1d();
-  if (idx >= volume) return;
+  if (idx >= volume) {
+    return;
+  }
   auto in_p = in_pitches.unflatten(idx, in_lo);
   unpack(out, in, in_p, axis);
 }
@@ -57,7 +59,7 @@ struct UnpackbitsImplBody<VariantKind::GPU, DIM, BITORDER> {
   }
 };
 
-/*static*/ void UnpackbitsTask::gpu_variant(TaskContext& context)
+/*static*/ void UnpackbitsTask::gpu_variant(TaskContext context)
 {
   unpackbits_template<VariantKind::GPU>(context);
 }

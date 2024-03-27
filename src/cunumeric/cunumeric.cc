@@ -14,9 +14,11 @@
  *
  */
 
-#include "cunumeric.h"
-#include "mapper.h"
-#include "unary/unary_red_util.h"
+#include "cunumeric/cunumeric_c.h"
+#include "cunumeric/cunumeric_task.h"
+#include "cunumeric/mapper.h"
+#include "cunumeric/runtime.h"
+#include "cunumeric/unary/unary_red_util.h"
 
 using namespace legate;
 
@@ -30,30 +32,56 @@ static const char* const cunumeric_library_name = "cunumeric";
   return registrar;
 }
 
+void unload_cudalibs() noexcept
+{
+  auto machine = legate::get_machine();
+
+  auto num_gpus = machine.count(legate::mapping::TaskTarget::GPU);
+  if (0 == num_gpus) {
+    return;
+  }
+
+  auto runtime = legate::Runtime::get_runtime();
+  auto library = runtime->find_library(cunumeric_library_name);
+
+  runtime->submit(runtime->create_task(
+    library, CuNumericOpCode::CUNUMERIC_UNLOAD_CUDALIBS, legate::tuple<uint64_t>{num_gpus}));
+}
+
 void registration_callback()
 {
   ResourceConfig config;
   config.max_tasks         = CUNUMERIC_MAX_TASKS;
   config.max_reduction_ops = CUNUMERIC_MAX_REDOPS;
 
-  auto context = Runtime::get_runtime()->create_library(
-    cunumeric_library_name, config, std::make_unique<CuNumericMapper>());
+  auto runtime = legate::Runtime::get_runtime();
+  auto library =
+    runtime->create_library(cunumeric_library_name, config, std::make_unique<CuNumericMapper>());
 
-  CuNumericRegistrar::get_registrar().register_all_tasks(context);
+  CuNumericRegistrar::get_registrar().register_all_tasks(library);
+  CuNumericRuntime::initialize(runtime, library);
+
+  legate::register_shutdown_callback(unload_cudalibs);
 }
 
 }  // namespace cunumeric
 
 extern "C" {
 
-void cunumeric_perform_registration(void)
-{
-  legate::Core::perform_registration<cunumeric::registration_callback>();
-}
+void cunumeric_perform_registration(void) { cunumeric::registration_callback(); }
 
 bool cunumeric_has_curand()
 {
-#if defined(LEGATE_USE_CUDA) || defined(CUNUMERIC_CURAND_FOR_CPU_BUILD)
+#if LegateDefined(LEGATE_USE_CUDA) || defined(CUNUMERIC_CURAND_FOR_CPU_BUILD)
+  return true;
+#else
+  return false;
+#endif
+}
+
+bool cunumeric_has_cusolvermp()
+{
+#if LegateDefined(LEGATE_USE_CUDA) && LegateDefined(CUNUMERIC_USE_CUSOLVERMP)
   return true;
 #else
   return false;

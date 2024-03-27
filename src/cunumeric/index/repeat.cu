@@ -59,7 +59,9 @@ __global__ static void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM)
                 const size_t volume)
 {
   const size_t idx = global_tid_1d();
-  if (idx >= volume) return;
+  if (idx >= volume) {
+    return;
+  }
   auto out_p = pitches.unflatten(idx, Point<DIM>::ZEROES());
   auto in_p  = out_p;
   in_p[axis] /= repeats;
@@ -79,7 +81,9 @@ __global__ static void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM)
                 const int volume)
 {
   const size_t idx = global_tid_1d();
-  if (idx >= volume) return;
+  if (idx >= volume) {
+    return;
+  }
   auto in_p  = pitches.unflatten(idx, in_lo);
   auto out_p = in_p - in_lo;
 
@@ -95,9 +99,9 @@ __global__ static void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM)
 
 template <Type::Code CODE, int DIM>
 struct RepeatImplBody<VariantKind::GPU, CODE, DIM> {
-  using VAL = legate_type_of<CODE>;
+  using VAL = type_of<CODE>;
 
-  void operator()(Array& out_array,
+  void operator()(legate::PhysicalStore& out_array,
                   const AccessorRO<VAL, DIM>& in,
                   const int64_t repeats,
                   const int32_t axis,
@@ -109,7 +113,7 @@ struct RepeatImplBody<VariantKind::GPU, CODE, DIM> {
     auto out = out_array.create_output_buffer<VAL, DIM>(extents, true);
 
     Rect<DIM> out_rect(Point<DIM>::ZEROES(), extents - Point<DIM>::ONES());
-    Pitches<DIM - 1> pitches;
+    Pitches<DIM - 1> pitches{};
 
     auto out_volume   = pitches.flatten(out_rect);
     const auto blocks = (out_volume + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
@@ -120,7 +124,7 @@ struct RepeatImplBody<VariantKind::GPU, CODE, DIM> {
     CHECK_CUDA_STREAM(stream);
   }
 
-  void operator()(Array& out_array,
+  void operator()(legate::PhysicalStore& out_array,
                   const AccessorRO<VAL, DIM>& in,
                   const AccessorRO<int64_t, DIM>& repeats,
                   const int32_t axis,
@@ -128,7 +132,7 @@ struct RepeatImplBody<VariantKind::GPU, CODE, DIM> {
   {
     auto stream = get_cached_stream();
 
-    Pitches<DIM - 1> pitches;
+    Pitches<DIM - 1> pitches{};
     const auto volume = pitches.flatten(in_rect);
 
     // Compute offsets
@@ -164,7 +168,7 @@ struct RepeatImplBody<VariantKind::GPU, CODE, DIM> {
   }
 };
 
-/*static*/ void RepeatTask::gpu_variant(TaskContext& context)
+/*static*/ void RepeatTask::gpu_variant(TaskContext context)
 {
   repeat_template<VariantKind::GPU>(context);
 }
