@@ -53,6 +53,12 @@ NDArray CuNumericRuntime::create_array(legate::LogicalStore&& store)
   return NDArray(std::move(store));
 }
 
+NDArray CuNumericRuntime::create_array(const legate::Type& type, int32_t dim)
+{
+  auto store = legate_runtime_->create_store(type, dim);
+  return NDArray(std::move(store));
+}
+
 legate::LogicalStore CuNumericRuntime::create_scalar_store(const Scalar& value)
 {
   return legate_runtime_->create_store(value);

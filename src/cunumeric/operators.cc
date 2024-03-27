@@ -468,6 +468,8 @@ NDArray moveaxis(NDArray a, std::vector<int32_t> source, std::vector<int32_t> de
   return a.transpose(order);
 }
 
+NDArray argwhere(NDArray input) { return input.argwhere(); }
+
 NDArray diag(NDArray v, int32_t k)
 {
   int32_t dim = v.dim();

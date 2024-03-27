@@ -37,6 +37,7 @@ class CuNumericRuntime {
                        const legate::Type& type,
                        bool optimize_scalar = true);
   NDArray create_array(legate::LogicalStore&& store);
+  NDArray create_array(const legate::Type& type, int32_t dim);
   legate::LogicalStore create_scalar_store(const Scalar& value);
 
  public:
