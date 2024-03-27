@@ -18,9 +18,13 @@ from __future__ import annotations
 
 import sys
 
+from legate.tester.args import parser
 from legate.tester.config import Config
 from legate.tester.test_plan import TestPlan
 from legate.tester.test_system import TestSystem
+
+# quick fix for new build changes
+parser.set_defaults(gtest_file=None)
 
 if __name__ == "__main__":
     config = Config(sys.argv)
