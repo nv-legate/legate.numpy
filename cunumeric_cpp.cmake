@@ -425,15 +425,6 @@ if(Legion_USE_CUDA AND CUSOLVERMP_DIR)
   target_link_libraries(cunumeric PRIVATE ${CUSOLVERMP_DIR}/lib/libcusolverMp.so)
 endif()
 
-# Change THRUST_DEVICE_SYSTEM for `.cpp` files
-if(Legion_USE_OpenMP)
-  list(APPEND cunumeric_CXX_OPTIONS -UTHRUST_DEVICE_SYSTEM)
-  list(APPEND cunumeric_CXX_OPTIONS -DTHRUST_DEVICE_SYSTEM=THRUST_DEVICE_SYSTEM_OMP)
-elseif(NOT Legion_USE_CUDA)
-  list(APPEND cunumeric_CXX_OPTIONS -UTHRUST_DEVICE_SYSTEM)
-  list(APPEND cunumeric_CXX_OPTIONS -DTHRUST_DEVICE_SYSTEM=THRUST_DEVICE_SYSTEM_CPP)
-endif()
-
 target_compile_options(cunumeric
   PRIVATE "$<$<COMPILE_LANGUAGE:CXX>:${cunumeric_CXX_OPTIONS}>"
           "$<$<COMPILE_LANGUAGE:CUDA>:${cunumeric_CUDA_OPTIONS}>")
