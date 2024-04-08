@@ -815,7 +815,7 @@ __host__ void direct_convolution(AccessorWO<VAL, DIM> out,
   }
   unsigned smem_size = sizeof(VAL);
   for (int d = 0; d < DIM; d++) {
-    smem_size *= (tile[d] + 2 * centers[d]);
+    smem_size *= std::max(static_cast<coord_t>(1), (tile[d] + 2 * centers[d]));
   }
   if (smem_size <= max_smem_size) {
     // Small tile case:
