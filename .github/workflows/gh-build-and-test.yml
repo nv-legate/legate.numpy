@@ -63,8 +63,8 @@ jobs:
             'linux-amd64-cpu32:cpu:cpu:linux'
             'macos-latest:cpu:cpu:mac')
           TEST_CONFIGS=(
-            '1 CPU test:test --cpus 1 --unit --debug:cpu'
-            '1 CPU test:test --cpus 1 --unit --debug:gpu'
+            '1 CPU test:test --cpus 1 --debug:cpu'
+            '1 CPU test:test --cpus 1 --debug:gpu'
             '2 CPU test:test --cpus 2 --debug:cpu'
             '2 CPU test:test --cpus 2 --debug:gpu'
             'GPU test:test --use cuda --gpus 1 --debug:gpu'
@@ -77,6 +77,7 @@ jobs:
             'Eager execution test:test --use eager --debug:cpu'
             'mypy:mypy:cpu'
             'Documentation:docs:cpu'
+            'Unit tests:unit:cpu'
           )
           for RUNNER in "${RUNNERS[@]}"; do
             IFS=':' read -ra RUNNER_INFO <<< "$RUNNER"

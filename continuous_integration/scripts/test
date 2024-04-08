@@ -29,6 +29,10 @@ setup_mypy_env() {
     mamba install -y "mypy>=0.961" jinja2 nbsphinx sphinx-copybutton  "sphinx>=4.4.0" types-docutils
 }
 
+setup_unit_env() {
+    mamba install -y pytest pytest-mock mock
+}
+
 test_cunumeric() {
     set -xeo pipefail
 
@@ -61,6 +65,12 @@ test_cunumeric() {
             setup_docs_env;
             cd docs/cunumeric
             make clean html
+            ;;
+        "unit")
+            echo "Running Unit tests..."
+            shift;
+            setup_unit_env;
+            pytest tests/unit
             ;;
         *)
             echo "Invalid command: $1"
