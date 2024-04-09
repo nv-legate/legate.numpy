@@ -332,6 +332,27 @@ void CUDALibraries::finalize_cutensor()
   cutensor_ = nullptr;
 }
 
+int CUDALibraries::get_device_ordinal()
+{
+  if (ordinal_.has_value()) {
+    return *ordinal_;
+  }
+  int ordinal{-1};
+  CHECK_CUDA(cudaGetDevice(&ordinal));
+  ordinal_ = ordinal;
+  return ordinal;
+}
+
+const cudaDeviceProp& CUDALibraries::get_device_properties()
+{
+  if (device_prop_) {
+    return *device_prop_;
+  }
+  device_prop_ = std::make_unique<cudaDeviceProp>();
+  CHECK_CUDA(cudaGetDeviceProperties(device_prop_.get(), get_device_ordinal()));
+  return *device_prop_;
+}
+
 cublasHandle_t CUDALibraries::get_cublas()
 {
   if (nullptr == cublas_) {
@@ -442,6 +463,20 @@ cufftContext get_cufft_plan(cufftType type, const cufftPlanParams& params)
   const auto proc = legate::Processor::get_executing_processor();
   auto& lib       = get_cuda_libraries(proc);
   return lib.get_cufft_plan(type, params);
+}
+
+const cudaDeviceProp& get_device_properties()
+{
+  const auto proc = legate::Processor::get_executing_processor();
+  auto& lib       = get_cuda_libraries(proc);
+  return lib.get_device_properties();
+}
+
+int get_device_ordinal()
+{
+  const auto proc = legate::Processor::get_executing_processor();
+  auto& lib       = get_cuda_libraries(proc);
+  return lib.get_device_ordinal();
 }
 
 class LoadCUDALibsTask : public CuNumericTask<LoadCUDALibsTask> {

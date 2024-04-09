@@ -34,6 +34,8 @@ struct CUDALibraries {
 
  public:
   void finalize();
+  int get_device_ordinal();
+  const cudaDeviceProp& get_device_properties();
   cublasHandle_t get_cublas();
   cusolverDnHandle_t get_cusolver();
 #if LegateDefined(CUNUMERIC_USE_CUSOLVERMP)
@@ -52,6 +54,8 @@ struct CUDALibraries {
 
  private:
   bool finalized_;
+  std::optional<int> ordinal_{};
+  std::unique_ptr<cudaDeviceProp> device_prop_{};
   cublasContext* cublas_;
   cusolverDnContext* cusolver_;
 #if LegateDefined(CUNUMERIC_USE_CUSOLVERMP)

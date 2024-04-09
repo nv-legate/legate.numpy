@@ -757,10 +757,8 @@ __host__ void direct_convolution(AccessorWO<VAL, DIM> out,
 {
   constexpr int THREADVALS = THREAD_OUTPUTS(VAL);
   // Get the maximum amount of shared memory per threadblock
-  int device;
-  CHECK_CUDA(cudaGetDevice(&device));
-  cudaDeviceProp properties;
-  CHECK_CUDA(cudaGetDeviceProperties(&properties, device));
+  int device           = get_device_ordinal();
+  auto& properties     = get_device_properties();
   size_t max_smem_size = properties.sharedMemPerBlockOptin;
 
   // Only need to do these calls the first time on each device so
@@ -1303,10 +1301,8 @@ __host__ static inline void cufft_convolution(AccessorWO<VAL, DIM> out,
                                               const Rect<DIM>& subrect,
                                               const Rect<DIM>& filter_rect)
 {
-  int device;
-  CHECK_CUDA(cudaGetDevice(&device));
-  cudaDeviceProp properties;
-  CHECK_CUDA(cudaGetDeviceProperties(&properties, device));
+  int device           = get_device_ordinal();
+  auto& properties     = get_device_properties();
   size_t max_smem_size = properties.sharedMemPerBlockOptin;
 
   // Only need to do these calls the first time on each device so

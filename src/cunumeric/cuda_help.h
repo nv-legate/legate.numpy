@@ -170,6 +170,8 @@ struct cufftPlanParams {
 
 // Return a cached stream for the current GPU
 legate::cuda::StreamView get_cached_stream();
+int get_device_ordinal();
+const cudaDeviceProp& get_device_properties();
 cublasHandle_t get_cublas();
 cusolverDnHandle_t get_cusolver();
 #if LegateDefined(CUNUMERIC_USE_CUSOLVERMP)
