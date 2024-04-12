@@ -81,3 +81,33 @@ def calculate_volume(shape: NdShape) -> int:
     if len(shape) == 0:
         return 0
     return reduce(lambda x, y: x * y, shape)
+
+
+def max_identity(
+    ty: np.dtype[Any],
+) -> int | np.floating[Any] | bool | np.complexfloating[Any, Any]:
+    if ty.kind == "i" or ty.kind == "u":
+        return np.iinfo(ty).min
+    elif ty.kind == "f":
+        return np.finfo(ty).min
+    elif ty.kind == "c":
+        return np.finfo(np.float64).min + np.finfo(np.float64).min * 1j
+    elif ty.kind == "b":
+        return False
+    else:
+        raise ValueError(f"Unsupported dtype: {ty}")
+
+
+def min_identity(
+    ty: np.dtype[Any],
+) -> int | np.floating[Any] | bool | np.complexfloating[Any, Any]:
+    if ty.kind == "i" or ty.kind == "u":
+        return np.iinfo(ty).max
+    elif ty.kind == "f":
+        return np.finfo(ty).max
+    elif ty.kind == "c":
+        return np.finfo(np.float64).max + np.finfo(np.float64).max * 1j
+    elif ty.kind == "b":
+        return True
+    else:
+        raise ValueError(f"Unsupported dtype: {ty}")

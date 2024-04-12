@@ -59,6 +59,7 @@ Sums, products, differences
    sum
    cumprod
    cumsum
+   diff
    nancumprod
    nancumsum
    nanprod

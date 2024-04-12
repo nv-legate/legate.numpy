@@ -14,14 +14,150 @@
 #
 from __future__ import annotations
 
+import math
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
+from numpy.core.numeric import (  # type: ignore [attr-defined]
+    normalize_axis_tuple,
+)
 
+from .._array.array import ndarray
 from .._array.util import add_boilerplate
+from .creation_shape import full
+from .logic_truth import any
 
 if TYPE_CHECKING:
-    from .._array.util import ndarray
+    import numpy.typing as npt
+
+
+@add_boilerplate("a", "weights")
+def average(
+    a: ndarray,
+    axis: int | tuple[int, ...] | None = None,
+    weights: ndarray | None = None,
+    returned: bool = False,
+    *,
+    keepdims: bool = False,
+) -> ndarray | tuple[ndarray, ndarray]:
+    """
+    Compute the weighted average along the specified axis.
+
+    Parameters
+    ----------
+    a : array_like
+        Array containing data to be averaged. If `a` is not an array, a
+        conversion is attempted.
+    axis : None or int or tuple of ints, optional
+        Axis or axes along which to average `a`.  The default,
+        axis=None, will average over all of the elements of the input array.
+        If axis is negative it counts from the last to the first axis.
+        If axis is a tuple of ints, averaging is performed on all of the axes
+        specified in the tuple instead of a single axis or all the axes as
+        before.
+    weights : array_like, optional
+        An array of weights associated with the values in `a`. Each value in
+        `a` contributes to the average according to its associated weight.
+        The weights array can either be 1-D (in which case its length must be
+        the size of `a` along the given axis) or of the same shape as `a`.
+        If `weights=None`, then all data in `a` are assumed to have a
+        weight equal to one.  The 1-D calculation is::
+
+            avg = sum(a * weights) / sum(weights)
+
+        The only constraint on `weights` is that `sum(weights)` must not be 0.
+    returned : bool, optional
+        Default is `False`. If `True`, the tuple (`average`, `sum_of_weights`)
+        is returned, otherwise only the average is returned.
+        If `weights=None`, `sum_of_weights` is equivalent to the number of
+        elements over which the average is taken.
+    keepdims : bool, optional
+        If this is set to True, the axes which are reduced are left
+        in the result as dimensions with size one. With this option,
+        the result will broadcast correctly against the original `a`.
+
+    Returns
+    -------
+    retval, [sum_of_weights] : array_type or double
+        Return the average along the specified axis. When `returned` is `True`,
+        return a tuple with the average as the first element and the sum
+        of the weights as the second element. `sum_of_weights` is of the
+        same type as `retval`. The result dtype follows a general pattern.
+        If `weights` is None, the result dtype will be that of `a` , or
+        ``float64`` if `a` is integral. Otherwise, if `weights` is not None and
+        `a` is non-integral, the result type will be the type of lowest
+        precision capable of representing values of both `a` and `weights`. If
+        `a` happens to be integral, the previous rules still applies but the
+        result dtype will at least be ``float64``.
+
+    Raises
+    ------
+    ZeroDivisionError
+        When all weights along axis are zero.
+    ValueError
+        When the length of 1D `weights` is not the same as the shape of `a`
+        along axis.
+
+    See Also
+    --------
+    numpy.average
+
+    Availability
+    --------
+    Multiple GPUs, Multiple CPUs
+    """
+    clean_axis: tuple[int, ...] | None = None
+    if axis is not None:
+        clean_axis = normalize_axis_tuple(axis, a.ndim, argname="axis")
+
+    scl: npt.ArrayLike | ndarray = 1
+    if weights is None:
+        scl = (
+            a.size
+            if clean_axis is None
+            else math.prod([a.shape[i] for i in clean_axis])
+        )
+        if a.dtype.kind == "i":
+            scl = np.float64(scl)
+        avg = a.sum(axis=clean_axis, keepdims=keepdims) / scl
+    elif weights.shape == a.shape:
+        scl = weights.sum(
+            axis=clean_axis,
+            keepdims=keepdims,
+            dtype=(np.dtype(np.float64) if a.dtype.kind == "i" else None),
+        )
+        if any(scl == 0):
+            raise ZeroDivisionError("Weights along axis sum to 0")
+        avg = (a * weights).sum(axis=clean_axis, keepdims=keepdims) / scl
+    else:
+        if clean_axis is None:
+            raise ValueError(
+                "a and weights must share shape or axis must be specified"
+            )
+        if weights.ndim != 1 or len(clean_axis) != 1:
+            raise ValueError(
+                "Weights must be either 1 dimension along single "
+                "axis or the same shape as a"
+            )
+        if weights.size != a.shape[clean_axis[0]]:
+            raise ValueError("Weights length does not match axis")
+
+        scl = weights.sum(
+            dtype=(np.dtype(np.float64) if a.dtype.kind == "i" else None)
+        )
+        project_shape = [1] * a.ndim
+        project_shape[clean_axis[0]] = -1
+        weights = weights.reshape(project_shape)
+        if any(scl == 0):
+            raise ZeroDivisionError("Weights along axis sum to 0")
+        avg = (a * weights).sum(axis=clean_axis[0], keepdims=keepdims) / scl
+
+    if returned:
+        if not isinstance(scl, ndarray) or scl.ndim == 0:
+            scl = full(avg.shape, scl)
+        return avg, scl
+    else:
+        return avg
 
 
 @add_boilerplate("a")

@@ -30,7 +30,12 @@ from numpy.core.numeric import (  # type: ignore [attr-defined]
 )
 
 from .. import _ufunc
-from .._utils.array import calculate_volume, to_core_type
+from .._utils.array import (
+    calculate_volume,
+    max_identity,
+    min_identity,
+    to_core_type,
+)
 from .._utils.coverage import FALLBACK_WARNING, clone_class, is_implemented
 from .._utils.linalg import dot_modes
 from .._utils.structure import deep_apply
@@ -1953,6 +1958,9 @@ class ndarray:
         Multiple GPUs, Multiple CPUs
 
         """
+        min = max_identity(self.dtype) if min is None else min
+        max = min_identity(self.dtype) if max is None else max
+
         args = (
             np.array(min, dtype=self.dtype),
             np.array(max, dtype=self.dtype),

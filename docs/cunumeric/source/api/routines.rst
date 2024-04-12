@@ -10,6 +10,7 @@ Routines
    binary
    datatype
    indexing
+   io
    linalg
    logic
    math

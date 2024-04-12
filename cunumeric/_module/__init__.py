@@ -59,6 +59,20 @@ from .binary_bit_packing import *  # Bit packing
 
 from .indexing import *
 
+# --- Input and output
+# https://numpy.org/doc/stable/reference/routines.io.html
+#
+# from .io_text import *  # Text files
+# from .io_raw import *  # Raw binary files
+# from .io_string import *  # String formatting
+# from .io_memory import *  # Memory mapping files
+# from .io_text import *  # Text formatting options
+# from .io_base import *  # Base-n representations
+# from .io_data import *  # Data sources
+# from .io_binary import *  # Binary format description
+
+from .io_numpy import *  # NumPy binary files (NPY, NPZ)
+
 # --- Linear Algebra
 # https://numpy.org/doc/stable/reference/routines.linalg.html
 
@@ -107,10 +121,10 @@ from .ssc_counting import *  # Counting
 # --- Statistics
 # https://numpy.org/doc/stable/reference/routines.statistics.html
 #
-# from .correlating import *  # Correlating
 
 from .stats_order import *  # Order statistics
 from .stats_avgs_vars import *  # Averages and variances
+from .stats_correlating import *  # Correlating
 from .stats_histograms import *  # Histograms
 
 # --- Window functions
