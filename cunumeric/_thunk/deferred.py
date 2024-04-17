@@ -638,9 +638,8 @@ class DeferredArray(NumPyThunk):
             task.add_scalar_arg(is_set, ty.bool_)
             task.add_scalar_arg(key_dims, ty.int64)
             task.add_constraint(align(p_rhs, p_key))
-            task.add_constraint(
-                broadcast(p_rhs, range(1, len(rhs.base.shape)))
-            )
+            if rhs.base.ndim > 1:
+                task.add_constraint(broadcast(p_rhs, range(1, rhs.base.ndim)))
             task.execute()
 
             # TODO : current implementation of the ND output regions
