@@ -2,6 +2,8 @@
 
 set -x
 
+. conda-utils
+
 make_ci_env() {
     set -xeuo pipefail
     yaml_file=$(find "${ARTIFACTS_DIR}" -name "environment*.yaml" | head -n 1)
@@ -31,7 +33,7 @@ make_conda_env() {
 
     case "$1" in
         ci) make_ci_env;;
-        # release) make_release_env;;
+        release) make_release_env;;
         *) return 1;;
     esac
 

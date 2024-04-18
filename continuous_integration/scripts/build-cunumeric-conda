@@ -30,6 +30,9 @@ build_cunumeric_conda_package() {
     GPU_ENABLED=true
     [ "${USE_CUDA}" = "OFF" ] && GPU_ENABLED=false
 
+    UPLOAD_BUILD=true
+    [ "${UPLOAD_ENABLED:-}" = "OFF" ] && UPLOAD_BUILD=false
+
     conda_build_args+=(--variants "{gpu_enabled:${GPU_ENABLED},python:${python_version}}");
 
     rm -rf /tmp/conda-build/cunumeric;
@@ -40,6 +43,9 @@ build_cunumeric_conda_package() {
     cat <<EOF > "${REPO_DIR}/conda/conda-build/conda_build_config.yaml"
 gpu_enabled:
   - "${GPU_ENABLED}"
+
+upload_build:
+  - "${UPLOAD_BUILD}"
 
 python:
   - "${python_version}"

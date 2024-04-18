@@ -7,10 +7,18 @@
   {# We need to have a default value for the initial pass over the recipe #}
   {% set gpu_enabled_bool = false %}
 {% endif %}
+{% if upload_build == "true" %}
+  {% set upload_build_bool = true %}
+{% elif upload_build == "false" %}
+  {% set upload_build_bool = false %}
+{% else %}
+  {# We need to have a default value for the initial pass over the recipe #}
+  {% set upload_build_bool = false %}
+{% endif %}
 ## The placeholder version is strictly for making two-pass conda build process.
 ## It should not be used for any other purpose, and this is not a default version.
 {% set placeholder_version = '0.0.0.dev' %}
-{% set default_cuda_version = '12.0' %}
+{% set default_cuda_version = '12.2' %}
 {% set cuda_version='.'.join(environ.get('CUDA', default_cuda_version).split('.')[:2]) %}
 {% set cuda_major=cuda_version.split('.')[0]|int %}
 {% set py_version=environ.get('CONDA_PY', '') %}
@@ -53,20 +61,22 @@ build:
   number: {{ build_number }}
   missing_dso_whitelist:
     -  '*libcuda.so*'
+{% if not gpu_enabled_bool %}
+{% set cpu_tag='_cpu' %}
+{% else %}
+{% set cpu_tag='' %}
+{% endif %}
+{% if upload_build_bool %}
+{% set upload_tag='_nightly' %}
+{% else %}
+{% set upload_tag='' %}
+{% endif %}
 {% if use_local_path is not defined %}
 # use git hash
-{% if not gpu_enabled_bool %}
-  string: "cuda{{ cuda_major }}_py{{ py_version }}_{{ GIT_DESCRIBE_HASH }}_{{ PKG_BUILDNUM }}_cpu"
-{% else %}
-  string: "cuda{{ cuda_major }}_py{{ py_version }}_{{ GIT_DESCRIBE_HASH }}_{{ PKG_BUILDNUM }}"
-{% endif %}
+  string: "cuda{{ cuda_major }}_py{{ py_version }}_{{ GIT_DESCRIBE_HASH }}_{{ PKG_BUILDNUM }}{{ cpu_tag }}{{ upload_tag }}"
 {% else %}
 # do not use git hash
-{% if not gpu_enabled_bool %}
-  string: "cuda{{ cuda_major }}_py{{ py_version }}_{{ PKG_BUILDNUM }}_cpu"
-{% else %}
-  string: "cuda{{ cuda_major }}_py{{ py_version }}_{{ PKG_BUILDNUM }}"
-{% endif %}
+  string: "cuda{{ cuda_major }}_py{{ py_version }}_{{ PKG_BUILDNUM }}{{ cpu_tag }}{{ upload_tag }}"
 {% endif %}
   script_env:
     - SCCACHE_BUCKET
@@ -110,7 +120,7 @@ requirements:
     - scikit-build
     - openblas =* =*openmp*
 {% if not gpu_enabled_bool %}
-    - legate-core ={{ core_version }} =*_cpu
+    - legate-core ={{ core_version }} =*_cpu*
 {% else %}
     - legate-core ={{ core_version }}
     - cuda-nvcc ={{ cuda_version }}
@@ -132,7 +142,7 @@ requirements:
     - numpy {{ numpy_version }}
     - libopenblas =* =*openmp*
 {% if not gpu_enabled_bool %}
-    - legate-core ={{ core_version }} =*_cpu
+    - legate-core ={{ core_version }} =*_cpu*
 {% else %}
     - legate-core ={{ core_version }}
     - cuda-cudart >={{ cuda_version }},<{{ cuda_major+1 }}
