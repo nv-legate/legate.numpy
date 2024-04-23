@@ -37,17 +37,28 @@ If you have questions, please contact us at legate(at)nvidia.com.
 
 ## Installation
 
-cuNumeric is available [on conda](https://anaconda.org/legate/cunumeric).
-Create a new environment containing cuNumeric:
+cuNumeric is available from [conda](https://docs.conda.io/projects/conda/en/latest/index.html)
+on the [legate channel](https://anaconda.org/legate/cunumeric).
+Please make sure you have at least conda version 24.1 installed, then create
+a new environment containing cuNumeric:
 
 ```
-mamba create -n myenv -c nvidia -c conda-forge -c legate cunumeric
+conda create -n myenv -c nvidia -c conda-forge -c legate cunumeric
 ```
 
 or install it into an existing environment:
 
 ```
-mamba install -c nvidia -c conda-forge -c legate cunumeric
+conda install -c nvidia -c conda-forge -c legate cunumeric
+```
+
+Once installed, you can verify the installation by running one of the examples
+from the cuNumeric repository, for instance:
+
+```
+$ legate examples/black_scholes.py
+Running black scholes on 10K options...
+Elapsed Time: 129.017 ms
 ```
 
 Only linux-64 packages are available at the moment.
@@ -59,7 +70,7 @@ installing on a machine without GPUs. You can force installation of a CPU-only
 package by requesting it as follows:
 
 ```
-mamba ... cunumeric=*=*_cpu
+conda ... cunumeric=*=*_cpu
 ```
 
 See the build instructions at https://nv-legate.github.io/cunumeric for details
