@@ -38,7 +38,7 @@ If you have questions, please contact us at legate(at)nvidia.com.
 ## Installation
 
 cuNumeric is available from [conda](https://docs.conda.io/projects/conda/en/latest/index.html)
-on the [legate channel](https://anaconda.org/legate/legate-core).
+on the [legate channel](https://anaconda.org/legate/cunumeric).
 Please make sure you have at least conda version 24.1 installed, then create
 a new environment containing cuNumeric:
 
@@ -52,8 +52,8 @@ or install it into an existing environment:
 conda install -c nvidia -c conda-forge -c legate cunumeric
 ```
 
-Once installed, you can verify intallation by running one of the examples
-from the cunumeric repository, for instance
+Once installed, you can verify the installation by running one of the examples
+from the cuNumeric repository, for instance:
 
 ```
 $ legate examples/black_scholes.py

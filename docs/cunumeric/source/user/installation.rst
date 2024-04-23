@@ -3,7 +3,7 @@ Installation
 
 Linux-64 packages for cuNumeric are available from
 `conda <https://docs.conda.io/projects/conda/en/latest/index.html>`_
-on the `legate channel <https://anaconda.org/legate/legate-core>`_.
+on the `legate channel <https://anaconda.org/legate/cunumeric>`_.
 Please make sure you have at least conda version 24.1 installed, then create
 a new environment containing cuNumeric:
 
@@ -11,8 +11,8 @@ a new environment containing cuNumeric:
 
   conda install -c nvidia -c conda-forge -c legate cunumeric
 
-Once installed, you can verify intallation by running one of the examples
-from the cunumeric repository, for instance
+Once installed, you can verify the installation by running one of the examples
+from the cuNumeric repository, for instance:
 
 .. code-block:: sh
 
