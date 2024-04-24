@@ -66,9 +66,9 @@ Only linux-64 packages are available at the moment.
 The default package contains GPU support, and is compatible with CUDA >= 11.8
 (driver >= 520), and Volta or later GPU architectures. There are also CPU-only
 packages available, which will be automatically selected when installing on a
-machine without GPUs available. See the build instructions at 
-https://nv-legate.github.io/cunumeric for details about manually forcing 
-different install configurations, or building cuNumeric from source.
+machine without GPUs available. See https://nv-legate.github.io/cunumeric for
+details about manually forcing different install configurations, or building 
+cuNumeric from source.
 
 ## Usage and Execution
 
