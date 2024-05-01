@@ -338,7 +338,7 @@ def install_cunumeric(
 
     cmake_flags += f"""\
 -DCMAKE_BUILD_TYPE={(
-    "Debug" if debug else "RelWithDebInfo" if debug_release else "Release"
+"Debug" if debug else "RelWithDebInfo" if debug_release else "Release"
 )}
 -DBUILD_SHARED_LIBS=ON
 -DCMAKE_CUDA_ARCHITECTURES={str(arch)}
