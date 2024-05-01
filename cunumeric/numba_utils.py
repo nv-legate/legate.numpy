@@ -211,7 +211,7 @@ def compile_ptx_soa(
     # values as SoA and some simplifications to keep it short
     if not device:
         raise NotImplementedError(
-            "Only device functions can be compiled for " "the SoA ABI"
+            "Only device functions can be compiled for the SoA ABI"
         )
 
     nvvm_options: Dict[str, Union[int, str, None]] = {
