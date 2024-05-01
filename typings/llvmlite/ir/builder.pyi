@@ -24,7 +24,7 @@ class IRBuilder:
         self,
         agg: Value,
         idx: Union[Iterable[int], int],
-        name: Optional[str] = "",
+        name: str = "",
     ) -> Instruction: ...
     def store(
         self, value: Value, ptr: Value, align: Optional[int] = None
