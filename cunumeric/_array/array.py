@@ -22,14 +22,9 @@ from typing import TYPE_CHECKING, Any, Sequence, cast
 import numpy as np
 from legate.core import Field, LogicalArray, Scalar
 from legate.core.utils import OrderedSet
-from numpy.core.multiarray import (  # type: ignore [attr-defined]
-    normalize_axis_index,
-)
-from numpy.core.numeric import (  # type: ignore [attr-defined]
-    normalize_axis_tuple,
-)
 
 from .. import _ufunc
+from .._utils import is_np2
 from .._utils.array import (
     calculate_volume,
     max_identity,
@@ -61,6 +56,13 @@ from .util import (
     sanitize_shape,
     tuple_pop,
 )
+
+if is_np2:
+    from numpy.lib.array_utils import normalize_axis_index  # type: ignore
+    from numpy.lib.array_utils import normalize_axis_tuple  # type: ignore
+else:
+    from numpy.core.multiarray import normalize_axis_index  # type: ignore
+    from numpy.core.numeric import normalize_axis_tuple  # type: ignore
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -940,7 +942,7 @@ class ndarray:
         Multiple GPUs, Multiple CPUs
 
         """
-        if self.dtype == np.bool_:
+        if self.dtype == bool:
             # Boolean values are special, just do logical NOT
             return _ufunc.logical_not(self)
         else:
@@ -2698,46 +2700,48 @@ class ndarray:
         assert result.shape == ()
         return result._thunk.__numpy_array__()
 
-    def itemset(self, *args: Any) -> None:
-        """a.itemset(*args)
+    if not is_np2:
 
-        Insert scalar into an array (scalar is cast to array's dtype,
-        if possible)
+        def itemset(self, *args: Any) -> None:
+            """a.itemset(*args)
 
-        There must be at least 1 argument, and define the last argument
-        as *item*.  Then, ``a.itemset(*args)`` is equivalent to but faster
-        than ``a[args] = item``.  The item should be a scalar value and `args`
-        must select a single item in the array `a`.
+            Insert scalar into an array (scalar is cast to array's dtype,
+            if possible)
 
-        Parameters
-        ----------
-        \\*args :
-            If one argument: a scalar, only used in case `a` is of size 1.
-            If two arguments: the last argument is the value to be set
-            and must be a scalar, the first argument specifies a single array
-            element location. It is either an int or a tuple.
+            There must be at least 1 argument, and define the last argument
+            as *item*.  Then, ``a.itemset(*args)`` is equivalent to but faster
+            than ``a[args] = item``.  The item should be a scalar value and
+            `args` must select a single item in the array `a`.
 
-        Notes
-        -----
-        Compared to indexing syntax, `itemset` provides some speed increase
-        for placing a scalar into a particular location in an `ndarray`,
-        if you must do this.  However, generally this is discouraged:
-        among other problems, it complicates the appearance of the code.
-        Also, when using `itemset` (and `item`) inside a loop, be sure
-        to assign the methods to a local variable to avoid the attribute
-        look-up at each loop iteration.
+            Parameters
+            ----------
+            \\*args :
+                If one argument: a scalar, only used in case `a` is of size 1.
+                If two arguments: the last argument is the value to be set
+                and must be a scalar, the first argument specifies a single
+                array element location. It is either an int or a tuple.
 
-        Availability
-        --------
-        Multiple GPUs, Multiple CPUs
+            Notes
+            -----
+            Compared to indexing syntax, `itemset` provides some speed increase
+            for placing a scalar into a particular location in an `ndarray`,
+            if you must do this.  However, generally this is discouraged:
+            among other problems, it complicates the appearance of the code.
+            Also, when using `itemset` (and `item`) inside a loop, be sure
+            to assign the methods to a local variable to avoid the attribute
+            look-up at each loop iteration.
 
-        """
-        if len(args) == 0:
-            raise KeyError("itemset() requires at least one argument")
-        value = args[-1]
-        args = args[:-1]
-        key = self._convert_singleton_key(args)
-        self[key] = value
+            Availability
+            --------
+            Multiple GPUs, Multiple CPUs
+
+            """
+            if len(args) == 0:
+                raise KeyError("itemset() requires at least one argument")
+            value = args[-1]
+            args = args[:-1]
+            key = self._convert_singleton_key(args)
+            self[key] = value
 
     @add_boilerplate()
     def max(
@@ -2899,7 +2903,7 @@ class ndarray:
         keepdims: bool = False,
         where: ndarray | None = None,
     ) -> ndarray:
-        if np.issubdtype(dtype, np.integer) or np.issubdtype(dtype, np.bool_):
+        if np.issubdtype(dtype, np.integer) or np.issubdtype(dtype, bool):
             return self.mean(
                 axis=axis, dtype=dtype, out=out, keepdims=keepdims, where=where
             )
@@ -3135,7 +3139,7 @@ class ndarray:
         Multiple GPUs, Multiple CPUs
 
         """
-        if self.dtype.type == np.bool_:
+        if self.dtype.type == bool:
             temp = ndarray(
                 shape=self.shape,
                 dtype=np.dtype(np.int32),
@@ -3505,7 +3509,7 @@ class ndarray:
         Multiple GPUs, Multiple CPUs
 
         """
-        if self.dtype.type == np.bool_:
+        if self.dtype.type == bool:
             temp = ndarray(
                 shape=self.shape,
                 dtype=np.dtype(np.int32),

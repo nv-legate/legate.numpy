@@ -17,15 +17,13 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
-from numpy.core.multiarray import (  # type: ignore [attr-defined]
-    normalize_axis_index,
-)
 
 from .._array.thunk import perform_scan, perform_unary_reduction
 from .._array.util import add_boilerplate
 from .._ufunc.comparison import not_equal
 from .._ufunc.floating import isnan
 from .._ufunc.math import add, multiply, subtract
+from .._utils import is_np2
 from ..config import ScanCode, UnaryRedCode
 from ..settings import settings as cunumeric_settings
 from ._unary_red_utils import get_non_nan_unary_red_code
@@ -34,6 +32,11 @@ from .array_joining import concatenate
 from .creation_shape import empty
 from .indexing import putmask
 from .logic_truth import all, any
+
+if is_np2:
+    from numpy.lib.array_utils import normalize_axis_index  # type: ignore
+else:
+    from numpy.core.multiarray import normalize_axis_index  # type: ignore
 
 if TYPE_CHECKING:
     from .._array.array import ndarray
@@ -109,6 +112,10 @@ def prod(
     --------
     Multiple GPUs, Multiple CPUs
     """
+    if isinstance(initial, list):
+        exc = TypeError if is_np2 else ValueError  # type: ignore [unreachable]
+        raise exc("initial should not be a list")
+
     return multiply.reduce(
         a,
         axis=axis,
@@ -1080,7 +1087,7 @@ def diff(
     slice1 = tuple(slice1l)
     slice2 = tuple(slice2l)
 
-    op = not_equal if a.dtype == np.bool_ else subtract
+    op = not_equal if a.dtype == bool else subtract
     for _ in range(n):
         a = op(a[slice1], a[slice2])
 

@@ -16,11 +16,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Sequence
 
-from numpy.core.numeric import (  # type: ignore [attr-defined]
-    normalize_axis_tuple,
-)
-
 from .._array.util import add_boilerplate
+from .._utils import is_np2
+
+if is_np2:
+    from numpy.lib.array_utils import normalize_axis_tuple  # type: ignore
+else:
+    from numpy.core.numeric import normalize_axis_tuple  # type: ignore
+
 
 if TYPE_CHECKING:
     from .._array.array import ndarray

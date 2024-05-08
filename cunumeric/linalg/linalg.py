@@ -17,12 +17,19 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Sequence
 
 import numpy as np
-from numpy.core.multiarray import (  # type: ignore [attr-defined]
-    normalize_axis_index,
-)
-from numpy.core.numeric import (  # type: ignore [attr-defined]
-    normalize_axis_tuple,
-)
+
+from .._utils import is_np2
+
+if is_np2:
+    from numpy.lib.array_utils import normalize_axis_index  # type: ignore
+    from numpy.lib.array_utils import normalize_axis_tuple  # type: ignore
+else:
+    from numpy.core.multiarray import (  # type: ignore
+        normalize_axis_index,
+    )
+    from numpy.core.numeric import (  # type: ignore
+        normalize_axis_tuple,
+    )
 
 from .._array.util import add_boilerplate, convert_to_cunumeric_ndarray
 from .._module import dot, empty_like, eye, matmul, ndarray
@@ -360,7 +367,7 @@ def _multi_dot_matrix_chain_order(
     for l_ in range(1, n):
         for i in range(n - l_):
             j = i + l_
-            m[i, j] = np.Inf
+            m[i, j] = np.inf
             for k in range(i, j):
                 q = m[i, k] + m[k + 1, j] + p[i] * p[k + 1] * p[j + 1]
                 if q < m[i, j]:

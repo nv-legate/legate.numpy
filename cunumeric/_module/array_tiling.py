@@ -17,20 +17,27 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, Sequence, cast
 
 import numpy as np
-from numpy.core.multiarray import (  # type: ignore [attr-defined]
-    normalize_axis_index,
-)
 
 from .._array.array import ndarray
 from .._array.util import add_boilerplate, convert_to_cunumeric_ndarray
+from .._utils import is_np2
 from ..runtime import runtime
 from .creation_shape import full
+
+if is_np2:
+    from numpy.lib.array_utils import normalize_axis_index  # type: ignore
+else:
+    from numpy.core.multiarray import normalize_axis_index  # type: ignore
 
 if TYPE_CHECKING:
     import numpy.typing as npt
 
     from ..types import NdShape
 
+if is_np2:
+    from numpy.exceptions import AxisError  # type: ignore
+else:
+    from numpy import AxisError  # type: ignore
 
 _builtin_max = max
 
@@ -150,7 +157,7 @@ def repeat(a: ndarray, repeats: Any, axis: int | None = None) -> ndarray:
     # when array is a scalar
     if np.ndim(a) == 0:
         if axis is not None and axis != 0 and axis != -1:
-            raise np.AxisError(
+            raise AxisError(
                 f"axis {axis} is out of bounds for array of dimension 0"
             )
         if np.ndim(repeats) == 0:

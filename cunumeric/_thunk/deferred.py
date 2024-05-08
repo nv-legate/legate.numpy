@@ -45,10 +45,8 @@ from legate.core import (
     scale,
 )
 from legate.core.utils import OrderedSet
-from numpy.core.numeric import (  # type: ignore [attr-defined]
-    normalize_axis_tuple,
-)
 
+from .._utils import is_np2
 from .._utils.array import (
     is_advanced_indexing,
     max_identity,
@@ -71,6 +69,11 @@ from ..linalg._solve import solve_deferred
 from ..runtime import runtime
 from ._sort import sort_deferred
 from .thunk import NumPyThunk
+
+if is_np2:
+    from numpy.lib.array_utils import normalize_axis_tuple  # type: ignore
+else:
+    from numpy.core.numeric import normalize_axis_tuple  # type: ignore
 
 if TYPE_CHECKING:
     import numpy.typing as npt

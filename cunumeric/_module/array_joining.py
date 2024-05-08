@@ -18,13 +18,16 @@ from itertools import chain
 from typing import TYPE_CHECKING, Any, Sequence
 
 import numpy as np
-from numpy.core.multiarray import (  # type: ignore [attr-defined]
-    normalize_axis_index,
-)
 
 from .._array.array import ndarray
 from .._array.util import convert_to_cunumeric_ndarray
+from .._utils import is_np2
 from .array_dimension import _atleast_nd
+
+if is_np2:
+    from numpy.lib.array_utils import normalize_axis_index  # type: ignore
+else:
+    from numpy.core.multiarray import normalize_axis_index  # type: ignore
 
 if TYPE_CHECKING:
     import numpy.typing as npt

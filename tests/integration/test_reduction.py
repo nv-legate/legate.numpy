@@ -15,6 +15,7 @@
 import numpy as np
 import pytest
 from utils.comparisons import allclose
+from utils.utils import AxisError
 
 import cunumeric as num
 
@@ -56,7 +57,7 @@ NO_EMPTY_SIZE = [
     (DIM, DIM, DIM),
 ]
 
-ARR = ([], [[]], [[], []], np.inf, np.Inf, -10.3, 0, 200, 5 + 8j)
+ARR = ([], [[]], [[], []], np.inf, -10.3, 0, 200, 5 + 8j)
 
 DTYPE = ["l", "L", "f", "d"]
 COMPLEX_TYPE = ["F", "D"]
@@ -92,7 +93,7 @@ class TestSumNegative(object):
     def test_axis_out_bound(self):
         arr = [-1, 0, 1, 2, 10]
         msg = r"bounds"
-        with pytest.raises(np.AxisError, match=msg):
+        with pytest.raises(AxisError, match=msg):
             num.sum(arr, axis=2)
 
     @pytest.mark.xfail

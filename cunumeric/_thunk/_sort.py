@@ -17,12 +17,15 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, cast
 
 from legate.core import get_legate_runtime, types as ty
-from numpy.core.multiarray import (  # type: ignore [attr-defined]
-    normalize_axis_index,
-)
 
+from .._utils import is_np2
 from ..config import CuNumericOpCode
 from ..runtime import runtime
+
+if is_np2:
+    from numpy.lib.array_utils import normalize_axis_index  # type: ignore
+else:
+    from numpy.core.multiarray import normalize_axis_index  # type: ignore
 
 if TYPE_CHECKING:
     from .._thunk.deferred import DeferredArray

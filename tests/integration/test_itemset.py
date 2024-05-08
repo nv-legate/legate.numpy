@@ -18,6 +18,11 @@ from legate.core import LEGATE_MAX_DIM
 from utils.generators import generate_item
 
 import cunumeric as num
+from cunumeric._utils import is_np2
+
+# itemset was removed in numpy 2.0, skip the entire module
+if is_np2:
+    pytestmark = pytest.mark.skip
 
 
 @pytest.mark.xfail

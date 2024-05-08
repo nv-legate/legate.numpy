@@ -18,14 +18,17 @@ import math
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
-from numpy.core.numeric import (  # type: ignore [attr-defined]
-    normalize_axis_tuple,
-)
 
 from .._array.array import ndarray
 from .._array.util import add_boilerplate
+from .._utils import is_np2
 from .creation_shape import full
 from .logic_truth import any
+
+if is_np2:
+    from numpy.lib.array_utils import normalize_axis_tuple  # type: ignore
+else:
+    from numpy.core.numeric import normalize_axis_tuple  # type: ignore
 
 if TYPE_CHECKING:
     import numpy.typing as npt

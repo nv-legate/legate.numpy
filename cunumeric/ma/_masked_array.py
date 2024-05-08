@@ -37,7 +37,7 @@ NDARRAY_INTERNAL = {
     "__array_wrap__",
 }
 
-MaskType = _np.bool_
+MaskType = bool
 nomask = MaskType(0)
 
 
@@ -51,7 +51,7 @@ class MaskedArray:
     def __init__(
         self,
         data: Any = None,
-        mask: _np.bool_ = nomask,
+        mask: bool = nomask,
         dtype: npt.DTypeLike | None = None,
         copy: bool = False,
         subok: bool = True,

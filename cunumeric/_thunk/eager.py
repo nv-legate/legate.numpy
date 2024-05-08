@@ -19,6 +19,7 @@ from typing import TYPE_CHECKING, Any, Callable, Iterable, Sequence, cast
 import numpy as np
 from legate.core import Scalar
 
+from .._utils import is_np2
 from .._utils.array import is_advanced_indexing
 from ..config import (
     FFT_C2R,
@@ -375,7 +376,13 @@ class EagerArray(NumPyThunk):
                 elif res.dtype == np.float64:
                     self.array[:] = res.astype(np.float32)
                 else:
-                    raise RuntimeError("Unsupported data type in eager FFT")
+                    if not is_np2:
+                        raise RuntimeError(
+                            f"Unsupported data type {res.dtype!r} in eager FFT"
+                        )
+                    else:
+                        self.array[:] = res
+
             else:
                 self.array[:] = res
 
@@ -458,7 +465,7 @@ class EagerArray(NumPyThunk):
             self.children.append(result)
         return result
 
-    def squeeze(self, axis: int | None) -> NumPyThunk:
+    def squeeze(self, axis: int | tuple[int, ...] | None) -> NumPyThunk:
         if self.deferred is not None:
             return self.deferred.squeeze(axis)
         # See https://github.com/numpy/numpy/issues/22019

@@ -396,6 +396,6 @@ def full_like(
     else:
         dtype = a.dtype
     result = empty_like(a, dtype=dtype, shape=shape)
-    val = np.array(value, dtype=result.dtype)
+    val = np.array(value).astype(dtype)
     result._thunk.fill(val)
     return result

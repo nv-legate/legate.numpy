@@ -134,7 +134,7 @@ class NumPyThunk(ABC):
         ...
 
     @abstractmethod
-    def squeeze(self, axis: int | None) -> NumPyThunk:
+    def squeeze(self, axis: int | tuple[int, ...] | None) -> NumPyThunk:
         ...
 
     @abstractmethod

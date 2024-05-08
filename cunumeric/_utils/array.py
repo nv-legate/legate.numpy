@@ -23,7 +23,7 @@ import numpy as np
 from ..types import NdShape
 
 SUPPORTED_DTYPES = {
-    np.dtype(np.bool_): ty.bool_,
+    np.dtype(bool): ty.bool_,
     np.dtype(np.int8): ty.int8,
     np.dtype(np.int16): ty.int16,
     np.dtype(np.int32): ty.int32,

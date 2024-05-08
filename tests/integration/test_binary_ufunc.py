@@ -14,7 +14,6 @@
 #
 
 import argparse
-from itertools import product
 
 import numpy as np
 import pytest
@@ -43,196 +42,253 @@ def check_result(op, in_np, out_np, out_num):
         assert False
 
 
-def check_ops(ops, in_np, out_dtype="D"):
+def check_op(op, in_np, out_dtype="D"):
     in_num = tuple(num.array(arr) for arr in in_np)
 
-    for op in ops:
-        if op.isidentifier():
-            op_np = getattr(np, op)
-            op_num = getattr(num, op)
-            assert op_np.nout == 1
+    if op.isidentifier():
+        op_np = getattr(np, op)
+        op_num = getattr(num, op)
+        assert op_np.nout == 1
 
-            out_np = op_np(*in_np)
-            out_num = op_num(*in_num)
+        out_np = op_np(*in_np)
+        out_num = op_num(*in_num)
 
-            check_result(op, in_np, out_np, out_num)
+        check_result(op, in_np, out_np, out_num)
 
-            out_np = np.empty(out_np.shape, dtype=out_dtype)
-            out_num = num.empty(out_num.shape, dtype=out_dtype)
-            op_np(*in_np, out=out_np)
-            op_num(*in_num, out=out_num)
+        out_np = np.empty(out_np.shape, dtype=out_dtype)
+        out_num = num.empty(out_num.shape, dtype=out_dtype)
+        op_np(*in_np, out=out_np)
+        op_num(*in_num, out=out_num)
 
-            check_result(op, in_np, out_np, out_num)
+        check_result(op, in_np, out_np, out_num)
 
-            # Ask cuNumeric to produce outputs to NumPy ndarrays
-            out_num = np.empty(out_np.shape, dtype=out_dtype)
-            op_num(*in_num, out=out_num)
+        # Ask cuNumeric to produce outputs to NumPy ndarrays
+        out_num = np.empty(out_np.shape, dtype=out_dtype)
+        op_num(*in_num, out=out_num)
 
-            check_result(op, in_np, out_np, out_num)
+        check_result(op, in_np, out_np, out_num)
 
-        else:
-            # Doing it this way instead of invoking the dunders directly, to
-            # avoid having to select the right version, __add__ vs __radd__,
-            # when one isn't supported, e.g. for scalar.__add__(array)
+    else:
+        # Doing it this way instead of invoking the dunders directly, to
+        # avoid having to select the right version, __add__ vs __radd__,
+        # when one isn't supported, e.g. for scalar.__add__(array)
 
-            out_np = eval(f"in_np[0] {op} in_np[1]")
-            out_num = eval(f"in_num[0] {op} in_num[1]")
+        out_np = eval(f"in_np[0] {op} in_np[1]")
+        out_num = eval(f"in_num[0] {op} in_num[1]")
 
-            check_result(op, in_np, out_np, out_num)
+        check_result(op, in_np, out_np, out_num)
 
-            out_np = np.ones_like(out_np)
-            out_num = num.ones_like(out_num)
-            exec(f"out_np {op}= in_np[0]")
-            exec(f"out_num {op}= in_num[0]")
+        out_np = np.ones_like(out_np)
+        out_num = num.ones_like(out_num)
+        exec(f"out_np {op}= in_np[0]")
+        exec(f"out_num {op}= in_num[0]")
 
-            check_result(op, in_np, out_np, out_num)
+        check_result(op, in_np, out_np, out_num)
 
-            out_num = np.ones_like(out_np)
-            exec(f"out_num {op}= in_num[0]")
+        out_num = np.ones_like(out_np)
+        exec(f"out_num {op}= in_num[0]")
 
-            check_result(op, in_np, out_np, out_num)
+        check_result(op, in_np, out_np, out_num)
 
 
-def test_all():
-    # TODO: right now we will simply check if the operations work
-    # for some boring inputs. For some of these, we will want to
-    # test corner cases in the future.
+# TODO: right now we will simply check if the operations work
+# for some boring inputs. For some of these, we will want to
+# test corner cases in the future.
 
-    # TODO: matmul, @
+# TODO: matmul, @
 
-    # Math operations
-    ops = [
-        "*",
-        "+",
-        "-",
-        "/",
-        "add",
-        # "divmod",
-        "equal",
-        "fmax",
-        "fmin",
-        "greater",
-        "greater_equal",
-        # "heaviside",
-        # "ldexp",
-        "less",
-        "less_equal",
-        "logical_and",
-        "logical_or",
-        "logical_xor",
-        "maximum",
-        "minimum",
-        "multiply",
-        "not_equal",
-        "subtract",
-        "true_divide",
-    ]
+# Math operations
+math_ops = [
+    "*",
+    "+",
+    "-",
+    "/",
+    "add",
+    # "divmod",
+    "equal",
+    "fmax",
+    "fmin",
+    "greater",
+    "greater_equal",
+    # "heaviside",
+    # "ldexp",
+    "less",
+    "less_equal",
+    "logical_and",
+    "logical_or",
+    "logical_xor",
+    "maximum",
+    "minimum",
+    "multiply",
+    "not_equal",
+    "subtract",
+    "true_divide",
+]
 
-    # We want to test array-array, array-scalar, and scalar-array cases
-    arrs = (
-        np.random.randint(3, 10, size=(4, 5)).astype("I"),
-        np.random.uniform(size=(4, 5)).astype("e"),
-        np.random.uniform(size=(4, 5)).astype("f"),
-        np.random.uniform(size=(4, 5)).astype("d"),
-        np.random.uniform(size=(4, 5)).astype("F"),
-    )
+# We want to test array-array, array-scalar, and scalar-array cases
+arrs = (
+    np.random.randint(3, 10, size=(4, 5)).astype("I"),
+    np.random.uniform(size=(4, 5)).astype("e"),
+    np.random.uniform(size=(4, 5)).astype("f"),
+    np.random.uniform(size=(4, 5)).astype("d"),
+    np.random.uniform(size=(4, 5)).astype("F"),
+)
 
-    scalars = (
-        np.uint64(2),
-        np.int64(-3),
-        np.random.randn(1)[0],
-        np.complex64(1 + 1j),
-    )
+scalars = (
+    np.uint64(2),
+    np.int64(-3),
+    np.random.randn(1)[0],
+    np.complex64(1 + 1j),
+)
 
-    for arr1, arr2 in product(arrs, arrs):
-        check_ops(ops, (arr1, arr2))
 
-    for arr, scalar in product(arrs, scalars):
-        check_ops(ops, (arr, scalar))
-        check_ops(ops, (scalar, arr))
+@pytest.mark.parametrize("op", math_ops)
+@pytest.mark.parametrize("arr1", arrs)
+@pytest.mark.parametrize("arr2", arrs)
+def test_math_ops_arr_arr(op, arr1, arr2) -> None:
+    check_op(op, (arr1, arr2))
 
-    for scalar1, scalar2 in product(scalars, scalars):
-        check_ops(ops, (scalar1, scalar2))
 
-    ops = [
-        "//",
-        "arctan2",
-        "copysign",
-        "floor_divide",
-        "mod",
-        "fmod",
-        "hypot",
-        "logaddexp",
-        "logaddexp2",
-        "nextafter",
-    ]
+@pytest.mark.parametrize("op", math_ops)
+@pytest.mark.parametrize("arr", arrs)
+@pytest.mark.parametrize("scalar", scalars)
+def test_math_ops_arr_scalar(op, arr, scalar) -> None:
+    check_op(op, (arr, scalar))
+    check_op(op, (scalar, arr))
 
-    for arr1, arr2 in product(arrs[:-1], arrs[:-1]):
-        check_ops(ops, (arr1, arr2))
 
-    for arr, scalar in product(arrs[:-1], scalars[:-1]):
-        check_ops(ops, (arr, scalar))
-        check_ops(ops, (scalar, arr))
+@pytest.mark.parametrize("op", math_ops)
+@pytest.mark.parametrize("scalar1", scalars)
+@pytest.mark.parametrize("scalar2", scalars)
+def test_math_ops_scalar_scalar(op, scalar1, scalar2) -> None:
+    check_op(op, (scalar1, scalar2))
 
-    for scalar1, scalar2 in product(scalars[:-1], scalars[:-1]):
-        check_ops(ops, (scalar1, scalar2))
 
-    ops = [
-        "**",
-        "power",
-        "float_power",
-    ]
+trig_ops = [
+    "//",
+    "arctan2",
+    "copysign",
+    "floor_divide",
+    "mod",
+    "fmod",
+    "hypot",
+    "logaddexp",
+    "logaddexp2",
+    "nextafter",
+]
 
-    for arr1, arr2 in product(arrs, arrs):
-        check_ops(ops, (arr1, arr2))
 
-    for arr in arrs:
-        check_ops(ops, (arr, scalars[0]))
-        check_ops(ops, (scalars[0], arr))
-        check_ops(ops, (arr, scalars[3]))
-        check_ops(ops, (scalars[3], scalars[3]))
+@pytest.mark.parametrize("op", trig_ops)
+@pytest.mark.parametrize("arr1", arrs[:-1])
+@pytest.mark.parametrize("arr2", arrs[:-1])
+def test_trig_ops_arr_arr(op, arr1, arr2) -> None:
+    check_op(op, (arr1, arr2))
 
-    check_ops(ops, (scalars[0], scalars[3]))
-    check_ops(ops, (scalars[3], scalars[0]))
 
-    ops = [
-        "%",
-        "remainder",
-    ]
+@pytest.mark.parametrize("op", trig_ops)
+@pytest.mark.parametrize("arr", arrs[:-1])
+@pytest.mark.parametrize("scalar", scalars[:-1])
+def test_trig_ops_arr_scalar(op, arr, scalar) -> None:
+    check_op(op, (arr, scalar))
+    check_op(op, (scalar, arr))
 
-    for arr1, arr2 in product(arrs[:1], arrs[:1]):
-        check_ops(ops, (arr1, arr2))
 
-    for arr, scalar in product(arrs[:1], scalars[:-2]):
-        check_ops(ops, (arr, scalar))
-        check_ops(ops, (scalar, arr))
+@pytest.mark.parametrize("op", trig_ops)
+@pytest.mark.parametrize("scalar1", scalars[:-1])
+@pytest.mark.parametrize("scalar2", scalars[:-1])
+def test_trig_ops_scalar_scalar(op, scalar1, scalar2) -> None:
+    check_op(op, (scalar1, scalar2))
 
-    for scalar1, scalar2 in product(scalars[:-2], scalars[:-2]):
-        check_ops(ops, (scalar1, scalar2))
 
-    ops = [
-        "&",
-        "<<",
-        ">>",
-        "^",
-        "|",
-        "bitwise_and",
-        "bitwise_or",
-        "bitwise_xor",
-        "gcd",
-        "lcm",
-        "left_shift",
-        "right_shift",
-    ]
+power_ops = [
+    "**",
+    "power",
+    "float_power",
+]
 
-    check_ops(ops, (arr1[0], arr2[0]))
 
-    check_ops(ops, (arrs[0], scalars[0]))
-    check_ops(ops, (arrs[0], scalars[1]))
-    check_ops(ops, (scalars[0], arrs[0]))
-    check_ops(ops, (scalars[1], arrs[0]))
+@pytest.mark.parametrize("op", power_ops)
+@pytest.mark.parametrize("arr1", arrs[:-1])
+@pytest.mark.parametrize("arr2", arrs[:-1])
+def test_power_ops_arr_arr(op, arr1, arr2) -> None:
+    check_op(op, (arr1, arr2))
 
-    check_ops(ops, (scalars[0], scalars[0]))
+
+@pytest.mark.parametrize("op", power_ops)
+@pytest.mark.parametrize("arr", arrs[:-1])
+def test_power_ops_arr_scalar(op, arr) -> None:
+    check_op(op, (arr, scalars[0]))
+    check_op(op, (scalars[0], arr))
+    check_op(op, (arr, scalars[3]))
+    check_op(op, (scalars[3], scalars[3]))
+
+
+@pytest.mark.parametrize("op", power_ops)
+def test_power_ops_scalar_scalar(op) -> None:
+    check_op(op, (scalars[0], scalars[3]))
+    check_op(op, (scalars[3], scalars[0]))
+
+
+div_ops = [
+    "%",
+    "remainder",
+]
+
+
+@pytest.mark.parametrize("op", div_ops)
+@pytest.mark.parametrize("arr1", arrs[:-1])
+@pytest.mark.parametrize("arr2", arrs[:-1])
+def test_div_ops_arr_arr(op, arr1, arr2) -> None:
+    check_op(op, (arr1, arr2))
+
+
+@pytest.mark.parametrize("op", div_ops)
+@pytest.mark.parametrize("arr", arrs[:-1])
+@pytest.mark.parametrize("scalar", scalars[:-2])
+def test_div_ops_arr_scalar(op, arr, scalar) -> None:
+    check_op(op, (arr, scalar))
+    check_op(op, (scalar, arr))
+
+
+@pytest.mark.parametrize("op", div_ops)
+@pytest.mark.parametrize("scalar1", scalars[:-2])
+@pytest.mark.parametrize("scalar2", scalars[:-2])
+def test_div_ops_scalar_scalar(op, scalar1, scalar2) -> None:
+    check_op(op, (scalar1, scalar2))
+
+
+bit_ops = [
+    "&",
+    "<<",
+    ">>",
+    "^",
+    "|",
+    "bitwise_and",
+    "bitwise_or",
+    "bitwise_xor",
+    "gcd",
+    "lcm",
+    "left_shift",
+    "right_shift",
+]
+
+
+@pytest.mark.parametrize("op", math_ops)
+def test_bit_ops_arr_arr(op) -> None:
+    check_op(op, (arrs[0], arrs[0]))
+
+
+@pytest.mark.parametrize("op", math_ops)
+def test_bit_ops_arr_scalar(op) -> None:
+    check_op(op, (arrs[0], scalars[0]))
+    check_op(op, (arrs[0], scalars[1]))
+    check_op(op, (scalars[0], arrs[0]))
+    check_op(op, (scalars[1], arrs[0]))
+
+
+@pytest.mark.parametrize("op", math_ops)
+def test_bit_ops_scalar_scalar(op) -> None:
+    check_op(op, (scalars[0], scalars[0]))
 
 
 def parse_inputs(in_str, dtype_str):
@@ -276,6 +332,6 @@ if __name__ == "__main__":
 
     if args.op is not None:
         in_np = parse_inputs(args.inputs, args.dtypes)
-        check_ops([args.op], in_np)
+        check_op(args.op, in_np)
     else:
         sys.exit(pytest.main(sys.argv))

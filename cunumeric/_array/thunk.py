@@ -18,13 +18,8 @@ from typing import TYPE_CHECKING, Any
 
 import numpy as np
 from legate.core import Scalar
-from numpy.core.multiarray import (  # type: ignore [attr-defined]
-    normalize_axis_index,
-)
-from numpy.core.numeric import (  # type: ignore [attr-defined]
-    normalize_axis_tuple,
-)
 
+from .._utils import is_np2
 from ..config import (
     BinaryOpCode,
     ConvertCode,
@@ -34,6 +29,13 @@ from ..config import (
 )
 from ..types import NdShape
 from .util import broadcast_where, find_common_type
+
+if is_np2:
+    from numpy.lib.array_utils import normalize_axis_index  # type: ignore
+    from numpy.lib.array_utils import normalize_axis_tuple  # type: ignore
+else:
+    from numpy.core.multiarray import normalize_axis_index  # type: ignore
+    from numpy.core.numeric import normalize_axis_tuple  # type: ignore
 
 if TYPE_CHECKING:
     import numpy.typing as npt
@@ -51,7 +53,7 @@ def get_where_thunk(
         return where
     if (
         not isinstance(where, ndarray)
-        or where.dtype != np.bool_
+        or where.dtype != bool
         or where.shape != out_shape
     ):
         raise RuntimeError("should have converted this earlier")
@@ -257,7 +259,7 @@ def perform_binary_reduction(
     args = (one, two)
 
     # We only handle bool types here for now
-    assert dtype is not None and dtype == np.dtype(np.bool_)
+    assert dtype is not None and dtype == np.dtype(bool)
 
     # Collapsing down to a single value in this case
     # Check to see if we need to broadcast between inputs
@@ -286,7 +288,7 @@ def perform_where(mask: ndarray, one: ndarray, two: ndarray) -> ndarray:
 
     args = (mask, one, two)
 
-    mask = mask._maybe_convert(np.dtype(np.bool_), args)
+    mask = mask._maybe_convert(np.dtype(bool), args)
 
     common_type = find_common_type(one, two)
     one = one._maybe_convert(common_type, args)

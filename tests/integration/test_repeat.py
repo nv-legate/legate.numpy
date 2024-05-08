@@ -16,6 +16,7 @@ import numpy as np
 import pytest
 from legate.core import LEGATE_MAX_DIM
 from utils.generators import mk_seq_array
+from utils.utils import AxisError
 
 import cunumeric as num
 
@@ -186,7 +187,7 @@ def test_axis_string(arr, repeats, axis):
 
 def test_array_axis_out_bound():
     anp = np.array([1, 2, 3, 4, 5])
-    expected_exc = np.AxisError
+    expected_exc = AxisError
     with pytest.raises(expected_exc):
         np.repeat(anp, 4, 2)
     with pytest.raises(expected_exc):
