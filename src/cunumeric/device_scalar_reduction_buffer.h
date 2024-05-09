@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "core/cuda/cuda_help.h"
+#include "core/cuda/cuda.h"
 #include "core/data/buffer.h"
 
 namespace cunumeric {

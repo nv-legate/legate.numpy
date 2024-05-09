@@ -17,7 +17,7 @@
 #pragma once
 
 #include "legate.h"
-#include "core/cuda/cuda_help.h"
+#include "core/cuda/cuda.h"
 #include "core/cuda/stream_pool.h"
 #include "cunumeric/arg.h"
 #include "cunumeric/device_scalar_reduction_buffer.h"
