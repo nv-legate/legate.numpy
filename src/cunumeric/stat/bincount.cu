@@ -183,7 +183,7 @@ struct BincountImplBody<VariantKind::GPU, CODE> {
       bincount_kernel_rd_global<VAL>
         <<<blocks, THREADS_PER_BLOCK, 0, stream>>>(lhs, rhs, volume, rect.lo);
     }
-    CHECK_CUDA_STREAM(stream);
+    LegateCheckCUDAStream(stream);
   }
 
   void operator()(AccessorRD<SumReduction<double>, false, 1> lhs,
@@ -212,7 +212,7 @@ struct BincountImplBody<VariantKind::GPU, CODE> {
       weighted_bincount_kernel_rd_global<VAL>
         <<<blocks, THREADS_PER_BLOCK, 0, stream>>>(lhs, rhs, weights, volume, rect.lo);
     }
-    CHECK_CUDA_STREAM(stream);
+    LegateCheckCUDAStream(stream);
   }
 };
 

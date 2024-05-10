@@ -148,7 +148,7 @@ __host__ void contract(T* lhs_data,
                                      work_size,
                                      task_stream));
 
-  CHECK_CUDA_STREAM(task_stream);
+  LegateCheckCUDAStream(task_stream);
 }
 
 template <>

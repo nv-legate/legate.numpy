@@ -46,7 +46,7 @@ __host__ static inline void copy_into_buffer(TYPE* target,
                                              cudaStream_t stream)
 {
   if (acc.accessor.is_dense_row_major(rect)) {
-    CHECK_CUDA(cudaMemcpyAsync(
+    LegateCheckCUDA(cudaMemcpyAsync(
       target, acc.ptr(rect.lo), volume * sizeof(TYPE), cudaMemcpyDeviceToDevice, stream));
   } else {
     Pitches<DIM - 1> pitches{};
@@ -56,7 +56,7 @@ __host__ static inline void copy_into_buffer(TYPE* target,
     copy_kernel<<<num_blocks, THREADS_PER_BLOCK, 0, stream>>>(
       volume, target, acc, pitches, rect.lo);
 
-    CHECK_CUDA_STREAM(stream);
+    LegateCheckCUDAStream(stream);
   }
 }
 
@@ -115,7 +115,7 @@ __host__ static inline void cufft_operation(AccessorWO<OUTPUT_TYPE, DIM> out,
                           static_cast<void*>(out.ptr(out_rect.lo)),
                           static_cast<int32_t>(direction)));
   // synchronize before cufft_context runs out of scope
-  CHECK_CUDA(cudaStreamSynchronize(stream));
+  LegateCheckCUDA(cudaStreamSynchronize(stream));
 }
 
 // Perform the FFT operation as multiple 1D FFTs along the specified axes (Complex-to-complex case).
@@ -144,7 +144,7 @@ __host__ static inline void cufft_over_axes_c2c(INOUT_TYPE* out,
   // Copy input to output buffer (if needed)
   // the computation will be done inplace of the target
   if (in != out) {
-    CHECK_CUDA(cudaMemcpyAsync(
+    LegateCheckCUDA(cudaMemcpyAsync(
       out, in, num_elements * sizeof(INOUT_TYPE), cudaMemcpyDeviceToDevice, stream));
   }
 
@@ -193,7 +193,7 @@ __host__ static inline void cufft_over_axes_c2c(INOUT_TYPE* out,
                               static_cast<int32_t>(direction)));
     }
     // synchronize before cufft_context runs out of scope
-    CHECK_CUDA(cudaStreamSynchronize(stream));
+    LegateCheckCUDA(cudaStreamSynchronize(stream));
   }
 }
 
@@ -269,7 +269,7 @@ __host__ static inline void cufft_r2c_c2r(OUTPUT_TYPE* out,
                             static_cast<int32_t>(direction)));
   }
   // synchronize before cufft_context runs out of scope
-  CHECK_CUDA(cudaStreamSynchronize(stream));
+  LegateCheckCUDA(cudaStreamSynchronize(stream));
 }
 
 // Perform the FFT operation as multiple 1D FFTs along the specified axes.

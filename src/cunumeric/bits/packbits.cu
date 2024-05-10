@@ -76,7 +76,7 @@ struct PackbitsImplBody<VariantKind::GPU, CODE, DIM, BITORDER> {
                                                                in_hi_axis,
                                                                axis);
     }
-    CHECK_CUDA_STREAM(stream);
+    LegateCheckCUDAStream(stream);
   }
 };
 

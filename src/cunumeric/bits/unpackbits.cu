@@ -55,7 +55,7 @@ struct UnpackbitsImplBody<VariantKind::GPU, DIM, BITORDER> {
     const size_t blocks = (in_volume + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
     generic_kernel<<<blocks, THREADS_PER_BLOCK, 0, stream>>>(
       in_volume, unpack, out, in, in_pitches, in_rect.lo, axis);
-    CHECK_CUDA_STREAM(stream);
+    LegateCheckCUDAStream(stream);
   }
 };
 

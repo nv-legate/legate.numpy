@@ -32,7 +32,7 @@ class DeviceScalarReductionBuffer {
   {
     VAL identity{REDOP::identity};
     ptr_ = buffer_.ptr(0);
-    CHECK_CUDA(cudaMemcpyAsync(ptr_, &identity, sizeof(VAL), cudaMemcpyHostToDevice, stream));
+    LegateCheckCUDA(cudaMemcpyAsync(ptr_, &identity, sizeof(VAL), cudaMemcpyHostToDevice, stream));
   }
 
   template <bool EXCLUSIVE>
@@ -44,8 +44,8 @@ class DeviceScalarReductionBuffer {
   __host__ VAL read(cudaStream_t stream) const
   {
     VAL result{REDOP::identity};
-    CHECK_CUDA(cudaMemcpyAsync(&result, ptr_, sizeof(VAL), cudaMemcpyDeviceToHost, stream));
-    CHECK_CUDA(cudaStreamSynchronize(stream));
+    LegateCheckCUDA(cudaMemcpyAsync(&result, ptr_, sizeof(VAL), cudaMemcpyDeviceToHost, stream));
+    LegateCheckCUDA(cudaStreamSynchronize(stream));
     return result;
   }
 

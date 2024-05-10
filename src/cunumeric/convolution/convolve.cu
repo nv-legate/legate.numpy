@@ -744,7 +744,7 @@ __host__ static inline void launch_small_tile_kernel(AccessorWO<VAL, DIM> out,
         out, filter, in, root_rect, subrect, filter_rect, args);
     }
   }
-  CHECK_CUDA_STREAM(stream);
+  LegateCheckCUDAStream(stream);
 }
 
 template <typename VAL, int32_t DIM>
@@ -766,24 +766,24 @@ __host__ void direct_convolution(AccessorWO<VAL, DIM> out,
   static unsigned long long mask = 0;
   if (!(mask & (1 << device))) {
     if (properties.sharedMemPerBlock < max_smem_size) {
-      CHECK_CUDA(cudaFuncSetAttribute(convolution_small_tile1<VAL, DIM>,
-                                      cudaFuncAttributeMaxDynamicSharedMemorySize,
-                                      max_smem_size));
-      CHECK_CUDA(cudaFuncSetAttribute(convolution_small_tile2<VAL, DIM>,
-                                      cudaFuncAttributeMaxDynamicSharedMemorySize,
-                                      max_smem_size));
-      CHECK_CUDA(cudaFuncSetAttribute(convolution_large_tile<VAL, DIM, THREADVALS>,
-                                      cudaFuncAttributeMaxDynamicSharedMemorySize,
-                                      max_smem_size));
+      LegateCheckCUDA(cudaFuncSetAttribute(convolution_small_tile1<VAL, DIM>,
+                                           cudaFuncAttributeMaxDynamicSharedMemorySize,
+                                           max_smem_size));
+      LegateCheckCUDA(cudaFuncSetAttribute(convolution_small_tile2<VAL, DIM>,
+                                           cudaFuncAttributeMaxDynamicSharedMemorySize,
+                                           max_smem_size));
+      LegateCheckCUDA(cudaFuncSetAttribute(convolution_large_tile<VAL, DIM, THREADVALS>,
+                                           cudaFuncAttributeMaxDynamicSharedMemorySize,
+                                           max_smem_size));
     }
     if (sizeof(VAL) >= 8) {
       // Only need to set this on the first invocation
-      CHECK_CUDA(cudaFuncSetSharedMemConfig(convolution_small_tile1<VAL, DIM>,
-                                            cudaSharedMemBankSizeEightByte));
-      CHECK_CUDA(cudaFuncSetSharedMemConfig(convolution_small_tile2<VAL, DIM>,
-                                            cudaSharedMemBankSizeEightByte));
-      CHECK_CUDA(cudaFuncSetSharedMemConfig(convolution_large_tile<VAL, DIM, THREADVALS>,
-                                            cudaSharedMemBankSizeEightByte));
+      LegateCheckCUDA(cudaFuncSetSharedMemConfig(convolution_small_tile1<VAL, DIM>,
+                                                 cudaSharedMemBankSizeEightByte));
+      LegateCheckCUDA(cudaFuncSetSharedMemConfig(convolution_small_tile2<VAL, DIM>,
+                                                 cudaSharedMemBankSizeEightByte));
+      LegateCheckCUDA(cudaFuncSetSharedMemConfig(convolution_large_tile<VAL, DIM, THREADVALS>,
+                                                 cudaSharedMemBankSizeEightByte));
     }
     // Make sure we have enough bits for every device
     assert(device < (8 * sizeof(mask)));
@@ -848,7 +848,7 @@ __host__ void direct_convolution(AccessorWO<VAL, DIM> out,
     }
     if (out_dense) {
       size_t bytes = sizeof(VAL) * out_pitch;
-      CHECK_CUDA(cudaMemsetAsync(out_ptr, 0, bytes));
+      LegateCheckCUDA(cudaMemsetAsync(out_ptr, 0, bytes));
     } else {
       out_pitch = 1;
       ConvolutionInitArgs<DIM> args;
@@ -1168,7 +1168,7 @@ __host__ void direct_convolution(AccessorWO<VAL, DIM> out,
           one,
           args);
     }
-    CHECK_CUDA_STREAM(stream);
+    LegateCheckCUDAStream(stream);
   }
 }
 
@@ -1310,19 +1310,19 @@ __host__ static inline void cufft_convolution(AccessorWO<VAL, DIM> out,
   static unsigned long long mask = 0;
   if (!(mask & (1 << device))) {
     if (properties.sharedMemPerBlock < max_smem_size) {
-      CHECK_CUDA(cudaFuncSetAttribute(convolution_small_tile1<VAL, DIM>,
-                                      cudaFuncAttributeMaxDynamicSharedMemorySize,
-                                      max_smem_size));
-      CHECK_CUDA(cudaFuncSetAttribute(convolution_small_tile2<VAL, DIM>,
-                                      cudaFuncAttributeMaxDynamicSharedMemorySize,
-                                      max_smem_size));
+      LegateCheckCUDA(cudaFuncSetAttribute(convolution_small_tile1<VAL, DIM>,
+                                           cudaFuncAttributeMaxDynamicSharedMemorySize,
+                                           max_smem_size));
+      LegateCheckCUDA(cudaFuncSetAttribute(convolution_small_tile2<VAL, DIM>,
+                                           cudaFuncAttributeMaxDynamicSharedMemorySize,
+                                           max_smem_size));
     }
     if (sizeof(VAL) >= 8) {
       // Only need to set this on the first invocation
-      CHECK_CUDA(cudaFuncSetSharedMemConfig(convolution_small_tile1<VAL, DIM>,
-                                            cudaSharedMemBankSizeEightByte));
-      CHECK_CUDA(cudaFuncSetSharedMemConfig(convolution_small_tile2<VAL, DIM>,
-                                            cudaSharedMemBankSizeEightByte));
+      LegateCheckCUDA(cudaFuncSetSharedMemConfig(convolution_small_tile1<VAL, DIM>,
+                                                 cudaSharedMemBankSizeEightByte));
+      LegateCheckCUDA(cudaFuncSetSharedMemConfig(convolution_small_tile2<VAL, DIM>,
+                                                 cudaSharedMemBankSizeEightByte));
     }
     // Make sure we have enough bits for every device
     assert(device < (8 * sizeof(mask)));
@@ -1405,7 +1405,7 @@ __host__ static inline void cufft_convolution(AccessorWO<VAL, DIM> out,
     // Zero pad and copy in the input data
     auto signal_buffer = create_buffer<VAL, DIM>(buffersize, Memory::GPU_FB_MEM, 128 /*alignment*/);
     VAL* signal_ptr    = signal_buffer.ptr(zero);
-    CHECK_CUDA(cudaMemsetAsync(signal_ptr, 0, buffervolume * sizeof(VAL), stream));
+    LegateCheckCUDA(cudaMemsetAsync(signal_ptr, 0, buffervolume * sizeof(VAL), stream));
     // Check to see if the input pointer is dense and we can do this with a CUDA memcpy
     size_t strides[DIM];
     const VAL* input_ptr = in.ptr(input_bounds, strides);
@@ -1421,7 +1421,7 @@ __host__ static inline void cufft_convolution(AccessorWO<VAL, DIM> out,
     // Zero pad and copy in the filter data
     auto filter_buffer = create_buffer<VAL, DIM>(buffersize, Memory::GPU_FB_MEM, 128 /*alignment*/);
     VAL* filter_ptr    = filter_buffer.ptr(zero);
-    CHECK_CUDA(cudaMemsetAsync(filter_ptr, 0, buffervolume * sizeof(VAL), stream));
+    LegateCheckCUDA(cudaMemsetAsync(filter_ptr, 0, buffervolume * sizeof(VAL), stream));
     const VAL* filt_ptr = filter.ptr(filter_rect, strides);
     pitch               = 1;
     for (int d = DIM - 1; d >= 0; d--) {
@@ -1432,7 +1432,7 @@ __host__ static inline void cufft_convolution(AccessorWO<VAL, DIM> out,
     copy_into_buffer<VAL, DIM><<<blocks, THREADS_PER_BLOCK, 0, stream>>>(
       filter, filter_buffer, filter_rect.lo, copy_pitches, pitch);
 
-    CHECK_CUDA_STREAM(stream);
+    LegateCheckCUDAStream(stream);
 
     auto forward_plan  = get_cufft_plan(ForwardPlanType<VAL>::value, cufftPlanParams(fftsize));
     auto backward_plan = get_cufft_plan(BackwardPlanType<VAL>::value, cufftPlanParams(fftsize));
@@ -1455,7 +1455,7 @@ __host__ static inline void cufft_convolution(AccessorWO<VAL, DIM> out,
     // FFT the filter data
     cufft_execute_forward(forward_plan.handle(), filter_ptr, filter_ptr);
 
-    CHECK_CUDA_STREAM(stream);
+    LegateCheckCUDAStream(stream);
 
     // Perform the pointwise multiplcation
     {
@@ -1492,13 +1492,13 @@ __host__ static inline void cufft_convolution(AccessorWO<VAL, DIM> out,
     copy_from_buffer<VAL, DIM><<<blocks, THREADS_PER_BLOCK, 0, stream>>>(
       filter_ptr, out, buffer_offset, subrect.lo, copy_pitches, fft_pitches, pitch, scaling_factor);
 
-    CHECK_CUDA_STREAM(stream);
+    LegateCheckCUDAStream(stream);
 
 #if 0
     // This is useful debugging code for finding the output
     VAL *buffer = (VAL*)malloc(buffervolume*sizeof(VAL));
-    CHECK_CUDA( cudaMemcpyAsync(buffer, filter_ptr, buffervolume*sizeof(VAL), cudaMemcpyDeviceToHost, stream) );
-    CHECK_CUDA( cudaStreamSynchronize(stream) );
+    LegateCheckCUDA( cudaMemcpyAsync(buffer, filter_ptr, buffervolume*sizeof(VAL), cudaMemcpyDeviceToHost, stream) );
+    LegateCheckCUDA( cudaStreamSynchronize(stream) );
     for (unsigned idx = 0; idx < buffervolume; idx++) {
       if ((idx % fftsize[DIM-1]) == 0)
         printf("\n");

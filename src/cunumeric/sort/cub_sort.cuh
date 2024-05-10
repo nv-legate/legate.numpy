@@ -47,7 +47,7 @@ void cub_local_sort(const VAL* values_in,
   if (values_in == values_out) {
     keys_in       = create_buffer<VAL>(volume, Memory::Kind::GPU_FB_MEM);
     values_in_cub = keys_in.ptr(0);
-    CHECK_CUDA(cudaMemcpyAsync(
+    LegateCheckCUDA(cudaMemcpyAsync(
       keys_in.ptr(0), values_out, sizeof(VAL) * volume, cudaMemcpyDeviceToDevice, stream));
   }
 
@@ -111,7 +111,7 @@ void cub_local_sort(const VAL* values_in,
     if (indices_in == indices_out) {
       idx_in         = create_buffer<int64_t>(volume, Memory::Kind::GPU_FB_MEM);
       indices_in_cub = idx_in.ptr(0);
-      CHECK_CUDA(cudaMemcpyAsync(
+      LegateCheckCUDA(cudaMemcpyAsync(
         idx_in.ptr(0), indices_out, sizeof(int64_t) * volume, cudaMemcpyDeviceToDevice, stream));
     }
 

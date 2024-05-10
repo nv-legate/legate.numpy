@@ -85,7 +85,7 @@ struct NonzeroImplBody<VariantKind::GPU, CODE, DIM> {
     if (size > 0) {
       populate_nonzeros(in, pitches, rect, volume, results, offsets, stream);
     }
-    CHECK_CUDA_STREAM(stream);
+    LegateCheckCUDAStream(stream);
   }
 };
 

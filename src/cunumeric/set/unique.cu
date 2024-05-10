@@ -66,7 +66,7 @@ static Piece<VAL> tree_reduce(legate::PhysicalStore& output,
     //       but I suspect point-to-point can be slower...
     all_sizes[my_id] = my_piece.second;
     CHECK_NCCL(ncclAllGather(all_sizes.ptr(my_id), all_sizes.ptr(0), 1, ncclUint64, *comm, stream));
-    CHECK_CUDA(cudaStreamSynchronize(stream));
+    LegateCheckCUDA(cudaStreamSynchronize(stream));
 
     Piece<VAL> other_piece;
     size_t offset           = radix / 2;
@@ -121,11 +121,11 @@ static Piece<VAL> tree_reduce(legate::PhysicalStore& output,
       assert(my_piece.second <= buf_size);
       my_piece.first = output.create_output_buffer<VAL, 1>(buf_size);
 
-      CHECK_CUDA(cudaMemcpyAsync(my_piece.first.ptr(0),
-                                 p_merged,
-                                 sizeof(VAL) * my_piece.second,
-                                 cudaMemcpyDeviceToDevice,
-                                 stream));
+      LegateCheckCUDA(cudaMemcpyAsync(my_piece.first.ptr(0),
+                                      p_merged,
+                                      sizeof(VAL) * my_piece.second,
+                                      cudaMemcpyDeviceToDevice,
+                                      stream));
       merged.destroy();
     }
 
@@ -163,14 +163,14 @@ struct UniqueImplBody<VariantKind::GPU, CODE, DIM> {
     if (volume > 0) {
       if (in.accessor.is_dense_arbitrary(rect)) {
         auto* src = in.ptr(rect.lo);
-        CHECK_CUDA(
+        LegateCheckCUDA(
           cudaMemcpyAsync(ptr, src, sizeof(VAL) * volume, cudaMemcpyDeviceToDevice, stream));
       } else {
         const size_t num_blocks = (volume + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
         copy_into_buffer<<<num_blocks, THREADS_PER_BLOCK, 0, stream>>>(
           ptr, in, rect.lo, pitches, volume);
       }
-      CHECK_CUDA_STREAM(stream);
+      LegateCheckCUDAStream(stream);
 
       // Find unique values
       thrust::sort(DEFAULT_POLICY.on(stream), ptr, ptr + volume);
@@ -183,7 +183,7 @@ struct UniqueImplBody<VariantKind::GPU, CODE, DIM> {
     assert(end - ptr <= buf_size);
     result.first = output.create_output_buffer<VAL, 1>(buf_size);
     if (result.second > 0) {
-      CHECK_CUDA(cudaMemcpyAsync(
+      LegateCheckCUDA(cudaMemcpyAsync(
         result.first.ptr(0), ptr, sizeof(VAL) * result.second, cudaMemcpyDeviceToDevice, stream));
     }
 
@@ -193,7 +193,7 @@ struct UniqueImplBody<VariantKind::GPU, CODE, DIM> {
       auto comm = comms[0].get<ncclComm_t*>();
       result    = tree_reduce(output, result, point[0], launch_domain.get_volume(), stream, comm);
     }
-    CHECK_CUDA_STREAM(stream);
+    LegateCheckCUDAStream(stream);
 
     // Finally we pack the result
     output.bind_data(result.first, Point<1>(result.second));

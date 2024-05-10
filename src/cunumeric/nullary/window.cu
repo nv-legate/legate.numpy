@@ -64,7 +64,7 @@ struct WindowImplBody<VariantKind::GPU, OP_CODE> {
         <<<blocks, THREADS_PER_BLOCK, 0, stream>>>(gen, volume, out, rect.lo[0]);
     }
 
-    CHECK_CUDA_STREAM(stream);
+    LegateCheckCUDAStream(stream);
   }
 };
 

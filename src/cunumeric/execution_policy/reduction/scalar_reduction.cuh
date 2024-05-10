@@ -75,7 +75,7 @@ struct ScalarReductionPolicy<VariantKind::GPU, LG_OP, Tag> {
           volume, 1, result, std::forward<Kernel>(kernel), identity, Tag{});
     }
     scalar_reduction_impl::copy_kernel<<<1, 1, 0, stream>>>(result, out);
-    CHECK_CUDA_STREAM(stream);
+    LegateCheckCUDAStream(stream);
   }
 };
 

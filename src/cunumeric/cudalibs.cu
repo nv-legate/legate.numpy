@@ -338,7 +338,7 @@ int CUDALibraries::get_device_ordinal()
     return *ordinal_;
   }
   int ordinal{-1};
-  CHECK_CUDA(cudaGetDevice(&ordinal));
+  LegateCheckCUDA(cudaGetDevice(&ordinal));
   ordinal_ = ordinal;
   return ordinal;
 }
@@ -349,7 +349,7 @@ const cudaDeviceProp& CUDALibraries::get_device_properties()
     return *device_prop_;
   }
   device_prop_ = std::make_unique<cudaDeviceProp>();
-  CHECK_CUDA(cudaGetDeviceProperties(device_prop_.get(), get_device_ordinal()));
+  LegateCheckCUDA(cudaGetDeviceProperties(device_prop_.get(), get_device_ordinal()));
   return *device_prop_;
 }
 
@@ -382,7 +382,7 @@ cusolverMpHandle_t CUDALibraries::get_cusolvermp()
 {
   if (nullptr == cusolvermp_) {
     int device = -1;
-    CHECK_CUDA(cudaGetDevice(&device));
+    LegateCheckCUDA(cudaGetDevice(&device));
     CHECK_CUSOLVER(cusolverMpCreate(&cusolvermp_, device, get_cached_stream()));
   }
   return cusolvermp_;

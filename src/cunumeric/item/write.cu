@@ -33,7 +33,7 @@ struct WriteImplBody<VariantKind::GPU, VAL> {
   {
     auto stream = get_cached_stream();
     write_value<VAL><<<1, 1, 0, stream>>>(out, value);
-    CHECK_CUDA_STREAM(stream);
+    LegateCheckCUDAStream(stream);
   }
 };
 

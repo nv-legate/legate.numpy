@@ -109,7 +109,7 @@ struct AdvancedIndexingImplBody<VariantKind::GPU, CODE, DIM, OUT_TYPE> {
         volume, size, offsets, in, pitches, rect.lo, 1, skip_size, key_dim);
     }
 
-    CHECK_CUDA_STREAM(stream);
+    LegateCheckCUDAStream(stream);
 
     auto off_ptr = offsets.ptr(0);
     thrust::exclusive_scan(DEFAULT_POLICY.on(stream), off_ptr, off_ptr + volume, off_ptr);
@@ -158,7 +158,7 @@ struct AdvancedIndexingImplBody<VariantKind::GPU, CODE, DIM, OUT_TYPE> {
       advanced_indexing_kernel<<<blocks, THREADS_PER_BLOCK, 0, stream>>>(
         volume, input, index, out, pitches, rect.lo, offsets, skip_size, key_dim);
     }
-    CHECK_CUDA_STREAM(stream);
+    LegateCheckCUDAStream(stream);
   }
 };
 

@@ -32,13 +32,13 @@ struct GPUGenerator : public CURANDGenerator {
   GPUGenerator(BitGeneratorType gentype, uint64_t seed, uint64_t generatorId, uint32_t flags)
     : CURANDGenerator(gentype, seed, generatorId)
   {
-    CHECK_CUDA(::cudaStreamCreate(&stream_));
+    LegateCheckCUDA(::cudaStreamCreate(&stream_));
     CHECK_CURAND(::randutilCreateGenerator(&gen_, type_, seed, generatorId, flags, stream_));
   }
 
   virtual ~GPUGenerator()
   {
-    CHECK_CUDA(::cudaStreamSynchronize(stream_));
+    LegateCheckCUDA(::cudaStreamSynchronize(stream_));
     CHECK_CURAND(::randutilDestroyGenerator(gen_));
   }
 };

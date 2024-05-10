@@ -116,7 +116,7 @@ struct RepeatImplBody<VariantKind::GPU, CODE, DIM> {
     auto stream = get_cached_stream();
     repeat_kernel<VAL, DIM><<<blocks, THREADS_PER_BLOCK, 0, stream>>>(
       out, in, repeats, axis, out_rect.lo, pitches, out_volume);
-    CHECK_CUDA_STREAM(stream);
+    LegateCheckCUDAStream(stream);
   }
 
   void operator()(legate::PhysicalStore& out_array,
@@ -146,7 +146,7 @@ struct RepeatImplBody<VariantKind::GPU, CODE, DIM> {
       count_repeat_kernel<<<blocks_count, THREADS_PER_BLOCK, shmem_size, stream>>>(
         extent, sum, repeats, in_rect.lo, axis, 1, offsets);
     }
-    CHECK_CUDA_STREAM(stream);
+    LegateCheckCUDAStream(stream);
 
     Point<DIM> out_extents = in_rect.hi - in_rect.lo + Point<DIM>::ONES();
     out_extents[axis]      = static_cast<coord_t>(sum.read(stream));
@@ -159,7 +159,7 @@ struct RepeatImplBody<VariantKind::GPU, CODE, DIM> {
     const size_t blocks = (volume + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
     repeat_kernel<VAL, DIM><<<blocks, THREADS_PER_BLOCK, 0, stream>>>(
       out, in, repeats, offsets, axis, in_rect.lo, pitches, volume);
-    CHECK_CUDA_STREAM(stream);
+    LegateCheckCUDAStream(stream);
   }
 };
 

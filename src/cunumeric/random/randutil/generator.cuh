@@ -73,8 +73,8 @@ struct inner_generator<gen_t, randutilimpl::execlocation::DEVICE> : basegenerato
     : seed(seed), generatorID(generatorID), stream(stream)
   {
     int deviceId;
-    CHECK_CUDA(::cudaGetDevice(&deviceId));
-    CHECK_CUDA(
+    LegateCheckCUDA(::cudaGetDevice(&deviceId));
+    LegateCheckCUDA(
       ::cudaDeviceGetAttribute(&multiProcessorCount, cudaDevAttrMultiProcessorCount, deviceId));
     // get number of generators
     ngenerators = blockDimX * multiProcessorCount * blocksPerMultiProcessor;
@@ -84,36 +84,36 @@ struct inner_generator<gen_t, randutilimpl::execlocation::DEVICE> : basegenerato
 
     // allocate buffer for generators state
     int driverVersion, runtimeVersion;
-    CHECK_CUDA(::cudaDriverGetVersion(&driverVersion));
-    CHECK_CUDA(::cudaRuntimeGetVersion(&runtimeVersion));
+    LegateCheckCUDA(::cudaDriverGetVersion(&driverVersion));
+    LegateCheckCUDA(::cudaRuntimeGetVersion(&runtimeVersion));
     asyncsupported = ((driverVersion >= 10020) && (runtimeVersion >= 10020));
     if (asyncsupported) {
 #if (__CUDACC_VER_MAJOR__ > 11 || ((__CUDACC_VER_MAJOR__ >= 11) && (__CUDACC_VER_MINOR__ >= 2)))
-      CHECK_CUDA(::cudaMallocAsync(&generators, ngenerators * sizeof(gen_t), stream));
+      LegateCheckCUDA(::cudaMallocAsync(&generators, ngenerators * sizeof(gen_t), stream));
 #else
-      CHECK_CUDA(::cudaMalloc(&generators, ngenerators * sizeof(gen_t)));
+      LegateCheckCUDA(::cudaMalloc(&generators, ngenerators * sizeof(gen_t)));
 #endif
     } else {
-      CHECK_CUDA(::cudaMalloc(&generators, ngenerators * sizeof(gen_t)));
+      LegateCheckCUDA(::cudaMalloc(&generators, ngenerators * sizeof(gen_t)));
     }
 
     // initialize generators
     initgenerators<<<blocksPerMultiProcessor * multiProcessorCount, blockDimX, 0, stream>>>(
       generators, seed, generatorID);
-    CHECK_CUDA(::cudaPeekAtLastError());
+    LegateCheckCUDA(::cudaPeekAtLastError());
   }
 
   virtual void destroy() override
   {
-    CHECK_CUDA(::cudaStreamSynchronize(stream));
+    LegateCheckCUDA(::cudaStreamSynchronize(stream));
     if (asyncsupported) {
 #if (__CUDACC_VER_MAJOR__ > 11 || ((__CUDACC_VER_MAJOR__ >= 11) && (__CUDACC_VER_MINOR__ >= 2)))
-      CHECK_CUDA(::cudaFreeAsync(generators, stream));
+      LegateCheckCUDA(::cudaFreeAsync(generators, stream));
 #else
-      CHECK_CUDA(::cudaFree(generators));
+      LegateCheckCUDA(::cudaFree(generators));
 #endif
     } else {
-      CHECK_CUDA(::cudaFree(generators));
+      LegateCheckCUDA(::cudaFree(generators));
     }
 
     generators = nullptr;

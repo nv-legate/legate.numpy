@@ -82,7 +82,7 @@ struct BinaryOpImplBody<VariantKind::GPU, OP_CODE, CODE, DIM> {
       generic_kernel<<<blocks, THREADS_PER_BLOCK, 0, stream>>>(
         volume, func, out, in1, in2, pitches, rect);
     }
-    CHECK_CUDA_STREAM(stream);
+    LegateCheckCUDAStream(stream);
   }
 };
 
