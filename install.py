@@ -332,14 +332,13 @@ def install_cunumeric(
 
     # Also use preexisting CMAKE_ARGS from conda if set
     cmake_flags = cmd_env.get("CMAKE_ARGS", "").split(" ")
-
     if debug or verbose:
         cmake_flags += ["--log-level=%s" % ("DEBUG" if debug else "VERBOSE")]
-
+    build_type = (  # noqa: F841
+        "Debug" if debug else "RelWithDebInfo" if debug_release else "Release"
+    )
     cmake_flags += f"""\
--DCMAKE_BUILD_TYPE={(
-    "Debug" if debug else "RelWithDebInfo" if debug_release else "Release"
-)}
+-DCMAKE_BUILD_TYPE=build_type
 -DBUILD_SHARED_LIBS=ON
 -DCMAKE_CUDA_ARCHITECTURES={str(arch)}
 -DLegion_MAX_DIM={str(maxdim)}

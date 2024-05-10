@@ -22,10 +22,10 @@ from sphinx.util.nodes import nested_parse_with_titles
 
 class CunumericDirective(SphinxDirective):
     def parse(self, rst_text: str, annotation: str) -> list[nodes.Node]:
-        result = ViewList()
+        result = ViewList()  # type: ignore
         for line in rst_text.split("\n"):
             result.append(line, annotation)
         node = nodes.paragraph()
         node.document = self.state.document
-        nested_parse_with_titles(self.state, result, node)
+        nested_parse_with_titles(self.state, result, node)  # type: ignore
         return node.children

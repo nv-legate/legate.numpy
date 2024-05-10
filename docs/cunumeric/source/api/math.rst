@@ -174,3 +174,4 @@ Miscellaneous
    inner
    outer
    vdot
+   gradient
