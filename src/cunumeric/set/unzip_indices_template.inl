@@ -36,11 +36,11 @@ struct UnzipIndicesImpl {
     using VAL = legate_type_of<CODE>;
 
     auto input_shape = input.shape<1>();
-    if(input_shape.volume() == 0) return;
+    if (input_shape.volume() == 0) return;
 
-    auto values = outputs[0].write_accessor<VAL,1>(input_shape);
+    auto values  = outputs[0].write_accessor<VAL, 1>(input_shape);
     auto indices = outputs[1].write_accessor<int64_t, 1>(input_shape);
-    auto in = input.read_accessor<ZippedIndex<VAL>, 1>(input_shape);
+    auto in      = input.read_accessor<ZippedIndex<VAL>, 1>(input_shape);
 
     UniqueImplBody<KIND, CODE>()(values, indices, in, input_shape);
   }

@@ -31,7 +31,7 @@ struct UniqueImplBody<VariantKind::CPU, CODE> {
                   const Rect<1> input_shape)
   {
     for (coord_t i = input_shape.lo[0]; i < input_shape.hi[0] + 1; i++) {
-      values[i] = in[i].value;
+      values[i]  = in[i].value;
       indices[i] = in[i].index;
     }
   }

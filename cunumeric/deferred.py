@@ -3538,8 +3538,12 @@ class DeferredArray(NumPyThunk):
                 task = self.context.create_auto_task(CuNumericOpCode.UNZIP)
                 task.add_input(result.base)
 
-                result = self.runtime.create_empty_thunk(result.shape, self.base.type)
-                returned_indices = self.runtime.create_empty_thunk(result.shape, ty.int64)
+                result = self.runtime.create_empty_thunk(
+                    result.shape, self.base.type
+                )
+                returned_indices = self.runtime.create_empty_thunk(
+                    result.shape, ty.int64
+                )
 
                 task.add_output(result.base)
 
