@@ -88,7 +88,7 @@ static void unary_red_template(TaskContext& context)
   bool has_where  = scalars[2].value<bool>();
   UnaryRedArgs args{reductions[0],
                     inputs[0],
-                    has_where ? inputs[1] : legate::PhysicalStore{},
+                    has_where ? inputs[1] : legate::PhysicalStore{nullptr},
                     scalars[0].value<int32_t>(),
                     scalars[1].value<UnaryRedCode>()};
   if (has_where) {

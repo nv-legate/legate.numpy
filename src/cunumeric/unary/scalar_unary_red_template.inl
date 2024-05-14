@@ -212,7 +212,7 @@ static void scalar_unary_red_template(TaskContext& context)
 
   ScalarUnaryRedArgs args{context.reduction(0),
                           context.input(0),
-                          has_where ? context.input(1) : PhysicalStore{},
+                          has_where ? context.input(1) : PhysicalStore{nullptr},
                           op_code,
                           shape,
                           std::move(extra_args)};

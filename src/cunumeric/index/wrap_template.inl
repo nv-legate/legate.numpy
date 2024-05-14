@@ -86,7 +86,7 @@ static void wrap_template(TaskContext& context)
   int dim           = shape.dim;
   bool has_input    = context.scalar(1).value<bool>();
   bool check_bounds = context.scalar(2).value<bool>();
-  legate::PhysicalStore tmp_array{};
+  legate::PhysicalStore tmp_array{nullptr};
   WrapArgs args{
     context.output(0), shape, has_input, check_bounds, has_input ? context.input(0) : tmp_array};
   dim_dispatch(dim, WrapImpl<KIND>{}, args);
