@@ -19,9 +19,27 @@
 
 namespace cunumeric {
 
+using namespace legate;
+
+template <Type::Code CODE>
+struct UniqueImplBody<VariantKind::CPU, CODE> {
+  using VAL = legate_type_of<CODE>;
+
+  void operator()(const AccessorWO<VAL, 1>& values,
+                  const AccessorWO<int64_t, 1>& indices,
+                  const AccessorRO<ZippedIndex<VAL>, 1>& in,
+                  const Rect<1> input_shape)
+  {
+    for (coord_t i = input_shape.lo[0]; i < input_shape.hi[0] + 1; i++) {
+      values[i] = in[i].value;
+      indices[i] = in[i].index;
+    }
+  }
+};
+
 /*static*/ void UnzipIndicesTask::cpu_variant(TaskContext& context)
 {
-  unzip_indices_template(context, thrust::host);
+  unzip_indices_template<VariantKind::CPU>(context);
 }
 
 namespace  // unnamed

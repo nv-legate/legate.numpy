@@ -25,7 +25,6 @@
 #include <thrust/sort.h>
 #include <thrust/unique.h>
 #include <thrust/execution_policy.h>
-#include <iostream>
 
 namespace cunumeric {
 

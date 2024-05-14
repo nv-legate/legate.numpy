@@ -60,7 +60,7 @@ def test_parameters(return_inverse, return_counts, axis):
         return_counts=return_counts,
     )
     # cuNumeric raises NotImplementedError: Keyword arguments
-    # for `unique` are not yet supported
+    # for `unique` outside of return_index are not yet supported
     res_np = np.unique(
         arr_np,
         return_inverse=return_inverse,
@@ -69,6 +69,14 @@ def test_parameters(return_inverse, return_counts, axis):
     )
     assert np.array_equal(res_np, res_num)
 
+def test_index_selection():
+    a = np.array([[1,2,3,4,1,1,9,1,1],[1,4,7,2,0,1,3,10,10]])
+
+    b_num = np.unique(a, return_index=True)
+    b_np = num.unique(a, return_index=True)
+
+    assert num.array_equal(b_num[0], b_np[0])
+    assert num.array_equal(b_num[1], b_np[1])
 
 if __name__ == "__main__":
     import sys

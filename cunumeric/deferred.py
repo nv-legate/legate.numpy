@@ -3497,6 +3497,7 @@ class DeferredArray(NumPyThunk):
 
         result = None
         # Assuming legate core will always choose GPU variant
+        # CPU uses legate.core Reduce op, which requires storing indices in struct
         if self.runtime.num_gpus > 0:
             task.add_nccl_communicator()
             result = self.runtime.create_unbound_thunk(self.base.type)
@@ -3516,8 +3517,9 @@ class DeferredArray(NumPyThunk):
 
         returned_indices = None
         if return_index:
-            returned_indices = self.runtime.create_unbound_thunk(ty.int64)
+            # GPU variant uses NCCL for reduction so can directly output indices
             if self.runtime.num_gpus > 0:
+                returned_indices = self.runtime.create_unbound_thunk(ty.int64)
                 task.add_output(returned_indices.base)
 
             for i in range(self.ndim):
@@ -3536,12 +3538,14 @@ class DeferredArray(NumPyThunk):
                 task = self.context.create_auto_task(CuNumericOpCode.UNZIP)
                 task.add_input(result.base)
 
-                result = self.runtime.create_unbound_thunk(self.base.type)
+                result = self.runtime.create_empty_thunk(result.shape, self.base.type)
+                returned_indices = self.runtime.create_empty_thunk(result.shape, ty.int64)
 
                 task.add_output(result.base)
 
                 returned_indices = cast(DeferredArray, returned_indices)
                 task.add_output(returned_indices.base)
+                task.add_alignment(result.base, returned_indices.base)
 
                 task.execute()
 

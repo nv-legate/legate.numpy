@@ -21,55 +21,33 @@
 #include "cunumeric/pitches.h"
 #include "cunumeric/set/zip_indices.h"
 
-#include <thrust/copy.h>
-#include <thrust/sort.h>
-#include <thrust/unique.h>
-#include <thrust/execution_policy.h>
-#include <thrust/transform.h>
-#include <iostream>
-
 namespace cunumeric {
 
 using namespace legate;
 
-template <typename VAL>
-struct ValExtract {
-  VAL operator()(const ZippedIndex<VAL>& x) { return x.value; }
-};
+template <VariantKind KIND, Type::Code CODE>
+struct UniqueImplBody;
 
-template <typename VAL>
-struct IndexExtract {
-  int64_t operator()(const ZippedIndex<VAL>& x) { return x.index; }
-};
-
-template <typename exe_pol_t>
+template <VariantKind KIND>
 struct UnzipIndicesImpl {
   template <Type::Code CODE>
-  void operator()(std::vector<Array>& outputs, Array& input, const exe_pol_t& exe_pol)
+  void operator()(std::vector<Array>& outputs, Array& input)
   {
     using VAL = legate_type_of<CODE>;
 
     auto input_shape = input.shape<1>();
-    size_t res_size  = input_shape.hi[0] - input_shape.lo[0] + 1;
+    if(input_shape.volume() == 0) return;
 
-    auto value         = outputs[0].create_output_buffer<VAL, 1>(res_size, true);
-    auto index         = outputs[1].create_output_buffer<int64_t, 1>(res_size, true);
-    VAL* value_ptr     = value.ptr(0);
-    int64_t* index_ptr = index.ptr(0);
+    auto values = outputs[0].write_accessor<VAL,1>(input_shape);
+    auto indices = outputs[1].write_accessor<int64_t, 1>(input_shape);
+    auto in = input.read_accessor<ZippedIndex<VAL>, 1>(input_shape);
 
-    size_t strides[1];
-    const ZippedIndex<VAL>* in_ptr =
-      input.read_accessor<ZippedIndex<VAL>, 1>(input_shape).ptr(input_shape, strides);
-    // unique_reduce has this check, so it's probably worthwhile to keep it here
-    assert(input_shape.volume() <= 1 || strides[0] == 1);
-
-    thrust::transform(exe_pol, in_ptr, in_ptr + res_size, value_ptr, ValExtract<VAL>());
-    thrust::transform(exe_pol, in_ptr, in_ptr + res_size, index_ptr, IndexExtract<VAL>());
+    UniqueImplBody<KIND, CODE>()(values, indices, in, input_shape);
   }
 };
 
-template <typename exe_pol_t>
-static void unzip_indices_template(TaskContext& context, const exe_pol_t& exe_pol)
+template <VariantKind KIND>
+static void unzip_indices_template(TaskContext& context)
 {
   auto& input   = context.inputs()[0];
   auto& outputs = context.outputs();
@@ -79,7 +57,7 @@ static void unzip_indices_template(TaskContext& context, const exe_pol_t& exe_po
   auto& field_type = static_cast<const StructType&>(input.type()).field_type(0);
   code             = field_type.code;
 
-  type_dispatch(code, UnzipIndicesImpl<exe_pol_t>{}, outputs, input, exe_pol);
+  type_dispatch(code, UnzipIndicesImpl<KIND>{}, outputs, input);
 }
 
 }  // namespace cunumeric

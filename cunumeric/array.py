@@ -4170,17 +4170,17 @@ class ndarray:
         Multiple GPUs, Multiple CPUs
 
         """
-        thunk = self._thunk.unique(return_index)
+        deferred_result = self._thunk.unique(return_index)
         if return_index:
             if TYPE_CHECKING:
-                thunk = cast(tuple[NumPyThunk, NumPyThunk], thunk)
-            return ndarray(shape=thunk[0].shape, thunk=thunk[0]), ndarray(
-                shape=thunk[1].shape, thunk=thunk[1]
+                deferred_result = cast(tuple[NumPyThunk, NumPyThunk], deferred_result)
+            return ndarray(shape=deferred_result[0].shape, thunk=deferred_result[0]), ndarray(
+                shape=deferred_result[1].shape, thunk=deferred_result[1]
             )
         else:
             if TYPE_CHECKING:
-                thunk = cast(NumPyThunk, thunk)
-            return ndarray(shape=thunk.shape, thunk=thunk)
+                deferred_result = cast(NumPyThunk, deferred_result)
+            return ndarray(shape=deferred_result.shape, thunk=deferred_result)
 
     @classmethod
     def _get_where_thunk(
