@@ -22,8 +22,8 @@
 namespace cunumeric {
 
 struct FFTArgs {
-  legate::PhysicalStore output;
-  legate::PhysicalStore input;
+  legate::PhysicalStore output{nullptr};
+  legate::PhysicalStore input{nullptr};
   CuNumericFFTType type;
   CuNumericFFTDirection direction;
   bool operate_over_axes;

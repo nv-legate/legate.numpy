@@ -30,8 +30,8 @@
 namespace cunumeric {
 
 struct ConvolveArgs {
-  legate::PhysicalStore out;
-  legate::PhysicalStore filter;
+  legate::PhysicalStore out{nullptr};
+  legate::PhysicalStore filter{nullptr};
   std::vector<legate::PhysicalStore> inputs;
   legate::Domain root_domain;
 };

@@ -21,9 +21,9 @@
 namespace cunumeric {
 
 struct BincountArgs {
-  legate::PhysicalStore lhs;
-  legate::PhysicalStore rhs;
-  legate::PhysicalStore weights;
+  legate::PhysicalStore lhs{nullptr};
+  legate::PhysicalStore rhs{nullptr};
+  legate::PhysicalStore weights{nullptr};
   bool has_weights;
 };
 

@@ -1135,14 +1135,15 @@ NDArray NDArray::diag_helper(int32_t offset,
     throw std::invalid_argument("output array has the wrong shape");
   }
 
-  legate::Type res_type;
-  if (type) {
-    res_type = type.value();
-  } else if (out) {
-    res_type = out->type();
-  } else {
-    res_type = store_.type();
-  }
+  auto res_type = [&] {
+    if (type) {
+      return type.value();
+    } else if (out) {
+      return out->type();
+    } else {
+      return store_.type();
+    }
+  }();
 
   if (store_.type() != res_type) {
     a = a.as_type(res_type);
