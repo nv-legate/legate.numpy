@@ -29,11 +29,8 @@
 #include <tuple>
 #include <vector>
 
+#include <core/cuda/cuda.h>
 #include "cunumeric/stat/histogram_gen.h"
-
-#if !LegateDefined(LEGATE_USE_CUDA)
-using cudaStream_t = void*;
-#endif
 
 namespace cunumeric {
 namespace detail {
