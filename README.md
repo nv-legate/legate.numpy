@@ -43,13 +43,13 @@ Please make sure you have at least conda version 24.1 installed, then create
 a new environment containing cuNumeric:
 
 ```
-conda create -n myenv -c nvidia -c conda-forge -c legate cunumeric
+conda create -n myenv -c conda-forge -c legate cunumeric
 ```
 
 or install it into an existing environment:
 
 ```
-conda install -c nvidia -c conda-forge -c legate cunumeric
+conda install -c conda-forge -c legate cunumeric
 ```
 
 Once installed, you can verify the installation by running one of the examples

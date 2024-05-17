@@ -9,7 +9,7 @@ a new environment containing cuNumeric:
 
 .. code-block:: sh
 
-    conda install -c nvidia -c conda-forge -c legate cunumeric
+    conda install -c conda-forge -c legate cunumeric
 
 Once installed, you can verify the installation by running one of the examples
 from the cuNumeric repository, for instance:

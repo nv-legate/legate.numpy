@@ -29,7 +29,7 @@ jobs:
         run: |
           if [ "${{ inputs.platform }}" = "linux" ]; then
             if [ "${{ github.repository_owner }}" = "nv-legate" ]; then
-              echo "runner_type=linux-amd64-cpu32" >> $GITHUB_OUTPUT
+              echo "runner_type=linux-amd64-cpu16" >> $GITHUB_OUTPUT
             else
               echo "runner_type=ubuntu-latest" >> $GITHUB_OUTPUT
             fi
@@ -41,7 +41,7 @@ jobs:
     needs: setup-build
     name: "Build (${{ inputs.platform }}, ${{ inputs.target-device }}, ${{ inputs.build-type }})"
     uses:
-      nv-legate/legate-gh-ci/.github/workflows/gh-build.yml@v1.1.4
+      nv-legate/legate-gh-ci/.github/workflows/gh-build.yml@v1.4
     with:
       client-repo: ${{ github.event.repository.name }}
       target-device: ${{ inputs.target-device }}
@@ -51,7 +51,7 @@ jobs:
       platform: ${{ inputs.platform }}
       dependencies-file: "cmake/versions.json"
       dependencies-workflow: ${{ inputs.dependencies-workflow }}
-      legate-gh-ci-tag: "v1.1.4"
+      legate-gh-ci-tag: "v1.4"
       build-mode: ""
       ucx-enabled: false
       upload-enabled: ${{ inputs.upload-enabled }}
@@ -128,14 +128,16 @@ jobs:
           MATRIX_JSON='{"include": ['
           RUNNERS=(
             'linux-amd64-gpu-v100-latest-1:gpu:gpu:linux' 'linux-amd64-2gpu:gpu:2gpu:linux'
-            'linux-amd64-cpu32:cpu:cpu:linux'
+            'linux-amd64-cpu16:cpu:cpu:linux'
             'macos-latest:cpu:cpu:mac')
           TEST_CONFIGS=(
             '1 CPU test:test --cpus 1 --debug:cpu'
             '1 CPU test:test --cpus 1 --debug:gpu'
             '2 CPU test:test --cpus 2 --debug:cpu'
             '2 CPU test:test --cpus 2 --debug:gpu'
-            'GPU test:test --use cuda --gpus 1 --debug:gpu'
+            # set the number of workers manually because nvidia runners report 6 gpus when onyl one is really available
+            # this workaround can be removed when the number of available gpus is reported correctly (when we run on VMs)
+            'GPU test:test --use cuda --gpus 1 -j 7 --debug:gpu'
             '2 GPU test:test --use cuda --gpus 2 --debug:2gpu'
             'OpenMP test:test --use openmp --omps 1 --ompthreads 2 --debug:gpu'
             'OpenMP test:test --use openmp --omps 1 --ompthreads 2 --debug:cpu'
@@ -179,7 +181,7 @@ jobs:
       matrix: ${{fromJson(needs.setup-test.outputs.matrix)}}
 
     uses:
-      nv-legate/legate-gh-ci/.github/workflows/gh-test-within-container.yml@v1.1.4
+      nv-legate/legate-gh-ci/.github/workflows/gh-test-within-container.yml@v1.4
     with:
       client-repo: ${{ github.event.repository.name }}
       build-type: ${{ inputs.build-type }}
@@ -189,7 +191,7 @@ jobs:
       has-gpu: ${{ matrix.runner.type == 'gpu' }}
       test-options: ${{ matrix.test-config.test-options }}
       platform: ${{ inputs.platform }}
-      legate-gh-ci-tag: "v1.1.4"
+      legate-gh-ci-tag: "v1.4"
       build-mode: ""
       ucx-enabled: false
       upload-enabled: ${{ inputs.upload-enabled }}

@@ -15,7 +15,8 @@ build_cunumeric_conda_package() {
     local conda_build_args=();
     conda_build_args+=(--override-channels);
     conda_build_args+=(-c conda-forge);
-    conda_build_args+=(-c nvidia);
+    # the ucx channel is only necessary as a WAR until the real ucx 1.17 package is available on conda-forge
+    conda_build_args+=(-c https://github.com/nv-legate/ucx-package/raw/main);
     conda_build_args+=(-c file:///tmp/conda-build/legate_core);
     conda_build_args+=(--croot /tmp/conda-build/cunumeric);
     conda_build_args+=(--numpy 1.22);
@@ -78,6 +79,13 @@ EOF
     git -C "${REPO_DIR}" commit --allow-empty --allow-empty-message -n -m "";
 
     # Build cuNumeric conda package
+    set +ux
+    eval "$(conda shell.bash hook)"
+    conda deactivate
+    conda create -n build
+    conda activate build
+    set -ux
+    conda install boa
     CUDA=${CUDA_VERSION} \
     conda mambabuild ${conda_build_args[@]} "${REPO_DIR}/conda/conda-build";
 

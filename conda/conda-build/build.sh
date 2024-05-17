@@ -2,6 +2,8 @@
 
 echo -e "\n\n--------------------- CONDA/CONDA-BUILD/BUILD.SH -----------------------\n"
 
+set -xeo pipefail;
+
 # Rewrite conda's -DCMAKE_FIND_ROOT_PATH_MODE_INCLUDE=ONLY to
 #                 -DCMAKE_FIND_ROOT_PATH_MODE_INCLUDE=BOTH
 CMAKE_ARGS="$(echo "$CMAKE_ARGS" | sed -r "s@_INCLUDE=ONLY@_INCLUDE=BOTH@g")"
@@ -12,21 +14,18 @@ CMAKE_ARGS+="
 -DBUILD_SHARED_LIBS=ON
 -DBUILD_MARCH=${BUILD_MARCH}
 -DCMAKE_BUILD_TYPE=Release
--DCMAKE_BUILD_PARALLEL_LEVEL=${JOBS:-$(nproc --ignore=1)}
-"
+-DCMAKE_BUILD_PARALLEL_LEVEL=${JOBS:-$(nproc --ignore=1)}"
 
 # We rely on an environment variable to determine if we need to build cpu-only bits
 if [ -z "$CPU_ONLY" ]; then
   # cutensor, relying on the conda cutensor package
   CMAKE_ARGS+="
 -Dcutensor_DIR=$PREFIX
--DCMAKE_CUDA_ARCHITECTURES=RAPIDS
-"
+-DCMAKE_CUDA_ARCHITECTURES=RAPIDS"
 else
   # When we build without cuda, we need to provide the location of curand
   CMAKE_ARGS+="
--Dcunumeric_cuRAND_INCLUDE_DIR=$PREFIX
-"
+-Dcunumeric_cuRAND_INCLUDE_DIR=$PREFIX/targets/x86_64-linux/include"
 fi
 
 export CMAKE_GENERATOR=Ninja
@@ -46,8 +45,7 @@ cmake --install build
 
 CMAKE_ARGS="
 -DFIND_CUNUMERIC_CPP=ON
--Dcunumeric_ROOT=$PREFIX
-"
+-Dcunumeric_ROOT=$PREFIX"
 
 SKBUILD_BUILD_OPTIONS=-j$CPU_COUNT \
 $PYTHON -m pip install             \

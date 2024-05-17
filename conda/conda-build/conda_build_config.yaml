@@ -2,6 +2,10 @@ gpu_enabled:
   - true
   - false
 
+upload_build:
+  - true
+  - false
+
 python:
   - 3.10
   - 3.11

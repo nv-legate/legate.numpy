@@ -8,6 +8,9 @@ make_ci_env() {
     set -xeuo pipefail
     yaml_file=$(find "${ARTIFACTS_DIR}" -name "environment*.yaml" | head -n 1)
 
+    sed -i '$ d' ${yaml_file}
+    echo "  - legate-core" >> "${yaml_file}"
+    sed -i "/channels:/!b;:a;n;/^- /ba;i\- ${ARTIFACTS_DIR}/conda-build/legate_core" ${yaml_file}
     [ "${USE_CUDA}" = "ON" ] &&
         echo "  - libcublas-dev" >> "${yaml_file}" &&
         echo "  - libcufft-dev" >> "${yaml_file}" &&
@@ -22,10 +25,10 @@ make_ci_env() {
     cp "${yaml_file}" /tmp/out
 
     mamba env create -n legate -f "$yaml_file"
+}
 
-    mamba uninstall -yn legate numpy
-
-    mamba install -yn legate -c "${ARTIFACTS_DIR}/conda-build/legate_core" -c conda-forge -c nvidia legate-core
+make_release_env() {
+    mamba create -q -y -n "${CONDA_ENV}" -c conda-forge boa
 }
 
 make_conda_env() {
