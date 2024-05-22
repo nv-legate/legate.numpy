@@ -6745,7 +6745,7 @@ def gradient(
 
     Return the gradient of an N-dimensional array.
     The gradient is computed using second order accurate central differences
-    in the interior points and either first or second order accurate one-sides
+    in the interior points and either first or second order accurate one-sided
     (forward or backwards) differences at the boundaries.
     The returned gradient hence has the same shape as the input array.
 
@@ -6768,13 +6768,11 @@ def gradient(
     edge_order : {1, 2}, optional
         Gradient is calculated using N-th order accurate differences
         at the boundaries. Default: 1.
-        .. versionadded:: 1.9.1
     axis : None or int or tuple of ints, optional
         Gradient is calculated only along the given axis or axes
         The default (axis = None) is to calculate the gradient for all the axes
         of the input array. axis may be negative, in which case it counts from
         the last to the first axis.
-        .. versionadded:: 1.11.0
 
     Returns
     -------
@@ -6843,7 +6841,7 @@ def gradient(
     if edge_order > 2:
         raise ValueError("'edge_order' greater than 2 not supported")
     if edge_order < 0:
-        raise ValueError(" invalid 'edge_order'")
+        raise ValueError("invalid 'edge_order'")
 
     # use central differences on interior and one-sided differences on the
     # endpoints. This preserves second order-accuracy over the full domain.
@@ -6857,13 +6855,7 @@ def gradient(
     slice4 = [slice(None)] * N
 
     otype = f.dtype
-    if otype.type is np.datetime64:
-        raise TypeError("datetime64 is not supported by gradient in cuNumeric")
-    elif otype.type is np.timedelta64:
-        pass
-    elif np.issubdtype(otype, np.inexact):
-        pass
-    else:
+    if not np.issubdtype(otype, np.inexact):
         # All other types convert to floating point.
         # First check if f is a numpy integer type; if so, convert f to float64
         # to avoid modular arithmetic when computing the changes in f.

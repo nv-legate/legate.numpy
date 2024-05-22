@@ -29,7 +29,7 @@ def test_gradient_with_scalar_dx():
     assert np.allclose(res_np, res_cn)
 
 
-def test_fradient_1d():
+def test_gradient_1d():
     a_np = np.array(np.random.random(size=1000), dtype=float)
     f_np = np.sort(a_np)
     f_cn = cn.array(f_np)
