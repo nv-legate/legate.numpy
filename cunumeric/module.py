@@ -6830,10 +6830,6 @@ def gradient(
                 # arithmetic in np.diff(distances).
                 distances = distances.astype(np.float64)
             diffx = diff(distances)
-            # if distances are constant reduce to the scalar case
-            # since it brings a consistent speedup
-            if (diffx == diffx[0]).all():
-                diffx = diffx[0]
             dx[i] = diffx
     else:
         raise TypeError("invalid number of arguments")
