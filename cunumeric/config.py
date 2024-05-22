@@ -208,6 +208,7 @@ class _CunumericSharedLib:
     CUNUMERIC_SELECT: int
     CUNUMERIC_SOLVE: int
     CUNUMERIC_SORT: int
+    CUNUMERIC_SVD: int
     CUNUMERIC_SYRK: int
     CUNUMERIC_TILE: int
     CUNUMERIC_TRANSPOSE_COPY_2D: int
@@ -398,6 +399,7 @@ class CuNumericOpCode(IntEnum):
     SELECT = _cunumeric.CUNUMERIC_SELECT
     SOLVE = _cunumeric.CUNUMERIC_SOLVE
     SORT = _cunumeric.CUNUMERIC_SORT
+    SVD = _cunumeric.CUNUMERIC_SVD
     SYRK = _cunumeric.CUNUMERIC_SYRK
     TILE = _cunumeric.CUNUMERIC_TILE
     TRANSPOSE_COPY_2D = _cunumeric.CUNUMERIC_TRANSPOSE_COPY_2D

@@ -67,6 +67,7 @@ from ..config import (
 from ..linalg._cholesky import cholesky_deferred
 from ..linalg._qr import qr_deferred
 from ..linalg._solve import solve_deferred
+from ..linalg._svd import svd_deferred
 from ..runtime import runtime
 from ._sort import sort_deferred
 from .thunk import NumPyThunk
@@ -3362,6 +3363,10 @@ class DeferredArray(NumPyThunk):
     @auto_convert("a", "b")
     def solve(self, a: Any, b: Any) -> None:
         solve_deferred(self, a, b)
+
+    @auto_convert("u", "s", "vh")
+    def svd(self, u: Any, s: Any, vh: Any) -> None:
+        svd_deferred(self, u, s, vh)
 
     @auto_convert("rhs")
     def scan(

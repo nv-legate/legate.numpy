@@ -217,6 +217,60 @@ def solve(a: ndarray, b: ndarray, out: ndarray | None = None) -> ndarray:
     return _thunk_solve(a, b, out)
 
 
+@add_boilerplate("a")
+def svd(a: ndarray) -> tuple[ndarray, ...]:
+    """
+    Singular Value Decomposition.
+
+    Parameters
+    ----------
+    a : (M, N) array_like
+        Array like, at least dimension 2.
+
+    Returns
+    -------
+    u : (M, M) array_like
+        Unitary array(s).
+    s : (K) array_like
+        The singular values, sorted in descending order
+    vh : (N, N) array_like
+        Unitary array(s).
+
+    Raises
+    ------
+    LinAlgError
+        If SVD computation does not converge.
+
+    Notes
+    -----
+    Currently does not support the parameters 'full_matrices', 'compute_uv',
+    and 'hermitian'.
+
+    See Also
+    --------
+    numpy.linalg.svd
+
+    Availability
+    --------
+    Single GPU, Single CPU
+    """
+    shape = a.shape
+    if len(shape) < 2:
+        raise LinAlgError(
+            f"{len(shape)}-dimensional array given. "
+            "Array must be at least two-dimensional"
+        )
+    if len(shape) > 2:
+        raise NotImplementedError(
+            "cuNumeric does not yet support stacked 2d arrays"
+        )
+    if shape[0] < shape[1]:
+        raise NotImplementedError("cuNumeric only supports M >= N")
+    if np.dtype("e") == a.dtype:
+        raise TypeError("array type float16 is unsupported in linalg")
+    return _thunk_svd(a)
+
+
 # This implementation is adapted closely from NumPy
 @add_boilerplate("a")
 def matrix_power(a: ndarray, n: int) -> ndarray:
@@ -747,3 +801,32 @@ def _thunk_solve(
         )
     out._thunk.solve(a._thunk, b._thunk)
     return out
+
+
+def _thunk_svd(a: ndarray) -> tuple[ndarray, ...]:
+    if a.dtype.kind not in ("f", "c"):
+        a = a.astype("float64")
+
+    k = min(a.shape[0], a.shape[1])
+
+    out_u = ndarray(
+        shape=(a.shape[0], a.shape[0]),
+        dtype=a.dtype,
+        inputs=(a,),
+    )
+
+    real_dtype = a.dtype.type(0).real.dtype
+
+    out_s = ndarray(
+        shape=(k,),
+        dtype=real_dtype,
+        inputs=(a,),
+    )
+    out_vh = ndarray(
+        shape=(a.shape[1], a.shape[1]),
+        dtype=a.dtype,
+        inputs=(a,),
+    )
+
+    a._thunk.svd(out_u._thunk, out_s._thunk, out_vh._thunk)
+    return out_u, out_s, out_vh

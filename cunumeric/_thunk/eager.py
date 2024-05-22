@@ -1695,6 +1695,21 @@ class EagerArray(NumPyThunk):
                 raise LinAlgError(e) from e
             self.array[:] = result
 
+    def svd(self, u: Any, s: Any, vh: Any) -> None:
+        self.check_eager_args(u, s, vh)
+        if self.deferred is not None:
+            self.deferred.svd(u, s, vh)
+        else:
+            try:
+                result_u, result_s, result_vh = np.linalg.svd(self.array)
+            except np.linalg.LinAlgError as e:
+                from ..linalg import LinAlgError
+
+                raise LinAlgError(e) from e
+            u.array[:] = result_u
+            s.array[:] = result_s
+            vh.array[:] = result_vh
+
     def scan(
         self,
         op: int,

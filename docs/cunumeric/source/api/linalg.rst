@@ -30,6 +30,7 @@ Decompositions
 
    linalg.cholesky
    linalg.qr
+   linalg.svd
 
 Norms and other numbers
 -----------------------

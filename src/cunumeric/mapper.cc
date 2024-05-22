@@ -128,6 +128,7 @@ std::vector<StoreMapping> CuNumericMapper::store_mappings(
     case CUNUMERIC_QR:
     case CUNUMERIC_TRSM:
     case CUNUMERIC_SOLVE:
+    case CUNUMERIC_SVD:
     case CUNUMERIC_SYRK:
     case CUNUMERIC_GEMM:
     case CUNUMERIC_MP_POTRF:

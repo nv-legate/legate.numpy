@@ -709,6 +709,10 @@ class NumPyThunk(ABC):
         ...
 
     @abstractmethod
+    def svd(self, u: Any, s: Any, vh: Any) -> None:
+        ...
+
+    @abstractmethod
     def scan(
         self,
         op: int,

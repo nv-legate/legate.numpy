@@ -94,6 +94,7 @@ def test_CuNumericOpCode() -> None:
         "SOLVE",
         "SORT",
         "SEARCHSORTED",
+        "SVD",
         "SYRK",
         "TILE",
         "TRANSPOSE_COPY_2D",
