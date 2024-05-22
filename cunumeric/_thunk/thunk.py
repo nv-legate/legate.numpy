@@ -701,6 +701,10 @@ class NumPyThunk(ABC):
         ...
 
     @abstractmethod
+    def qr(self, q: Any, r: Any) -> None:
+        ...
+
+    @abstractmethod
     def solve(self, a: Any, b: Any) -> None:
         ...
 

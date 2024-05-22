@@ -65,6 +65,7 @@ from ..config import (
     UnaryRedCode,
 )
 from ..linalg._cholesky import cholesky_deferred
+from ..linalg._qr import qr_deferred
 from ..linalg._solve import solve_deferred
 from ..runtime import runtime
 from ._sort import sort_deferred
@@ -3353,6 +3354,10 @@ class DeferredArray(NumPyThunk):
     @auto_convert("src")
     def cholesky(self, src: Any, no_tril: bool = False) -> None:
         cholesky_deferred(self, src, no_tril)
+
+    @auto_convert("q", "r")
+    def qr(self, q: Any, r: Any) -> None:
+        qr_deferred(self, q, r)
 
     @auto_convert("a", "b")
     def solve(self, a: Any, b: Any) -> None:
