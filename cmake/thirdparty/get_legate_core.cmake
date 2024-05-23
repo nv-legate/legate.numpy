@@ -59,6 +59,7 @@ function(find_or_configure_legate_core)
     message(VERBOSE "cunumeric: legate.core git_repo: ${git_repo}")
     message(VERBOSE "cunumeric: legate.core git_branch: ${git_branch}")
     message(VERBOSE "cunumeric: legate.core exclude_from_all: ${exclude_from_all}")
+    message(VERBOSE "cunumeric: legate.core legate_core_cpm_git_args: ${legate_core_cpm_git_args}")
 
     rapids_cpm_find(legate_core ${version} ${FIND_PKG_ARGS}
         CPM_ARGS

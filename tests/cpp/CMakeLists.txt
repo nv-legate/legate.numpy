@@ -48,7 +48,7 @@ file(GLOB integration_GPU_SRC ${PROJECT_SOURCE_DIR}/integration/*.cu)
 list(APPEND integration_SRC ${integration_GPU_SRC})
 
 if(NOT EXISTS ${CMAKE_BINARY_DIR}/RAPIDS.cmake)
-  file(DOWNLOAD https://raw.githubusercontent.com/rapidsai/rapids-cmake/branch-23.04/RAPIDS.cmake
+  file(DOWNLOAD https://raw.githubusercontent.com/rapidsai/rapids-cmake/v24.04.00/RAPIDS.cmake
        ${CMAKE_BINARY_DIR}/RAPIDS.cmake)
 endif()
 include(${CMAKE_BINARY_DIR}/RAPIDS.cmake)

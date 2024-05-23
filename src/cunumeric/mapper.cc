@@ -24,10 +24,10 @@ namespace cunumeric {
 
 CuNumericMapper::CuNumericMapper()
   : min_gpu_chunk(
-      extract_env("CUNUMERIC_MIN_GPU_CHUNK", MIN_GPU_CHUNK_DEFAULT, MIN_GPU_CHUNK_TEST)),
+      legate::detail::EnvironmentVariable<std::int64_t>("CUNUMERIC_MIN_GPU_CHUNK").get(MIN_GPU_CHUNK_DEFAULT, MIN_GPU_CHUNK_TEST)),
     min_cpu_chunk(
-      extract_env("CUNUMERIC_MIN_CPU_CHUNK", MIN_CPU_CHUNK_DEFAULT, MIN_CPU_CHUNK_TEST)),
-    min_omp_chunk(extract_env("CUNUMERIC_MIN_OMP_CHUNK", MIN_OMP_CHUNK_DEFAULT, MIN_OMP_CHUNK_TEST))
+      legate::detail::EnvironmentVariable<std::int64_t>("CUNUMERIC_MIN_CPU_CHUNK").get(MIN_CPU_CHUNK_DEFAULT, MIN_CPU_CHUNK_TEST)),
+    min_omp_chunk(legate::detail::EnvironmentVariable<std::int64_t>("CUNUMERIC_MIN_OMP_CHUNK").get(MIN_OMP_CHUNK_DEFAULT, MIN_OMP_CHUNK_TEST))
 {
 }
 
