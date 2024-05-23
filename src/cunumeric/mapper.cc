@@ -23,11 +23,12 @@ using namespace legate::mapping;
 namespace cunumeric {
 
 CuNumericMapper::CuNumericMapper()
-  : min_gpu_chunk(
-      legate::detail::EnvironmentVariable<std::int64_t>("CUNUMERIC_MIN_GPU_CHUNK").get(MIN_GPU_CHUNK_DEFAULT, MIN_GPU_CHUNK_TEST)),
-    min_cpu_chunk(
-      legate::detail::EnvironmentVariable<std::int64_t>("CUNUMERIC_MIN_CPU_CHUNK").get(MIN_CPU_CHUNK_DEFAULT, MIN_CPU_CHUNK_TEST)),
-    min_omp_chunk(legate::detail::EnvironmentVariable<std::int64_t>("CUNUMERIC_MIN_OMP_CHUNK").get(MIN_OMP_CHUNK_DEFAULT, MIN_OMP_CHUNK_TEST))
+  : min_gpu_chunk(legate::detail::EnvironmentVariable<std::int64_t>("CUNUMERIC_MIN_GPU_CHUNK")
+                    .get(MIN_GPU_CHUNK_DEFAULT, MIN_GPU_CHUNK_TEST)),
+    min_cpu_chunk(legate::detail::EnvironmentVariable<std::int64_t>("CUNUMERIC_MIN_CPU_CHUNK")
+                    .get(MIN_CPU_CHUNK_DEFAULT, MIN_CPU_CHUNK_TEST)),
+    min_omp_chunk(legate::detail::EnvironmentVariable<std::int64_t>("CUNUMERIC_MIN_OMP_CHUNK")
+                    .get(MIN_OMP_CHUNK_DEFAULT, MIN_OMP_CHUNK_TEST))
 {
 }
 
