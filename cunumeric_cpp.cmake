@@ -56,7 +56,7 @@ endif()
 # add third party dependencies using CPM
 rapids_cpm_init(OVERRIDE ${CMAKE_CURRENT_SOURCE_DIR}/cmake/versions.json)
 
-find_package(OpenMP)
+rapids_find_package(OpenMP GLOBAL_TARGETS OpenMP::OpenMP_CXX)
 
 option(Legion_USE_CUDA "Use CUDA" ON)
 option(Legion_USE_OpenMP "Use OpenMP" ${OpenMP_FOUND})

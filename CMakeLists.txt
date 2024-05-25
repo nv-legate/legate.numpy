@@ -44,8 +44,10 @@ endif()
 ##############################################################################
 # - Download and initialize RAPIDS CMake helpers -----------------------------
 
+set(rapids-cmake-version 24.04)
+set(rapids-cmake-sha "365322aca32fd6ecd7027f5d7ec7be50b7f3cc2a")
 if(NOT EXISTS ${CMAKE_BINARY_DIR}/RAPIDS.cmake)
-  file(DOWNLOAD https://raw.githubusercontent.com/rapidsai/rapids-cmake/v24.04.00/RAPIDS.cmake
+  file(DOWNLOAD https://raw.githubusercontent.com/rapidsai/rapids-cmake/branch-${rapids-cmake-version}/RAPIDS.cmake
        ${CMAKE_BINARY_DIR}/RAPIDS.cmake)
 endif()
 include(${CMAKE_BINARY_DIR}/RAPIDS.cmake)
