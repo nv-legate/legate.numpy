@@ -225,6 +225,21 @@ class TestNanArgReductions:
 
         settings.numpy_compat.unset_value()
 
+    @pytest.mark.parametrize("func_name", NAN_ARG_FUNCS)
+    def test_empty_arr(self, func_name: str) -> None:
+        a = []
+        in_np = np.array(a)
+        in_num = num.array(a)
+        func_np = getattr(np, func_name)
+        func_num = getattr(num, func_name)
+        with pytest.raises(ValueError, match="All-NaN"):
+            func_np(in_np)
+            # ValueError: All-NaN slice encountered
+        with pytest.raises(ValueError, match=" empty sequence"):
+            func_num(in_num)
+            # ValueError: attempt to get nanargmax of an empty sequence
+            # ValueError: attempt to get nanargmin of an empty sequence
+
 
 class TestXFail:
     """
