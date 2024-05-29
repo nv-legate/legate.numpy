@@ -1122,6 +1122,20 @@ class ndarray:
 
         return left_shift(self, rhs, out=self)
 
+    def __imatmul__(self, rhs: Any) -> ndarray:
+        """a.__imatmul__(value, /)
+
+        Return ``self@=value``.
+
+        Availability
+        --------
+        Multiple GPUs, Multiple CPUs
+
+        """
+        from .module import matmul
+
+        return matmul(self, rhs, out=self)
+
     def __imod__(self, rhs: Any) -> ndarray:
         """a.__imod__(value, /)
 
@@ -1329,7 +1343,9 @@ class ndarray:
         Multiple GPUs, Multiple CPUs
 
         """
-        return self.dot(value)
+        from .module import matmul
+
+        return matmul(self, value)
 
     def __mod__(self, rhs: Any) -> ndarray:
         """a.__mod__(value, /)
@@ -1550,6 +1566,20 @@ class ndarray:
         from ._ufunc import floor_divide
 
         return floor_divide(lhs, self)
+
+    def __rmatmul__(self, lhs: Any) -> ndarray:
+        """a.__rmatmul__(value, /)
+
+        Return ``value@self``.
+
+        Availability
+        --------
+        Multiple GPUs, Multiple CPUs
+
+        """
+        from .module import matmul
+
+        return matmul(lhs, self)
 
     def __rmod__(self, lhs: Any) -> ndarray:
         """a.__rmod__(value, /)
