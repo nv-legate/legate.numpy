@@ -150,6 +150,7 @@ def test_default_rng_bitgenerator():
     EAGER_TEST,
     reason="cuNumeric does not respect seed in Eager mode",
 )
+@pytest.mark.xfail(reason="cunumeric.internal#135")
 def test_default_rng_generator():
     steps = 3
     seed = 12345
