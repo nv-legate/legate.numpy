@@ -55,63 +55,29 @@ jobs:
       build-mode: ""
       ucx-enabled: false
       upload-enabled: ${{ inputs.upload-enabled }}
-
     secrets: inherit
 
-    
+
   upload:
     needs: build
-    runs-on: linux-amd64-gpu-v100-earliest-1
-    container:
-      options: -u root
-      image: condaforge/miniforge3:latest
-  
-    if: ${{ github.repository_owner == 'nv-legate' && inputs.upload-enabled == true }}
-    steps:
-      - name: Set environment variables
-        shell: bash --noprofile --norc -xeuo pipefail {0}
-        run: |
-          UCX_STR=''
-          BUILD_MODE=''
-          BUILD_MODE_STR=""
-          [ -n "${BUILD_MODE}" ] && BUILD_MODE_STR="-${BUILD_MODE}"
-  
-          echo "ARTIFACT_NAME=${{ inputs.platform }}-${{ inputs.build-type }}-${{ github.event.repository.name }}-${{ inputs.target-device }}${BUILD_MODE_STR}${UCX_STR}-${{ github.sha }}" >> $GITHUB_ENV
-          echo "ARTIFACTS_DIR=${{ github.workspace }}/artifacts"  >> $GITHUB_ENV
-          echo "OUTPUT_FOLDER=conda-build/cunumeric" >> $GITHUB_ENV
-          echo "TARGET_PLATFORM=linux-64" >> $GITHUB_ENV
-  
-      - name: Download build artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: ${{ env.ARTIFACT_NAME }}
-          path: ${{ env.ARTIFACTS_DIR }}
-  
-      - name: Display structure of downloaded artifacts
-        run: |
-          ls -aR $ARTIFACTS_DIR
-
-      - name: Get Build Date
-        run: |
-          echo "BUILD_DATE=$(date +%Y%m%d)" >> $GITHUB_ENV
-
-      - name: Dump relevant environment variables
-        run: |
-          echo "ARTIFACTS_DIR=$ARTIFACTS_DIR" 
-          echo "ARTIFACT_NAME=$ARTIFACT_NAME" 
-          echo "TARGET_PLATFORM=$TARGET_PLATFORM"
-          echo "BUILD_DATE=$BUILD_DATE"
-
-      - name: Upload to URM
-        run: |
-          apt-get update
-          apt-get install -y curl
-          for f in $(find $ARTIFACTS_DIR/$OUTPUT_FOLDER/$TARGET_PLATFORM/. -name 'cunumeric-*.tar.bz2')
-          do
-            fname=$(basename $f)
-            echo "File to upload: $fname"
-            curl -usvc-legate-github:${{ secrets.URM_ARTIFACT_TOKEN }} -T $f "https://urm.nvidia.com/artifactory/sw-legate-conda-local/${TARGET_PLATFORM}/$fname;buildType="Nightly";buildDate=$BUILD_DATE;automatedTestingPassed=0;sha=${{ github.sha }}";
-          done
+    if: ${{ github.repository_owner == 'nv-legate' && contains(github.workflow, 'release') && inputs.upload-enabled == true }}
+    name: Upload package to Server
+    uses:
+      nv-legate/legate-gh-ci/.github/workflows/gh-upload.yml@v1.4
+    with:
+      client-repo: ${{ github.event.repository.name }}
+      build-type: ${{ inputs.build-type }}
+      name: Upload package to Server
+      target-device: ${{ inputs.target-device }}
+      platform: ${{ inputs.platform }}
+      legate-gh-ci-tag: "v1.4"
+      build-mode: ""
+      ucx-enabled: false
+      upload-enabled: ${{ inputs.upload-enabled }}
+      upload-action: "upload-package"
+      pkgSubString: "cunumeric-"
+      repos-Root: "cunumeric"
+    secrets: inherit    
 
   setup-test:
     if: inputs.upload-enabled == false
@@ -195,4 +161,25 @@ jobs:
       build-mode: ""
       ucx-enabled: false
       upload-enabled: ${{ inputs.upload-enabled }}
+    secrets: inherit
+
+  updateTestStatus:
+    needs: test
+    name: Update Test status on Server
+    if: ${{ (github.repository_owner == 'nv-legate') && contains(github.workflow, 'Nightly') && (inputs.upload-enabled == true) }}
+    uses:
+      nv-legate/legate-gh-ci/.github/workflows/gh-upload.yml@v1.4
+    with:
+      client-repo: ${{ github.event.repository.name }}
+      build-type: ${{ inputs.build-type }}
+      name: UpdateTestStatus
+      target-device: ${{ inputs.target-device }}
+      platform: ${{ inputs.platform }}
+      legate-gh-ci-tag: "v1.4"
+      build-mode: ""
+      ucx-enabled: false
+      upload-enabled: true
+      upload-action: "update-test-status"
+      pkgSubString: "cunumeric-"
+      repos-Root: "cunumeric"  
     secrets: inherit
