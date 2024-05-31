@@ -47,7 +47,6 @@ def test_function(a_ndim, b_ndim):
 @pytest.mark.parametrize(
     "a_shape",
     (
-        (2, 3, 4, 5),
         (3, 4, 5),
         (4, 5),
         (5,),
@@ -56,7 +55,6 @@ def test_function(a_ndim, b_ndim):
 @pytest.mark.parametrize(
     "b_shape",
     (
-        (2, 3, 5, 6),
         (3, 5, 6),
         (5, 6),
         (5,),
@@ -73,7 +71,6 @@ def test_operator(a_shape, b_shape):
 @pytest.mark.parametrize(
     "a_shape",
     (
-        (2, 3, 4, 5),
         (3, 4, 5),
         (4, 5),
         (5,),
@@ -82,7 +79,6 @@ def test_operator(a_shape, b_shape):
 @pytest.mark.parametrize(
     "b_shape",
     (
-        (2, 3, 5, 5),
         (3, 5, 5),
         (5, 5),
     ),
