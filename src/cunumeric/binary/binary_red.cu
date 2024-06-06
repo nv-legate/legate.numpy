@@ -82,7 +82,7 @@ struct BinaryRedImplBody<VariantKind::GPU, OP_CODE, CODE, DIM> {
     }
 
     copy_kernel<<<1, 1, 0, stream>>>(result, out);
-    LegateCheckCUDAStream(stream);
+    CUNUMERIC_CHECK_CUDA_STREAM(stream);
   }
 };
 

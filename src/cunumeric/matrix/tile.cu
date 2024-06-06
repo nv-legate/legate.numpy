@@ -53,7 +53,7 @@ struct TileImplBody<VariantKind::GPU, VAL, OUT_DIM, IN_DIM> {
     auto stream         = get_cached_stream();
     tile_kernel<VAL, OUT_DIM, IN_DIM><<<blocks, THREADS_PER_BLOCK, 0, stream>>>(
       out_rect, out_pitches, out_volume, in_strides, out, in);
-    LegateCheckCUDAStream(stream);
+    CUNUMERIC_CHECK_CUDA_STREAM(stream);
   }
 };
 

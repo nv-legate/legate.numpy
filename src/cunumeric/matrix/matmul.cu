@@ -68,7 +68,7 @@ struct MatMulImplBody<VariantKind::GPU, Type::Code::FLOAT32> {
                                CUDA_R_32F,
                                lhs_stride));
 
-    LegateCheckCUDAStream(task_stream);
+    CUNUMERIC_CHECK_CUDA_STREAM(task_stream);
   }
 };
 
@@ -109,7 +109,7 @@ struct MatMulImplBody<VariantKind::GPU, Type::Code::FLOAT64> {
                              lhs,
                              lhs_stride));
 
-    LegateCheckCUDAStream(task_stream);
+    CUNUMERIC_CHECK_CUDA_STREAM(task_stream);
   }
 };
 
@@ -153,7 +153,7 @@ struct MatMulImplBody<VariantKind::GPU, Type::Code::FLOAT16> {
                                CUDA_R_32F,
                                lhs_stride));
 
-    LegateCheckCUDAStream(task_stream);
+    CUNUMERIC_CHECK_CUDA_STREAM(task_stream);
   }
 };
 
@@ -201,7 +201,7 @@ struct MatMulImplBody<VariantKind::GPU, Type::Code::COMPLEX64> {
                                CUDA_C_32F,
                                lhs_stride));
 
-    LegateCheckCUDAStream(task_stream);
+    CUNUMERIC_CHECK_CUDA_STREAM(task_stream);
   }
 };
 
@@ -246,7 +246,7 @@ struct MatMulImplBody<VariantKind::GPU, Type::Code::COMPLEX128> {
                              lhs,
                              lhs_stride));
 
-    LegateCheckCUDAStream(task_stream);
+    CUNUMERIC_CHECK_CUDA_STREAM(task_stream);
   }
 };
 

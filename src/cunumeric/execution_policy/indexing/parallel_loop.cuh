@@ -48,7 +48,7 @@ struct ParallelLoopPolicy<VariantKind::GPU, Tag> {
     parallel_loop_kernel<<<blocks, THREADS_PER_BLOCK, 1, stream>>>(
       volume, std::forward<KERNEL>(kernel), Tag{});
 
-    LegateCheckCUDAStream(stream);
+    CUNUMERIC_CHECK_CUDA_STREAM(stream);
   }
 };
 

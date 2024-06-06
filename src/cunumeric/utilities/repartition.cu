@@ -439,7 +439,7 @@ std::tuple<Buffer<VAL>, size_t, size_t> repartition_matrix_2dbc(const VAL* input
       recv_info.ptr(r * stored_size_per_rank), stored_size_per_rank, ncclUint64, r, *comm, stream));
   }
   CHECK_NCCL(ncclGroupEnd());
-  LegateCheckCUDA(cudaStreamSynchronize(stream));  // need Z-copy synchronized to Host
+  CUNUMERIC_CHECK_CUDA(cudaStreamSynchronize(stream));  // need Z-copy synchronized to Host
 
   // allocate send/recv buffer
   std::vector<Buffer<VAL>> send_buffers;
@@ -499,11 +499,11 @@ std::tuple<Buffer<VAL>, size_t, size_t> repartition_matrix_2dbc(const VAL* input
                                                     p_c,
                                                     tile_r,
                                                     tile_c);
-    LegateCheckCUDA(cudaStreamSynchronize(stream));
+    CUNUMERIC_CHECK_CUDA(cudaStreamSynchronize(stream));
     send_buffers_ptr.destroy();
   }
 
-  LegateCheckCUDAStream(stream);
+  CUNUMERIC_CHECK_CUDA_STREAM(stream);
 
   // all2all data
   CHECK_NCCL(ncclGroupStart());
@@ -550,11 +550,11 @@ std::tuple<Buffer<VAL>, size_t, size_t> repartition_matrix_2dbc(const VAL* input
                                                                        tile_c,
                                                                        (size_t)nccl_rank,
                                                                        num_ranks);
-    LegateCheckCUDA(cudaStreamSynchronize(stream));
+    CUNUMERIC_CHECK_CUDA(cudaStreamSynchronize(stream));
     recv_buffers_ptr.destroy();
   }
 
-  LegateCheckCUDAStream(stream);
+  CUNUMERIC_CHECK_CUDA_STREAM(stream);
 
   recv_info.destroy();
   for (auto&& buf : recv_buffers) {
@@ -610,7 +610,7 @@ void repartition_matrix_block(
     offsets[2 * local_rank + 1] = num_target_cols > 0 ? target_offset_c + num_target_cols : 0;
     CHECK_NCCL(
       ncclAllGather(offsets.ptr(2 * local_rank), offsets.ptr(0), 2, ncclUint64, *comm, stream));
-    LegateCheckCUDA(cudaStreamSynchronize(stream));
+    CUNUMERIC_CHECK_CUDA(cudaStreamSynchronize(stream));
 
     // re-arrange so that all row offsets come first
     for (size_t i = 1; i < num_ranks; i += 2) {
@@ -805,7 +805,7 @@ void repartition_matrix_block(
                                                                              tile_r,
                                                                              tile_c);
 
-    LegateCheckCUDA(cudaStreamSynchronize(stream));
+    CUNUMERIC_CHECK_CUDA(cudaStreamSynchronize(stream));
     send_buffers_ptr.destroy();
   }
   // we can destroy the input once we distributed data into the buffers
@@ -904,11 +904,11 @@ void repartition_matrix_block(
                                                                p_c,
                                                                tile_r,
                                                                tile_c);
-    LegateCheckCUDA(cudaStreamSynchronize(stream));
+    CUNUMERIC_CHECK_CUDA(cudaStreamSynchronize(stream));
     recv_buffers_ptr.destroy();
   }
 
-  LegateCheckCUDAStream(stream);
+  CUNUMERIC_CHECK_CUDA_STREAM(stream);
 
   // cleanup
   offsets_r.destroy();

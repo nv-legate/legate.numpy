@@ -39,7 +39,7 @@ static inline void gemm_template(
 
   CHECK_CUBLAS(gemm(context, transa, transb, m, n, k, &alpha, rhs1, m, rhs2, n, &beta, lhs, m));
 
-  LegateCheckCUDAStream(stream);
+  CUNUMERIC_CHECK_CUDA_STREAM(stream);
 }
 
 template <typename Gemm, typename VAL, typename CTOR>
@@ -58,7 +58,7 @@ static inline void complex_gemm_template(
 
   CHECK_CUBLAS(gemm(context, transa, transb, m, n, k, &alpha, rhs1, m, rhs2, n, &beta, lhs, m));
 
-  LegateCheckCUDAStream(stream);
+  CUNUMERIC_CHECK_CUDA_STREAM(stream);
 }
 
 template <>

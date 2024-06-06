@@ -77,7 +77,7 @@ static inline void mp_potrf_template(
 
   // TODO: We need a deferred exception to avoid this synchronization
   CHECK_CAL(cal_stream_sync(comm, stream));
-  LegateCheckCUDAStream(stream);
+  CUNUMERIC_CHECK_CUDA_STREAM(stream);
 
   CHECK_CUSOLVER(cusolverMpDestroyMatrixDesc(desc));
   CHECK_CUSOLVER(cusolverMpDestroyGrid(grid));

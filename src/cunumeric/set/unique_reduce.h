@@ -26,7 +26,7 @@ class UniqueReduceTask : public CuNumericTask<UniqueReduceTask> {
 
  public:
   static void cpu_variant(legate::TaskContext context);
-#if LegateDefined(LEGATE_USE_OPENMP)
+#if LEGATE_DEFINED(LEGATE_USE_OPENMP)
   static void omp_variant(legate::TaskContext context);
 #endif
 };

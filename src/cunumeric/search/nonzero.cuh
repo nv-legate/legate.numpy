@@ -78,7 +78,7 @@ int64_t compute_offsets(const AccessorRO<VAL, DIM>& in,
 
   exclusive_sum(p_offsets, volume, stream);
 
-  LegateCheckCUDAStream(stream);
+  CUNUMERIC_CHECK_CUDA_STREAM(stream);
   return size.read(stream);
 }
 

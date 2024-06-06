@@ -82,7 +82,7 @@ struct ChooseImplBody<VariantKind::GPU, CODE, DIM> {
       choose_kernel<VAL, DIM>
         <<<blocks, THREADS_PER_BLOCK, 0, stream>>>(out, index_arr, ch_arr, rect, pitches, volume);
     }
-    LegateCheckCUDAStream(stream);
+    CUNUMERIC_CHECK_CUDA_STREAM(stream);
   }
 };
 

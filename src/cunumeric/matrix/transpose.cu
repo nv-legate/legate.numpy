@@ -99,7 +99,7 @@ struct TransposeImplBody<VariantKind::GPU, CODE> {
 
     auto stream = get_cached_stream();
     transpose_2d_physical<VAL><<<blocks, threads, 0, stream>>>(out, in, rect.lo, rect.hi);
-    LegateCheckCUDAStream(stream);
+    CUNUMERIC_CHECK_CUDA_STREAM(stream);
   }
 };
 

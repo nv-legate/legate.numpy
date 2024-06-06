@@ -39,7 +39,7 @@ static inline void trsm_template(
 
   CHECK_CUBLAS(trsm(context, side, uplo, transa, diag, m, n, &alpha, rhs, n, lhs, m));
 
-  LegateCheckCUDAStream(stream);
+  CUNUMERIC_CHECK_CUDA_STREAM(stream);
 }
 
 template <>

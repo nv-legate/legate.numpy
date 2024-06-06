@@ -41,7 +41,7 @@ struct WrapImpl {
       return;
     }
 
-#if !LegateDefined(LEGATE_BOUNDS_CHECKS)
+#if !LEGATE_DEFINED(LEGATE_BOUNDS_CHECKS)
     bool dense = out.accessor.is_dense_row_major(rect_out);
 #else
     bool dense = false;

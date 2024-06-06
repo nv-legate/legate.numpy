@@ -25,7 +25,7 @@ class MpSolveTask : public CuNumericTask<MpSolveTask> {
   static const int TASK_ID = CUNUMERIC_MP_SOLVE;
 
  public:
-#if LegateDefined(LEGATE_USE_CUDA)
+#if LEGATE_DEFINED(LEGATE_USE_CUDA)
   static void gpu_variant(legate::TaskContext context);
 #endif
 };

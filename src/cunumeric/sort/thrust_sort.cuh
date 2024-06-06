@@ -48,12 +48,12 @@ void thrust_local_sort(const VAL* values_in,
 
   if (values_in != values_out) {
     // not in-place --> need a copy
-    LegateCheckCUDA(cudaMemcpyAsync(
+    CUNUMERIC_CHECK_CUDA(cudaMemcpyAsync(
       values_out, values_in, sizeof(VAL) * volume, cudaMemcpyDeviceToDevice, stream));
   }
   if (indices_in != indices_out) {
     // not in-place --> need a copy
-    LegateCheckCUDA(cudaMemcpyAsync(
+    CUNUMERIC_CHECK_CUDA(cudaMemcpyAsync(
       indices_out, values_in, sizeof(int64_t) * volume, cudaMemcpyDeviceToDevice, stream));
   }
 

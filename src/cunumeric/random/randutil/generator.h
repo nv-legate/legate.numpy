@@ -137,7 +137,7 @@ curandStatus_t dispatch(randutilimpl::basegenerator* gen, func_t func, size_t N,
   switch (gen->location()) {
     case randutilimpl::execlocation::HOST:
       return dispatcher<randutilimpl::execlocation::HOST, func_t, out_t>::run(gen, func, N, out);
-#if LegateDefined(LEGATE_USE_CUDA)
+#if LEGATE_DEFINED(LEGATE_USE_CUDA)
     case randutilimpl::execlocation::DEVICE:
       return dispatcher<randutilimpl::execlocation::DEVICE, func_t, out_t>::run(gen, func, N, out);
 #endif

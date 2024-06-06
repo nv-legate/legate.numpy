@@ -17,7 +17,7 @@
 #include "cunumeric/matrix/transpose.h"
 #include "cunumeric/matrix/transpose_template.inl"
 
-#if LegateDefined(LEGATE_USE_OPENMP)
+#if LEGATE_DEFINED(LEGATE_USE_OPENMP)
 #include "omp.h"
 #endif
 #include "cblas.h"
@@ -51,7 +51,7 @@ struct TransposeImplBody<VariantKind::CPU, CODE> {
 
 /*static*/ void TransposeTask::cpu_variant(TaskContext context)
 {
-#if LegateDefined(LEGATE_USE_OPENMP)
+#if LEGATE_DEFINED(LEGATE_USE_OPENMP)
   openblas_set_num_threads(1);  // make sure this isn't overzealous
 #endif
   transpose_template<VariantKind::CPU>(context);

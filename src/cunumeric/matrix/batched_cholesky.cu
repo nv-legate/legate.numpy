@@ -101,7 +101,7 @@ struct BatchedTransposeImplBody<VariantKind::GPU, CODE> {
     // the lower diagonal
     transpose_2d_lower<VAL><<<blocks, threads, 0, stream>>>(out, n);
 
-    LegateCheckCUDAStream(stream);
+    CUNUMERIC_CHECK_CUDA_STREAM(stream);
   }
 };
 

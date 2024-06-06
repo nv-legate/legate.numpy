@@ -52,8 +52,9 @@ static inline void qr_template(GeqrfBufferSize geqrf_buffer_size,
     q_tmp       = q_copy.ptr(0);
   }
 
-  LegateCheckCUDA(cudaMemcpyAsync(q_tmp, a, sizeof(VAL) * m * n, cudaMemcpyDeviceToDevice, stream));
-  LegateCheckCUDA(cudaStreamSynchronize(stream));
+  CUNUMERIC_CHECK_CUDA(
+    cudaMemcpyAsync(q_tmp, a, sizeof(VAL) * m * n, cudaMemcpyDeviceToDevice, stream));
+  CUNUMERIC_CHECK_CUDA(cudaStreamSynchronize(stream));
 
   CHECK_CUSOLVER(cusolverDnSetStream(handle, stream));
 
@@ -70,27 +71,27 @@ static inline void qr_template(GeqrfBufferSize geqrf_buffer_size,
 
   CHECK_CUSOLVER(
     geqrf(handle, m, n, q_tmp, m, tau.ptr(0), buffer.ptr(0), lwork_total, info.ptr(0)));
-  LegateCheckCUDA(cudaStreamSynchronize(stream));
+  CUNUMERIC_CHECK_CUDA(cudaStreamSynchronize(stream));
 
   if (info[0] != 0) {
     throw legate::TaskException(QrTask::ERROR_MESSAGE);
   }
 
   // extract R from upper triangular of geqrf result
-  LegateCheckCUDA(cudaMemsetAsync(r, 0, k * n * sizeof(VAL), stream));
+  CUNUMERIC_CHECK_CUDA(cudaMemsetAsync(r, 0, k * n * sizeof(VAL), stream));
   for (int i = 0; i < k; ++i) {
     int elements = i + 1;
     if (i == k - 1 && n > k) {
       elements = k * (n - k + 1);
     }
-    LegateCheckCUDA(cudaMemcpyAsync(
+    CUNUMERIC_CHECK_CUDA(cudaMemcpyAsync(
       r + i * k, q_tmp + i * m, sizeof(VAL) * elements, cudaMemcpyDeviceToDevice, stream));
   }
 
   // assemble Q
   CHECK_CUSOLVER(
     orgqr(handle, m, k, k, q_tmp, m, tau.ptr(0), buffer.ptr(0), lwork_total, info.ptr(0)));
-  LegateCheckCUDA(cudaStreamSynchronize(stream));
+  CUNUMERIC_CHECK_CUDA(cudaStreamSynchronize(stream));
 
   if (info[0] != 0) {
     throw legate::TaskException(QrTask::ERROR_MESSAGE);
@@ -99,11 +100,11 @@ static inline void qr_template(GeqrfBufferSize geqrf_buffer_size,
   // if we used a tmp storage we still need to copy back Q
   if (q_tmp != q) {
     assert(n > m);
-    LegateCheckCUDA(
+    CUNUMERIC_CHECK_CUDA(
       cudaMemcpyAsync(q, q_tmp, sizeof(VAL) * m * m, cudaMemcpyDeviceToDevice, stream));
   }
 
-  LegateCheckCUDAStream(stream);
+  CUNUMERIC_CHECK_CUDA_STREAM(stream);
 
 #ifdef DEBUG_CUNUMERIC
   assert(info[0] == 0);

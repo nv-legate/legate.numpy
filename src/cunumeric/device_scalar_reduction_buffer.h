@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "core/cuda/cuda.h"
+#include "cunumeric/cuda_help.h"
 #include "core/data/buffer.h"
 
 namespace cunumeric {
@@ -32,7 +32,8 @@ class DeviceScalarReductionBuffer {
   {
     VAL identity{REDOP::identity};
     ptr_ = buffer_.ptr(0);
-    LegateCheckCUDA(cudaMemcpyAsync(ptr_, &identity, sizeof(VAL), cudaMemcpyHostToDevice, stream));
+    CUNUMERIC_CHECK_CUDA(
+      cudaMemcpyAsync(ptr_, &identity, sizeof(VAL), cudaMemcpyHostToDevice, stream));
   }
 
   template <bool EXCLUSIVE>
@@ -44,8 +45,9 @@ class DeviceScalarReductionBuffer {
   __host__ VAL read(cudaStream_t stream) const
   {
     VAL result{REDOP::identity};
-    LegateCheckCUDA(cudaMemcpyAsync(&result, ptr_, sizeof(VAL), cudaMemcpyDeviceToHost, stream));
-    LegateCheckCUDA(cudaStreamSynchronize(stream));
+    CUNUMERIC_CHECK_CUDA(
+      cudaMemcpyAsync(&result, ptr_, sizeof(VAL), cudaMemcpyDeviceToHost, stream));
+    CUNUMERIC_CHECK_CUDA(cudaStreamSynchronize(stream));
     return result;
   }
 

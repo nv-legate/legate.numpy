@@ -17,13 +17,12 @@
 #pragma once
 
 #include "legate.h"
-#include "core/cuda/cuda.h"
 #include "core/cuda/stream_pool.h"
 #include "cunumeric/arg.h"
 #include "cunumeric/device_scalar_reduction_buffer.h"
 #include <cublas_v2.h>
 #include <cusolverDn.h>
-#if LegateDefined(CUNUMERIC_USE_CUSOLVERMP)
+#if LEGATE_DEFINED(CUNUMERIC_USE_CUSOLVERMP)
 #include <cusolverMp.h>
 #include <cal.h>
 #endif
@@ -74,6 +73,22 @@
     ncclResult_t result = (expr);           \
     check_nccl(result, __FILE__, __LINE__); \
   } while (false)
+
+#define CUNUMERIC_CHECK_CUDA(...)           \
+  do {                                      \
+    cudaError_t result = __VA_ARGS__;       \
+    check_cuda(result, __FILE__, __LINE__); \
+  } while (false)
+
+#ifdef DEBUG_CUNUMERIC
+#define CUNUMERIC_CHECK_CUDA_STREAM(stream)              \
+  do {                                                   \
+    CUNUMERIC_CHECK_CUDA(cudaStreamSynchronize(stream)); \
+    CUNUMERIC_CHECK_CUDA(cudaPeekAtLastError());         \
+  } while (false)
+#else
+#define CUNUMERIC_CHECK_CUDA_STREAM(stream) static_cast<void>(stream)
+#endif
 
 #ifndef MAX
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))
@@ -174,11 +189,28 @@ int get_device_ordinal();
 const cudaDeviceProp& get_device_properties();
 cublasHandle_t get_cublas();
 cusolverDnHandle_t get_cusolver();
-#if LegateDefined(CUNUMERIC_USE_CUSOLVERMP)
+#if LEGATE_DEFINED(CUNUMERIC_USE_CUSOLVERMP)
 cusolverMpHandle_t get_cusolvermp();
 #endif
 cutensorHandle_t* get_cutensor();
 cufftContext get_cufft_plan(cufftType type, const cufftPlanParams& params);
+
+__host__ inline void check_cuda(cublasStatus_t status, const char* file, int line)
+{
+  if (error != cudaSuccess) {
+    fprintf(stderr,
+            "Internal CUDA failure with error %s (%s) in file %s at line %d\n",
+            cudaGetErrorString(error),
+            cudaGetErrorName(error),
+            file,
+            line);
+#ifdef DEBUG_CUNUMERIC
+    assert(false);
+#else
+    exit(status);
+#endif
+  }
+}
 
 __host__ inline void check_cublas(cublasStatus_t status, const char* file, int line)
 {
@@ -228,7 +260,7 @@ __host__ inline void check_cusolver(cusolverStatus_t status, const char* file, i
   }
 }
 
-#if LegateDefined(CUNUMERIC_USE_CUSOLVERMP)
+#if LEGATE_DEFINED(CUNUMERIC_USE_CUSOLVERMP)
 __host__ inline void check_cal(calError_t status, const char* file, int line)
 {
   if (status != CAL_OK) {

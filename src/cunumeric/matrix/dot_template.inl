@@ -59,7 +59,7 @@ struct DotImpl {
       return;
     }
 
-#if !LegateDefined(LEGATE_BOUNDS_CHECKS)
+#if !LEGATE_DEFINED(LEGATE_BOUNDS_CHECKS)
     // Check to see if this is dense or not
     bool dense = rhs1.accessor.is_dense_row_major(rect) && rhs2.accessor.is_dense_row_major(rect);
 #else

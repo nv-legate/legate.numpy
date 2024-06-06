@@ -38,7 +38,7 @@ struct CUDALibraries {
   const cudaDeviceProp& get_device_properties();
   cublasHandle_t get_cublas();
   cusolverDnHandle_t get_cusolver();
-#if LegateDefined(CUNUMERIC_USE_CUSOLVERMP)
+#if LEGATE_DEFINED(CUNUMERIC_USE_CUSOLVERMP)
   cusolverMpHandle_t get_cusolvermp();
 #endif
   cutensorHandle_t* get_cutensor();
@@ -47,7 +47,7 @@ struct CUDALibraries {
  private:
   void finalize_cublas();
   void finalize_cusolver();
-#if LegateDefined(CUNUMERIC_USE_CUSOLVERMP)
+#if LEGATE_DEFINED(CUNUMERIC_USE_CUSOLVERMP)
   void finalize_cusolvermp();
 #endif
   void finalize_cutensor();
@@ -58,7 +58,7 @@ struct CUDALibraries {
   std::unique_ptr<cudaDeviceProp> device_prop_{};
   cublasContext* cublas_;
   cusolverDnContext* cusolver_;
-#if LegateDefined(CUNUMERIC_USE_CUSOLVERMP)
+#if LEGATE_DEFINED(CUNUMERIC_USE_CUSOLVERMP)
   cusolverMpHandle* cusolvermp_;
 #endif
   cutensorHandle_t* cutensor_;

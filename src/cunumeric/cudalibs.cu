@@ -271,7 +271,7 @@ CUDALibraries::CUDALibraries()
   : finalized_(false),
     cublas_(nullptr),
     cusolver_(nullptr),
-#if LegateDefined(CUNUMERIC_USE_CUSOLVERMP)
+#if LEGATE_DEFINED(CUNUMERIC_USE_CUSOLVERMP)
     cusolvermp_(nullptr),
 #endif
     cutensor_(nullptr),
@@ -292,7 +292,7 @@ void CUDALibraries::finalize()
   if (cusolver_ != nullptr) {
     finalize_cusolver();
   }
-#if LegateDefined(CUNUMERIC_USE_CUSOLVERMP)
+#if LEGATE_DEFINED(CUNUMERIC_USE_CUSOLVERMP)
   if (cusolvermp_ != nullptr) {
     finalize_cusolvermp();
   }
@@ -318,7 +318,7 @@ void CUDALibraries::finalize_cusolver()
   cusolver_ = nullptr;
 }
 
-#if LegateDefined(CUNUMERIC_USE_CUSOLVERMP)
+#if LEGATE_DEFINED(CUNUMERIC_USE_CUSOLVERMP)
 void CUDALibraries::finalize_cusolvermp()
 {
   CHECK_CUSOLVER(cusolverMpDestroy(cusolvermp_));
@@ -338,7 +338,7 @@ int CUDALibraries::get_device_ordinal()
     return *ordinal_;
   }
   int ordinal{-1};
-  LegateCheckCUDA(cudaGetDevice(&ordinal));
+  CUNUMERIC_CHECK_CUDA(cudaGetDevice(&ordinal));
   ordinal_ = ordinal;
   return ordinal;
 }
@@ -349,7 +349,7 @@ const cudaDeviceProp& CUDALibraries::get_device_properties()
     return *device_prop_;
   }
   device_prop_ = std::make_unique<cudaDeviceProp>();
-  LegateCheckCUDA(cudaGetDeviceProperties(device_prop_.get(), get_device_ordinal()));
+  CUNUMERIC_CHECK_CUDA(cudaGetDeviceProperties(device_prop_.get(), get_device_ordinal()));
   return *device_prop_;
 }
 
@@ -377,12 +377,12 @@ cusolverDnHandle_t CUDALibraries::get_cusolver()
   return cusolver_;
 }
 
-#if LegateDefined(CUNUMERIC_USE_CUSOLVERMP)
+#if LEGATE_DEFINED(CUNUMERIC_USE_CUSOLVERMP)
 cusolverMpHandle_t CUDALibraries::get_cusolvermp()
 {
   if (nullptr == cusolvermp_) {
     int device = -1;
-    LegateCheckCUDA(cudaGetDevice(&device));
+    CUNUMERIC_CHECK_CUDA(cudaGetDevice(&device));
     CHECK_CUSOLVER(cusolverMpCreate(&cusolvermp_, device, get_cached_stream()));
   }
   return cusolvermp_;
@@ -442,7 +442,7 @@ cusolverDnContext* get_cusolver()
   return lib.get_cusolver();
 }
 
-#if LegateDefined(CUNUMERIC_USE_CUSOLVERMP)
+#if LEGATE_DEFINED(CUNUMERIC_USE_CUSOLVERMP)
 cusolverMpHandle* get_cusolvermp()
 {
   const auto proc = legate::Processor::get_executing_processor();
@@ -490,7 +490,7 @@ class LoadCUDALibsTask : public CuNumericTask<LoadCUDALibsTask> {
     auto& lib       = get_cuda_libraries(proc);
     lib.get_cublas();
     lib.get_cusolver();
-#if LegateDefined(CUNUMERIC_USE_CUSOLVERMP)
+#if LEGATE_DEFINED(CUNUMERIC_USE_CUSOLVERMP)
     lib.get_cusolvermp();
 #endif
     lib.get_cutensor();

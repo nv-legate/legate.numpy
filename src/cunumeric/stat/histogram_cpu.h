@@ -29,7 +29,7 @@
 #include <tuple>
 #include <vector>
 
-#include <core/cuda/cuda.h>
+#include "cunumeric/cuda_help.h"
 #include "cunumeric/stat/histogram_gen.h"
 
 namespace cunumeric {

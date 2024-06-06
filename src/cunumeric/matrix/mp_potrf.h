@@ -25,7 +25,7 @@ class MpPotrfTask : public CuNumericTask<MpPotrfTask> {
   static const int TASK_ID = CUNUMERIC_MP_POTRF;
 
  public:
-#if LegateDefined(LEGATE_USE_CUDA)
+#if LEGATE_DEFINED(LEGATE_USE_CUDA)
   static void gpu_variant(legate::TaskContext context);
 #endif
 };

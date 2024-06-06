@@ -79,7 +79,7 @@ struct ScanGlobalImplBody<VariantKind::GPU, OP_CODE, CODE, DIM> {
       scalar_kernel<<<blocks, THREADS_PER_BLOCK, 0, stream>>>(
         stride, func, &outptr[index], global_prefix);
     }
-    LegateCheckCUDAStream(stream);
+    CUNUMERIC_CHECK_CUDA_STREAM(stream);
   }
 };
 

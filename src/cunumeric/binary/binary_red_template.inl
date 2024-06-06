@@ -56,7 +56,7 @@ struct BinaryRedImpl {
     auto in1 = args.in1.read_accessor<ARG, DIM>(rect);
     auto in2 = args.in2.read_accessor<ARG, DIM>(rect);
 
-#if !LegateDefined(LEGATE_BOUNDS_CHECKS)
+#if !LEGATE_DEFINED(LEGATE_BOUNDS_CHECKS)
     // Check to see if this is dense or not
     bool dense = in1.accessor.is_dense_row_major(rect) && in2.accessor.is_dense_row_major(rect);
 #else

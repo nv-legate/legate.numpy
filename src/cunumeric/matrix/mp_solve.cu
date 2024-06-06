@@ -136,7 +136,7 @@ static inline void mp_solve_template(cal_comm_t comm,
 
   // TODO: We need a deferred exception to avoid this synchronization
   CHECK_CAL(cal_stream_sync(comm, stream));
-  LegateCheckCUDAStream(stream);
+  CUNUMERIC_CHECK_CUDA_STREAM(stream);
 
   CHECK_CUSOLVER(cusolverMpDestroyMatrixDesc(a_desc));
   CHECK_CUSOLVER(cusolverMpDestroyMatrixDesc(b_desc));

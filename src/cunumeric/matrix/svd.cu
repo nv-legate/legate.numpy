@@ -38,7 +38,7 @@ static inline void svd_template(DataType valTypeC,
   auto stream = get_cached_stream();
 
   auto a_copy = create_buffer<VAL>(m * n, Memory::Kind::GPU_FB_MEM);
-  LegateCheckCUDA(
+  CUNUMERIC_CHECK_CUDA(
     cudaMemcpyAsync(a_copy.ptr(0), a, m * n * sizeof(VAL), cudaMemcpyDeviceToDevice, stream));
 
   // a[m][n], u[m][m] s[k] vh[n][n]
@@ -94,13 +94,13 @@ static inline void svd_template(DataType valTypeC,
                                   lwork_host,
                                   info.ptr(0)));
 
-  LegateCheckCUDA(cudaStreamSynchronize(stream));
+  CUNUMERIC_CHECK_CUDA(cudaStreamSynchronize(stream));
 
   if (info[0] != 0) {
     throw legate::TaskException(SvdTask::ERROR_MESSAGE);
   }
 
-  LegateCheckCUDAStream(stream);
+  CUNUMERIC_CHECK_CUDA_STREAM(stream);
 
 #ifdef DEBUG_CUNUMERIC
   assert(info[0] == 0);

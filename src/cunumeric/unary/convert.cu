@@ -68,7 +68,7 @@ struct ConvertImplBody<VariantKind::GPU, NAN_OP, DST_TYPE, SRC_TYPE, DIM> {
       generic_kernel<<<blocks, THREADS_PER_BLOCK, 0, stream>>>(
         volume, func, out, in, pitches, rect);
     }
-    LegateCheckCUDAStream(stream);
+    CUNUMERIC_CHECK_CUDA_STREAM(stream);
   }
 };
 

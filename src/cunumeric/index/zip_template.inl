@@ -41,7 +41,7 @@ struct ZipImpl {
       return;
     }
 
-#if !LegateDefined(LEGATE_BOUNDS_CHECKS)
+#if !LEGATE_DEFINED(LEGATE_BOUNDS_CHECKS)
     bool dense = out.accessor.is_dense_row_major(out_rect);
 #else
     bool dense = false;
