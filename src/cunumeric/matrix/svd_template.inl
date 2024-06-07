@@ -116,10 +116,10 @@ struct SvdImpl {
 template <VariantKind KIND>
 static void svd_template(TaskContext& context)
 {
-  auto& a_array  = context.inputs()[0];
-  auto& u_array  = context.outputs()[0];
-  auto& s_array  = context.outputs()[1];
-  auto& vh_array = context.outputs()[2];
+  auto a_array  = context.input(0);
+  auto u_array  = context.output(0);
+  auto s_array  = context.output(1);
+  auto vh_array = context.output(2);
   type_dispatch(a_array.type().code(), SvdImpl<KIND>{}, a_array, u_array, s_array, vh_array);
 }
 

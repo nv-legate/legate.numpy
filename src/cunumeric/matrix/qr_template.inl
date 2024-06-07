@@ -93,9 +93,9 @@ struct QrImpl {
 template <VariantKind KIND>
 static void qr_template(TaskContext& context)
 {
-  auto& a_array = context.inputs()[0];
-  auto& q_array = context.outputs()[0];
-  auto& r_array = context.outputs()[1];
+  auto a_array = context.input(0);
+  auto q_array = context.output(0);
+  auto r_array = context.output(1);
   type_dispatch(a_array.type().code(), QrImpl<KIND>{}, a_array, q_array, r_array);
 }
 
