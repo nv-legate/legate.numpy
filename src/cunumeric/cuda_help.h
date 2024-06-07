@@ -19,7 +19,6 @@
 #include "legate.h"
 #include "core/cuda/stream_pool.h"
 #include "cunumeric/arg.h"
-#include "cunumeric/device_scalar_reduction_buffer.h"
 #include <cublas_v2.h>
 #include <cusolverDn.h>
 #if LEGATE_DEFINED(CUNUMERIC_USE_CUSOLVERMP)
@@ -96,6 +95,9 @@
 #ifndef MIN
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
 #endif
+
+// Must go here since it depends on CUNUMERIC_CHECK_CUDA(), which is defined in this header...
+#include "cunumeric/device_scalar_reduction_buffer.h"
 
 namespace cunumeric {
 
