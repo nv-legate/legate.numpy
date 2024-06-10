@@ -86,9 +86,6 @@ build:
     - SCCACHE_S3_KEY_PREFIX
     - AWS_ACCESS_KEY_ID
     - AWS_SECRET_ACCESS_KEY
-    - CMAKE_C_COMPILER_LAUNCHER
-    - CMAKE_CXX_COMPILER_LAUNCHER
-    - CMAKE_CUDA_COMPILER_LAUNCHER
 {% if not gpu_enabled_bool %}
     - CPU_ONLY=1
   track_features:
