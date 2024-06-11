@@ -12,12 +12,14 @@ Using cuNumeric you do things like run the final example of the
 `DGX SuperPOD`_ and achieve good weak scaling.
 
 .. toctree::
-  :maxdepth: 2
+  :maxdepth: 1
   :caption: Contents:
 
+  installation
   user/index
-  comparison/index
+  examples/index
   api/index
+  faqs
   developer/index
 
 .. toctree::

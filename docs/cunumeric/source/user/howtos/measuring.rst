@@ -1,23 +1,13 @@
-Project comparisons
-===================
-
-Here is a list of NumPy APIs and corresponding cuNumeric implementations.
-
-A dot in the cunumeric column denotes that cuNumeric implementation
-is not provided yet. We welcome contributions for these functions.
-
-NumPy vs cuNumeric APIs
------------------------
-
-.. comparison-table::
-
 .. _measuring api coverage:
 
-Measuring API coverage
-----------------------
+Measure API coverage
+====================
 
-When running applications that use cunumeric, various command line options may
-be used to generate coverage reports.
+cuNumeric does not currently implment all of NumPy's APIs. If necessary,
+cuNumeric will fall back to using NumPy directly to complete a compuation.
+When running applications that use cuNumeric, the command line options below
+may be used to generate coverage reports that show which APIs are implemented
+and optimized by cuNumeric and which APIs required falling back to NumPy.
 
 Overall coverage report
 ~~~~~~~~~~~~~~~~~~~~~~~
