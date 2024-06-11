@@ -29,7 +29,11 @@
 #include <tuple>
 #include <vector>
 
+#if LEGATE_DEFINED(LEGATE_USE_CUDA) and LEGATE_DEFINED(LEGATE_NVCC)
 #include "cunumeric/cuda_help.h"
+#else
+#define cudaStream_t std::int32_t
+#endif
 #include "cunumeric/stat/histogram_gen.h"
 
 namespace cunumeric {

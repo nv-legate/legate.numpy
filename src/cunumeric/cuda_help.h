@@ -17,6 +17,11 @@
 #pragma once
 
 #include "legate.h"
+
+#if !LEGATE_DEFINED(LEGATE_NVCC)
+#error "This header can only be included from .cu files"
+#endif
+
 #include "core/cuda/stream_pool.h"
 #include "cunumeric/arg.h"
 #include <cublas_v2.h>

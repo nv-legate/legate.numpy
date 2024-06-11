@@ -86,7 +86,7 @@ void histogram_weights(exe_policy_t exe_pol,
                        size_t n_intervals,             // |bins| - 1
                        weight_t* ptr_hist,             // result; pre-allocated, sz = n_intervals
                        weight_t* ptr_w     = nullptr,  // weights array, w
-                       cudaStream_t stream = nullptr)
+                       cudaStream_t stream = {})
 {
   alloc_t<offset_t, exe_policy_t> alloc_offsets;
   auto* ptr_offsets = alloc_offsets(exe_pol, n_intervals + 1);
@@ -129,7 +129,7 @@ void histogram_wrapper(exe_policy_t exe_pol,
                        const Rect<1>& weights_rect,
                        const AccessorRD<SumReduction<weight_t>, true, 1>& result,
                        const Rect<1>& result_rect,
-                       cudaStream_t stream = nullptr)
+                       cudaStream_t stream = {})
 {
   auto&& [src_size, src_copy, src_ptr] = accessors::make_accessor_copy(exe_pol, src, src_rect);
 
