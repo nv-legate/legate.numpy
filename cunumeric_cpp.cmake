@@ -534,3 +534,9 @@ rapids_export(
   NAMESPACE cunumeric::
   DOCUMENTATION doc_string
   FINAL_CODE_BLOCK code_string)
+
+if(cunumeric_BUILD_TESTS)
+  include(CTest)
+
+  add_subdirectory(tests/cpp)
+endif()

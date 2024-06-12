@@ -110,7 +110,7 @@ function(find_or_configure_OpenBLAS)
 
     # Tell cmake where it can find the generated blas-config.cmake
     include("${rapids-cmake-dir}/export/find_package_root.cmake")
-    rapids_export_find_package_root(BUILD BLAS [=[${CMAKE_CURRENT_LIST_DIR}]=] cunumeric-exports)
+    rapids_export_find_package_root(BUILD BLAS [=[${CMAKE_CURRENT_LIST_DIR}]=] EXPORT_SET cunumeric-exports)
   endif()
 endfunction()
 

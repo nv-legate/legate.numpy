@@ -53,9 +53,11 @@ class BooleanFlag(argparse.Action):
 
         option_strings = flatten(
             [
-                [opt, "--no-" + opt[2:], "--no" + opt[2:]]
-                if opt.startswith("--")
-                else [opt]
+                (
+                    [opt, "--no-" + opt[2:], "--no" + opt[2:]]
+                    if opt.startswith("--")
+                    else [opt]
+                )
                 for opt in option_strings
             ]
         )
@@ -126,6 +128,7 @@ def was_previously_built_with_different_build_isolation(
 def install_cunumeric(
     arch,
     build_isolation,
+    with_tests,
     check_bounds,
     clean_first,
     cmake_exe,
@@ -170,6 +173,7 @@ def install_cunumeric(
         print("Options are:")
         print("arch: ", arch)
         print("build_isolation: ", build_isolation)
+        print("with_tests: ", with_tests)
         print("check_bounds: ", check_bounds)
         print("clean_first: ", clean_first)
         print("cmake_exe: ", cmake_exe)
@@ -351,6 +355,7 @@ def install_cunumeric(
 -DLegion_USE_LLVM={("ON" if llvm else "OFF")}
 -DLegion_NETWORKS={";".join(networks)}
 -DLegion_USE_HDF5={("ON" if hdf else "OFF")}
+-Dcunumeric_BUILD_TESTS={("ON" if with_tests else "OFF")}
 """.splitlines()
 
     if march:
@@ -415,6 +420,14 @@ def driver():
         default=os.environ.get("DEBUG_RELEASE", "0") == "1",
         help="Build cuNumeric with optimizations, but include debugging "
         "symbols.",
+    )
+    parser.add_argument(
+        "--with-tests",
+        dest="with_tests",
+        action="store_true",
+        required=False,
+        default=False,
+        help="Build cuNumeric tests.",
     )
     parser.add_argument(
         "--check-bounds",
