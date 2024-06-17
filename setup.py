@@ -44,6 +44,6 @@ setup(
     package_data={"cunumeric": ["_sphinxext/_templates/*.rst"]},
     include_package_data=True,
     cmdclass=versioneer.get_cmdclass(),
-    install_requires=["numpy>=1.22"],
+    install_requires=["numpy>=1.22,<2"],
     zip_safe=False,
 )

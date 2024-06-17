@@ -52,7 +52,7 @@ python:
   - "${python_version}"
 
 numpy_version:
-  - ">=1.22"
+  - ">=1.22,<2"
 
 cmake_version:
   - ">=3.20.1,!=3.23.0"

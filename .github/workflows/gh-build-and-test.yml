@@ -16,7 +16,7 @@ on:
       dependencies-workflow:
         required: true
         type: string
-        description: The workflow file name used by the dependency 
+        description: The workflow file name used by the dependency
 
 jobs:
   setup-build:
@@ -33,6 +33,8 @@ jobs:
             else
               echo "runner_type=ubuntu-latest" >> $GITHUB_OUTPUT
             fi
+          elif [ "${{ inputs.platform }}" = "linux-aarch64" ]; then
+            echo "runner_type=linux-arm64-cpu16"  >> $GITHUB_OUTPUT
           elif [ "${{ inputs.platform }}" = "mac" ]; then
             echo "runner_type=macos-latest"  >> $GITHUB_OUTPUT
           fi
