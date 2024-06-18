@@ -177,6 +177,7 @@ class _CunumericSharedLib:
     CUNUMERIC_PACKBITS: int
     CUNUMERIC_POTRF: int
     CUNUMERIC_PUTMASK: int
+    CUNUMERIC_QR: int
     CUNUMERIC_RAND: int
     CUNUMERIC_READ: int
     CUNUMERIC_RED_ALL: int
@@ -207,6 +208,7 @@ class _CunumericSharedLib:
     CUNUMERIC_SELECT: int
     CUNUMERIC_SOLVE: int
     CUNUMERIC_SORT: int
+    CUNUMERIC_SVD: int
     CUNUMERIC_SYRK: int
     CUNUMERIC_TILE: int
     CUNUMERIC_TRANSPOSE_COPY_2D: int
@@ -386,6 +388,7 @@ class CuNumericOpCode(IntEnum):
     PACKBITS = _cunumeric.CUNUMERIC_PACKBITS
     POTRF = _cunumeric.CUNUMERIC_POTRF
     PUTMASK = _cunumeric.CUNUMERIC_PUTMASK
+    QR = _cunumeric.CUNUMERIC_QR
     RAND = _cunumeric.CUNUMERIC_RAND
     READ = _cunumeric.CUNUMERIC_READ
     REPEAT = _cunumeric.CUNUMERIC_REPEAT
@@ -396,6 +399,7 @@ class CuNumericOpCode(IntEnum):
     SELECT = _cunumeric.CUNUMERIC_SELECT
     SOLVE = _cunumeric.CUNUMERIC_SOLVE
     SORT = _cunumeric.CUNUMERIC_SORT
+    SVD = _cunumeric.CUNUMERIC_SVD
     SYRK = _cunumeric.CUNUMERIC_SYRK
     TILE = _cunumeric.CUNUMERIC_TILE
     TRANSPOSE_COPY_2D = _cunumeric.CUNUMERIC_TRANSPOSE_COPY_2D

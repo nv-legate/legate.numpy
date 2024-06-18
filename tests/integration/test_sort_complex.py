@@ -48,7 +48,7 @@ class TestSortComplex(object):
     def test_arr_none(self):
         res_np = np.sort_complex(
             None
-        )  # numpy.AxisError: axis 0 is out of bounds for array of dimension 0
+        )  # AxisError: axis 0 is out of bounds for array of dimension 0
         res_num = num.sort_complex(
             None
         )  # AttributeError: 'NoneType' object has no attribute 'shape'

@@ -23,7 +23,7 @@ import numpy as np
 from legate.core import LEGATE_MAX_DIM, Scalar, TaskTarget, get_legate_runtime
 from legate.settings import settings as legate_settings
 
-from ._utils.array import calculate_volume, is_supported_type, to_core_dtype
+from ._utils.array import calculate_volume, is_supported_dtype, to_core_type
 from ._utils.stack import find_last_user_stacklevel
 from .config import (
     BitGeneratorOperation,
@@ -60,7 +60,7 @@ def thunk_from_scalar(
     from ._thunk.deferred import DeferredArray
 
     store = legate_runtime.create_store_from_scalar(
-        Scalar(bytes, to_core_dtype(dtype)),
+        Scalar(bytes, to_core_type(dtype)),
         shape=shape,
     )
     return DeferredArray(store)
@@ -377,7 +377,7 @@ class Runtime(object):
         from ._thunk.deferred import DeferredArray
 
         assert isinstance(array, np.ndarray)
-        if not is_supported_type(array.dtype):
+        if not is_supported_dtype(array.dtype):
             raise TypeError(f"cuNumeric does not support dtype={array.dtype}")
 
         # We have to be really careful here to handle the case of
@@ -429,7 +429,7 @@ class Runtime(object):
             # This is not a scalar so make a field.
             # We won't try to cache these bigger arrays.
             store = legate_runtime.create_store_from_buffer(
-                to_core_dtype(array.dtype),
+                to_core_type(array.dtype),
                 array.shape,
                 array.copy() if transfer == TransferType.MAKE_COPY else array,
                 # This argument should really be called "donate"

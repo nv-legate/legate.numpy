@@ -18,57 +18,58 @@ cmake_minimum_required(VERSION 3.22.1 FATAL_ERROR)
 
 project(cpp_tests VERSION 0.1 LANGUAGES C CXX)
 
-if (NOT CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 17)
+if(PROJECT_IS_TOP_LEVEL)
+  # To catch people trying to build the tests from within tests/cpp instead of top-level
+  message(FATAL_ERROR "Error: Tests can only be built as part of the main library build. Please re-run cmake from top-level directory (\${CMAKE_SOURCE_DIR}) with -Dcunumeric_BUILD_TESTS=ON"
+  )
 endif()
 
-include(FetchContent)
-FetchContent_Declare(
-  googletest
-  URL https://github.com/google/googletest/archive/refs/tags/v1.13.0.zip
-)
+if(Legion_USE_CUDA)
+  find_package(CUDAToolkit REQUIRED)
+  enable_language(CUDA)
+endif()
 
-set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-FetchContent_MakeAvailable(googletest)
+include(rapids-test)
 
-find_package(legate_core REQUIRED)
-find_package(cunumeric REQUIRED)
+rapids_test_init()
 
-enable_testing()
+include(${rapids-cmake-dir}/cpm/gtest.cmake)
+
+# BUILD_EXPORT_SET and INSTALL_EXPORT_SET are crucial, otherwise gtest does not get
+# installed
+rapids_cpm_gtest(BUILD_EXPORT_SET cunumeric-exports
+                 INSTALL_EXPORT_SET cunumeric-exports)
 
 file(GLOB main_SRC ${PROJECT_SOURCE_DIR}/main.cc)
 file(GLOB integration_SRC ${PROJECT_SOURCE_DIR}/integration/*.cc)
 
 if(Legion_USE_CUDA)
-
-find_package(CUDAToolkit REQUIRED)
-enable_language(CUDA)
-
-file(GLOB integration_GPU_SRC ${PROJECT_SOURCE_DIR}/integration/*.cu)
-list(APPEND integration_SRC ${integration_GPU_SRC})
-
-if(NOT EXISTS ${CMAKE_BINARY_DIR}/RAPIDS.cmake)
-  file(DOWNLOAD https://raw.githubusercontent.com/rapidsai/rapids-cmake/branch-23.04/RAPIDS.cmake
-       ${CMAKE_BINARY_DIR}/RAPIDS.cmake)
-endif()
-include(${CMAKE_BINARY_DIR}/RAPIDS.cmake)
-include(rapids-find)
-include(cmake/thirdparty/get_nccl.cmake)
-
+  file(GLOB integration_GPU_SRC ${PROJECT_SOURCE_DIR}/integration/*.cu)
+  list(APPEND integration_SRC ${integration_GPU_SRC})
 endif()
 
 add_executable(cpp_tests ${main_SRC} ${tasks_SRC} ${integration_SRC} ${unit_SRC})
 
-target_link_libraries(cpp_tests PRIVATE legate::core PRIVATE cunumeric::cunumeric PRIVATE GTest::gtest)
+target_link_libraries(cpp_tests PRIVATE legate::core cunumeric::cunumeric GTest::gtest)
 if(Legion_USE_CUDA)
-target_link_libraries(cpp_tests PRIVATE NCCL::NCCL)
+  target_link_libraries(cpp_tests PRIVATE NCCL::NCCL)
 endif()
 
-include(GoogleTest)
-gtest_discover_tests(cpp_tests DISCOVERY_MODE PRE_TEST WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+if(Legion_USE_CUDA)
+  set(num_gpus 1)
+else()
+  set(num_gpus 0)
+endif()
 
-include(CPack)
+rapids_test_add(
+  NAME cpp_tests
+  COMMAND cpp_tests
+  GPUS ${num_gpus}
+  PERCENT 30
+  INSTALL_COMPONENT_SET testing
+)
+
 include(GNUInstallDirs)
 
-install(TARGETS cpp_tests DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/cmake-install")
-install( TARGETS cpp_tests DESTINATION ${CMAKE_INSTALL_BINDIR})
+rapids_test_install_relocatable(INSTALL_COMPONENT_SET testing
+                                DESTINATION ${CMAKE_INSTALL_BINDIR} INCLUDE_IN_ALL)

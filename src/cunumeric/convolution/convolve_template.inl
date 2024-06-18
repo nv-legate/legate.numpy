@@ -253,7 +253,7 @@ static unsigned roundup_tile(Point<DIM>& tile,
       if (bounds[d] < tile[d]) {
         tile[d] = bounds[d];
       }
-      result *= (tile[d] + padding[d]);
+      result *= std::max(static_cast<coord_t>(1), tile[d] + padding[d]);
     }
     // Find the two smallest dimensions and increase one of them
     // until we hit the second smallest one or exceed max_smem_size
@@ -294,7 +294,7 @@ static unsigned roundup_tile(Point<DIM>& tile,
         unsigned pitch = sizeof(VAL);
         for (int d = 0; d < DIM; d++) {
           if (d != d1) {
-            pitch *= (tile[d] + padding[d]);
+            pitch *= std::max(static_cast<coord_t>(1), tile[d] + padding[d]);
           }
         }
         // Make sure the last dimension is as large as it can go too
@@ -307,7 +307,7 @@ static unsigned roundup_tile(Point<DIM>& tile,
             tile[d1] = bounds[d1];
           }
         }
-        return pitch * (tile[d1] + padding[d1]);
+        return pitch * std::max(static_cast<coord_t>(1), tile[d1] + padding[d1]);
       }
       // If we ever get two dimensions of the same size then see what dimension
       // has the next largest value. If we can't find one that is larger then
@@ -335,7 +335,7 @@ static unsigned roundup_tile(Point<DIM>& tile,
       unsigned pitch = sizeof(VAL);
       for (int d = 0; d < DIM; d++) {
         if (d != d1) {
-          pitch *= (tile[d] + padding[d]);
+          pitch *= std::max(static_cast<coord_t>(1), tile[d] + padding[d]);
         }
       }
       unsigned elements = max_size / pitch;
@@ -346,15 +346,15 @@ static unsigned roundup_tile(Point<DIM>& tile,
       int bound = elements - padding[d1];
       if (bounds[d1] < bound) {
         tile[d1] = bounds[d1];
-        result   = pitch * (tile[d1] + padding[d1]);
+        result   = pitch * std::max(static_cast<coord_t>(1), tile[d1] + padding[d1]);
       } else if (bound < t2) {
         tile[d1] = bound;
-        result   = pitch * (bound + padding[d1]);
+        result   = pitch * std::max(static_cast<coord_t>(1), bound + padding[d1]);
         all_same = false;
         break;
       } else {
         tile[d1] = t2;
-        result   = pitch * (t2 + padding[d1]);
+        result   = pitch * std::max(static_cast<coord_t>(1), t2 + padding[d1]);
       }
     }
     if (all_same) {
@@ -368,9 +368,9 @@ static unsigned roundup_tile(Point<DIM>& tile,
         unsigned next_size = sizeof(VAL);
         for (int d = 0; d < DIM; d++) {
           if (skipdims & (1 << d)) {
-            next_size *= (tile[d] + padding[d]);
+            next_size *= std::max(static_cast<coord_t>(1), tile[d] + padding[d]);
           } else if (tile[d] == bounds[d]) {
-            next_size *= (tile[d] + padding[d]);
+            next_size *= std::max(static_cast<coord_t>(1), tile[d] + padding[d]);
             skipdims |= (1 << d);
           } else {
             next_size *= (tile[d] + 1 + padding[d]);

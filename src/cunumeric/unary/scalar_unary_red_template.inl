@@ -74,7 +74,7 @@ struct ScalarUnaryRed {
     if constexpr (HAS_WHERE) {
       where = args.where.read_accessor<bool, DIM>(rect);
     }
-#if !LegateDefined(LEGATE_BOUNDS_CHECKS)
+#if !LEGATE_DEFINED(LEGATE_BOUNDS_CHECKS)
     // Check to see if this is dense or not
     if (in.accessor.is_dense_row_major(rect)) {
       dense = true;
@@ -148,7 +148,7 @@ struct ScalarUnaryRed {
   void execute() const noexcept
   {
     auto identity = LG_OP::identity;
-#if !LegateDefined(LEGATE_BOUNDS_CHECKS)
+#if !LEGATE_DEFINED(LEGATE_BOUNDS_CHECKS)
     // The constexpr if here prevents the DenseReduction from being instantiated for GPU kernels
     // which limits compile times and binary sizes.
     if constexpr (KIND != VariantKind::GPU) {
@@ -212,7 +212,7 @@ static void scalar_unary_red_template(TaskContext& context)
 
   ScalarUnaryRedArgs args{context.reduction(0),
                           context.input(0),
-                          has_where ? context.input(1) : PhysicalStore{},
+                          has_where ? context.input(1) : PhysicalStore{nullptr},
                           op_code,
                           shape,
                           std::move(extra_args)};

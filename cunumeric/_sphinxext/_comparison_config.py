@@ -136,7 +136,6 @@ MANIP = (
     "asarray_chkfinite",
     "asarray",
     "ascontiguousarray",
-    "asfarray",
     "asfortranarray",
     "asmatrix",
     "atleast_1d",
@@ -218,7 +217,6 @@ CREATION = (
     "identity",
     "linspace",
     "logspace",
-    "mat",
     "meshgrid",
     "ones_like",
     "ones",
@@ -252,7 +250,6 @@ IO = (
     "savez_compressed",
     "savez",
     "set_printoptions",
-    "set_string_function",
 )
 
 IO_ND = ("tofile", "tolist")
@@ -283,7 +280,6 @@ MATH = (
     "prod",
     "real_if_close",
     "real",
-    "round_",
     "sinc",
     "sum",
     "trapz",
@@ -300,7 +296,6 @@ SEARCHING = (
     "extract",
     "flatnonzero",
     "lexsort",
-    "msort",
     "nanargmax",
     "nanargmin",
     "nonzero",

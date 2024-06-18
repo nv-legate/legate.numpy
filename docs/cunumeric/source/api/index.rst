@@ -9,3 +9,4 @@ API Reference
    classes
    routines
    settings
+   comparison

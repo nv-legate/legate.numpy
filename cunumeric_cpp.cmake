@@ -56,7 +56,7 @@ endif()
 # add third party dependencies using CPM
 rapids_cpm_init(OVERRIDE ${CMAKE_CURRENT_SOURCE_DIR}/cmake/versions.json)
 
-find_package(OpenMP)
+rapids_find_package(OpenMP GLOBAL_TARGETS OpenMP::OpenMP_CXX)
 
 option(Legion_USE_CUDA "Use CUDA" ON)
 option(Legion_USE_OpenMP "Use OpenMP" ${OpenMP_FOUND})
@@ -153,7 +153,9 @@ list(APPEND cunumeric_SOURCES
   src/cunumeric/matrix/matvecmul.cc
   src/cunumeric/matrix/dot.cc
   src/cunumeric/matrix/potrf.cc
+  src/cunumeric/matrix/qr.cc
   src/cunumeric/matrix/solve.cc
+  src/cunumeric/matrix/svd.cc
   src/cunumeric/matrix/syrk.cc
   src/cunumeric/matrix/tile.cc
   src/cunumeric/matrix/transpose.cc
@@ -211,7 +213,9 @@ if(Legion_USE_OpenMP)
     src/cunumeric/matrix/matvecmul_omp.cc
     src/cunumeric/matrix/dot_omp.cc
     src/cunumeric/matrix/potrf_omp.cc
+    src/cunumeric/matrix/qr_omp.cc
     src/cunumeric/matrix/solve_omp.cc
+    src/cunumeric/matrix/svd_omp.cc
     src/cunumeric/matrix/syrk_omp.cc
     src/cunumeric/matrix/tile_omp.cc
     src/cunumeric/matrix/transpose_omp.cc
@@ -263,7 +267,9 @@ if(Legion_USE_CUDA)
     src/cunumeric/matrix/matvecmul.cu
     src/cunumeric/matrix/dot.cu
     src/cunumeric/matrix/potrf.cu
+    src/cunumeric/matrix/qr.cu
     src/cunumeric/matrix/solve.cu
+    src/cunumeric/matrix/svd.cu
     src/cunumeric/matrix/syrk.cu
     src/cunumeric/matrix/tile.cu
     src/cunumeric/matrix/transpose.cu
@@ -425,15 +431,6 @@ if(Legion_USE_CUDA AND CUSOLVERMP_DIR)
   target_link_libraries(cunumeric PRIVATE ${CUSOLVERMP_DIR}/lib/libcusolverMp.so)
 endif()
 
-# Change THRUST_DEVICE_SYSTEM for `.cpp` files
-if(Legion_USE_OpenMP)
-  list(APPEND cunumeric_CXX_OPTIONS -UTHRUST_DEVICE_SYSTEM)
-  list(APPEND cunumeric_CXX_OPTIONS -DTHRUST_DEVICE_SYSTEM=THRUST_DEVICE_SYSTEM_OMP)
-elseif(NOT Legion_USE_CUDA)
-  list(APPEND cunumeric_CXX_OPTIONS -UTHRUST_DEVICE_SYSTEM)
-  list(APPEND cunumeric_CXX_OPTIONS -DTHRUST_DEVICE_SYSTEM=THRUST_DEVICE_SYSTEM_CPP)
-endif()
-
 target_compile_options(cunumeric
   PRIVATE "$<$<COMPILE_LANGUAGE:CXX>:${cunumeric_CXX_OPTIONS}>"
           "$<$<COMPILE_LANGUAGE:CUDA>:${cunumeric_CUDA_OPTIONS}>")
@@ -537,3 +534,9 @@ rapids_export(
   NAMESPACE cunumeric::
   DOCUMENTATION doc_string
   FINAL_CODE_BLOCK code_string)
+
+if(cunumeric_BUILD_TESTS)
+  include(CTest)
+
+  add_subdirectory(tests/cpp)
+endif()

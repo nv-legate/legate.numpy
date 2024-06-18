@@ -20,7 +20,7 @@ import pytest
 
 import cunumeric as num
 
-INF_VALUES = [np.NINF, np.inf]
+INF_VALUES = [-np.inf, np.inf]
 FLOAT_FILL_VALUES = (-2.4e120, -1.3, 8.9e-130, 0.0, 5.7e-150, 0.6, 3.7e160)
 FLOAT_BIG_VALUES = (-2.4e120, 3.7e160)
 

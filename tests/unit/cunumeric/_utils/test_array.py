@@ -75,17 +75,17 @@ class Test_is_supported_dtype:
     @pytest.mark.parametrize("value", ["foo", 10, 10.2, (), set()])
     def test_type_bad(self, value) -> None:
         with pytest.raises(TypeError):
-            m.to_core_dtype(value)
+            m.to_core_type(value)
 
     @pytest.mark.parametrize("value", EXPECTED_SUPPORTED_DTYPES)
     def test_supported(self, value) -> None:
-        m.to_core_dtype(value)
+        m.to_core_type(value)
 
     # This is just a representative sample, not exhasutive
     @pytest.mark.parametrize("value", [np.float128, np.datetime64, [], {}])
     def test_unsupported(self, value) -> None:
         with pytest.raises(TypeError):
-            m.to_core_dtype(value)
+            m.to_core_type(value)
 
 
 @pytest.mark.parametrize(

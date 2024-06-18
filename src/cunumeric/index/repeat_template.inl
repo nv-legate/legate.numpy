@@ -37,7 +37,9 @@ struct RepeatImpl {
     auto input_arr  = args.input.read_accessor<VAL, DIM>(input_rect);
 
     if (input_rect.empty()) {
-      args.output.bind_empty_data();
+      if (!args.scalar_repeats) {
+        args.output.bind_empty_data();
+      }
       return;
     }
 
@@ -58,8 +60,12 @@ static void repeat_template(TaskContext& context)
   auto axis           = context.scalar(0).value<int32_t>();
   if (scalar_repeats) {
     auto repeats = context.scalar(2).value<int64_t>();
-    RepeatArgs args{
-      context.output(0), context.input(0), legate::PhysicalStore(), repeats, axis, scalar_repeats};
+    RepeatArgs args{context.output(0),
+                    context.input(0),
+                    legate::PhysicalStore{nullptr},
+                    repeats,
+                    axis,
+                    scalar_repeats};
     double_dispatch(args.input.dim(), args.input.code(), RepeatImpl<KIND>{}, args);
   } else {
     auto repeats = context.input(1);

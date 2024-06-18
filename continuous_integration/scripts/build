@@ -1,7 +1,54 @@
 #!/usr/bin/env bash
 set -x
 
-#
+build_release_product() {
+    set -xeo pipefail;
+
+    echo "RUNNING build_release_product"
+
+    mkdir -p /tmp/env_yaml /tmp/conda-build /tmp/out
+
+    cp -r "${ARTIFACTS_DIR}/conda-build/legate_core" /tmp/conda-build/
+
+    local conda_build_args=();
+    conda_build_args+=(--override-channels);
+
+    # The channel sequence below needs to be preserved 
+    conda_build_args+=(-c conda-forge);
+    conda_build_args+=(--override-channels);
+    conda_build_args+=(-c file:///tmp/conda-build/legate_core);
+    conda_build_args+=(--croot /tmp/conda-build/cunumeric);
+    conda_build_args+=(--numpy 1.22);
+    conda_build_args+=(--no-test);
+    conda_build_args+=(--no-verify);
+    conda_build_args+=(--no-build-id);
+    conda_build_args+=("--build-id-pat=''");
+    conda_build_args+=(--no-include-recipe);
+    conda_build_args+=(--no-anaconda-upload);
+
+    GPU_ENABLED=true
+    [ "${USE_CUDA:-}" = "OFF" ] && GPU_ENABLED=false
+
+    UPLOAD_BUILD=true
+    [ "${UPLOAD_ENABLED:-}" = "OFF" ] && UPLOAD_BUILD=false
+
+    variantOpts=$(printf "{\"gpu_enabled\": [$GPU_ENABLED], \"upload_build\": [$UPLOAD_BUILD], \"python\": [$PYTHON_VERSION]}")
+
+    conda_build_args+=(--variants "$variantOpts")
+
+    conda mambabuild "${conda_build_args[@]}" "${REPO_DIR}/conda/conda-build";
+
+    copy_release_artifacts
+}
+
+copy_release_artifacts() {
+    set -xeuo pipefail;
+    echo Copying release artifacts
+
+    cp -r /tmp/out          "$ARTIFACTS_DIR"
+    cp -r /tmp/conda-build  "$ARTIFACTS_DIR"
+    ls -lahR $ARTIFACTS_DIR
+}
 
 copy_ci_artifacts() {
     set -xeuo pipefail;
@@ -46,7 +93,7 @@ build_project() {
 
     case "$BUILD_TYPE" in
         ci) build_ci_product;;
-        release) build_release;;
+        release) build_release_product;;
         *) return 1;;
     esac
 }

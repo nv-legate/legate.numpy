@@ -104,7 +104,7 @@ class TestModule:
         # For cunumeric, if array.dim==1, it returns the array itself directly,
         # no matter what the axes value is.
         # For numpy, it raises
-        # "numpy.AxisError: axis * is out of bounds for array of dimension 1".
+        # "AxisError: axis * is out of bounds for array of dimension 1".
         a = np.random.randint(low=-10, high=10, size=size)
         b = num.array(a)
         res_np = np.transpose(a, axes=axes)
@@ -215,7 +215,7 @@ class TestArrayMethod:
         # For cunumeric, if array.dim==1, it returns the array itself directly,
         # no matter what the axes value is.
         # For Numpy, it raises
-        # "numpy.AxisError: axis * is out of bounds for array of dimension 1".
+        # "AxisError: axis * is out of bounds for array of dimension 1".
         a = np.random.randint(low=-10, high=10, size=size)
         b = num.array(a)
         res_np = a.transpose(axes)

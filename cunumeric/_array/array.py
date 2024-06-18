@@ -22,15 +22,15 @@ from typing import TYPE_CHECKING, Any, Sequence, cast
 import numpy as np
 from legate.core import Field, LogicalArray, Scalar
 from legate.core.utils import OrderedSet
-from numpy.core.multiarray import (  # type: ignore [attr-defined]
-    normalize_axis_index,
-)
-from numpy.core.numeric import (  # type: ignore [attr-defined]
-    normalize_axis_tuple,
-)
 
 from .. import _ufunc
-from .._utils.array import calculate_volume, to_core_dtype
+from .._utils import is_np2
+from .._utils.array import (
+    calculate_volume,
+    max_identity,
+    min_identity,
+    to_core_type,
+)
 from .._utils.coverage import FALLBACK_WARNING, clone_class, is_implemented
 from .._utils.linalg import dot_modes
 from .._utils.structure import deep_apply
@@ -56,6 +56,13 @@ from .util import (
     sanitize_shape,
     tuple_pop,
 )
+
+if is_np2:
+    from numpy.lib.array_utils import normalize_axis_index  # type: ignore
+    from numpy.lib.array_utils import normalize_axis_tuple  # type: ignore
+else:
+    from numpy.core.multiarray import normalize_axis_index  # type: ignore
+    from numpy.core.numeric import normalize_axis_tuple  # type: ignore
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -128,7 +135,7 @@ class ndarray:
                         for inp in inputs
                         if isinstance(inp, ndarray)
                     ]
-                core_dtype = to_core_dtype(dtype)
+                core_dtype = to_core_type(dtype)
                 self._thunk = runtime.create_empty_thunk(
                     sanitized_shape, core_dtype, inputs
                 )
@@ -660,7 +667,7 @@ class ndarray:
             args = (np.array(item, dtype=self.dtype),)
         if args[0].size != 1:
             raise ValueError("contains needs scalar item")
-        core_dtype = to_core_dtype(self.dtype)
+        core_dtype = to_core_type(self.dtype)
         return perform_unary_reduction(
             UnaryRedCode.CONTAINS,
             self,
@@ -890,6 +897,20 @@ class ndarray:
         """
         return _ufunc.left_shift(self, rhs, out=self)
 
+    def __imatmul__(self, rhs: Any) -> ndarray:
+        """a.__imatmul__(value, /)
+
+        Return ``self@=value``.
+
+        Availability
+        --------
+        Multiple GPUs, Multiple CPUs
+
+        """
+        from .._module.linalg_mvp import matmul
+
+        return matmul(self, rhs, out=self)
+
     def __imod__(self, rhs: Any) -> ndarray:
         """a.__imod__(value, /)
 
@@ -935,7 +956,7 @@ class ndarray:
         Multiple GPUs, Multiple CPUs
 
         """
-        if self.dtype == np.bool_:
+        if self.dtype == bool:
             # Boolean values are special, just do logical NOT
             return _ufunc.logical_not(self)
         else:
@@ -1071,7 +1092,9 @@ class ndarray:
         Multiple GPUs, Multiple CPUs
 
         """
-        return self.dot(value)
+        from .._module.linalg_mvp import matmul
+
+        return matmul(self, value)
 
     def __mod__(self, rhs: Any) -> ndarray:
         """a.__mod__(value, /)
@@ -1268,6 +1291,20 @@ class ndarray:
 
         """
         return _ufunc.floor_divide(lhs, self)
+
+    def __rmatmul__(self, lhs: Any) -> ndarray:
+        """a.__rmatmul__(value, /)
+
+        Return ``value@self``.
+
+        Availability
+        --------
+        Multiple GPUs, Multiple CPUs
+
+        """
+        from .._module.linalg_mvp import matmul
+
+        return matmul(lhs, self)
 
     def __rmod__(self, lhs: Any) -> ndarray:
         """a.__rmod__(value, /)
@@ -1953,6 +1990,9 @@ class ndarray:
         Multiple GPUs, Multiple CPUs
 
         """
+        min = max_identity(self.dtype) if min is None else min
+        max = min_identity(self.dtype) if max is None else max
+
         args = (
             np.array(min, dtype=self.dtype),
             np.array(max, dtype=self.dtype),
@@ -1975,7 +2015,7 @@ class ndarray:
                 return convert_to_cunumeric_ndarray(
                     self.__array__().clip(args[0], args[1])
                 )
-        core_dtype = to_core_dtype(self.dtype)
+        core_dtype = to_core_type(self.dtype)
         extra_args = (Scalar(min, core_dtype), Scalar(max, core_dtype))
         return perform_unary_op(
             UnaryOpCode.CLIP, self, out=out, extra_args=extra_args
@@ -2690,46 +2730,48 @@ class ndarray:
         assert result.shape == ()
         return result._thunk.__numpy_array__()
 
-    def itemset(self, *args: Any) -> None:
-        """a.itemset(*args)
+    if not is_np2:
 
-        Insert scalar into an array (scalar is cast to array's dtype,
-        if possible)
+        def itemset(self, *args: Any) -> None:
+            """a.itemset(*args)
 
-        There must be at least 1 argument, and define the last argument
-        as *item*.  Then, ``a.itemset(*args)`` is equivalent to but faster
-        than ``a[args] = item``.  The item should be a scalar value and `args`
-        must select a single item in the array `a`.
+            Insert scalar into an array (scalar is cast to array's dtype,
+            if possible)
 
-        Parameters
-        ----------
-        \\*args :
-            If one argument: a scalar, only used in case `a` is of size 1.
-            If two arguments: the last argument is the value to be set
-            and must be a scalar, the first argument specifies a single array
-            element location. It is either an int or a tuple.
+            There must be at least 1 argument, and define the last argument
+            as *item*.  Then, ``a.itemset(*args)`` is equivalent to but faster
+            than ``a[args] = item``.  The item should be a scalar value and
+            `args` must select a single item in the array `a`.
 
-        Notes
-        -----
-        Compared to indexing syntax, `itemset` provides some speed increase
-        for placing a scalar into a particular location in an `ndarray`,
-        if you must do this.  However, generally this is discouraged:
-        among other problems, it complicates the appearance of the code.
-        Also, when using `itemset` (and `item`) inside a loop, be sure
-        to assign the methods to a local variable to avoid the attribute
-        look-up at each loop iteration.
+            Parameters
+            ----------
+            \\*args :
+                If one argument: a scalar, only used in case `a` is of size 1.
+                If two arguments: the last argument is the value to be set
+                and must be a scalar, the first argument specifies a single
+                array element location. It is either an int or a tuple.
 
-        Availability
-        --------
-        Multiple GPUs, Multiple CPUs
+            Notes
+            -----
+            Compared to indexing syntax, `itemset` provides some speed increase
+            for placing a scalar into a particular location in an `ndarray`,
+            if you must do this.  However, generally this is discouraged:
+            among other problems, it complicates the appearance of the code.
+            Also, when using `itemset` (and `item`) inside a loop, be sure
+            to assign the methods to a local variable to avoid the attribute
+            look-up at each loop iteration.
 
-        """
-        if len(args) == 0:
-            raise KeyError("itemset() requires at least one argument")
-        value = args[-1]
-        args = args[:-1]
-        key = self._convert_singleton_key(args)
-        self[key] = value
+            Availability
+            --------
+            Multiple GPUs, Multiple CPUs
+
+            """
+            if len(args) == 0:
+                raise KeyError("itemset() requires at least one argument")
+            value = args[-1]
+            args = args[:-1]
+            key = self._convert_singleton_key(args)
+            self[key] = value
 
     @add_boilerplate()
     def max(
@@ -2891,7 +2933,7 @@ class ndarray:
         keepdims: bool = False,
         where: ndarray | None = None,
     ) -> ndarray:
-        if np.issubdtype(dtype, np.integer) or np.issubdtype(dtype, np.bool_):
+        if np.issubdtype(dtype, np.integer) or np.issubdtype(dtype, bool):
             return self.mean(
                 axis=axis, dtype=dtype, out=out, keepdims=keepdims, where=where
             )
@@ -2971,7 +3013,7 @@ class ndarray:
                 # FIXME(wonchanl): the following code blocks on mu to convert
                 # it to a Scalar object. We need to get rid of this blocking by
                 # allowing the extra arguments to be Legate stores
-                args=(Scalar(mu.__array__(), to_core_dtype(self.dtype)),),
+                args=(Scalar(mu.__array__(), to_core_type(self.dtype)),),
             )
         else:
             # TODO(https://github.com/nv-legate/cunumeric/issues/591)
@@ -3127,7 +3169,7 @@ class ndarray:
         Multiple GPUs, Multiple CPUs
 
         """
-        if self.dtype.type == np.bool_:
+        if self.dtype.type == bool:
             temp = ndarray(
                 shape=self.shape,
                 dtype=np.dtype(np.int32),
@@ -3497,7 +3539,7 @@ class ndarray:
         Multiple GPUs, Multiple CPUs
 
         """
-        if self.dtype.type == np.bool_:
+        if self.dtype.type == bool:
             temp = ndarray(
                 shape=self.shape,
                 dtype=np.dtype(np.int32),

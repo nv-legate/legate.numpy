@@ -146,7 +146,7 @@ struct ZipImplBody<VariantKind::GPU, DIM, N> {
       check_kernel<<<blocks, THREADS_PER_BLOCK, shmem_size, stream>>>(
         out_of_bounds, index_arrays, volume, 1, rect, pitches, narrays, start_index, shape);
     }
-    CHECK_CUDA_STREAM(stream);
+    CUNUMERIC_CHECK_CUDA_STREAM(stream);
 
     bool res = out_of_bounds.read(stream);
     if (res) {
@@ -198,7 +198,7 @@ struct ZipImplBody<VariantKind::GPU, DIM, N> {
       zip_kernel<DIM, N><<<blocks, THREADS_PER_BLOCK, 0, stream>>>(
         out, index_buf, rect, pitches, num_arrays, volume, key_dim, start_index, shape);
     }
-    CHECK_CUDA_STREAM(stream);
+    CUNUMERIC_CHECK_CUDA_STREAM(stream);
   }
 };
 

@@ -95,7 +95,7 @@ struct UnaryOpImplBody<VariantKind::GPU, OP_CODE, CODE, DIM> {
       generic_kernel<<<blocks, THREADS_PER_BLOCK, 0, stream>>>(
         volume, func, out, in, pitches, rect);
     }
-    CHECK_CUDA_STREAM(stream);
+    CUNUMERIC_CHECK_CUDA_STREAM(stream);
   }
 };
 
@@ -117,7 +117,7 @@ struct PointCopyImplBody<VariantKind::GPU, VAL, DIM> {
     } else {
       generic_copy_kernel<<<blocks, THREADS_PER_BLOCK, 0, stream>>>(volume, out, in, pitches, rect);
     }
-    CHECK_CUDA_STREAM(stream);
+    CUNUMERIC_CHECK_CUDA_STREAM(stream);
   }
 };
 
@@ -183,7 +183,7 @@ struct MultiOutUnaryOpImplBody<VariantKind::GPU, OP_CODE, CODE, DIM> {
       generic_kernel_multiout<<<blocks, THREADS_PER_BLOCK, 0, stream>>>(
         volume, func, lhs, rhs1, rhs2, pitches, rect);
     }
-    CHECK_CUDA_STREAM(stream);
+    CUNUMERIC_CHECK_CUDA_STREAM(stream);
   }
 };
 

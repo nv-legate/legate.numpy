@@ -33,7 +33,7 @@ def test_get_line_number_from_frame() -> None:
     filename, lineno = result.split(":")
 
     # NOTE: this will break if this test filename is changed
-    assert filename.endswith("test_utils_stack.py")
+    assert filename.endswith("test_stack.py")
 
     # it would be too fragile to compare more specific than this
     assert int(lineno) > 0

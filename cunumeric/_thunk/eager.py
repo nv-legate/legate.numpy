@@ -19,6 +19,7 @@ from typing import TYPE_CHECKING, Any, Callable, Iterable, Sequence, cast
 import numpy as np
 from legate.core import Scalar
 
+from .._utils import is_np2
 from .._utils.array import is_advanced_indexing
 from ..config import (
     FFT_C2R,
@@ -375,7 +376,13 @@ class EagerArray(NumPyThunk):
                 elif res.dtype == np.float64:
                     self.array[:] = res.astype(np.float32)
                 else:
-                    raise RuntimeError("Unsupported data type in eager FFT")
+                    if not is_np2:
+                        raise RuntimeError(
+                            f"Unsupported data type {res.dtype!r} in eager FFT"
+                        )
+                    else:
+                        self.array[:] = res
+
             else:
                 self.array[:] = res
 
@@ -458,7 +465,7 @@ class EagerArray(NumPyThunk):
             self.children.append(result)
         return result
 
-    def squeeze(self, axis: int | None) -> NumPyThunk:
+    def squeeze(self, axis: int | tuple[int, ...] | None) -> NumPyThunk:
         if self.deferred is not None:
             return self.deferred.squeeze(axis)
         # See https://github.com/numpy/numpy/issues/22019
@@ -1661,6 +1668,20 @@ class EagerArray(NumPyThunk):
                 result = np.triu(result.T.conj(), k=1) + result
             self.array[:] = result
 
+    def qr(self, q: Any, r: Any) -> None:
+        self.check_eager_args(q, r)
+        if self.deferred is not None:
+            self.deferred.qr(q, r)
+        else:
+            try:
+                result_q, result_r = np.linalg.qr(self.array)
+            except np.linalg.LinAlgError as e:
+                from ..linalg import LinAlgError
+
+                raise LinAlgError(e) from e
+            q.array[:] = result_q
+            r.array[:] = result_r
+
     def solve(self, a: Any, b: Any) -> None:
         self.check_eager_args(a, b)
         if self.deferred is not None:
@@ -1673,6 +1694,21 @@ class EagerArray(NumPyThunk):
 
                 raise LinAlgError(e) from e
             self.array[:] = result
+
+    def svd(self, u: Any, s: Any, vh: Any) -> None:
+        self.check_eager_args(u, s, vh)
+        if self.deferred is not None:
+            self.deferred.svd(u, s, vh)
+        else:
+            try:
+                result_u, result_s, result_vh = np.linalg.svd(self.array)
+            except np.linalg.LinAlgError as e:
+                from ..linalg import LinAlgError
+
+                raise LinAlgError(e) from e
+            u.array[:] = result_u
+            s.array[:] = result_s
+            vh.array[:] = result_vh
 
     def scan(
         self,

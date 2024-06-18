@@ -52,7 +52,7 @@ class TestSort(object):
     def test_arr_none(self):
         res_np = np.sort(
             None
-        )  # numpy.AxisError: axis -1 is out of bounds for array of dimension 0
+        )  # AxisError: axis -1 is out of bounds for array of dimension 0
         res_num = num.sort(
             None
         )  # AttributeError: 'NoneType' object has no attribute 'shape'

@@ -72,7 +72,7 @@ struct DotImplBody<VariantKind::GPU, CODE> {
     }
 
     copy_kernel<<<1, 1, 0, stream>>>(result, out);
-    CHECK_CUDA_STREAM(stream);
+    CUNUMERIC_CHECK_CUDA_STREAM(stream);
   }
 };
 

@@ -16,8 +16,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-import numpy as np
-
 if TYPE_CHECKING:
     from .array import ndarray
 
@@ -47,9 +45,6 @@ class flagsobj:
 
     def __eq__(self, other: Any) -> bool:
         flags = ("C", "F", "O", "W", "A", "X")
-        if not isinstance(other, (flagsobj, np.core.multiarray.flagsobj)):
-            return False
-
         return all(self[f] == other[f] for f in flags)  # type: ignore [index]
 
     def __getattr__(self, name: str) -> Any:

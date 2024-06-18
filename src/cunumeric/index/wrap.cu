@@ -113,7 +113,7 @@ void check_out_of_bounds(const AccessorRO<int64_t, 1>& indices,
     check_kernel<<<blocks, THREADS_PER_BLOCK, shmem_size, stream>>>(
       out_of_bounds, indices, start, volume, volume_base, 1);
   }
-  CHECK_CUDA_STREAM(stream);
+  CUNUMERIC_CHECK_CUDA_STREAM(stream);
 
   bool res = out_of_bounds.read(stream);
   if (res) {
@@ -158,7 +158,7 @@ struct WrapImplBody<VariantKind::GPU, DIM> {
                                                                       volume_base,
                                                                       indices);
     }
-    CHECK_CUDA_STREAM(stream);
+    CUNUMERIC_CHECK_CUDA_STREAM(stream);
   }
 };
 

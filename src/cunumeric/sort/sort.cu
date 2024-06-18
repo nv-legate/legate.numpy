@@ -647,10 +647,10 @@ SegmentMergePiece<type_of<CODE>> merge_all_buffers(
         combine_buffers_no_sort<<<grid_shape, block_shape, 0, stream>>>(
           idc_buffers_ptr, target_offsets, result.indices, merged_size, num_sort_ranks);
 
-        CHECK_CUDA(cudaStreamSynchronize(stream));  // needed before Z-copy destroy()
+        CUNUMERIC_CHECK_CUDA(cudaStreamSynchronize(stream));  // needed before Z-copy destroy()
         idc_buffers_ptr.destroy();
       } else {
-        CHECK_CUDA(cudaStreamSynchronize(stream));  // needed before Z-copy destroy()
+        CUNUMERIC_CHECK_CUDA(cudaStreamSynchronize(stream));  // needed before Z-copy destroy()
       }
       val_buffers_ptr.destroy();
       target_offsets.destroy();
@@ -672,7 +672,7 @@ SegmentMergePiece<type_of<CODE>> merge_all_buffers(
     local_sort<CODE>(
       p_values, p_values, p_indices, p_indices, merged_size, merged_size, true, stream);
 
-    CHECK_CUDA_STREAM(stream);
+    CUNUMERIC_CHECK_CUDA_STREAM(stream);
     return result;
   } else {
     // maybe k-way merge is more efficient here...
@@ -773,7 +773,7 @@ SegmentMergePiece<type_of<CODE>> merge_all_buffers(
     }
     SegmentMergePiece<VAL> result = merge_buffers[0];
     merge_buffers.clear();
-    CHECK_CUDA_STREAM(stream);
+    CUNUMERIC_CHECK_CUDA_STREAM(stream);
     return result;
   }
 }
@@ -913,28 +913,28 @@ void rebalance_data(SegmentMergePiece<VAL>& merge_buffer,
                            segment_diff_2d_ptr,
                            segment_diff_2d_ptr + num_segments_l * num_sort_ranks,
                            segment_diff_2d_scan_ptr);
-    CHECK_CUDA(cudaMemcpy2DAsync(send_right.ptr(0),
-                                 sizeof(int64_t),
-                                 segment_diff_2d_scan.ptr(0) + my_sort_rank,
-                                 num_sort_ranks * sizeof(int64_t),
-                                 sizeof(int64_t),
-                                 num_segments_l,
-                                 cudaMemcpyDeviceToDevice,
-                                 stream));
+    CUNUMERIC_CHECK_CUDA(cudaMemcpy2DAsync(send_right.ptr(0),
+                                           sizeof(int64_t),
+                                           segment_diff_2d_scan.ptr(0) + my_sort_rank,
+                                           num_sort_ranks * sizeof(int64_t),
+                                           sizeof(int64_t),
+                                           num_segments_l,
+                                           cudaMemcpyDeviceToDevice,
+                                           stream));
     thrust::reverse_iterator<thrust::device_vector<int64_t>::iterator> iter_in(
       segment_diff_2d_ptr + num_segments_l * num_sort_ranks);
     thrust::reverse_iterator<thrust::device_vector<int64_t>::iterator> iter_out(
       segment_diff_2d_scan_ptr + num_segments_l * num_sort_ranks);
     thrust::inclusive_scan(
       exec_policy, iter_in, iter_in + num_segments_l * num_sort_ranks, iter_out);
-    CHECK_CUDA(cudaMemcpy2DAsync(send_left.ptr(0),
-                                 sizeof(int64_t),
-                                 segment_diff_2d_scan.ptr(0) + my_sort_rank,
-                                 num_sort_ranks * sizeof(int64_t),
-                                 sizeof(int64_t),
-                                 num_segments_l,
-                                 cudaMemcpyDeviceToDevice,
-                                 stream));
+    CUNUMERIC_CHECK_CUDA(cudaMemcpy2DAsync(send_left.ptr(0),
+                                           sizeof(int64_t),
+                                           segment_diff_2d_scan.ptr(0) + my_sort_rank,
+                                           num_sort_ranks * sizeof(int64_t),
+                                           sizeof(int64_t),
+                                           num_segments_l,
+                                           cudaMemcpyDeviceToDevice,
+                                           stream));
 
     segment_diff_2d.destroy();
     segment_diff_2d_scan.destroy();
@@ -1212,7 +1212,7 @@ void rebalance_data(SegmentMergePiece<VAL>& merge_buffer,
       recv_left_data.values.destroy();
       recv_right_data.values.destroy();
     }
-    CHECK_CUDA_STREAM(stream);
+    CUNUMERIC_CHECK_CUDA_STREAM(stream);
   }
 }
 
@@ -1259,13 +1259,13 @@ void sample_sort_nccl_nd(
   {
     auto worker_count_d = create_buffer<int32_t>(1, legate::Memory::GPU_FB_MEM);
     size_t worker_count = (segment_size_l > 0 ? 1 : 0);
-    CHECK_CUDA(cudaMemcpyAsync(
+    CUNUMERIC_CHECK_CUDA(cudaMemcpyAsync(
       worker_count_d.ptr(0), &worker_count, sizeof(int32_t), cudaMemcpyHostToDevice, stream));
     CHECK_NCCL(ncclAllReduce(
       worker_count_d.ptr(0), worker_count_d.ptr(0), 1, ncclInt32, ncclSum, *comm, stream));
-    CHECK_CUDA(cudaMemcpyAsync(
+    CUNUMERIC_CHECK_CUDA(cudaMemcpyAsync(
       &worker_count, worker_count_d.ptr(0), sizeof(int32_t), cudaMemcpyDeviceToHost, stream));
-    CHECK_CUDA(cudaStreamSynchronize(stream));
+    CUNUMERIC_CHECK_CUDA(cudaStreamSynchronize(stream));
     if (worker_count < num_ranks) {
       const size_t number_sort_groups = num_ranks / num_sort_ranks;
       num_sort_ranks                  = worker_count / number_sort_groups;
@@ -1313,7 +1313,7 @@ void sample_sort_nccl_nd(
       offset,
       num_sort_ranks,
       my_sort_rank);
-    CHECK_CUDA_STREAM(stream);
+    CUNUMERIC_CHECK_CUDA_STREAM(stream);
   }
 
   // AllGather does not work here as not all have the same amount!
@@ -1322,11 +1322,11 @@ void sample_sort_nccl_nd(
     // allocate receive buffer
     const size_t aligned_count = get_16b_aligned_count(num_samples_l, sizeof(SegmentSample<VAL>));
     auto send_buffer = create_buffer<SegmentSample<VAL>>(aligned_count, legate::Memory::GPU_FB_MEM);
-    CHECK_CUDA(cudaMemcpyAsync(send_buffer.ptr(0),
-                               samples.ptr(offset),
-                               sizeof(SegmentSample<VAL>) * num_samples_l,
-                               cudaMemcpyDeviceToDevice,
-                               stream));
+    CUNUMERIC_CHECK_CUDA(cudaMemcpyAsync(send_buffer.ptr(0),
+                                         samples.ptr(offset),
+                                         sizeof(SegmentSample<VAL>) * num_samples_l,
+                                         cudaMemcpyDeviceToDevice,
+                                         stream));
 
     auto recv_buffer =
       create_buffer<SegmentSample<VAL>>(aligned_count * num_sort_ranks, legate::Memory::GPU_FB_MEM);
@@ -1353,11 +1353,11 @@ void sample_sort_nccl_nd(
     // copy back
     for (size_t r = 0; r < num_sort_ranks; r++) {
       if (r != my_sort_rank) {
-        CHECK_CUDA(cudaMemcpyAsync(samples.ptr(num_samples_l * r),
-                                   recv_buffer.ptr(aligned_count * r),
-                                   sizeof(SegmentSample<VAL>) * num_samples_l,
-                                   cudaMemcpyDeviceToDevice,
-                                   stream));
+        CUNUMERIC_CHECK_CUDA(cudaMemcpyAsync(samples.ptr(num_samples_l * r),
+                                             recv_buffer.ptr(aligned_count * r),
+                                             sizeof(SegmentSample<VAL>) * num_samples_l,
+                                             cudaMemcpyDeviceToDevice,
+                                             stream));
       }
     }
 
@@ -1365,7 +1365,7 @@ void sample_sort_nccl_nd(
     send_buffer.destroy();
     recv_buffer.destroy();
 
-    CHECK_CUDA_STREAM(stream);
+    CUNUMERIC_CHECK_CUDA_STREAM(stream);
   }
 
   /////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1431,7 +1431,7 @@ void sample_sort_nccl_nd(
     compute_scan_per_rank<<<num_sort_ranks, THREADS_PER_BLOCK, 0, stream>>>(
       segment_blocks.ptr(0), size_send.ptr(0), num_segments_l, num_segments_l_aligned);
 
-    CHECK_CUDA_STREAM(stream);
+    CUNUMERIC_CHECK_CUDA_STREAM(stream);
   }
 
   // cleanup intermediate data structures
@@ -1468,25 +1468,25 @@ void sample_sort_nccl_nd(
   Buffer<size_t> size_recv_total =
     create_buffer<size_t>(num_sort_ranks, legate::Memory::Z_COPY_MEM);
   {
-    CHECK_CUDA(cudaMemcpy2DAsync(size_send_total.ptr(0),
-                                 1 * sizeof(size_t),
-                                 size_send.ptr(num_segments_l),
-                                 num_segments_l_aligned * sizeof(size_t),
-                                 sizeof(int64_t),
-                                 num_sort_ranks,
-                                 cudaMemcpyDeviceToHost,
-                                 stream));
-    CHECK_CUDA(cudaMemcpy2DAsync(size_recv_total.ptr(0),
-                                 1 * sizeof(size_t),
-                                 size_recv.ptr(num_segments_l),
-                                 num_segments_l_aligned * sizeof(size_t),
-                                 sizeof(int64_t),
-                                 num_sort_ranks,
-                                 cudaMemcpyDeviceToHost,
-                                 stream));
+    CUNUMERIC_CHECK_CUDA(cudaMemcpy2DAsync(size_send_total.ptr(0),
+                                           1 * sizeof(size_t),
+                                           size_send.ptr(num_segments_l),
+                                           num_segments_l_aligned * sizeof(size_t),
+                                           sizeof(int64_t),
+                                           num_sort_ranks,
+                                           cudaMemcpyDeviceToHost,
+                                           stream));
+    CUNUMERIC_CHECK_CUDA(cudaMemcpy2DAsync(size_recv_total.ptr(0),
+                                           1 * sizeof(size_t),
+                                           size_recv.ptr(num_segments_l),
+                                           num_segments_l_aligned * sizeof(size_t),
+                                           sizeof(int64_t),
+                                           num_sort_ranks,
+                                           cudaMemcpyDeviceToHost,
+                                           stream));
 
     // need to sync as we share values in between host/device
-    CHECK_CUDA(cudaStreamSynchronize(stream));
+    CUNUMERIC_CHECK_CUDA(cudaStreamSynchronize(stream));
   }
 
   // copy values into aligned send buffer
@@ -1537,13 +1537,13 @@ void sample_sort_nccl_nd(
                                                                            segment_size_l,
                                                                            my_rank,
                                                                            num_sort_ranks);
-        CHECK_CUDA(cudaStreamSynchronize(stream));  // needed before Z-copy destroy()
+        CUNUMERIC_CHECK_CUDA(cudaStreamSynchronize(stream));  // needed before Z-copy destroy()
         idc_send_buffers_ptr.destroy();
       } else {
-        CHECK_CUDA(cudaStreamSynchronize(stream));  // needed before Z-copy destroy()
+        CUNUMERIC_CHECK_CUDA(cudaStreamSynchronize(stream));  // needed before Z-copy destroy()
       }
       val_send_buffers_ptr.destroy();
-      CHECK_CUDA_STREAM(stream);
+      CUNUMERIC_CHECK_CUDA_STREAM(stream);
     }
 
     local_sorted.values.destroy();
@@ -1573,7 +1573,7 @@ void sample_sort_nccl_nd(
                                size_recv.ptr(r * num_segments_l_aligned),
                                size_recv.ptr(r * num_segments_l_aligned) + num_segments_l + 1,
                                size_recv.ptr(r * num_segments_l_aligned));
-        CHECK_CUDA(
+        CUNUMERIC_CHECK_CUDA(
           cudaMemsetAsync(merge_buffers[r].segments.ptr(0), 0, size * sizeof(size_t), stream));
         const size_t num_blocks = (num_segments_l + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
         assert(sizeof(unsigned long long int) ==
@@ -1597,7 +1597,7 @@ void sample_sort_nccl_nd(
       }
     }
 
-    CHECK_CUDA_STREAM(stream);
+    CUNUMERIC_CHECK_CUDA_STREAM(stream);
   }
 
   // communicate all2all (in sort dimension)
@@ -1652,7 +1652,7 @@ void sample_sort_nccl_nd(
       idc_send_buffers[r].destroy();
     }
   }
-  CHECK_CUDA_STREAM(stream);
+  CUNUMERIC_CHECK_CUDA_STREAM(stream);
 
   /////////////////////////////////////////////////////////////////////////////////////////////////
   /////////////// Part 4: merge data
@@ -1782,7 +1782,7 @@ struct SortImplBody<VariantKind::GPU, CODE, DIM> {
         values_ptr = output.ptr(rect.lo);
       }
     }
-    CHECK_CUDA_STREAM(stream);
+    CUNUMERIC_CHECK_CUDA_STREAM(stream);
 
     if (volume > 0) {
       // sort data (locally)
@@ -1795,7 +1795,7 @@ struct SortImplBody<VariantKind::GPU, CODE, DIM> {
                        stable,
                        stream);
     }
-    CHECK_CUDA_STREAM(stream);
+    CUNUMERIC_CHECK_CUDA_STREAM(stream);
 
     if (need_distributed_sort) {
       if (is_index_space) {
@@ -1849,7 +1849,7 @@ struct SortImplBody<VariantKind::GPU, CODE, DIM> {
       local_sorted.values.destroy();
     }
 
-    CHECK_CUDA_STREAM(stream);
+    CUNUMERIC_CHECK_CUDA_STREAM(stream);
   }
 };
 

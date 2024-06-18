@@ -17,6 +17,7 @@ import numpy as np
 import pytest
 from legate.core import LEGATE_MAX_DIM
 from utils.generators import mk_0to1_array
+from utils.utils import AxisError
 
 import cunumeric as num
 
@@ -87,16 +88,16 @@ class TestMoveAxisErrors:
 
     def test_axis_out_of_bound(self):
         msg = "out of bound"
-        with pytest.raises(np.AxisError, match=msg):
+        with pytest.raises(AxisError, match=msg):
             num.moveaxis(self.x, [0, 3], [0, 1])
 
-        with pytest.raises(np.AxisError, match=msg):
+        with pytest.raises(AxisError, match=msg):
             num.moveaxis(self.x, [0, 1], [0, -4])
 
-        with pytest.raises(np.AxisError, match=msg):
+        with pytest.raises(AxisError, match=msg):
             num.moveaxis(self.x, 4, 0)
 
-        with pytest.raises(np.AxisError, match=msg):
+        with pytest.raises(AxisError, match=msg):
             num.moveaxis(self.x, 0, -4)
 
     def test_axis_with_different_length(self):

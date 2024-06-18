@@ -20,6 +20,7 @@ import numpy as np
 
 from .._array.array import ndarray
 from .._array.util import add_boilerplate
+from .._utils import is_np2
 
 if TYPE_CHECKING:
     from ..types import SelectKind, SortType
@@ -71,30 +72,32 @@ def argsort(
     return result
 
 
-def msort(a: ndarray) -> ndarray:
-    """
+if not is_np2:
 
-    Returns a sorted copy of an array sorted along the first axis.
+    def msort(a: ndarray) -> ndarray:
+        """
 
-    Parameters
-    ----------
-    a : array_like
-        Input array.
+        Returns a sorted copy of an array sorted along the first axis.
 
-    Returns
-    -------
-    out : ndarray
-        Sorted array with same dtype and shape as `a`.
+        Parameters
+        ----------
+        a : array_like
+            Input array.
 
-    See Also
-    --------
-    numpy.msort
+        Returns
+        -------
+        out : ndarray
+            Sorted array with same dtype and shape as `a`.
 
-    Availability
-    --------
-    Multiple GPUs, Multiple CPUs
-    """
-    return sort(a, axis=0)
+        See Also
+        --------
+        numpy.msort
+
+        Availability
+        --------
+        Multiple GPUs, Multiple CPUs
+        """
+        return sort(a, axis=0)
 
 
 @add_boilerplate("a")

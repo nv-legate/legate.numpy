@@ -89,6 +89,7 @@ class NDArray {
             std::string kind            = "quicksort");
   NDArray transpose();
   NDArray transpose(std::vector<int32_t> axes);
+  NDArray argwhere();
   NDArray flip(std::optional<std::vector<int32_t>> axis = std::nullopt);
   NDArray all(std::optional<std::vector<int32_t>> axis = std::nullopt,
               std::optional<NDArray> out               = std::nullopt,

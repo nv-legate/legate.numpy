@@ -15,6 +15,35 @@
  */
 
 namespace {
+template <typename T>
+std::stringstream& print_value(std::stringstream& ss, T value)
+{
+  ss << value;
+  return ss;
+}
+
+template <>
+std::stringstream& print_value<complex<float>>(std::stringstream& ss, complex<float> value)
+{
+  // operator<< missing for cuda::std::complex
+  // The issue is going to be fixed in the next cuda release.
+#if CUDART_VERSION >= 12050
+  ss << value;
+#endif
+  return ss;
+}
+
+template <>
+std::stringstream& print_value<complex<double>>(std::stringstream& ss, complex<double> value)
+{
+  // operator<< missing for cuda::std::complex
+  // The issue is going to be fixed in the next cuda release.
+#if CUDART_VERSION >= 12050
+  ss << value;
+#endif
+  return ss;
+}
+
 template <typename T, int32_t DIM>
 std::string to_string(legate::AccessorRO<T, DIM> acc,
                       const std::vector<size_t>& shape,
@@ -66,7 +95,8 @@ std::string to_string(legate::AccessorRO<T, DIM> acc,
         ss << ",";
       }
     }
-    ss << std::setw(9) << std::setprecision(3) << acc[*itr];
+    ss << std::setw(9) << std::setprecision(3);
+    print_value(ss, acc[*itr]);
     count += 1;
   }
   print_brackets_in_start_end(false);
@@ -88,8 +118,10 @@ std::string check_array_eq(legate::AccessorRO<T, DIM> acc,
   for (legate::PointInRectIterator<DIM> itr(rect, false); itr.valid(); ++itr) {
     auto q = *itr;
     ss << std::left << std::setprecision(3);
-    ss << std::setw(13) << "Array value: " << std::setw(10) << acc[q] << ", ";
-    ss << std::setw(16) << "Expected value: " << std::setw(10) << values_ptr[index] << ", ";
+    ss << std::setw(13) << "Array value: " << std::setw(10);
+    print_value(ss, acc[q]) << ", ";
+    ss << std::setw(16) << "Expected value: " << std::setw(10);
+    print_value(ss, acc[q]) << ", ";
     if (size > 0) {
       ss << std::setw(8) << "index: [";
       for (uint32_t i = 0; i < size - 1; ++i) {

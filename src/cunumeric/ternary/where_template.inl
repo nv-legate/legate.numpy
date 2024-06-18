@@ -48,7 +48,7 @@ struct WhereImpl {
     auto in1  = args.in1.read_accessor<VAL, DIM>(rect);
     auto in2  = args.in2.read_accessor<VAL, DIM>(rect);
 
-#if !LegateDefined(LEGATE_BOUNDS_CHECKS)
+#if !LEGATE_DEFINED(LEGATE_BOUNDS_CHECKS)
     // Check to see if this is dense or not
     bool dense = out.accessor.is_dense_row_major(rect) && in1.accessor.is_dense_row_major(rect) &&
                  in2.accessor.is_dense_row_major(rect) && mask.accessor.is_dense_row_major(rect);

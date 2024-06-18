@@ -71,7 +71,7 @@ struct MatVecMulImplBody<VariantKind::GPU, Type::Code::FLOAT32> {
                                  transpose_mat ? n : m));
     }
 
-    CHECK_CUDA_STREAM(task_stream);
+    CUNUMERIC_CHECK_CUDA_STREAM(task_stream);
   }
 };
 
@@ -119,7 +119,7 @@ struct MatVecMulImplBody<VariantKind::GPU, Type::Code::FLOAT64> {
                                transpose_mat ? n : m));
     }
 
-    CHECK_CUDA_STREAM(task_stream);
+    CUNUMERIC_CHECK_CUDA_STREAM(task_stream);
   }
 };
 
@@ -161,7 +161,7 @@ struct MatVecMulImplBody<VariantKind::GPU, Type::Code::FLOAT16> {
                                CUDA_R_32F,
                                transpose_mat ? n : m));
 
-    CHECK_CUDA_STREAM(task_stream);
+    CUNUMERIC_CHECK_CUDA_STREAM(task_stream);
   }
 };
 
@@ -216,7 +216,7 @@ struct MatVecMulImplBody<VariantKind::GPU, Type::Code::COMPLEX64> {
                                  transpose_mat ? n : m));
     }
 
-    CHECK_CUDA_STREAM(task_stream);
+    CUNUMERIC_CHECK_CUDA_STREAM(task_stream);
   }
 };
 
@@ -268,7 +268,7 @@ struct MatVecMulImplBody<VariantKind::GPU, Type::Code::COMPLEX128> {
                                transpose_mat ? n : m));
     }
 
-    CHECK_CUDA_STREAM(task_stream);
+    CUNUMERIC_CHECK_CUDA_STREAM(task_stream);
   }
 };
 

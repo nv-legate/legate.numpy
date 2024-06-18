@@ -118,7 +118,7 @@ struct SelectImplBody<VariantKind::GPU, CODE, DIM> {
         out, narrays, cond_arr, choice_arr, default_val, rect, pitches, rect.volume());
     }
 
-    CHECK_CUDA_STREAM(stream);
+    CUNUMERIC_CHECK_CUDA_STREAM(stream);
   }
 };
 

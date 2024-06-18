@@ -7,6 +7,16 @@ on:
       target-device:
         type: string
         required: true
+      build-type:
+        type: string
+        required: true
+      upload-enabled:
+        type: boolean
+        required: true
+      dependencies-workflow:
+        required: true
+        type: string
+        description: The workflow file name used by the dependency
 
 jobs:
   setup-build:
@@ -19,33 +29,60 @@ jobs:
         run: |
           if [ "${{ inputs.platform }}" = "linux" ]; then
             if [ "${{ github.repository_owner }}" = "nv-legate" ]; then
-              echo "runner_type=linux-amd64-cpu32" >> $GITHUB_OUTPUT
+              echo "runner_type=linux-amd64-cpu16" >> $GITHUB_OUTPUT
             else
               echo "runner_type=ubuntu-latest" >> $GITHUB_OUTPUT
             fi
+          elif [ "${{ inputs.platform }}" = "linux-aarch64" ]; then
+            echo "runner_type=linux-arm64-cpu16"  >> $GITHUB_OUTPUT
           elif [ "${{ inputs.platform }}" = "mac" ]; then
             echo "runner_type=macos-latest"  >> $GITHUB_OUTPUT
           fi
 
   build:
     needs: setup-build
-    name: "Build (${{ inputs.platform }}, ${{ inputs.target-device }})"
+    name: "Build (${{ inputs.platform }}, ${{ inputs.target-device }}, ${{ inputs.build-type }})"
     uses:
-      nv-legate/legate-gh-ci/.github/workflows/gh-build.yml@v23.11.00
+      nv-legate/legate-gh-ci/.github/workflows/gh-build.yml@v1.7
     with:
       client-repo: ${{ github.event.repository.name }}
       target-device: ${{ inputs.target-device }}
       runs-on: ${{ needs.setup-build.outputs.runner_type }}
-      build-type: ci
+      build-type: ${{ inputs.build-type }}
       use-container: ${{ inputs.platform == 'linux' }}
       platform: ${{ inputs.platform }}
       dependencies-file: "cmake/versions.json"
-      legate-gh-ci-tag: "v23.11.00"
-      cmake-preset: ""
+      dependencies-workflow: ${{ inputs.dependencies-workflow }}
+      legate-gh-ci-tag: "v1.7"
+      build-mode: ""
       ucx-enabled: false
+      upload-enabled: ${{ inputs.upload-enabled }}
     secrets: inherit
 
+
+  upload:
+    needs: build
+    if: ${{ github.repository_owner == 'nv-legate' && contains(github.workflow, 'release') && inputs.upload-enabled == true }}
+    name: Upload package to Server
+    uses:
+      nv-legate/legate-gh-ci/.github/workflows/gh-upload.yml@v1.7
+    with:
+      client-repo: ${{ github.event.repository.name }}
+      build-type: ${{ inputs.build-type }}
+      name: Upload package to Server
+      target-device: ${{ inputs.target-device }}
+      platform: ${{ inputs.platform }}
+      legate-gh-ci-tag: "v1.7"
+      build-mode: ""
+      ucx-enabled: false
+      upload-enabled: ${{ inputs.upload-enabled }}
+      upload-action: "upload-package"
+      pkgSubString: "cunumeric-"
+      repos-Root: "cunumeric"
+    secrets: inherit    
+
   setup-test:
+    if: inputs.upload-enabled == false
     name: Setup test
     needs:
       - build
@@ -59,14 +96,16 @@ jobs:
           MATRIX_JSON='{"include": ['
           RUNNERS=(
             'linux-amd64-gpu-v100-latest-1:gpu:gpu:linux' 'linux-amd64-2gpu:gpu:2gpu:linux'
-            'linux-amd64-cpu32:cpu:cpu:linux'
+            'linux-amd64-cpu16:cpu:cpu:linux'
             'macos-latest:cpu:cpu:mac')
           TEST_CONFIGS=(
-            '1 CPU test:test --cpus 1 --unit --debug:cpu'
-            '1 CPU test:test --cpus 1 --unit --debug:gpu'
+            '1 CPU test:test --cpus 1 --debug:cpu'
+            '1 CPU test:test --cpus 1 --debug:gpu'
             '2 CPU test:test --cpus 2 --debug:cpu'
             '2 CPU test:test --cpus 2 --debug:gpu'
-            'GPU test:test --use cuda --gpus 1 --debug:gpu'
+            # set the number of workers manually because nvidia runners report 6 gpus when onyl one is really available
+            # this workaround can be removed when the number of available gpus is reported correctly (when we run on VMs)
+            'GPU test:test --use cuda --gpus 1 -j 7 --debug:gpu'
             '2 GPU test:test --use cuda --gpus 2 --debug:2gpu'
             'OpenMP test:test --use openmp --omps 1 --ompthreads 2 --debug:gpu'
             'OpenMP test:test --use openmp --omps 1 --ompthreads 2 --debug:cpu'
@@ -76,6 +115,7 @@ jobs:
             'Eager execution test:test --use eager --debug:cpu'
             'mypy:mypy:cpu'
             'Documentation:docs:cpu'
+            'Unit tests:unit:cpu'
           )
           for RUNNER in "${RUNNERS[@]}"; do
             IFS=':' read -ra RUNNER_INFO <<< "$RUNNER"
@@ -109,17 +149,39 @@ jobs:
       matrix: ${{fromJson(needs.setup-test.outputs.matrix)}}
 
     uses:
-      nv-legate/legate-gh-ci/.github/workflows/gh-test-within-container.yml@v23.11.00
+      nv-legate/legate-gh-ci/.github/workflows/gh-test-within-container.yml@v1.7
     with:
       client-repo: ${{ github.event.repository.name }}
-      build-type: ci
+      build-type: ${{ inputs.build-type }}
       name: ${{ matrix.test-config.name }}
       target-device: ${{ inputs.target-device }}
       runs-on: ${{ matrix.runner.name }}
       has-gpu: ${{ matrix.runner.type == 'gpu' }}
       test-options: ${{ matrix.test-config.test-options }}
       platform: ${{ inputs.platform }}
-      legate-gh-ci-tag: "v23.11.00"
-      cmake-preset: ""
+      legate-gh-ci-tag: "v1.7"
+      build-mode: ""
       ucx-enabled: false
+      upload-enabled: ${{ inputs.upload-enabled }}
+    secrets: inherit
+
+  updateTestStatus:
+    needs: test
+    name: Update Test status on Server
+    if: ${{ (github.repository_owner == 'nv-legate') && contains(github.workflow, 'Nightly') && (inputs.upload-enabled == true) }}
+    uses:
+      nv-legate/legate-gh-ci/.github/workflows/gh-upload.yml@v1.7
+    with:
+      client-repo: ${{ github.event.repository.name }}
+      build-type: ${{ inputs.build-type }}
+      name: UpdateTestStatus
+      target-device: ${{ inputs.target-device }}
+      platform: ${{ inputs.platform }}
+      legate-gh-ci-tag: "v1.7"
+      build-mode: ""
+      ucx-enabled: false
+      upload-enabled: true
+      upload-action: "update-test-status"
+      pkgSubString: "cunumeric-"
+      repos-Root: "cunumeric"  
     secrets: inherit

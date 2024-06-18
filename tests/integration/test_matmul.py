@@ -16,6 +16,7 @@
 import numpy as np
 import pytest
 from legate.core import LEGATE_MAX_DIM
+from utils.comparisons import allclose
 from utils.contractions import (
     check_default,
     check_permutations,
@@ -29,7 +30,7 @@ from cunumeric._utils.linalg import matmul_modes
 
 @pytest.mark.parametrize("a_ndim", range(1, LEGATE_MAX_DIM + 1))
 @pytest.mark.parametrize("b_ndim", range(1, LEGATE_MAX_DIM + 1))
-def test(a_ndim, b_ndim):
+def test_function(a_ndim, b_ndim):
     name = f"matmul({a_ndim} x {b_ndim})"
     modes = matmul_modes(a_ndim, b_ndim)
 
@@ -41,6 +42,57 @@ def test(a_ndim, b_ndim):
     check_shapes(name, modes, operation)
     if a_ndim <= 2 and b_ndim <= 2:
         check_types(name, modes, operation)
+
+
+@pytest.mark.parametrize(
+    "a_shape",
+    (
+        (3, 4, 5),
+        (4, 5),
+        (5,),
+    ),
+)
+@pytest.mark.parametrize(
+    "b_shape",
+    (
+        (3, 5, 6),
+        (5, 6),
+        (5,),
+    ),
+)
+def test_operator(a_shape, b_shape):
+    np_a = np.random.random(a_shape)
+    np_b = np.random.random(b_shape)
+    num_a = num.array(np_a)
+    num_b = num.array(np_b)
+    assert allclose(np_a @ np_b, num_a @ num_b)
+
+
+@pytest.mark.parametrize(
+    "a_shape",
+    (
+        (3, 4, 5),
+        (4, 5),
+        (5,),
+    ),
+)
+@pytest.mark.parametrize(
+    "b_shape",
+    (
+        (3, 5, 5),
+        (5, 5),
+    ),
+)
+def test_inplace_operator(a_shape, b_shape):
+    if len(a_shape) < len(b_shape):
+        return
+    np_a = np.random.random(a_shape)
+    np_b = np.random.random(b_shape)
+    num_a = num.array(np_a)
+    num_b = num.array(np_b)
+    np_a @= np_b
+    num_a @= num_b
+    assert allclose(np_a, num_a)
 
 
 class TestMatmulErrors:

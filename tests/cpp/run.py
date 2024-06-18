@@ -14,6 +14,7 @@ import argparse
 import os
 import subprocess
 import sys
+from pathlib import Path
 
 LAUNCHER_VAR_PREFIXES = (
     "CONDA_",
@@ -91,19 +92,22 @@ def run_test(config, test_name, log, extra_args):
 
 
 def main():
+    CUNUMERIC_DIR = Path(__file__).resolve().parent.parent.parent
     parser = argparse.ArgumentParser(description="Run Legate cpp tests.")
     parser.add_argument(
         "--binary-path",
         dest="binary_path",
         required=False,
-        default="build/cpp_tests",
+        default=str(
+            CUNUMERIC_DIR / "build" / "tests" / "cpp" / "bin" / "cpp_tests"
+        ),
         help="Path to binary under test.",
     )
     parser.add_argument(
         "--log-path",
         dest="log_path",
         required=False,
-        default="build/results.log",
+        default=str(CUNUMERIC_DIR / "build" / "results.log"),
         help="Path to output log file.",
     )
     parser.add_argument(
@@ -140,7 +144,7 @@ def main():
                 failed_tests += [test_name]
                 failed_count += 1
             print(
-                f"{count+1:3d}/{total_count}: {test_name} ".ljust(50, "."),
+                f"{count + 1:3d}/{total_count}: {test_name} ".ljust(50, "."),
                 "Failed" if return_code else "Passed",
             )
 

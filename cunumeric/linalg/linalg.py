@@ -17,12 +17,19 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Sequence
 
 import numpy as np
-from numpy.core.multiarray import (  # type: ignore [attr-defined]
-    normalize_axis_index,
-)
-from numpy.core.numeric import (  # type: ignore [attr-defined]
-    normalize_axis_tuple,
-)
+
+from .._utils import is_np2
+
+if is_np2:
+    from numpy.lib.array_utils import normalize_axis_index  # type: ignore
+    from numpy.lib.array_utils import normalize_axis_tuple  # type: ignore
+else:
+    from numpy.core.multiarray import (  # type: ignore
+        normalize_axis_index,
+    )
+    from numpy.core.numeric import (  # type: ignore
+        normalize_axis_tuple,
+    )
 
 from .._array.util import add_boilerplate, convert_to_cunumeric_ndarray
 from .._module import dot, empty_like, eye, matmul, ndarray
@@ -80,6 +87,58 @@ def cholesky(a: ndarray) -> ndarray:
         raise ValueError("Last 2 dimensions of the array must be square")
 
     return _thunk_cholesky(a)
+
+
+@add_boilerplate("a")
+def qr(a: ndarray) -> tuple[ndarray, ...]:
+    """
+    Compute the qr factorization of a matrix.
+
+    Factor the matrix a as qr, where q is orthonormal
+    and r is upper-triangular.
+
+    Parameters
+    ----------
+    a : (M, N) array_like
+        Array like, at least dimension 2.
+
+    Returns
+    -------
+    q : (M, K) array_like
+        A matrix with orthonormal columns. K = min(M, N).
+    r : (K, N) array_like
+        The uppoer triangular matrix.
+
+    Raises
+    ------
+    LinAlgError
+        If factoring fails.
+
+    Notes
+    -----
+    Currently does not support the parameter 'mode' from numpy 1.8.
+
+    See Also
+    --------
+    numpy.linalg.qr
+
+    Availability
+    --------
+    Single GPU, Single CPU
+    """
+    shape = a.shape
+    if len(shape) < 2:
+        raise LinAlgError(
+            f"{len(shape)}-dimensional array given. "
+            "Array must be at least two-dimensional"
+        )
+    if len(shape) > 2:
+        raise NotImplementedError(
+            "cuNumeric does not yet support stacked 2d arrays"
+        )
+    if np.dtype("e") == a.dtype:
+        raise TypeError("array type float16 is unsupported in linalg")
+    return _thunk_qr(a)
 
 
 @add_boilerplate("a", "b")
@@ -156,6 +215,60 @@ def solve(a: ndarray, b: ndarray, out: ndarray | None = None) -> ndarray:
         return empty_like(b)
 
     return _thunk_solve(a, b, out)
+
+
+@add_boilerplate("a")
+def svd(a: ndarray) -> tuple[ndarray, ...]:
+    """
+    Singular Value Decomposition.
+
+    Parameters
+    ----------
+    a : (M, N) array_like
+        Array like, at least dimension 2.
+
+    Returns
+    -------
+    u : (M, M) array_like
+        Unitary array(s).
+    s : (K) array_like
+        The singular values, sorted in descending order
+    vh : (N, N) array_like
+        Unitary array(s).
+
+    Raises
+    ------
+    LinAlgError
+        If SVD computation does not converge.
+
+    Notes
+    -----
+    Currently does not support the parameters 'full_matrices', 'compute_uv',
+    and 'hermitian'.
+
+    See Also
+    --------
+    numpy.linalg.svd
+
+    Availability
+    --------
+    Single GPU, Single CPU
+    """
+    shape = a.shape
+    if len(shape) < 2:
+        raise LinAlgError(
+            f"{len(shape)}-dimensional array given. "
+            "Array must be at least two-dimensional"
+        )
+    if len(shape) > 2:
+        raise NotImplementedError(
+            "cuNumeric does not yet support stacked 2d arrays"
+        )
+    if shape[0] < shape[1]:
+        raise NotImplementedError("cuNumeric only supports M >= N")
+    if np.dtype("e") == a.dtype:
+        raise TypeError("array type float16 is unsupported in linalg")
+    return _thunk_svd(a)
 
 
 # This implementation is adapted closely from NumPy
@@ -360,7 +473,7 @@ def _multi_dot_matrix_chain_order(
     for l_ in range(1, n):
         for i in range(n - l_):
             j = i + l_
-            m[i, j] = np.Inf
+            m[i, j] = np.inf
             for k in range(i, j):
                 q = m[i, k] + m[k + 1, j] + p[i] * p[k + 1] * p[j + 1]
                 if q < m[i, j]:
@@ -632,6 +745,27 @@ def _thunk_cholesky(a: ndarray, no_tril: bool = False) -> ndarray:
     return output
 
 
+def _thunk_qr(a: ndarray) -> tuple[ndarray, ...]:
+    if a.dtype.kind not in ("f", "c"):
+        a = a.astype("float64")
+
+    k = min(a.shape[0], a.shape[1])
+
+    out_q = ndarray(
+        shape=(a.shape[0], k),
+        dtype=a.dtype,
+        inputs=(a,),
+    )
+    out_r = ndarray(
+        shape=(k, a.shape[1]),
+        dtype=a.dtype,
+        inputs=(a,),
+    )
+
+    a._thunk.qr(out_q._thunk, out_r._thunk)
+    return out_q, out_r
+
+
 def _thunk_solve(
     a: ndarray, b: ndarray, output: ndarray | None = None
 ) -> ndarray:
@@ -667,3 +801,32 @@ def _thunk_solve(
         )
     out._thunk.solve(a._thunk, b._thunk)
     return out
+
+
+def _thunk_svd(a: ndarray) -> tuple[ndarray, ...]:
+    if a.dtype.kind not in ("f", "c"):
+        a = a.astype("float64")
+
+    k = min(a.shape[0], a.shape[1])
+
+    out_u = ndarray(
+        shape=(a.shape[0], a.shape[0]),
+        dtype=a.dtype,
+        inputs=(a,),
+    )
+
+    real_dtype = a.dtype.type(0).real.dtype
+
+    out_s = ndarray(
+        shape=(k,),
+        dtype=real_dtype,
+        inputs=(a,),
+    )
+    out_vh = ndarray(
+        shape=(a.shape[1], a.shape[1]),
+        dtype=a.dtype,
+        inputs=(a,),
+    )
+
+    a._thunk.svd(out_u._thunk, out_s._thunk, out_vh._thunk)
+    return out_u, out_s, out_vh

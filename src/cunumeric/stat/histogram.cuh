@@ -108,7 +108,7 @@ template <typename exe_policy_t>
 struct sync_policy_t<exe_policy_t, std::enable_if_t<!is_host_policy_v<exe_policy_t>>> {
   sync_policy_t() {}
 
-  void operator()(cudaStream_t stream) { CHECK_CUDA_STREAM(stream); }
+  void operator()(cudaStream_t stream) { CUNUMERIC_CHECK_CUDA_STREAM(stream); }
 };
 
 }  // namespace detail

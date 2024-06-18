@@ -1,4 +1,4 @@
-# Copyright 2021-2022 NVIDIA Corporation
+# Copyright 2021-2024 NVIDIA Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -134,7 +134,7 @@ class NumPyThunk(ABC):
         ...
 
     @abstractmethod
-    def squeeze(self, axis: int | None) -> NumPyThunk:
+    def squeeze(self, axis: int | tuple[int, ...] | None) -> NumPyThunk:
         ...
 
     @abstractmethod
@@ -701,7 +701,15 @@ class NumPyThunk(ABC):
         ...
 
     @abstractmethod
+    def qr(self, q: Any, r: Any) -> None:
+        ...
+
+    @abstractmethod
     def solve(self, a: Any, b: Any) -> None:
+        ...
+
+    @abstractmethod
+    def svd(self, u: Any, s: Any, vh: Any) -> None:
         ...
 
     @abstractmethod

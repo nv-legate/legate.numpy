@@ -17,6 +17,7 @@ import numpy as np
 import pytest
 
 import cunumeric as num
+from cunumeric._utils import is_np2
 
 # cunumeric.msort(a: ndarray) → ndarray
 
@@ -42,12 +43,13 @@ SIZES = [
 ]
 
 
+@pytest.mark.skipif(is_np2, reason="numpy 2.0")
 class TestmSort(object):
     @pytest.mark.xfail
     def test_arr_none(self):
         res_np = np.msort(
             None
-        )  # numpy.AxisError: axis 0 is out of bounds for array of dimension 0
+        )  # AxisError: axis 0 is out of bounds for array of dimension 0
         res_num = num.msort(
             None
         )  # AttributeError: 'NoneType' object has no attribute 'shape'

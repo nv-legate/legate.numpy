@@ -75,7 +75,7 @@ struct ScanLocalImplBody<VariantKind::GPU, OP_CODE, CODE, DIM> {
       lazy_kernel<<<1, THREADS_PER_BLOCK, 0, stream>>>(&outptr[index + stride - 1],
                                                        &sum_valsptr[sum_valp]);
     }
-    CHECK_CUDA_STREAM(stream);
+    CUNUMERIC_CHECK_CUDA_STREAM(stream);
   }
 };
 
@@ -126,7 +126,7 @@ struct ScanLocalNanImplBody<VariantKind::GPU, OP_CODE, CODE, DIM> {
       lazy_kernel<<<1, THREADS_PER_BLOCK, 0, stream>>>(&outptr[index + stride - 1],
                                                        &sum_valsptr[sum_valp]);
     }
-    CHECK_CUDA_STREAM(stream);
+    CUNUMERIC_CHECK_CUDA_STREAM(stream);
   }
 };
 

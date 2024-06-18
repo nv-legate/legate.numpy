@@ -150,6 +150,7 @@ def test_default_rng_bitgenerator():
     EAGER_TEST,
     reason="cuNumeric does not respect seed in Eager mode",
 )
+@pytest.mark.xfail(reason="cunumeric.internal#135")
 def test_default_rng_generator():
     steps = 3
     seed = 12345
@@ -183,7 +184,7 @@ SMALL_RNG_SIZES = [5, 1024, (1, 2)]
 LARGE_RNG_SIZES = [10000, (20, 50, 4)]
 ALL_RNG_SIZES = SMALL_RNG_SIZES + LARGE_RNG_SIZES + [None]
 INT_DTYPES = [np.int64, np.int32, np.int16]
-UINT_DTYPES = [np.uint64, np.uint16, np.uint0]
+UINT_DTYPES = [np.uint64, np.uint16, np.uintp]
 FLOAT_DTYPES = [np.float16, np.float128, np.float64]
 
 

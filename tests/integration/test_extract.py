@@ -47,7 +47,7 @@ VALUES = [
     [11, 12, 13],
     [True, False, False, True],
     [42.3, 42.3, 42.3, 42.3, 42.3],
-    [np.inf, np.Inf],
+    [np.inf],
 ]
 
 

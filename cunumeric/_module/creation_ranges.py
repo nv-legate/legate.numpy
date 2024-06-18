@@ -235,7 +235,7 @@ def linspace(
     else:
         # sequences with 0 items or 1 item with endpoint=True (i.e. div <= 0)
         # have an undefined step
-        step = np.NaN
+        step = np.nan
         if delta.ndim == 0:
             y *= delta
         else:

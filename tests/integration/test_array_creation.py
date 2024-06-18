@@ -90,19 +90,18 @@ SHAPES_NEGATIVE = [
 
 
 class TestCreationErrors:
-    def setup_method(self):
-        self.bad_type_shape = (2, 3.0)
+    bad_type_shape = (2, 3.0)
+
+    @pytest.mark.parametrize("fn", ("empty", "zeros", "ones"))
+    @pytest.mark.parametrize("shape", SHAPES_NEGATIVE, ids=str)
+    def test_creation_negative_shape(self, shape, fn):
+        with pytest.raises(ValueError):
+            getattr(num, fn)(shape)
 
     @pytest.mark.parametrize("shape", SHAPES_NEGATIVE, ids=str)
-    class TestNegativeShape:
-        @pytest.mark.parametrize("fn", ("empty", "zeros", "ones"))
-        def test_creation(self, shape, fn):
-            with pytest.raises(ValueError):
-                getattr(num, fn)(shape)
-
-        def test_full(self, shape):
-            with pytest.raises(ValueError):
-                num.full(shape, 10)
+    def test_full_negative_shape(self, shape):
+        with pytest.raises(ValueError):
+            num.full(shape, 10)
 
     @pytest.mark.parametrize("fn", ("empty", "zeros", "ones"))
     def test_creation_bad_type(self, fn):

@@ -18,7 +18,7 @@
 
 #include "generator.h"
 
-#include <core/cuda/cuda_help.h>
+#include "cunumeric/cuda_help.h"
 
 namespace randutilimpl {
 static constexpr int blocksPerMultiProcessor = 2;    // TODO: refine => number of blocks per mp
@@ -73,8 +73,8 @@ struct inner_generator<gen_t, randutilimpl::execlocation::DEVICE> : basegenerato
     : seed(seed), generatorID(generatorID), stream(stream)
   {
     int deviceId;
-    CHECK_CUDA(::cudaGetDevice(&deviceId));
-    CHECK_CUDA(
+    CUNUMERIC_CHECK_CUDA(::cudaGetDevice(&deviceId));
+    CUNUMERIC_CHECK_CUDA(
       ::cudaDeviceGetAttribute(&multiProcessorCount, cudaDevAttrMultiProcessorCount, deviceId));
     // get number of generators
     ngenerators = blockDimX * multiProcessorCount * blocksPerMultiProcessor;
@@ -84,36 +84,36 @@ struct inner_generator<gen_t, randutilimpl::execlocation::DEVICE> : basegenerato
 
     // allocate buffer for generators state
     int driverVersion, runtimeVersion;
-    CHECK_CUDA(::cudaDriverGetVersion(&driverVersion));
-    CHECK_CUDA(::cudaRuntimeGetVersion(&runtimeVersion));
+    CUNUMERIC_CHECK_CUDA(::cudaDriverGetVersion(&driverVersion));
+    CUNUMERIC_CHECK_CUDA(::cudaRuntimeGetVersion(&runtimeVersion));
     asyncsupported = ((driverVersion >= 10020) && (runtimeVersion >= 10020));
     if (asyncsupported) {
 #if (__CUDACC_VER_MAJOR__ > 11 || ((__CUDACC_VER_MAJOR__ >= 11) && (__CUDACC_VER_MINOR__ >= 2)))
-      CHECK_CUDA(::cudaMallocAsync(&generators, ngenerators * sizeof(gen_t), stream));
+      CUNUMERIC_CHECK_CUDA(::cudaMallocAsync(&generators, ngenerators * sizeof(gen_t), stream));
 #else
-      CHECK_CUDA(::cudaMalloc(&generators, ngenerators * sizeof(gen_t)));
+      CUNUMERIC_CHECK_CUDA(::cudaMalloc(&generators, ngenerators * sizeof(gen_t)));
 #endif
     } else {
-      CHECK_CUDA(::cudaMalloc(&generators, ngenerators * sizeof(gen_t)));
+      CUNUMERIC_CHECK_CUDA(::cudaMalloc(&generators, ngenerators * sizeof(gen_t)));
     }
 
     // initialize generators
     initgenerators<<<blocksPerMultiProcessor * multiProcessorCount, blockDimX, 0, stream>>>(
       generators, seed, generatorID);
-    CHECK_CUDA(::cudaPeekAtLastError());
+    CUNUMERIC_CHECK_CUDA(::cudaPeekAtLastError());
   }
 
   virtual void destroy() override
   {
-    CHECK_CUDA(::cudaStreamSynchronize(stream));
+    CUNUMERIC_CHECK_CUDA(::cudaStreamSynchronize(stream));
     if (asyncsupported) {
 #if (__CUDACC_VER_MAJOR__ > 11 || ((__CUDACC_VER_MAJOR__ >= 11) && (__CUDACC_VER_MINOR__ >= 2)))
-      CHECK_CUDA(::cudaFreeAsync(generators, stream));
+      CUNUMERIC_CHECK_CUDA(::cudaFreeAsync(generators, stream));
 #else
-      CHECK_CUDA(::cudaFree(generators));
+      CUNUMERIC_CHECK_CUDA(::cudaFree(generators));
 #endif
     } else {
-      CHECK_CUDA(::cudaFree(generators));
+      CUNUMERIC_CHECK_CUDA(::cudaFree(generators));
     }
 
     generators = nullptr;

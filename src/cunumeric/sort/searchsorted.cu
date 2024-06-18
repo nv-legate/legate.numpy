@@ -106,7 +106,7 @@ struct SearchSortedImplBody<VariantKind::GPU, CODE, DIM> {
       searchsorted_kernel_max<VAL><<<num_blocks_desired, THREADS_PER_BLOCK, 0, stream>>>(
         output_reduction, input, input_v, rect_values.lo, pitches, volume, num_values, offset);
     }
-    CHECK_CUDA_STREAM(stream);
+    CUNUMERIC_CHECK_CUDA_STREAM(stream);
   }
 };
 

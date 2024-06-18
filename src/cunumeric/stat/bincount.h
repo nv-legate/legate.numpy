@@ -21,9 +21,9 @@
 namespace cunumeric {
 
 struct BincountArgs {
-  legate::PhysicalStore lhs;
-  legate::PhysicalStore rhs;
-  legate::PhysicalStore weights;
+  legate::PhysicalStore lhs{nullptr};
+  legate::PhysicalStore rhs{nullptr};
+  legate::PhysicalStore weights{nullptr};
   bool has_weights;
 };
 
@@ -33,10 +33,10 @@ class BincountTask : public CuNumericTask<BincountTask> {
 
  public:
   static void cpu_variant(legate::TaskContext context);
-#if LegateDefined(LEGATE_USE_OPENMP)
+#if LEGATE_DEFINED(LEGATE_USE_OPENMP)
   static void omp_variant(legate::TaskContext context);
 #endif
-#if LegateDefined(LEGATE_USE_CUDA)
+#if LEGATE_DEFINED(LEGATE_USE_CUDA)
   static void gpu_variant(legate::TaskContext context);
 #endif
 };

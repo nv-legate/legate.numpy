@@ -22,8 +22,8 @@
 namespace cunumeric {
 
 struct FFTArgs {
-  legate::PhysicalStore output;
-  legate::PhysicalStore input;
+  legate::PhysicalStore output{nullptr};
+  legate::PhysicalStore input{nullptr};
   CuNumericFFTType type;
   CuNumericFFTDirection direction;
   bool operate_over_axes;
@@ -35,7 +35,7 @@ class FFTTask : public CuNumericTask<FFTTask> {
   static const int TASK_ID = CUNUMERIC_FFT;
 
  public:
-#if LegateDefined(LEGATE_USE_CUDA)
+#if LEGATE_DEFINED(LEGATE_USE_CUDA)
   static void gpu_variant(legate::TaskContext context);
 #endif
 };

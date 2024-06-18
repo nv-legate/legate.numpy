@@ -42,6 +42,21 @@ struct generate_zero_fn {
   }
 };
 
+struct check_nonzero_scalar_fn {
+  template <legate::Type::Code CODE>
+  bool operator()(cunumeric::NDArray array)
+  {
+    assert(array.dim() == 0);
+    using VAL = legate::type_of<CODE>;
+    auto acc  = array.get_read_accessor<VAL, 1>();
+    if (acc[0] == VAL(0)) {
+      return false;
+    } else {
+      return true;
+    }
+  }
+};
+
 struct generate_identity_fn {
   template <UnaryRedCode OP>
   struct generator {
@@ -719,6 +734,34 @@ NDArray NDArray::transpose(std::vector<int32_t> axes)
   return NDArray(store_.transpose(std::move(axes)));
 }
 
+NDArray NDArray::argwhere()
+{
+  auto runtime = CuNumericRuntime::get_runtime();
+  if (dim() == 0) {
+    auto not_zero = legate::type_dispatch(type().code(), check_nonzero_scalar_fn{}, *this);
+    if (not_zero) {
+      auto result = runtime->create_array({1, 0}, legate::int64());
+      return result;
+    } else {
+      auto result = runtime->create_array({0, 0}, legate::int64());
+      return result;
+    }
+  }
+
+  auto result = runtime->create_array(legate::int64(), 2);
+
+  auto task     = runtime->create_task(CuNumericOpCode::CUNUMERIC_ARGWHERE);
+  auto part_out = task.declare_partition();
+  auto part_in  = task.declare_partition();
+  task.add_output(result.store_, part_out);
+  task.add_input(store_, part_in);
+  if (dim() > 1) {
+    task.add_constraint(legate::broadcast(part_in, legate::from_range<uint32_t>(1, dim())));
+  }
+  runtime->submit(std::move(task));
+  return result;
+}
+
 NDArray NDArray::flip(std::optional<std::vector<int32_t>> axis)
 {
   auto runtime = CuNumericRuntime::get_runtime();
@@ -1092,14 +1135,15 @@ NDArray NDArray::diag_helper(int32_t offset,
     throw std::invalid_argument("output array has the wrong shape");
   }
 
-  legate::Type res_type;
-  if (type) {
-    res_type = type.value();
-  } else if (out) {
-    res_type = out->type();
-  } else {
-    res_type = store_.type();
-  }
+  auto res_type = [&] {
+    if (type) {
+      return type.value();
+    } else if (out) {
+      return out->type();
+    } else {
+      return store_.type();
+    }
+  }();
 
   if (store_.type() != res_type) {
     a = a.as_type(res_type);

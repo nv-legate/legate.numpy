@@ -23,7 +23,7 @@ import numpy as np
 from ..types import NdShape
 
 SUPPORTED_DTYPES = {
-    np.dtype(np.bool_): ty.bool_,
+    np.dtype(bool): ty.bool_,
     np.dtype(np.int8): ty.int8,
     np.dtype(np.int16): ty.int16,
     np.dtype(np.int32): ty.int32,
@@ -40,11 +40,24 @@ SUPPORTED_DTYPES = {
 }
 
 
-def is_supported_type(dtype: str | np.dtype[Any]) -> bool:
+def is_supported_dtype(dtype: str | np.dtype[Any]) -> bool:
+    """
+    Whether a NumPy dtype is supported by cuNumeric
+
+    Parameters
+    ----------
+    dtype : data-type
+        The dtype to query
+
+    Returns
+    -------
+    res : bool
+        True if `dtype` is a supported dtype
+    """
     return np.dtype(dtype) in SUPPORTED_DTYPES
 
 
-def to_core_dtype(dtype: str | np.dtype[Any]) -> ty.Type:
+def to_core_type(dtype: str | np.dtype[Any]) -> ty.Type:
     core_dtype = SUPPORTED_DTYPES.get(np.dtype(dtype))
     if core_dtype is None:
         raise TypeError(f"cuNumeric does not support dtype={dtype}")
@@ -68,3 +81,33 @@ def calculate_volume(shape: NdShape) -> int:
     if len(shape) == 0:
         return 0
     return reduce(lambda x, y: x * y, shape)
+
+
+def max_identity(
+    ty: np.dtype[Any],
+) -> int | np.floating[Any] | bool | np.complexfloating[Any, Any]:
+    if ty.kind == "i" or ty.kind == "u":
+        return np.iinfo(ty).min
+    elif ty.kind == "f":
+        return np.finfo(ty).min
+    elif ty.kind == "c":
+        return np.finfo(np.float64).min + np.finfo(np.float64).min * 1j
+    elif ty.kind == "b":
+        return False
+    else:
+        raise ValueError(f"Unsupported dtype: {ty}")
+
+
+def min_identity(
+    ty: np.dtype[Any],
+) -> int | np.floating[Any] | bool | np.complexfloating[Any, Any]:
+    if ty.kind == "i" or ty.kind == "u":
+        return np.iinfo(ty).max
+    elif ty.kind == "f":
+        return np.finfo(ty).max
+    elif ty.kind == "c":
+        return np.finfo(np.float64).max + np.finfo(np.float64).max * 1j
+    elif ty.kind == "b":
+        return True
+    else:
+        raise ValueError(f"Unsupported dtype: {ty}")

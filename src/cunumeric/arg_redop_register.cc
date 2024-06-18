@@ -57,7 +57,7 @@ DEFINE_IDENTITIES(uint64_t)
 
 }  // namespace cunumeric
 
-#if !LegateDefined(LEGATE_USE_CUDA)
+#if !LEGATE_DEFINED(LEGATE_USE_CUDA)
 extern "C" {
 
 ReductionOpIds cunumeric_register_reduction_ops(int32_t code)

@@ -61,7 +61,7 @@ struct FillImplBody<VariantKind::GPU, VAL, DIM> {
     } else {
       generic_kernel<<<blocks, THREADS_PER_BLOCK, 0, stream>>>(volume, out, in, pitches, rect);
     }
-    CHECK_CUDA_STREAM(stream);
+    CUNUMERIC_CHECK_CUDA_STREAM(stream);
   }
 };
 

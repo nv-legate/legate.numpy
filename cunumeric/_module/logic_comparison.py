@@ -197,5 +197,5 @@ def array_equal(
     if a1.shape != a2.shape:
         return False
     return perform_binary_reduction(
-        BinaryOpCode.EQUAL, a1, a2, dtype=np.dtype(np.bool_)
+        BinaryOpCode.EQUAL, a1, a2, dtype=np.dtype(bool)
     )

@@ -17,9 +17,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, Sequence
 
 import numpy as np
-from numpy.core.multiarray import (  # type: ignore [attr-defined]
-    normalize_axis_index,
-)
 
 from .._array.array import ndarray
 from .._array.util import (
@@ -27,6 +24,7 @@ from .._array.util import (
     check_writeable,
     convert_to_cunumeric_ndarray,
 )
+from .._utils import is_np2
 from .._utils.coverage import is_implemented
 from ..runtime import runtime
 from ..types import NdShape
@@ -38,6 +36,11 @@ from .creation_ranges import arange
 from .creation_shape import empty, ones
 from .ssc_counting import count_nonzero
 from .ssc_searching import nonzero
+
+if is_np2:
+    from numpy.lib.array_utils import normalize_axis_index  # type: ignore
+else:
+    from numpy.core.multiarray import normalize_axis_index  # type: ignore
 
 if TYPE_CHECKING:
     from typing import Callable

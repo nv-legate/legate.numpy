@@ -28,7 +28,6 @@ from typing import (
 )
 
 import numpy as np
-from legate.core.utils import OrderedSet
 
 from ..runtime import runtime
 from ..types import NdShape
@@ -51,57 +50,60 @@ def add_boilerplate(
     Adds required boilerplate to the wrapped cunumeric.ndarray or module-level
     function.
 
-    Every time the wrapped function is called, this wrapper will:
-    * Convert all specified array-like parameters, plus the special "out"
-      parameter (if present), to cuNumeric ndarrays.
-    * Convert the special "where" parameter (if present) to a valid predicate.
+    Every time the wrapped function is called, this wrapper will convert all
+    specified array-like parameters to cuNumeric ndarrays. Additionally, any
+    "out" or "where" arguments will also always be automatically converted.
     """
-    keys = OrderedSet(array_params)
-    assert len(keys) == len(array_params)
+    to_convert = set(array_params)
+    assert len(to_convert) == len(array_params)
 
     def decorator(func: Callable[P, R]) -> Callable[P, R]:
         assert not hasattr(
             func, "__wrapped__"
         ), "this decorator must be the innermost"
 
-        # For each parameter specified by name, also consider the case where
-        # it's passed as a positional parameter.
-        indices: OrderedSet[int] = OrderedSet()
-        where_idx: int | None = None
-        out_idx: int | None = None
         params = signature(func).parameters
-        extra = keys - OrderedSet(params)
+        extra = to_convert - set(params)
         assert len(extra) == 0, f"unknown parameter(s): {extra}"
+
+        # we also always want to convert "out" and "where"
+        # even if they are not explicitly specified by the user
+        to_convert.update(("out", "where"))
+
+        out_idx = -1
+        indices = set()
         for idx, param in enumerate(params):
-            if param == "where":
-                where_idx = idx
-            elif param == "out":
+            if param == "out":
                 out_idx = idx
-            elif param in keys:
+            if param in to_convert:
                 indices.add(idx)
 
         @wraps(func)
         def wrapper(*args: Any, **kwargs: Any) -> R:
-            assert (where_idx is None or len(args) <= where_idx) and (
-                out_idx is None or len(args) <= out_idx
-            ), "'where' and 'out' should be passed as keyword arguments"
+            # convert specified non-None positional arguments, making sure
+            # that any out-parameters are appropriately writeable
+            converted_args = []
+            for idx, arg in enumerate(args):
+                if idx in indices and arg is not None:
+                    if idx == out_idx:
+                        arg = convert_to_cunumeric_ndarray(arg, share=True)
+                        if not arg.flags.writeable:
+                            raise ValueError("out is not writeable")
+                    else:
+                        arg = convert_to_cunumeric_ndarray(arg)
+                converted_args.append(arg)
+            args = tuple(converted_args)
 
-            # Convert relevant arguments to cuNumeric ndarrays
-            args = tuple(
-                convert_to_cunumeric_ndarray(arg)
-                if idx in indices and arg is not None
-                else arg
-                for (idx, arg) in enumerate(args)
-            )
+            # convert specified non-None keyword arguments, making sure
+            # that any out-parameters are appropriately writeable
             for k, v in kwargs.items():
-                if v is None:
-                    continue
-                elif k == "out":
-                    kwargs[k] = convert_to_cunumeric_ndarray(v, share=True)
-                    if not kwargs[k].flags.writeable:
-                        raise ValueError("out is not writeable")
-                elif (k in keys) or (k == "where"):
-                    kwargs[k] = convert_to_cunumeric_ndarray(v)
+                if k in to_convert and v is not None:
+                    if k == "out":
+                        kwargs[k] = convert_to_cunumeric_ndarray(v, share=True)
+                        if not kwargs[k].flags.writeable:
+                            raise ValueError("out is not writeable")
+                    else:
+                        kwargs[k] = convert_to_cunumeric_ndarray(v)
 
             return func(*args, **kwargs)
 

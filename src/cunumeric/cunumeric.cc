@@ -72,7 +72,7 @@ void cunumeric_perform_registration(void) { cunumeric::registration_callback(); 
 
 bool cunumeric_has_curand()
 {
-#if LegateDefined(LEGATE_USE_CUDA) || defined(CUNUMERIC_CURAND_FOR_CPU_BUILD)
+#if LEGATE_DEFINED(LEGATE_USE_CUDA) || LEGATE_DEFINED(CUNUMERIC_CURAND_FOR_CPU_BUILD)
   return true;
 #else
   return false;
@@ -81,7 +81,7 @@ bool cunumeric_has_curand()
 
 bool cunumeric_has_cusolvermp()
 {
-#if LegateDefined(LEGATE_USE_CUDA) && LegateDefined(CUNUMERIC_USE_CUSOLVERMP)
+#if LEGATE_DEFINED(LEGATE_USE_CUDA) && LEGATE_DEFINED(CUNUMERIC_USE_CUSOLVERMP)
   return true;
 #else
   return false;

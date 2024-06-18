@@ -59,7 +59,7 @@ struct Putmask {
     if (volume == 0) {
       return;
     }
-#if !LegateDefined(LEGATE_BOUNDS_CHECKS)
+#if !LEGATE_DEFINED(LEGATE_BOUNDS_CHECKS)
     dense = input.accessor.is_dense_row_major(rect) && mask.accessor.is_dense_row_major(rect);
     dense = dense && values.accessor.is_dense_row_major(rect);
     if (dense) {
@@ -87,7 +87,7 @@ struct Putmask {
 
   void execute() const noexcept
   {
-#if !LegateDefined(LEGATE_BOUNDS_CHECKS)
+#if !LEGATE_DEFINED(LEGATE_BOUNDS_CHECKS)
     if (dense) {
       return ParallelLoopPolicy<KIND, DenseTag>()(rect, *this);
     }

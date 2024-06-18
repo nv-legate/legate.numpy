@@ -59,7 +59,7 @@ struct ArgWhereImplBody<VariantKind::GPU, CODE, DIM> {
 
     auto offsets = create_buffer<int64_t>(volume, legate::Memory::Kind::GPU_FB_MEM);
     auto size    = compute_offsets(input, pitches, rect, volume, offsets, stream);
-    CHECK_CUDA_STREAM(stream);
+    CUNUMERIC_CHECK_CUDA_STREAM(stream);
 
     auto out = out_array.create_output_buffer<int64_t, 2>(Point<2>(size, DIM), true);
 
@@ -67,7 +67,7 @@ struct ArgWhereImplBody<VariantKind::GPU, CODE, DIM> {
       const size_t blocks = (volume + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
       argwhere_kernel<<<blocks, THREADS_PER_BLOCK, 0, stream>>>(
         volume, input, pitches, rect.lo, offsets, out);
-      CHECK_CUDA_STREAM(stream);
+      CUNUMERIC_CHECK_CUDA_STREAM(stream);
     }
   }
 };

@@ -13,3 +13,7 @@
 # limitations under the License.
 #
 from __future__ import annotations
+
+import numpy as np
+
+is_np2 = np.lib.NumpyVersion(np.__version__) >= "2.0.0b1"

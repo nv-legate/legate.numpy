@@ -53,9 +53,11 @@ class BooleanFlag(argparse.Action):
 
         option_strings = flatten(
             [
-                [opt, "--no-" + opt[2:], "--no" + opt[2:]]
-                if opt.startswith("--")
-                else [opt]
+                (
+                    [opt, "--no-" + opt[2:], "--no" + opt[2:]]
+                    if opt.startswith("--")
+                    else [opt]
+                )
                 for opt in option_strings
             ]
         )
@@ -126,6 +128,7 @@ def was_previously_built_with_different_build_isolation(
 def install_cunumeric(
     arch,
     build_isolation,
+    with_tests,
     check_bounds,
     clean_first,
     cmake_exe,
@@ -153,7 +156,6 @@ def install_cunumeric(
     spy,
     tblis_dir,
     thread_count,
-    thrust_dir,
     unknown,
     verbose,
 ):
@@ -171,6 +173,7 @@ def install_cunumeric(
         print("Options are:")
         print("arch: ", arch)
         print("build_isolation: ", build_isolation)
+        print("with_tests: ", with_tests)
         print("check_bounds: ", check_bounds)
         print("clean_first: ", clean_first)
         print("cmake_exe: ", cmake_exe)
@@ -198,7 +201,6 @@ def install_cunumeric(
         print("spy: ", spy)
         print("tblis_dir: ", tblis_dir)
         print("thread_count: ", thread_count)
-        print("thrust_dir: ", thrust_dir)
         print("unknown: ", unknown)
         print("verbose: ", verbose)
 
@@ -225,7 +227,6 @@ def install_cunumeric(
     cuda_dir = validate_path(cuda_dir)
     nccl_dir = validate_path(nccl_dir)
     tblis_dir = validate_path(tblis_dir)
-    thrust_dir = validate_path(thrust_dir)
     curand_dir = validate_path(curand_dir)
     gasnet_dir = validate_path(gasnet_dir)
     cusolvermp_dir = validate_path(cusolvermp_dir)
@@ -247,7 +248,6 @@ def install_cunumeric(
         print("nccl_dir: ", nccl_dir)
         print("tblis_dir: ", tblis_dir)
         print("legate_dir: ", legate_dir)
-        print("thrust_dir: ", thrust_dir)
         print("curand_dir: ", curand_dir)
         print("gasnet_dir: ", gasnet_dir)
         print("cusolvermp_dir: ", cusolvermp_dir)
@@ -355,6 +355,7 @@ def install_cunumeric(
 -DLegion_USE_LLVM={("ON" if llvm else "OFF")}
 -DLegion_NETWORKS={";".join(networks)}
 -DLegion_USE_HDF5={("ON" if hdf else "OFF")}
+-Dcunumeric_BUILD_TESTS={("ON" if with_tests else "OFF")}
 """.splitlines()
 
     if march:
@@ -369,8 +370,6 @@ def install_cunumeric(
         cmake_flags += ["-DGASNet_CONDUIT=%s" % conduit]
     if tblis_dir:
         cmake_flags += ["-Dtblis_ROOT=%s" % tblis_dir]
-    if thrust_dir:
-        cmake_flags += ["-DThrust_ROOT=%s" % thrust_dir]
     if openblas_dir:
         cmake_flags += ["-DBLAS_DIR=%s" % openblas_dir]
     if cusolvermp_dir:
@@ -421,6 +420,14 @@ def driver():
         default=os.environ.get("DEBUG_RELEASE", "0") == "1",
         help="Build cuNumeric with optimizations, but include debugging "
         "symbols.",
+    )
+    parser.add_argument(
+        "--with-tests",
+        dest="with_tests",
+        action="store_true",
+        required=False,
+        default=False,
+        help="Build cuNumeric tests.",
     )
     parser.add_argument(
         "--check-bounds",
@@ -506,14 +513,6 @@ def driver():
         required=False,
         default=os.environ.get("CUTENSOR_PATH"),
         help="Path to cuTensor installation directory.",
-    )
-    parser.add_argument(
-        "--with-thrust",
-        dest="thrust_dir",
-        metavar="DIR",
-        required=False,
-        default=os.environ.get("THRUST_PATH"),
-        help="Path to Thrust installation directory.",
     )
     parser.add_argument(
         "--with-nccl",

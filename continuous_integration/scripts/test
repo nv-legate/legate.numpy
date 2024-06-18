@@ -15,7 +15,7 @@ setup_env() {
 }
 
 setup_test_env() {
-    mamba install -y "clang-tools>=8" "clang>=8" colorama coverage mock pre-commit pytest-cov pytest-lazy-fixture pytest-mock "pytest<8" types-docutils pynvml psutil
+    mamba install -y "clang-tools>=8" "clang>=8" colorama coverage mock pre-commit pytest-cov pytest-mock "pytest" types-docutils pynvml psutil
 
     pip install tifffile
 }
@@ -27,6 +27,10 @@ setup_docs_env() {
 
 setup_mypy_env() {
     mamba install -y "mypy>=0.961" jinja2 nbsphinx sphinx-copybutton  "sphinx>=4.4.0" types-docutils
+}
+
+setup_unit_env() {
+    mamba install -y pytest pytest-mock mock
 }
 
 test_cunumeric() {
@@ -61,6 +65,12 @@ test_cunumeric() {
             setup_docs_env;
             cd docs/cunumeric
             make clean html
+            ;;
+        "unit")
+            echo "Running Unit tests..."
+            shift;
+            setup_unit_env;
+            pytest tests/unit
             ;;
         *)
             echo "Invalid command: $1"

@@ -45,11 +45,14 @@ from legate.core import (
     scale,
 )
 from legate.core.utils import OrderedSet
-from numpy.core.numeric import (  # type: ignore [attr-defined]
-    normalize_axis_tuple,
-)
 
-from .._utils.array import is_advanced_indexing, to_core_dtype
+from .._utils import is_np2
+from .._utils.array import (
+    is_advanced_indexing,
+    max_identity,
+    min_identity,
+    to_core_type,
+)
 from ..config import (
     BinaryOpCode,
     BitGeneratorDistribution,
@@ -62,10 +65,17 @@ from ..config import (
     UnaryRedCode,
 )
 from ..linalg._cholesky import cholesky_deferred
+from ..linalg._qr import qr_deferred
 from ..linalg._solve import solve_deferred
+from ..linalg._svd import svd_deferred
 from ..runtime import runtime
 from ._sort import sort_deferred
 from .thunk import NumPyThunk
+
+if is_np2:
+    from numpy.lib.array_utils import normalize_axis_tuple  # type: ignore
+else:
+    from numpy.core.numeric import normalize_axis_tuple  # type: ignore
 
 if TYPE_CHECKING:
     import numpy.typing as npt
@@ -162,36 +172,6 @@ _UNARY_RED_TO_REDUCTION_OPS: dict[int, int] = {
     UnaryRedCode.ALL: ReductionOp.MUL,
     UnaryRedCode.ANY: ReductionOp.ADD,
 }
-
-
-def max_identity(
-    ty: np.dtype[Any],
-) -> int | np.floating[Any] | bool | np.complexfloating[Any, Any]:
-    if ty.kind == "i" or ty.kind == "u":
-        return np.iinfo(ty).min
-    elif ty.kind == "f":
-        return np.finfo(ty).min
-    elif ty.kind == "c":
-        return np.finfo(np.float64).min + np.finfo(np.float64).min * 1j
-    elif ty.kind == "b":
-        return False
-    else:
-        raise ValueError(f"Unsupported dtype: {ty}")
-
-
-def min_identity(
-    ty: np.dtype[Any],
-) -> int | np.floating[Any] | bool | np.complexfloating[Any, Any]:
-    if ty.kind == "i" or ty.kind == "u":
-        return np.iinfo(ty).max
-    elif ty.kind == "f":
-        return np.finfo(ty).max
-    elif ty.kind == "c":
-        return np.finfo(np.float64).max + np.finfo(np.float64).max * 1j
-    elif ty.kind == "b":
-        return True
-    else:
-        raise ValueError(f"Unsupported dtype: {ty}")
 
 
 _UNARY_RED_IDENTITIES: dict[UnaryRedCode, Callable[[Any], Any]] = {
@@ -663,9 +643,8 @@ class DeferredArray(NumPyThunk):
             task.add_scalar_arg(is_set, ty.bool_)
             task.add_scalar_arg(key_dims, ty.int64)
             task.add_constraint(align(p_rhs, p_key))
-            task.add_constraint(
-                broadcast(p_rhs, range(1, len(rhs.base.shape)))
-            )
+            if rhs.base.ndim > 1:
+                task.add_constraint(broadcast(p_rhs, range(1, rhs.base.ndim)))
             task.execute()
 
             # TODO : current implementation of the ND output regions
@@ -1701,7 +1680,7 @@ class DeferredArray(NumPyThunk):
             c_arr = c._broadcast(self.shape)
             task.add_input(c_arr)
             task.add_alignment(c_arr, out_arr)
-        task.add_scalar_arg(default, to_core_dtype(default.dtype))
+        task.add_scalar_arg(default, to_core_type(default.dtype))
         task.execute()
 
     # Create or extract a diagonal from a matrix
@@ -1941,12 +1920,34 @@ class DeferredArray(NumPyThunk):
     def repeat(
         self, repeats: Any, axis: int, scalar_repeats: bool
     ) -> DeferredArray:
-        out = runtime.create_unbound_thunk(self.base.type, ndim=self.ndim)
         task = legate_runtime.create_auto_task(
             self.library, CuNumericOpCode.REPEAT
         )
-        p_self = task.add_input(self.base)
-        task.add_output(out.base)
+        if scalar_repeats:
+            out_shape = tuple(
+                self.shape[dim] * repeats if dim == axis else self.shape[dim]
+                for dim in range(self.ndim)
+            )
+            out = cast(
+                DeferredArray,
+                runtime.create_empty_thunk(
+                    out_shape,
+                    dtype=self.base.type,
+                    inputs=[self],
+                ),
+            )
+            p_self = task.declare_partition()
+            p_out = task.declare_partition()
+            task.add_input(self.base, p_self)
+            task.add_output(out.base, p_out)
+            factors = tuple(
+                repeats if dim == axis else 1 for dim in range(self.ndim)
+            )
+            task.add_constraint(scale(factors, p_self, p_out))
+        else:
+            out = runtime.create_unbound_thunk(self.base.type, ndim=self.ndim)
+            p_self = task.add_input(self.base)
+            task.add_output(out.base)
         # We pass axis now but don't use for 1D case (will use for ND case
         task.add_scalar_arg(axis, ty.int32)
         task.add_scalar_arg(scalar_repeats, ty.bool_)
@@ -3355,9 +3356,17 @@ class DeferredArray(NumPyThunk):
     def cholesky(self, src: Any, no_tril: bool = False) -> None:
         cholesky_deferred(self, src, no_tril)
 
+    @auto_convert("q", "r")
+    def qr(self, q: Any, r: Any) -> None:
+        qr_deferred(self, q, r)
+
     @auto_convert("a", "b")
     def solve(self, a: Any, b: Any) -> None:
         solve_deferred(self, a, b)
+
+    @auto_convert("u", "s", "vh")
+    def svd(self, u: Any, s: Any, vh: Any) -> None:
+        svd_deferred(self, u, s, vh)
 
     @auto_convert("rhs")
     def scan(

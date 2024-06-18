@@ -269,7 +269,7 @@ static void __device__ __forceinline__ collapse_dims(LHS& result,
   }
 #endif
 
-  if (LegateDefined(LEGATE_BOUNDS_CHECKS)) {
+  if (LEGATE_DEFINED(LEGATE_BOUNDS_CHECKS)) {
     // Note: this isn't necessary because we know that the affine transformation on the output
     // accessor will ignore coordinates of the collapsed dimension. However, Legion's bounds checks
     // want the accessor to honor the sub-rectangle passed when it was created, so we need to
@@ -353,7 +353,7 @@ struct UnaryRedImplBody<VariantKind::GPU, OP_CODE, CODE, DIM, HAS_WHERE> {
     blocks.compute_maximum_concurrency(reinterpret_cast<const void*>(Kernel));
     Kernel<<<blocks.num_blocks(), blocks.num_threads(), 0, stream>>>(
       lhs, rhs, where, LG_OP::identity, blocks, rect, collapsed_dim);
-    CHECK_CUDA_STREAM(stream);
+    CUNUMERIC_CHECK_CUDA_STREAM(stream);
   }
 };
 

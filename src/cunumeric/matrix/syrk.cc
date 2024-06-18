@@ -77,7 +77,7 @@ struct SyrkImplBody<VariantKind::CPU, Type::Code::COMPLEX128> {
 
 /*static*/ void SyrkTask::cpu_variant(TaskContext context)
 {
-#if LegateDefined(LEGATE_USE_OPENMP)
+#if LEGATE_DEFINED(LEGATE_USE_OPENMP)
   openblas_set_num_threads(1);  // make sure this isn't overzealous
 #endif
   syrk_template<VariantKind::CPU>(context);
