@@ -1,7 +1,7 @@
 :html_theme.sidebar_secondary.remove:
 
-Welcome to cuNumeric's documentation!
-=====================================
+NVIDIA cuNumeric
+================
 
 cuNumeric is a `Legate`_ library that aims to provide a distributed and
 accelerated drop-in replacement for the `NumPy API`_ on top of the `Legion`_

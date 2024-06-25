@@ -13,11 +13,13 @@
 # limitations under the License.
 #
 
+import os
+
 # -- Project information -----------------------------------------------------
 
-project = "cuNumeric"
+project = "NVIDIA cuNumeric"
 copyright = "2021-2023, NVIDIA"
-author = "NVIDIA"
+author = "NVIDIA Corporation"
 
 # -- General configuration ---------------------------------------------------
 
@@ -43,28 +45,37 @@ source_suffix = {".rst": "restructuredtext", ".md": "markdown"}
 # -- Options for HTML output -------------------------------------------------
 
 html_context = {
-    "default_mode": "light",
+    # "default_mode": "light",
     "AUTHOR": author,
     "DESCRIPTION": "cuNumeric documentation site.",
 }
 
 html_static_path = ["_static"]
 
-html_theme = "pydata_sphinx_theme"
+# This is pretty kludgy but the nv theme is not publicly available to
+# install on CI, etc. We will use the pydata theme in those situations
+if os.environ.get("NV_THEME") == "1":
+    html_theme = "nvidia_sphinx_theme"
 
-html_theme_options = {
-    "footer_start": ["copyright"],
-    "github_url": "https://github.com/nv-legate/cunumeric",
-    # https://github.com/pydata/pydata-sphinx-theme/issues/1220
-    "icon_links": [],
-    "logo": {"text": project, "link": "https://nv-legate.github.io/cunumeric"},
-    "navbar_align": "left",
-    "navbar_end": ["navbar-icon-links", "theme-switcher"],
-    "primary_sidebar_end": ["indices.html"],
-    "secondary_sidebar_items": ["page-toc"],
-    "show_nav_level": 2,
-    "show_toc_level": 2,
-}
+else:
+    html_theme = "pydata_sphinx_theme"
+
+    html_theme_options = {
+        "footer_start": ["copyright"],
+        "github_url": "https://github.com/nv-legate/cunumeric",
+        # https://github.com/pydata/pydata-sphinx-theme/issues/1220
+        "icon_links": [],
+        "logo": {
+            "text": project,
+            "link": "https://nv-legate.github.io/cunumeric",
+        },
+        "navbar_align": "left",
+        "navbar_end": ["navbar-icon-links", "theme-switcher"],
+        "primary_sidebar_end": ["indices.html"],
+        "secondary_sidebar_items": ["page-toc"],
+        "show_nav_level": 2,
+        "show_toc_level": 2,
+    }
 
 templates_path = ["_templates"]
 
