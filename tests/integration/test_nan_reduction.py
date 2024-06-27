@@ -288,6 +288,11 @@ class TestNanReductions:
         out_num = num.nanprod(in_num)
         assert out_np == out_num
 
+    def test_dtype_nansum(self) -> None:
+        arr_num = num.array([1, 2, 3])
+        arr_np = np.array([1, 2, 3])
+        assert num.nansum(arr_num) == np.nansum(arr_np)
+
     @pytest.mark.parametrize("ndim", range(1, LEGATE_MAX_DIM + 1))
     def test_all_nans_nansum(self, ndim):
         shape = (3,) * ndim

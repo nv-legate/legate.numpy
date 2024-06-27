@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-
+import copy
 from itertools import product
 
 import numpy as np
@@ -28,10 +28,34 @@ def test_array():
     assert np.array_equal(x, z)
     assert x.dtype == z.dtype
 
+    assert x.data == y.data
+    assert x.itemsize == y.itemsize
+    assert x.nbytes == y.nbytes
+    assert x.strides == y.strides
+    assert isinstance(x.ctypes, type(y.ctypes))
+
     x = num.array([1, 2, 3])
     y = num.array(x)
     assert num.array_equal(x, y)
     assert x.dtype == y.dtype
+
+
+def test_array_deepcopy() -> None:
+    x = num.array([1, 2, 3])
+    y = np.array([1, 2, 3])
+    copy_x = copy.deepcopy(x)
+    copy_y = copy.deepcopy(y)
+    x[1] = 0
+    y[1] = 0
+    assert not np.array_equal(x, copy_x)
+    assert not np.array_equal(y, copy_y)
+    assert np.array_equal(copy_x, copy_y)
+
+
+def test_array_float() -> None:
+    p = num.array(2)
+    q = np.array(2)
+    assert p.__float__() == q.__float__()
 
 
 CREATION_FUNCTIONS = ("zeros", "ones")

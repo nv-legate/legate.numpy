@@ -65,8 +65,6 @@ def perform_unary_op(
     src: ndarray,
     out: Any | None = None,
     extra_args: Any = None,
-    dtype: np.dtype[Any] | None = None,
-    out_dtype: np.dtype[Any] | None = None,
 ) -> ndarray:
     from .array import ndarray
 
@@ -82,33 +80,30 @@ def perform_unary_op(
         # No output yet, so make one
         out_shape = src.shape
 
-        if dtype is not None:
-            out = ndarray(
-                shape=out_shape,
-                dtype=dtype,
-                inputs=(src,),
-            )
-        elif out_dtype is not None:
-            out = ndarray(
-                shape=out_shape,
-                dtype=out_dtype,
-                inputs=(src,),
-            )
+        if src.dtype.kind != "c":
+            dtype = src.dtype
         else:
-            out = ndarray(
-                shape=out_shape,
-                dtype=src.dtype
-                if src.dtype.kind != "c"
-                else np.dtype(np.float32)
-                if src.dtype == np.dtype(np.complex64)
-                else np.dtype(np.float64),
-                inputs=(src,),
+            if src.dtype == np.dtype(np.complex64):
+                dtype = np.dtype(np.float32)
+            else:
+                dtype = np.dtype(np.float64)
+
+        out = ndarray(
+            shape=out_shape,
+            dtype=dtype,
+            inputs=(src,),
+        )
+
+    if out.dtype != src.dtype:
+        if op == UnaryOpCode.ABSOLUTE and src.dtype.kind == "c":
+            out._thunk.unary_op(
+                op,
+                src._thunk,
+                True,
+                extra_args,
             )
 
-    if out_dtype is None:
-        if out.dtype != src.dtype and not (
-            op == UnaryOpCode.ABSOLUTE and src.dtype.kind == "c"
-        ):
+        else:
             temp = ndarray(
                 out.shape,
                 dtype=src.dtype,
@@ -121,34 +116,13 @@ def perform_unary_op(
                 extra_args,
             )
             out._thunk.convert(temp._thunk)
-        else:
-            out._thunk.unary_op(
-                op,
-                src._thunk,
-                True,
-                extra_args,
-            )
     else:
-        if out.dtype != out_dtype:
-            temp = ndarray(
-                out.shape,
-                dtype=out_dtype,
-                inputs=(src,),
-            )
-            temp._thunk.unary_op(
-                op,
-                src._thunk,
-                True,
-                extra_args,
-            )
-            out._thunk.convert(temp._thunk)
-        else:
-            out._thunk.unary_op(
-                op,
-                src._thunk,
-                True,
-                extra_args,
-            )
+        out._thunk.unary_op(
+            op,
+            src._thunk,
+            True,
+            extra_args,
+        )
     return out
 
 
