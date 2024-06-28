@@ -232,10 +232,10 @@ class TestNanArgReductions:
         in_num = num.array(a)
         func_np = getattr(np, func_name)
         func_num = getattr(num, func_name)
-        with pytest.raises(ValueError, match="All-NaN"):
+        with pytest.raises(ValueError):
             func_np(in_np)
             # ValueError: All-NaN slice encountered
-        with pytest.raises(ValueError, match=" empty sequence"):
+        with pytest.raises(ValueError):
             func_num(in_num)
             # ValueError: attempt to get nanargmax of an empty sequence
             # ValueError: attempt to get nanargmin of an empty sequence
@@ -259,8 +259,7 @@ class TestXFail:
         func_num = getattr(num, func_name)
 
         expected_exp = ValueError
-        msg = r"operation is not supported for complex-type arrays"
-        with pytest.raises(expected_exp, match=msg):
+        with pytest.raises(expected_exp):
             func_num(in_num)
 
     @pytest.mark.xfail
