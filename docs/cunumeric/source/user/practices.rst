@@ -20,7 +20,7 @@ Guidelines on using cuNumeric APIs
 ----------------------------------
 
 Use cuNumeric or NumPy arrays, AVOID native lists
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Create a cuNumeric array from data structures native to Python like lists,
 tuples, etc., and operate on the cuNumeric array, as shown in the example
@@ -61,7 +61,7 @@ thus performing an array-based operation.
     y = (x + 3) * 4
 
 Use array-based operations, AVOID loops with indexing
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Use array-based implementations as much as possible, and while doing so, ensure
 that some of the best practices given below are followed.
@@ -135,7 +135,7 @@ Use putmask to update an array based on another array
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 When an array needs to be updated from another array based on a condition
-that they both satisfy, use ``putmask`` for better performance. In this 
+that they both satisfy, use ``putmask`` for better performance. In this
 example, the values of ``x`` are updated to twice the value of ``y`` only when the
 condition is met, which can be described using the ``putmask`` API.
 
@@ -194,7 +194,7 @@ possible. Here is an example:
 
 
 Array Manipulation Routine Pitfalls
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. _reshape:
 
