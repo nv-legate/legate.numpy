@@ -39,7 +39,7 @@ ALL_METHODS = (
 
 
 @pytest.mark.parametrize("str_method", ALL_METHODS)
-@pytest.mark.parametrize("axes", (0, 1, (0, 1), (0, 2)))
+@pytest.mark.parametrize("axes", (0, 1, (0,), (0, 1), (0, 2)))
 @pytest.mark.parametrize(
     "qin_arr", (0.5, [0.001, 0.37, 0.42, 0.67, 0.83, 0.99, 0.39, 0.49, 0.5])
 )
@@ -420,6 +420,26 @@ def test_non_ndarray_input(str_method, qs_arr, arr):
         ),
     ),
 )
+@pytest.mark.parametrize("arr", (3 + 3.0j, [2 + 2.0j, 1 + 1.0j]))
+def test_complex_ndarray_input(str_method, qs_arr, arr):
+    expected_msg = "input array cannot be of complex type"
+    with pytest.raises(TypeError, match=expected_msg):
+        num.quantile(arr, qs_arr, method=str_method)
+    expected_msg = "array of real numbers"
+    with pytest.raises(TypeError, match=expected_msg):
+        np.quantile(arr, qs_arr, method=str_method)
+
+
+@pytest.mark.parametrize("str_method", ALL_METHODS)
+@pytest.mark.parametrize(
+    "qs_arr",
+    (
+        0.5,
+        np.ndarray(
+            shape=(2, 3), buffer=np.array([x / 6.0 for x in range(0, 6)])
+        ),
+    ),
+)
 @pytest.mark.parametrize("keepdims", (False, True))
 def test_output_conversion(str_method, qs_arr, keepdims):
     #
@@ -453,6 +473,28 @@ def test_output_conversion(str_method, qs_arr, keepdims):
         assert allclose(np_q_out, q_out, atol=eps)
     else:
         assert abs(q_out - np_q_out) < eps
+
+
+@pytest.mark.parametrize("str_method", ALL_METHODS)
+@pytest.mark.parametrize(
+    "qs_arr",
+    (
+        np.ndarray(
+            shape=(2, 3), buffer=np.array([x / 6.0 for x in range(0, 6)])
+        ),
+    ),
+)
+@pytest.mark.parametrize("arr", (3, [2, 1]))
+def test_wrong_shape(str_method, qs_arr, arr):
+    q_out = num.zeros((3, 1), dtype=np.dtype("float32"))
+    q_np_out = np.zeros((3, 1), dtype=np.dtype("float32"))
+    expected_msg = "wrong shape on output array"
+    with pytest.raises(ValueError, match=expected_msg):
+        num.quantile(arr, qs_arr, method=str_method, keepdims=False, out=q_out)
+    with pytest.raises(ValueError):
+        np.quantile(
+            arr, qs_arr, method=str_method, keepdims=False, out=q_np_out
+        )
 
 
 if __name__ == "__main__":
