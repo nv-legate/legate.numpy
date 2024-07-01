@@ -109,9 +109,15 @@ essentially breaking it down to three steps:
     x[cond] = const
     x[~cond] = 1.0 - const
 
-In the example below, using a boolean mask array will be faster than using
-indices. For the curious reader, using indices with cuNumeric will require
-additional communication that might be undesirable for performance.
+
+Use boolean masks, AVOID advanced indexing
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Indexing using boolean masks instead of indices is recommended for better
+performance. In the example below, indexing the array using a boolean mask
+will be faster than using a array with indices derived from ``nonzero`` since
+the latter could incur additional communication that might be undesirable for
+performance.
 
 .. code-block:: python
 
@@ -125,11 +131,13 @@ additional communication that might be undesirable for performance.
     cond = h < 0
     x[cond] = y[cond]
 
+Use putmask to update an array based on another array
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-When the array needs to be updated from another array based on a condition
-that they both satisfy, use ``putmask`` for better performance. Unlike the
-previous example, here ``x`` is set to twice the value of ``y`` when the
-condition is met.
+When an array needs to be updated from another array based on a condition
+that they both satisfy, use ``putmask`` for better performance. In this 
+example, the values of ``x`` are updated to twice the value of ``y`` only when the
+condition is met, which can be described using the ``putmask`` API.
 
 .. code-block:: python
 
