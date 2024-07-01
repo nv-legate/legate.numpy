@@ -19,8 +19,8 @@ designing the application since it can impact the scalability.
 Guidelines on using cuNumeric APIs
 ----------------------------------
 
-Array Creation
-~~~~~~~~~~~~~~
+Use cuNumeric or NumPy arrays, AVOID native lists
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Create a cuNumeric array from data structures native to Python like lists,
 tuples, etc., and operate on the cuNumeric array, as shown in the example
@@ -60,8 +60,8 @@ thus performing an array-based operation.
     # or
     y = (x + 3) * 4
 
-Indexing
-~~~~~~~~
+Use array-based operations, AVOID loops with indexing
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Use array-based implementations as much as possible, and while doing so, ensure
 that some of the best practices given below are followed.
@@ -144,8 +144,8 @@ condition is met.
     # Recommended: use putmask to update elements based on a condition
     np.putmask(x, cond, y * 2.0)
 
-Logic Functions
-~~~~~~~~~~~~~~~
+Use logic functions, AVOID iterating through a loop
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Setting elements of an array that satisfy multiple conditions to a scalar
 should be done using logic functions instead of iterating through a loop.
@@ -165,8 +165,8 @@ Here is an example:
 
 Refer to the `documentation for other logical operations <https://numpy.org/doc/stable/reference/routines.logic.html#logical-operations>`_.
 
-Mathematical Functions
-~~~~~~~~~~~~~~~~~~~~~~
+Use mathematical functions, AVOID element-wise loops
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 When there are nested element-wise operations, it is recommended that they
 are translated to array-based operations using equivalent cuNumeric APIs, if
@@ -185,13 +185,13 @@ possible. Here is an example:
     x = np.maximum(np.maximum(y, z), const)
 
 
-Array Manipulation Routines
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Array Manipulation Routine Pitfalls
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. _reshape:
 
-Reshape
-.......
+Reshape returns a copy instead of view
+......................................
 
 It's important to note that in our implementation, ``reshape`` returns a copy
 of the array rather than a view like numpy, so this deviation can cause
@@ -209,8 +209,8 @@ can also make it run slower, so we recommend using it as sparingly as possible.
 
     assert x[0,0] == 42 # succeeds in NumPy, fails in cuNumeric
 
-Stack
-.....
+Stack results in a performance penalty
+......................................
 
 There is a performance penalty to stacking arrays using
 `hstack <https://numpy.org/doc/stable/reference/generated/numpy.hstack.html#numpy-hstack>`_
@@ -218,16 +218,16 @@ or
 `vstack <https://numpy.org/doc/stable/reference/generated/numpy.vstack.html#numpy-vstack>`_
 because they incur additional copies of data in our implementation.
 
-I/O Routines
-~~~~~~~~~~~~
+Faster I/O Routines
+~~~~~~~~~~~~~~~~~~~
 
 As of 23.07, we recommend using `h5py <https://github.com/h5py/h5py>`_ to perform I/O.
 
 Guidelines on designing cuNumeric applications
 ----------------------------------------------
 
-Use Output argument
-~~~~~~~~~~~~~~~~~~~
+Use output arguments to reduce memory allocation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Whenever possible, use the ``out`` parameter in the APIs, to avoid allocating an
 intermediate array in our implementation.
@@ -247,8 +247,8 @@ intermediate array in our implementation.
     np.multiply(x, y, out=x)
 
 
-Vectorize
-~~~~~~~~~
+Vectorize for better performance
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Functions with conditionals that operate on scalars might make array-based
 operations less straightforward. The general recommendation in such cases is to
@@ -287,8 +287,8 @@ in one API.
     x = np.where(cond, x + 1, x + 2)
 
 
-Merge Tasks
-~~~~~~~~~~~
+Merge tasks to reduce overhead
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 It is recommended that tasks (e.g., a Python operation like ``z = x + y``,
 will be a task) be large enough to execute for at least a millisecond to

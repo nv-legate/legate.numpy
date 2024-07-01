@@ -48,11 +48,11 @@ And run the program, like this
 
 By default, this command will use 4 CPUs to run the program, but is
 configurable through the LEGATE_CONFIG environment variable. For
-example, to use 2 CPUs instead, run the following
+example, to use 2 GPUs instead, run the following
 
 .. code-block:: sh
 
-    LEGATE_CONFIG="--cpus 2" python main.py
+    LEGATE_CONFIG="--gpus 2" python main.py
 
 For more information on how resources can be allocated using this
 environment variable, see `Using LEGATE_CONFIG`_.
