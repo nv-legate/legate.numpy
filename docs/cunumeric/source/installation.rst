@@ -1,26 +1,6 @@
 Installation
 ============
 
-Requirements
-------------
-
-cuNumeric has the following runtime dependencies:
-
-- cuda-cudart
-- cuda-version
-- cutensor
-- legate-core
-- libcublas
-- libcufft
-- libcusolver
-- libcusparse
-- libnvjitlink
-- libopenblas
-- numpy
-- opt_einsum
-- scipy
-- typing_extensions
-
 Default conda install
 ---------------------
 
