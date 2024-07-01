@@ -255,6 +255,13 @@ class DeferredArray(NumPyThunk):
         copy.copy(self, deep=True)
         return copy
 
+    def _copy_if_partially_overlapping(
+        self, other: DeferredArray
+    ) -> DeferredArray:
+        if self.base.equal_storage(other.base):
+            return self
+        return self._copy_if_overlapping(other)
+
     def __numpy_array__(self) -> npt.NDArray[Any]:
         if self.numpy_array is not None:
             result = self.numpy_array()
@@ -1812,7 +1819,7 @@ class DeferredArray(NumPyThunk):
     @auto_convert("mask", "values")
     def putmask(self, mask: Any, values: Any) -> None:
         assert self.shape == mask.shape
-        values = values._copy_if_overlapping(self)
+        values = values._copy_if_partially_overlapping(self)
         if values.shape != self.shape:
             values_new = values._broadcast(self.shape)
         else:
@@ -3072,7 +3079,7 @@ class DeferredArray(NumPyThunk):
         multiout: Any | None = None,
     ) -> None:
         lhs = self.base
-        src = src._copy_if_overlapping(self)
+        src = src._copy_if_partially_overlapping(self)
         rhs = src._broadcast(lhs.shape)
 
         with Annotation({"OpCode": op.name}):
@@ -3244,9 +3251,9 @@ class DeferredArray(NumPyThunk):
         args: tuple[Scalar, ...],
     ) -> None:
         lhs = self.base
-        src1 = src1._copy_if_overlapping(self)
+        src1 = src1._copy_if_partially_overlapping(self)
         rhs1 = src1._broadcast(lhs.shape)
-        src2 = src2._copy_if_overlapping(self)
+        src2 = src2._copy_if_partially_overlapping(self)
         rhs2 = src2._broadcast(lhs.shape)
 
         with Annotation({"OpCode": op_code.name}):
