@@ -40,4 +40,15 @@ You can force installation of a CPU-only package by requesting it as follows:
 Building from source
 ---------------------
 
-See :ref:`building cunumeric from source` for instructions on building cuNumeric manually.
+See :ref:`building cunumeric from source` for instructions on building
+cuNumeric manually.
+
+Licenses
+--------
+
+This project will download and install additional third-party open source
+software projects at install time. Review the license terms of these open
+source projects before use.
+
+For license information regarding projects bundled directly, see
+:ref:`thirdparty`.
