@@ -1,4 +1,4 @@
-/* Copyright 2021-2022 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ using namespace legate;
 
 template <Type::Code CODE, int DIM>
 struct WhereImplBody<VariantKind::CPU, CODE, DIM> {
-  using VAL = legate_type_of<CODE>;
+  using VAL = type_of<CODE>;
 
   void operator()(AccessorWO<VAL, DIM> out,
                   AccessorRO<bool, DIM> mask,
@@ -40,8 +40,9 @@ struct WhereImplBody<VariantKind::CPU, CODE, DIM> {
       auto maskptr  = mask.ptr(rect);
       auto in1ptr   = in1.ptr(rect);
       auto in2ptr   = in2.ptr(rect);
-      for (size_t idx = 0; idx < volume; ++idx)
+      for (size_t idx = 0; idx < volume; ++idx) {
         outptr[idx] = maskptr[idx] ? in1ptr[idx] : in2ptr[idx];
+      }
     } else {
       for (size_t idx = 0; idx < volume; ++idx) {
         auto point = pitches.unflatten(idx, rect.lo);
@@ -51,7 +52,7 @@ struct WhereImplBody<VariantKind::CPU, CODE, DIM> {
   }
 };
 
-/*static*/ void WhereTask::cpu_variant(TaskContext& context)
+/*static*/ void WhereTask::cpu_variant(TaskContext context)
 {
   where_template<VariantKind::CPU>(context);
 }

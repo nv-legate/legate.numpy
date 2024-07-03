@@ -1,4 +1,4 @@
-/* Copyright 2022 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,14 +34,16 @@ static __global__ void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM)
                  uint32_t axis)
 {
   const size_t idx = global_tid_1d();
-  if (idx >= volume) return;
+  if (idx >= volume) {
+    return;
+  }
   auto out_p = pitches.unflatten(idx, lo);
   out[out_p] = pack(in, out_p, in_hi_axis, axis);
 }
 
 template <Type::Code CODE, int32_t DIM, Bitorder BITORDER>
 struct PackbitsImplBody<VariantKind::GPU, CODE, DIM, BITORDER> {
-  using VAL = legate_type_of<CODE>;
+  using VAL = type_of<CODE>;
 
   void operator()(const AccessorWO<uint8_t, DIM>& out,
                   const AccessorRO<VAL, DIM>& in,
@@ -74,11 +76,11 @@ struct PackbitsImplBody<VariantKind::GPU, CODE, DIM, BITORDER> {
                                                                in_hi_axis,
                                                                axis);
     }
-    CHECK_CUDA_STREAM(stream);
+    CUNUMERIC_CHECK_CUDA_STREAM(stream);
   }
 };
 
-/*static*/ void PackbitsTask::gpu_variant(TaskContext& context)
+/*static*/ void PackbitsTask::gpu_variant(TaskContext context)
 {
   packbits_template<VariantKind::GPU>(context);
 }

@@ -1,4 +1,4 @@
-/* Copyright 2021-2022 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "cunumeric/cunumeric.h"
+#include "cunumeric/cunumeric_task.h"
 #include "cunumeric/unary/isnan.h"
 
 namespace cunumeric {
@@ -48,8 +48,8 @@ struct ConvertOp {};
 
 template <legate::Type::Code DST_TYPE, legate::Type::Code SRC_TYPE>
 struct ConvertOp<ConvertCode::NOOP, DST_TYPE, SRC_TYPE> {
-  using SRC = legate::legate_type_of<SRC_TYPE>;
-  using DST = legate::legate_type_of<DST_TYPE>;
+  using SRC = legate::type_of<SRC_TYPE>;
+  using DST = legate::type_of<DST_TYPE>;
 
   template <typename _SRC                                          = SRC,
             std::enable_if_t<!legate::is_complex_type<_SRC>::value or
@@ -64,10 +64,11 @@ struct ConvertOp<ConvertCode::NOOP, DST_TYPE, SRC_TYPE> {
                              !legate::is_complex_type<DST>::value>* = nullptr>
   constexpr DST operator()(const _SRC& src) const
   {
-    if constexpr (DST_TYPE == legate::Type::Code::BOOL)
+    if constexpr (DST_TYPE == legate::Type::Code::BOOL) {
       return static_cast<DST>(src.real()) || static_cast<DST>(src.imag());
-    else
+    } else {
       return static_cast<DST>(src.real());
+    }
     // Unreachable
     assert(false);
     return DST{};
@@ -76,7 +77,7 @@ struct ConvertOp<ConvertCode::NOOP, DST_TYPE, SRC_TYPE> {
 
 template <legate::Type::Code SRC_TYPE>
 struct ConvertOp<ConvertCode::NOOP, legate::Type::Code::FLOAT16, SRC_TYPE> {
-  using SRC = legate::legate_type_of<SRC_TYPE>;
+  using SRC = legate::type_of<SRC_TYPE>;
 
   template <typename _SRC = SRC, std::enable_if_t<!legate::is_complex_type<_SRC>::value>* = nullptr>
   __CUDA_HD__ __half operator()(const _SRC& src) const
@@ -93,7 +94,7 @@ struct ConvertOp<ConvertCode::NOOP, legate::Type::Code::FLOAT16, SRC_TYPE> {
 
 template <legate::Type::Code DST_TYPE>
 struct ConvertOp<ConvertCode::NOOP, DST_TYPE, legate::Type::Code::FLOAT16> {
-  using DST = legate::legate_type_of<DST_TYPE>;
+  using DST = legate::type_of<DST_TYPE>;
 
   constexpr DST operator()(const __half& src) const
   {
@@ -103,8 +104,8 @@ struct ConvertOp<ConvertCode::NOOP, DST_TYPE, legate::Type::Code::FLOAT16> {
 
 template <legate::Type::Code DST_TYPE, legate::Type::Code SRC_TYPE>
 struct ConvertOp<ConvertCode::PROD, DST_TYPE, SRC_TYPE> {
-  using SRC = legate::legate_type_of<SRC_TYPE>;
-  using DST = legate::legate_type_of<DST_TYPE>;
+  using SRC = legate::type_of<SRC_TYPE>;
+  using DST = legate::type_of<DST_TYPE>;
 
   template <typename _SRC                                          = SRC,
             std::enable_if_t<!legate::is_complex_type<_SRC>::value or
@@ -125,7 +126,7 @@ struct ConvertOp<ConvertCode::PROD, DST_TYPE, SRC_TYPE> {
 
 template <legate::Type::Code SRC_TYPE>
 struct ConvertOp<ConvertCode::PROD, legate::Type::Code::FLOAT16, SRC_TYPE> {
-  using SRC = legate::legate_type_of<SRC_TYPE>;
+  using SRC = legate::type_of<SRC_TYPE>;
 
   template <typename _SRC = SRC, std::enable_if_t<!legate::is_complex_type<_SRC>::value>* = nullptr>
   __CUDA_HD__ __half operator()(const _SRC& src) const
@@ -144,7 +145,7 @@ struct ConvertOp<ConvertCode::PROD, legate::Type::Code::FLOAT16, SRC_TYPE> {
 
 template <legate::Type::Code DST_TYPE>
 struct ConvertOp<ConvertCode::PROD, DST_TYPE, legate::Type::Code::FLOAT16> {
-  using DST = legate::legate_type_of<DST_TYPE>;
+  using DST = legate::type_of<DST_TYPE>;
 
   constexpr DST operator()(const __half& src) const
   {
@@ -155,8 +156,8 @@ struct ConvertOp<ConvertCode::PROD, DST_TYPE, legate::Type::Code::FLOAT16> {
 
 template <legate::Type::Code DST_TYPE, legate::Type::Code SRC_TYPE>
 struct ConvertOp<ConvertCode::SUM, DST_TYPE, SRC_TYPE> {
-  using SRC = legate::legate_type_of<SRC_TYPE>;
-  using DST = legate::legate_type_of<DST_TYPE>;
+  using SRC = legate::type_of<SRC_TYPE>;
+  using DST = legate::type_of<DST_TYPE>;
 
   template <typename _SRC                                          = SRC,
             std::enable_if_t<!legate::is_complex_type<_SRC>::value or
@@ -177,7 +178,7 @@ struct ConvertOp<ConvertCode::SUM, DST_TYPE, SRC_TYPE> {
 
 template <legate::Type::Code SRC_TYPE>
 struct ConvertOp<ConvertCode::SUM, legate::Type::Code::FLOAT16, SRC_TYPE> {
-  using SRC = legate::legate_type_of<SRC_TYPE>;
+  using SRC = legate::type_of<SRC_TYPE>;
 
   template <typename _SRC = SRC, std::enable_if_t<!legate::is_complex_type<_SRC>::value>* = nullptr>
   __CUDA_HD__ __half operator()(const _SRC& src) const
@@ -196,7 +197,7 @@ struct ConvertOp<ConvertCode::SUM, legate::Type::Code::FLOAT16, SRC_TYPE> {
 
 template <legate::Type::Code DST_TYPE>
 struct ConvertOp<ConvertCode::SUM, DST_TYPE, legate::Type::Code::FLOAT16> {
-  using DST = legate::legate_type_of<DST_TYPE>;
+  using DST = legate::type_of<DST_TYPE>;
 
   constexpr DST operator()(const __half& src) const
   {

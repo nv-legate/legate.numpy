@@ -1,4 +1,4 @@
-/* Copyright 2022 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@
 
 namespace cunumeric {
 
-/*static*/ void PutmaskTask::gpu_variant(TaskContext& context)
+/*static*/ void PutmaskTask::gpu_variant(TaskContext context)
 {
   putmask_template<VariantKind::GPU>(context);
 }

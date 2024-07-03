@@ -1,4 +1,4 @@
-/* Copyright 2021-2022 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,16 +34,18 @@ struct ArangeImpl {
   template <Type::Code CODE>
   void operator()(ArangeArgs& args) const
   {
-    using VAL = legate_type_of<CODE>;
+    using VAL = type_of<CODE>;
 
     const auto rect = args.out.shape<1>();
 
-    if (rect.empty()) return;
+    if (rect.empty()) {
+      return;
+    }
 
     auto out = args.out.write_accessor<VAL, 1>();
 
-    const auto start = args.start.scalar<VAL>();
-    const auto step  = args.step.scalar<VAL>();
+    const auto start = args.start.value<VAL>();
+    const auto step  = args.step.value<VAL>();
 
     ArangeImplBody<KIND, VAL>{}(out, rect, start, step);
   }
@@ -52,8 +54,7 @@ struct ArangeImpl {
 template <VariantKind KIND>
 static void arange_template(TaskContext& context)
 {
-  auto& inputs = context.inputs();
-  ArangeArgs args{context.outputs()[0], inputs[0], inputs[1], inputs[2]};
+  ArangeArgs args{context.output(0), context.scalar(0), context.scalar(1)};
   type_dispatch(args.out.code(), ArangeImpl<KIND>{}, args);
 }
 

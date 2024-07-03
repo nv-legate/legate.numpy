@@ -1,4 +1,4 @@
-/* Copyright 2021-2022 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,13 +32,13 @@ struct GPUGenerator : public CURANDGenerator {
   GPUGenerator(BitGeneratorType gentype, uint64_t seed, uint64_t generatorId, uint32_t flags)
     : CURANDGenerator(gentype, seed, generatorId)
   {
-    CHECK_CUDA(::cudaStreamCreate(&stream_));
+    CUNUMERIC_CHECK_CUDA(::cudaStreamCreate(&stream_));
     CHECK_CURAND(::randutilCreateGenerator(&gen_, type_, seed, generatorId, flags, stream_));
   }
 
   virtual ~GPUGenerator()
   {
-    CHECK_CUDA(::cudaStreamSynchronize(stream_));
+    CUNUMERIC_CHECK_CUDA(::cudaStreamSynchronize(stream_));
     CHECK_CURAND(::randutilDestroyGenerator(gen_));
   }
 };
@@ -63,7 +63,7 @@ std::map<legate::Processor, std::unique_ptr<generator_map<VariantKind::GPU>>>
 template <>
 std::mutex BitGeneratorImplBody<VariantKind::GPU>::lock_generators = {};
 
-/*static*/ void BitGeneratorTask::gpu_variant(legate::TaskContext& context)
+/*static*/ void BitGeneratorTask::gpu_variant(legate::TaskContext context)
 {
   bitgenerator_template<VariantKind::GPU>(context);
 }

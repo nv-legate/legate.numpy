@@ -1,4 +1,4 @@
-# Copyright 2022 NVIDIA Corporation
+# Copyright 2024 NVIDIA Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,8 +14,7 @@
 #
 from __future__ import annotations
 
-from cunumeric.config import BinaryOpCode, UnaryOpCode, UnaryRedCode
-
+from ..config import BinaryOpCode, UnaryOpCode, UnaryRedCode
 from .ufunc import (
     all_dtypes,
     create_binary_ufunc,
@@ -73,6 +72,7 @@ logical_and = create_binary_ufunc(
     "logical_and",
     BinaryOpCode.LOGICAL_AND,
     relation_types_of(all_dtypes),
+    red_code=UnaryRedCode.ALL,
 )
 
 logical_or = create_binary_ufunc(
@@ -80,6 +80,7 @@ logical_or = create_binary_ufunc(
     "logical_or",
     BinaryOpCode.LOGICAL_OR,
     relation_types_of(all_dtypes),
+    red_code=UnaryRedCode.ANY,
 )
 
 logical_xor = create_binary_ufunc(

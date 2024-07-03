@@ -1,4 +1,4 @@
-/* Copyright 2022 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,11 +25,11 @@ using namespace legate;
 
 template <Type::Code CODE, int32_t DIM>
 struct SearchSortedImplBody<VariantKind::OMP, CODE, DIM> {
-  using VAL = legate_type_of<CODE>;
+  using VAL = type_of<CODE>;
 
-  void operator()(const Array& input_array,
-                  const Array& input_values,
-                  const Array& output_positions,
+  void operator()(const PhysicalStore& input_array,
+                  const PhysicalStore& input_values,
+                  const PhysicalStore& output_positions,
                   const Rect<1>& rect_base,
                   const Rect<DIM>& rect_values,
                   const Pitches<DIM - 1> pitches,
@@ -56,7 +56,9 @@ struct SearchSortedImplBody<VariantKind::OMP, CODE, DIM> {
         VAL key             = input_v_ptr[idx];
         auto v_point        = pitches.unflatten(idx, rect_values.lo);
         int64_t lower_bound = std::lower_bound(input_ptr, input_ptr + volume, key) - input_ptr;
-        if (lower_bound < volume) { output_reduction.reduce(v_point, lower_bound + offset); }
+        if (lower_bound < static_cast<int64_t>(volume)) {
+          output_reduction.reduce(v_point, lower_bound + offset);
+        }
       }
     } else {
       auto output_reduction =
@@ -66,13 +68,15 @@ struct SearchSortedImplBody<VariantKind::OMP, CODE, DIM> {
         VAL key             = input_v_ptr[idx];
         auto v_point        = pitches.unflatten(idx, rect_values.lo);
         int64_t upper_bound = std::upper_bound(input_ptr, input_ptr + volume, key) - input_ptr;
-        if (upper_bound > 0) { output_reduction.reduce(v_point, upper_bound + offset); }
+        if (upper_bound > 0) {
+          output_reduction.reduce(v_point, upper_bound + offset);
+        }
       }
     }
   }
 };
 
-/*static*/ void SearchSortedTask::omp_variant(TaskContext& context)
+/*static*/ void SearchSortedTask::omp_variant(TaskContext context)
 {
   searchsorted_template<VariantKind::OMP>(context);
 }

@@ -1,4 +1,4 @@
-/* Copyright 2021-2023 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,20 +31,21 @@ class Splitter {
  public:
   Split split(const Rect<DIM>& rect, int must_be_inner)
   {
-    for (int dim = 0; dim < DIM; ++dim)
+    for (int dim = 0; dim < DIM; ++dim) {
       if (dim != must_be_inner) {
         outer_dim_ = dim;
         break;
       }
+    }
 
     size_t outer = 1;
     size_t inner = 1;
     size_t pitch = 1;
     for (int dim = DIM - 1; dim >= 0; --dim) {
       auto diff = rect.hi[dim] - rect.lo[dim] + 1;
-      if (dim == outer_dim_)
+      if (dim == outer_dim_) {
         outer *= diff;
-      else {
+      } else {
         inner *= diff;
         pitches_[dim] = pitch;
         pitch *= diff;
@@ -57,9 +58,9 @@ class Splitter {
   {
     Point<DIM> point = lo;
     for (int dim = 0; dim < DIM; ++dim) {
-      if (dim == outer_dim_)
+      if (dim == outer_dim_) {
         point[dim] += outer_idx;
-      else {
+      } else {
         point[dim] += inner_idx / pitches_[dim];
         inner_idx = inner_idx % pitches_[dim];
       }
@@ -76,7 +77,7 @@ template <UnaryRedCode OP_CODE, Type::Code CODE, int DIM, bool HAS_WHERE>
 struct UnaryRedImplBody<VariantKind::OMP, OP_CODE, CODE, DIM, HAS_WHERE> {
   using OP    = UnaryRedOp<OP_CODE, CODE>;
   using LG_OP = typename OP::OP;
-  using RHS   = legate_type_of<CODE>;
+  using RHS   = type_of<CODE>;
 
   void operator()(AccessorRD<LG_OP, true, DIM> lhs,
                   AccessorRO<RHS, DIM> rhs,
@@ -94,7 +95,9 @@ struct UnaryRedImplBody<VariantKind::OMP, OP_CODE, CODE, DIM, HAS_WHERE> {
       for (size_t i_idx = 0; i_idx < split.inner; ++i_idx) {
         auto point = splitter.combine(o_idx, i_idx, rect.lo);
         bool mask  = true;
-        if constexpr (HAS_WHERE) mask = where[point];
+        if constexpr (HAS_WHERE) {
+          mask = where[point];
+        }
         if (mask) {
           auto identity = LG_OP::identity;
           lhs.reduce(point, OP::convert(point, collapsed_dim, identity, rhs[point]));
@@ -104,7 +107,7 @@ struct UnaryRedImplBody<VariantKind::OMP, OP_CODE, CODE, DIM, HAS_WHERE> {
   }
 };
 
-/*static*/ void UnaryRedTask::omp_variant(TaskContext& context)
+/*static*/ void UnaryRedTask::omp_variant(TaskContext context)
 {
   unary_red_template<VariantKind::OMP>(context);
 }

@@ -8,7 +8,9 @@ Routines
    creation
    manipulation
    binary
+   datatype
    indexing
+   io
    linalg
    logic
    math

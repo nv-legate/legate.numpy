@@ -1,4 +1,4 @@
-# Copyright 2022 NVIDIA Corporation
+# Copyright 2024 NVIDIA Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 #
 
 from itertools import islice
-from typing import Any, Union
+from typing import Any
 
 import numpy as np
 
@@ -26,7 +26,7 @@ def allclose(
     atol: float = 1e-8,
     equal_nan: bool = False,
     *,
-    diff_limit: Union[int, None] = 5,  # None means no limit at all
+    diff_limit: int | None = 5,  # None means no limit at all
     check_dtype: bool = True,
 ) -> bool:
     if np.shape(a) != np.shape(b):

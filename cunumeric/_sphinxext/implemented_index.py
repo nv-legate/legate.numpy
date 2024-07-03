@@ -1,4 +1,4 @@
-# Copyright 2022 NVIDIA Corporation
+# Copyright 2024 NVIDIA Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ from sphinx.util.logging import getLogger
 
 import cunumeric as cn
 
-from ..coverage import is_implemented
+from .._utils.coverage import is_implemented
 from . import PARALLEL_SAFE, SphinxParallelSpec
 from ._cunumeric_directive import CunumericDirective
 

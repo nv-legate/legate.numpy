@@ -1,4 +1,4 @@
-/* Copyright 2021-2022 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,26 +33,30 @@ static __global__ void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM)
                int32_t k)
 {
   const size_t idx = global_tid_1d();
-  if (idx >= volume) return;
+  if (idx >= volume) {
+    return;
+  }
 
   if (LOWER) {
     auto p = pitches.unflatten(idx, lo);
-    if (p[DIM - 2] + k >= p[DIM - 1])
+    if (p[DIM - 2] + k >= p[DIM - 1]) {
       out[p] = in[p];
-    else
+    } else {
       out[p] = 0;
+    }
   } else {
     auto p = pitches.unflatten(idx, lo);
-    if (p[DIM - 2] + k <= p[DIM - 1])
+    if (p[DIM - 2] + k <= p[DIM - 1]) {
       out[p] = in[p];
-    else
+    } else {
       out[p] = 0;
+    }
   }
 }
 
 template <Type::Code CODE, int32_t DIM, bool LOWER>
 struct TriluImplBody<VariantKind::GPU, CODE, DIM, LOWER> {
-  using VAL = legate_type_of<CODE>;
+  using VAL = type_of<CODE>;
 
   template <bool C_ORDER>
   void operator()(const AccessorWO<VAL, DIM>& out,
@@ -66,11 +70,11 @@ struct TriluImplBody<VariantKind::GPU, CODE, DIM, LOWER> {
     auto stream         = get_cached_stream();
     trilu_kernel<VAL, DIM, LOWER, C_ORDER>
       <<<blocks, THREADS_PER_BLOCK, 0, stream>>>(out, in, pitches, lo, volume, k);
-    CHECK_CUDA_STREAM(stream);
+    CUNUMERIC_CHECK_CUDA_STREAM(stream);
   }
 };
 
-/*static*/ void TriluTask::gpu_variant(TaskContext& context)
+/*static*/ void TriluTask::gpu_variant(TaskContext context)
 {
   trilu_template<VariantKind::GPU>(context);
 }

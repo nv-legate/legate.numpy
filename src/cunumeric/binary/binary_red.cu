@@ -1,4 +1,4 @@
-/* Copyright 2021-2022 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,8 +26,12 @@ static __global__ void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM)
   dense_kernel(size_t volume, Function func, RES out, const ARG* in1, const ARG* in2)
 {
   const size_t idx = global_tid_1d();
-  if (idx >= volume) return;
-  if (!func(in1[idx], in2[idx])) out.reduce<false /*EXCLUSIVE*/>(false);
+  if (idx >= volume) {
+    return;
+  }
+  if (!func(in1[idx], in2[idx])) {
+    out.reduce<false /*EXCLUSIVE*/>(false);
+  }
 }
 
 template <typename Function, typename RES, typename ReadAcc, typename Pitches, typename Rect>
@@ -35,9 +39,13 @@ static __global__ void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM) gen
   size_t volume, Function func, RES out, ReadAcc in1, ReadAcc in2, Pitches pitches, Rect rect)
 {
   const size_t idx = global_tid_1d();
-  if (idx >= volume) return;
+  if (idx >= volume) {
+    return;
+  }
   auto point = pitches.unflatten(idx, rect.lo);
-  if (!func(in1[point], in2[point])) out.reduce<false /*EXCLUSIVE*/>(false);
+  if (!func(in1[point], in2[point])) {
+    out.reduce<false /*EXCLUSIVE*/>(false);
+  }
 }
 
 template <typename Buffer, typename RedAcc>
@@ -49,7 +57,7 @@ static __global__ void __launch_bounds__(1, 1) copy_kernel(Buffer result, RedAcc
 template <BinaryOpCode OP_CODE, Type::Code CODE, int DIM>
 struct BinaryRedImplBody<VariantKind::GPU, OP_CODE, CODE, DIM> {
   using OP  = BinaryOp<OP_CODE, CODE>;
-  using ARG = legate_type_of<CODE>;
+  using ARG = type_of<CODE>;
 
   template <typename AccessorRD>
   void operator()(OP func,
@@ -74,11 +82,11 @@ struct BinaryRedImplBody<VariantKind::GPU, OP_CODE, CODE, DIM> {
     }
 
     copy_kernel<<<1, 1, 0, stream>>>(result, out);
-    CHECK_CUDA_STREAM(stream);
+    CUNUMERIC_CHECK_CUDA_STREAM(stream);
   }
 };
 
-/*static*/ void BinaryRedTask::gpu_variant(TaskContext& context)
+/*static*/ void BinaryRedTask::gpu_variant(TaskContext context)
 {
   binary_red_template<VariantKind::GPU>(context);
 }

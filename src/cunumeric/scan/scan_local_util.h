@@ -1,4 +1,4 @@
-/* Copyright 2022 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "cunumeric/cunumeric.h"
+#include "cunumeric/cunumeric_task.h"
 
 #include <thrust/functional.h>
 
@@ -56,13 +56,13 @@ template <ScanCode OP_CODE, legate::Type::Code CODE>
 struct ScanOp {};
 
 template <legate::Type::Code CODE>
-struct ScanOp<ScanCode::SUM, CODE> : thrust::plus<legate::legate_type_of<CODE>> {
+struct ScanOp<ScanCode::SUM, CODE> : thrust::plus<legate::type_of<CODE>> {
   static constexpr int nan_identity = 0;
   ScanOp() {}
 };
 
 template <legate::Type::Code CODE>
-struct ScanOp<ScanCode::PROD, CODE> : thrust::multiplies<legate::legate_type_of<CODE>> {
+struct ScanOp<ScanCode::PROD, CODE> : thrust::multiplies<legate::type_of<CODE>> {
   static constexpr int nan_identity = 1;
   ScanOp() {}
 };

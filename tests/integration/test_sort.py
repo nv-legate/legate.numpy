@@ -1,4 +1,4 @@
-# Copyright 2022 NVIDIA Corporation
+# Copyright 2024 NVIDIA Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -52,7 +52,7 @@ class TestSort(object):
     def test_arr_none(self):
         res_np = np.sort(
             None
-        )  # numpy.AxisError: axis -1 is out of bounds for array of dimension 0
+        )  # AxisError: axis -1 is out of bounds for array of dimension 0
         res_num = num.sort(
             None
         )  # AttributeError: 'NoneType' object has no attribute 'shape'

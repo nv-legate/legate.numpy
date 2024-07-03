@@ -1,4 +1,4 @@
-# Copyright 2021-2022 NVIDIA Corporation
+# Copyright 2024 NVIDIA Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@
 
 # You can set these variables from the command line, and also
 # from the environment for the first two.
-SPHINXOPTS     ?= -v -W
+SPHINXOPTS     ?= -v
 PARALLEL_BUILD ?= 1
 SPHINXBUILD    ?= $(shell which sphinx-build)
 SOURCEDIR      = source

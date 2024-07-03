@@ -1,4 +1,4 @@
-/* Copyright 2021-2022 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -148,7 +148,7 @@ __host__ void contract(T* lhs_data,
                                      work_size,
                                      task_stream));
 
-  CHECK_CUDA_STREAM(task_stream);
+  CUNUMERIC_CHECK_CUDA_STREAM(task_stream);
 }
 
 template <>
@@ -341,7 +341,7 @@ struct ContractImplBody<VariantKind::GPU, Type::Code::COMPLEX128> {
   }
 };
 
-/*static*/ void ContractTask::gpu_variant(TaskContext& context)
+/*static*/ void ContractTask::gpu_variant(TaskContext context)
 {
   contract_template<VariantKind::GPU>(context);
 }

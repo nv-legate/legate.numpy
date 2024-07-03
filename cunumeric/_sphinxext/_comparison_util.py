@@ -1,4 +1,4 @@
-# Copyright 2022 NVIDIA Corporation
+# Copyright 2024 NVIDIA Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,9 +16,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from types import ModuleType
-from typing import TYPE_CHECKING, Any, Iterable, Iterator, Type, Union
+from typing import TYPE_CHECKING, Any, Iterable, Iterator, Type
 
-from ..coverage import is_implemented, is_multi, is_single
+from .._utils.coverage import is_implemented, is_multi, is_single
 from ._comparison_config import MISSING_NP_REFS, SKIP
 
 if TYPE_CHECKING:
@@ -75,7 +75,7 @@ def _lgref(name: str, obj: Any, implemented: bool) -> str:
 
 def filter_names(
     obj: Any,
-    types: Union[tuple[Type[Any], ...], None] = None,
+    types: tuple[Type[Any], ...] | None = None,
     skip: Iterable[str] = (),
 ) -> Iterator[str]:
     names = (n for n in dir(obj))  # every name in the module or class
@@ -106,7 +106,7 @@ def get_item(name: str, np_obj: Any, lg_obj: Any) -> ItemDetail:
     )
 
 
-def get_namespaces(attr: Union[str, None]) -> tuple[Any, Any]:
+def get_namespaces(attr: str | None) -> tuple[Any, Any]:
     import numpy
 
     import cunumeric

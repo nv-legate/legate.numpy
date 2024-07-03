@@ -1,4 +1,4 @@
-/* Copyright 2022 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,14 +31,16 @@ static __global__ void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM)
   scalar_kernel(uint64_t volume, Function func, RES* out, RES scalar)
 {
   const size_t idx = blockIdx.x * blockDim.x + threadIdx.x;
-  if (idx >= volume) return;
+  if (idx >= volume) {
+    return;
+  }
   out[idx] = func(out[idx], scalar);
 }
 
 template <ScanCode OP_CODE, Type::Code CODE, int DIM>
 struct ScanGlobalImplBody<VariantKind::GPU, OP_CODE, CODE, DIM> {
   using OP  = ScanOp<OP_CODE, CODE>;
-  using VAL = legate_type_of<CODE>;
+  using VAL = type_of<CODE>;
 
   void operator()(OP func,
                   const AccessorRW<VAL, DIM>& out,
@@ -77,11 +79,11 @@ struct ScanGlobalImplBody<VariantKind::GPU, OP_CODE, CODE, DIM> {
       scalar_kernel<<<blocks, THREADS_PER_BLOCK, 0, stream>>>(
         stride, func, &outptr[index], global_prefix);
     }
-    CHECK_CUDA_STREAM(stream);
+    CUNUMERIC_CHECK_CUDA_STREAM(stream);
   }
 };
 
-/*static*/ void ScanGlobalTask::gpu_variant(TaskContext& context)
+/*static*/ void ScanGlobalTask::gpu_variant(TaskContext context)
 {
   scan_global_template<VariantKind::GPU>(context);
 }

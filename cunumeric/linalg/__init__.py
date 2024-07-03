@@ -1,4 +1,4 @@
-# Copyright 2021-2022 NVIDIA Corporation
+# Copyright 2024 NVIDIA Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,10 +16,9 @@ from __future__ import annotations
 
 import numpy.linalg as _nplinalg
 
-from cunumeric.array import maybe_convert_to_np_ndarray
-from cunumeric.linalg.linalg import *
-from cunumeric.linalg.exception import *
-from cunumeric.coverage import clone_module
+from .._array.util import maybe_convert_to_np_ndarray
+from .._utils.coverage import clone_module
+from .linalg import *
 
 clone_module(_nplinalg, globals(), maybe_convert_to_np_ndarray)
 

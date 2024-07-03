@@ -1,4 +1,4 @@
-/* Copyright 2022 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@
 
 #define _USE_MATH_DEFINES
 
-#include "cunumeric/cunumeric.h"
+#include "cunumeric/cunumeric_task.h"
 #include <math.h>
 
 extern double i0(double);

@@ -1,4 +1,4 @@
-/* Copyright 2021-2022 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,12 +29,13 @@ struct ArangeImplBody<VariantKind::OMP, VAL> {
                   const VAL step) const
   {
 #pragma omp parallel for
-    for (coord_t idx = rect.lo[0]; idx <= rect.hi[0]; ++idx)
+    for (coord_t idx = rect.lo[0]; idx <= rect.hi[0]; ++idx) {
       out[idx] = static_cast<VAL>(idx) * step + start;
+    }
   }
 };
 
-/*static*/ void ArangeTask::omp_variant(TaskContext& context)
+/*static*/ void ArangeTask::omp_variant(TaskContext context)
 {
   arange_template<VariantKind::OMP>(context);
 }

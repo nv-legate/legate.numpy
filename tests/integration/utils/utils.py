@@ -1,4 +1,4 @@
-# Copyright 2021-2022 NVIDIA Corporation
+# Copyright 2024 NVIDIA Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,6 +16,12 @@
 import numpy as np
 
 import cunumeric as num
+from cunumeric._utils import is_np2
+
+if is_np2:
+    from numpy.exceptions import AxisError  # noqa: F401
+else:
+    from numpy import AxisError  # noqa: F401
 
 
 def compare_array(a, b, check_type=True):

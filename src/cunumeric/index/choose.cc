@@ -1,4 +1,4 @@
-/* Copyright 2021-2022 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ using namespace legate;
 
 template <Type::Code CODE, int DIM>
 struct ChooseImplBody<VariantKind::CPU, CODE, DIM> {
-  using VAL = legate_type_of<CODE>;
+  using VAL = type_of<CODE>;
 
   void operator()(const AccessorWO<VAL, DIM>& out,
                   const AccessorRO<int64_t, DIM>& index_arr,
@@ -38,7 +38,7 @@ struct ChooseImplBody<VariantKind::CPU, CODE, DIM> {
       auto indexptr = index_arr.ptr(rect);
       for (size_t idx = 0; idx < volume; ++idx) {
 #ifdef DEBUG_CUNUMERIC
-        assert(indexptr[idx] < choices.size());
+        assert(indexptr[idx] < static_cast<int64_t>(choices.size()));
 #endif
         auto chptr  = choices[indexptr[idx]].ptr(rect);
         outptr[idx] = chptr[idx];
@@ -47,7 +47,7 @@ struct ChooseImplBody<VariantKind::CPU, CODE, DIM> {
       for (size_t idx = 0; idx < volume; ++idx) {
         auto p = pitches.unflatten(idx, rect.lo);
 #ifdef DEBUG_CUNUMERIC
-        assert(index_arr[p] < choices.size());
+        assert(index_arr[p] < static_cast<int64_t>(choices.size()));
 #endif
         out[p] = choices[index_arr[p]][p];
       }
@@ -55,7 +55,7 @@ struct ChooseImplBody<VariantKind::CPU, CODE, DIM> {
   }
 };
 
-/*static*/ void ChooseTask::cpu_variant(TaskContext& context)
+/*static*/ void ChooseTask::cpu_variant(TaskContext context)
 {
   choose_template<VariantKind::CPU>(context);
 }

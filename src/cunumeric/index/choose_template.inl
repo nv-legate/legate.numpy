@@ -1,4 +1,4 @@
-/* Copyright 2021-2022 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,18 +32,20 @@ struct ChooseImpl {
   template <Type::Code CODE, int DIM>
   void operator()(ChooseArgs& args) const
   {
-    using VAL     = legate_type_of<CODE>;
+    using VAL     = type_of<CODE>;
     auto out_rect = args.out.shape<DIM>();
 
     Pitches<DIM - 1> pitches;
     size_t volume = pitches.flatten(out_rect);
-    if (volume == 0) return;
+    if (volume == 0) {
+      return;
+    }
 
     auto out        = args.out.write_accessor<VAL, DIM>(out_rect);
     auto index_rect = args.inputs[0].shape<DIM>();
     auto index_arr  = args.inputs[0].read_accessor<int64_t, DIM>(index_rect);
 
-#ifndef LEGATE_BOUNDS_CHECKS
+#if !LEGATE_DEFINED(LEGATE_BOUNDS_CHECKS)
     // Check to see if this is dense or not
     bool dense =
       index_arr.accessor.is_dense_row_major(out_rect) && out.accessor.is_dense_row_major(out_rect);
@@ -52,7 +54,7 @@ struct ChooseImpl {
     bool dense = false;
 #endif
     std::vector<AccessorRO<VAL, DIM>> choices;
-    for (int i = 1; i < args.inputs.size(); i++) {
+    for (uint32_t i = 1; i < args.inputs.size(); i++) {
       auto rect_c = args.inputs[i].shape<DIM>();
       choices.push_back(args.inputs[i].read_accessor<VAL, DIM>(rect_c));
       dense = dense && choices[i - 1].accessor.is_dense_row_major(out_rect);
@@ -64,7 +66,11 @@ struct ChooseImpl {
 template <VariantKind KIND>
 static void choose_template(TaskContext& context)
 {
-  ChooseArgs args{context.outputs()[0], context.inputs()};
+  std::vector<legate::PhysicalStore> inputs;
+  for (auto& input : context.inputs()) {
+    inputs.emplace_back(input);
+  }
+  ChooseArgs args{context.output(0), std::move(inputs)};
   double_dispatch(args.inputs[0].dim(), args.inputs[0].code(), ChooseImpl<KIND>{}, args);
 }
 

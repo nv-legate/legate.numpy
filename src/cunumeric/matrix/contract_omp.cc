@@ -1,4 +1,4 @@
-/* Copyright 2021-2022 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -233,7 +233,7 @@ struct ContractImplBody<VariantKind::OMP, Type::Code::COMPLEX128> {
   }
 };
 
-/*static*/ void ContractTask::omp_variant(legate::TaskContext& context)
+/*static*/ void ContractTask::omp_variant(legate::TaskContext context)
 {
   std::stringstream ss;
   ss << omp_get_max_threads();

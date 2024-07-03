@@ -1,4 +1,4 @@
-/* Copyright 2023 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,22 +38,25 @@ struct lower_bound_op_t {
       // upcast to bin_t:
       //
       bin_t left_up = static_cast<bin_t>(left);
-      if (right == sentinel)
+      if (right == sentinel) {
         return left_up <= right;
-      else
+      } else {
         return left_up < right;
+      }
     } else if constexpr (std::is_same_v<elem_t, __half> && std::is_integral_v<bin_t>) {
       // upcast to elem_t:
       //
-      if (right == sentinel)
+      if (right == sentinel) {
         return left <= static_cast<elem_t>(right);
-      else
+      } else {
         return left < right;
+      }
     } else {
-      if (right == sentinel)
+      if (right == sentinel) {
         return left <= right;
-      else
+      } else {
         return left < right;
+      }
     }
   }
 
@@ -83,14 +86,16 @@ void histogram_weights(exe_policy_t exe_pol,
                        size_t n_intervals,             // |bins| - 1
                        weight_t* ptr_hist,             // result; pre-allocated, sz = n_intervals
                        weight_t* ptr_w     = nullptr,  // weights array, w
-                       cudaStream_t stream = nullptr)
+                       cudaStream_t stream = {})
 {
   alloc_t<offset_t, exe_policy_t> alloc_offsets;
   auto* ptr_offsets = alloc_offsets(exe_pol, n_intervals + 1);
 
   alloc_t<weight_t, exe_policy_t> alloc_w;
 
-  if (!ptr_w) { ptr_w = alloc_w(exe_pol, n_samples, 1); }
+  if (!ptr_w) {
+    ptr_w = alloc_w(exe_pol, n_samples, 1);
+  }
 
   // in-place src sort + corresponding weights shuffle:
   //
@@ -124,7 +129,7 @@ void histogram_wrapper(exe_policy_t exe_pol,
                        const Rect<1>& weights_rect,
                        const AccessorRD<SumReduction<weight_t>, true, 1>& result,
                        const Rect<1>& result_rect,
-                       cudaStream_t stream = nullptr)
+                       cudaStream_t stream = {})
 {
   auto&& [src_size, src_copy, src_ptr] = accessors::make_accessor_copy(exe_pol, src, src_rect);
 

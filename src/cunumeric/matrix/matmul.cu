@@ -1,4 +1,4 @@
-/* Copyright 2021-2022 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,7 +68,7 @@ struct MatMulImplBody<VariantKind::GPU, Type::Code::FLOAT32> {
                                CUDA_R_32F,
                                lhs_stride));
 
-    CHECK_CUDA_STREAM(task_stream);
+    CUNUMERIC_CHECK_CUDA_STREAM(task_stream);
   }
 };
 
@@ -109,7 +109,7 @@ struct MatMulImplBody<VariantKind::GPU, Type::Code::FLOAT64> {
                              lhs,
                              lhs_stride));
 
-    CHECK_CUDA_STREAM(task_stream);
+    CUNUMERIC_CHECK_CUDA_STREAM(task_stream);
   }
 };
 
@@ -153,7 +153,7 @@ struct MatMulImplBody<VariantKind::GPU, Type::Code::FLOAT16> {
                                CUDA_R_32F,
                                lhs_stride));
 
-    CHECK_CUDA_STREAM(task_stream);
+    CUNUMERIC_CHECK_CUDA_STREAM(task_stream);
   }
 };
 
@@ -201,7 +201,7 @@ struct MatMulImplBody<VariantKind::GPU, Type::Code::COMPLEX64> {
                                CUDA_C_32F,
                                lhs_stride));
 
-    CHECK_CUDA_STREAM(task_stream);
+    CUNUMERIC_CHECK_CUDA_STREAM(task_stream);
   }
 };
 
@@ -246,11 +246,11 @@ struct MatMulImplBody<VariantKind::GPU, Type::Code::COMPLEX128> {
                              lhs,
                              lhs_stride));
 
-    CHECK_CUDA_STREAM(task_stream);
+    CUNUMERIC_CHECK_CUDA_STREAM(task_stream);
   }
 };
 
-/*static*/ void MatMulTask::gpu_variant(TaskContext& context)
+/*static*/ void MatMulTask::gpu_variant(TaskContext context)
 {
   matmul_template<VariantKind::GPU>(context);
 }

@@ -1,4 +1,4 @@
-/* Copyright 2021-2022 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ static inline curandRngType get_curandRngType(cunumeric::BitGeneratorType kind)
     case cunumeric::BitGeneratorType::MT19937: return curandRngType::CURAND_RNG_PSEUDO_MT19937;
     case cunumeric::BitGeneratorType::PHILOX4_32_10:
       return curandRngType::CURAND_RNG_PSEUDO_PHILOX4_32_10;
-    default: LEGATE_ABORT;
+    default: LEGATE_ABORT("Unknown generator type");
   }
   return curandRngType::CURAND_RNG_TEST;
 }

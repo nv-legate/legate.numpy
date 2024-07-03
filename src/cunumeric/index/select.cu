@@ -1,4 +1,4 @@
-/* Copyright 2023 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,10 +30,14 @@ __global__ static void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM)
                       int volume)
 {
   const size_t idx = global_tid_1d();
-  if (idx >= volume) return;
+  if (idx >= volume) {
+    return;
+  }
   outptr[idx] = default_val;
   for (int32_t c = (narrays - 1); c >= 0; c--) {
-    if (condlist[c][idx]) { outptr[idx] = choicelist[c][idx]; }
+    if (condlist[c][idx]) {
+      outptr[idx] = choicelist[c][idx];
+    }
   }
 }
 
@@ -49,11 +53,15 @@ __global__ static void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM)
                 int volume)
 {
   const size_t tid = global_tid_1d();
-  if (tid >= volume) return;
+  if (tid >= volume) {
+    return;
+  }
   auto p = pitches.unflatten(tid, rect.lo);
   out[p] = default_val;
   for (int32_t c = (narrays - 1); c >= 0; c--) {
-    if (condlist[c][p]) { out[p] = choicelist[c][p]; }
+    if (condlist[c][p]) {
+      out[p] = choicelist[c][p];
+    }
   }
 }
 
@@ -61,7 +69,7 @@ using namespace legate;
 
 template <Type::Code CODE, int DIM>
 struct SelectImplBody<VariantKind::GPU, CODE, DIM> {
-  using VAL = legate_type_of<CODE>;
+  using VAL = type_of<CODE>;
 
   void operator()(const AccessorWO<VAL, DIM>& out,
                   const std::vector<AccessorRO<bool, DIM>>& condlist,
@@ -81,11 +89,14 @@ struct SelectImplBody<VariantKind::GPU, CODE, DIM> {
 
     if (dense) {
       auto cond_arr = create_buffer<const bool*>(condlist.size(), legate::Memory::Kind::Z_COPY_MEM);
-      for (uint32_t idx = 0; idx < condlist.size(); ++idx) cond_arr[idx] = condlist[idx].ptr(rect);
+      for (uint32_t idx = 0; idx < condlist.size(); ++idx) {
+        cond_arr[idx] = condlist[idx].ptr(rect);
+      }
       auto choice_arr =
         create_buffer<const VAL*>(choicelist.size(), legate::Memory::Kind::Z_COPY_MEM);
-      for (uint32_t idx = 0; idx < choicelist.size(); ++idx)
+      for (uint32_t idx = 0; idx < choicelist.size(); ++idx) {
         choice_arr[idx] = choicelist[idx].ptr(rect);
+      }
 
       VAL* outptr = out.ptr(rect);
       select_kernel_dense<VAL><<<blocks, THREADS_PER_BLOCK, 0, stream>>>(
@@ -94,20 +105,24 @@ struct SelectImplBody<VariantKind::GPU, CODE, DIM> {
     } else {  // not dense
       auto cond_arr =
         create_buffer<AccessorRO<bool, DIM>>(condlist.size(), legate::Memory::Kind::Z_COPY_MEM);
-      for (uint32_t idx = 0; idx < condlist.size(); ++idx) cond_arr[idx] = condlist[idx];
+      for (uint32_t idx = 0; idx < condlist.size(); ++idx) {
+        cond_arr[idx] = condlist[idx];
+      }
       auto choice_arr =
         create_buffer<AccessorRO<VAL, DIM>>(choicelist.size(), legate::Memory::Kind::Z_COPY_MEM);
-      for (uint32_t idx = 0; idx < choicelist.size(); ++idx) choice_arr[idx] = choicelist[idx];
+      for (uint32_t idx = 0; idx < choicelist.size(); ++idx) {
+        choice_arr[idx] = choicelist[idx];
+      }
 
       select_kernel<VAL, DIM><<<blocks, THREADS_PER_BLOCK, 0, stream>>>(
         out, narrays, cond_arr, choice_arr, default_val, rect, pitches, rect.volume());
     }
 
-    CHECK_CUDA_STREAM(stream);
+    CUNUMERIC_CHECK_CUDA_STREAM(stream);
   }
 };
 
-/*static*/ void SelectTask::gpu_variant(TaskContext& context)
+/*static*/ void SelectTask::gpu_variant(TaskContext context)
 {
   select_template<VariantKind::GPU>(context);
 }

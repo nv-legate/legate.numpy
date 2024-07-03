@@ -1,4 +1,4 @@
-# Copyright 2023 NVIDIA Corporation
+# Copyright 2024 NVIDIA Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 #
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Type, Union
+from typing import TYPE_CHECKING, Any, Type
 
 if TYPE_CHECKING:
     import numpy.typing as npt
@@ -23,8 +23,8 @@ if TYPE_CHECKING:
 
 import numpy as _np
 
-from ..array import maybe_convert_to_np_ndarray
-from ..coverage import clone_class
+from .._array.util import maybe_convert_to_np_ndarray
+from .._utils.coverage import clone_class
 
 NDARRAY_INTERNAL = {
     "__array_finalize__",
@@ -37,7 +37,7 @@ NDARRAY_INTERNAL = {
     "__array_wrap__",
 }
 
-MaskType = _np.bool_
+MaskType = bool
 nomask = MaskType(0)
 
 
@@ -51,8 +51,8 @@ class MaskedArray:
     def __init__(
         self,
         data: Any = None,
-        mask: _np.bool_ = nomask,
-        dtype: Union[npt.DTypeLike, None] = None,
+        mask: bool = nomask,
+        dtype: npt.DTypeLike | None = None,
         copy: bool = False,
         subok: bool = True,
         ndmin: int = 0,
@@ -60,7 +60,7 @@ class MaskedArray:
         keep_mask: Any = True,
         hard_mask: Any = None,
         shrink: bool = True,
-        order: Union[str, None] = None,
+        order: str | None = None,
     ) -> None:
         self._internal_ma = _np.ma.MaskedArray(  # type: ignore
             data=maybe_convert_to_np_ndarray(data),

@@ -1,4 +1,4 @@
-/* Copyright 2022 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,12 +48,12 @@ void thrust_local_sort(const VAL* values_in,
 
   if (values_in != values_out) {
     // not in-place --> need a copy
-    CHECK_CUDA(cudaMemcpyAsync(
+    CUNUMERIC_CHECK_CUDA(cudaMemcpyAsync(
       values_out, values_in, sizeof(VAL) * volume, cudaMemcpyDeviceToDevice, stream));
   }
   if (indices_in != indices_out) {
     // not in-place --> need a copy
-    CHECK_CUDA(cudaMemcpyAsync(
+    CUNUMERIC_CHECK_CUDA(cudaMemcpyAsync(
       indices_out, values_in, sizeof(int64_t) * volume, cudaMemcpyDeviceToDevice, stream));
   }
 

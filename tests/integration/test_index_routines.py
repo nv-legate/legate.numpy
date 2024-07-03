@@ -1,4 +1,4 @@
-# Copyright 2021-2022 NVIDIA Corporation
+# Copyright 2024 NVIDIA Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,9 +19,10 @@ import numpy as np
 import pytest
 from legate.core import LEGATE_MAX_DIM
 from utils.generators import mk_seq_array
+from utils.utils import AxisError
 
 import cunumeric as num
-from cunumeric.eager import diagonal_reference
+from cunumeric._thunk.eager import diagonal_reference
 
 
 class TestChoose1d:
@@ -530,11 +531,11 @@ class TestDiagonalErrors:
         "axes", ((0, -4), (3, 0)), ids=lambda axes: f"(axes={axes})"
     )
     def test_axes_out_of_bound(self, axes):
-        # In Numpy, it raises numpy.AxisError: is out of bounds
+        # In Numpy, it raises AxisError: is out of bounds
         # In cuNumeric, it raises ValueError:
         # axes must be the same size as ndim for transpose
         axis1, axis2 = axes
-        with pytest.raises(np.AxisError):
+        with pytest.raises(AxisError):
             num.diagonal(self.a, 0, axis1, axis2)
 
     @pytest.mark.xfail

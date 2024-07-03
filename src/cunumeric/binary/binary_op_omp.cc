@@ -1,4 +1,4 @@
-/* Copyright 2021-2022 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ using namespace legate;
 template <BinaryOpCode OP_CODE, Type::Code CODE, int DIM>
 struct BinaryOpImplBody<VariantKind::OMP, OP_CODE, CODE, DIM> {
   using OP   = BinaryOp<OP_CODE, CODE>;
-  using RHS1 = legate_type_of<CODE>;
+  using RHS1 = type_of<CODE>;
   using RHS2 = rhs2_of_binary_op<OP_CODE, CODE>;
   using LHS  = std::result_of_t<OP(RHS1, RHS2)>;
 
@@ -42,7 +42,9 @@ struct BinaryOpImplBody<VariantKind::OMP, OP_CODE, CODE, DIM> {
       auto in1ptr = in1.ptr(rect);
       auto in2ptr = in2.ptr(rect);
 #pragma omp parallel for schedule(static)
-      for (size_t idx = 0; idx < volume; ++idx) outptr[idx] = func(in1ptr[idx], in2ptr[idx]);
+      for (size_t idx = 0; idx < volume; ++idx) {
+        outptr[idx] = func(in1ptr[idx], in2ptr[idx]);
+      }
     } else {
 #pragma omp parallel for schedule(static)
       for (size_t idx = 0; idx < volume; ++idx) {
@@ -53,7 +55,7 @@ struct BinaryOpImplBody<VariantKind::OMP, OP_CODE, CODE, DIM> {
   }
 };
 
-/*static*/ void BinaryOpTask::omp_variant(TaskContext& context)
+/*static*/ void BinaryOpTask::omp_variant(TaskContext context)
 {
   binary_op_template<VariantKind::OMP>(context);
 }

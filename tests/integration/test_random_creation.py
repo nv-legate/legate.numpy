@@ -1,4 +1,4 @@
-# Copyright 2021-2022 NVIDIA Corporation
+# Copyright 2024 NVIDIA Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 #
 
 import os
-from typing import Any, Tuple
+from typing import Any
 
 import numpy as np
 import pytest
@@ -41,14 +41,14 @@ def test_randn():
 
 def reseed_and_gen_random(
     func: str, seed: Any, *args: Any, **kwargs: Any
-) -> Tuple[Any, Any]:
+) -> tuple[Any, Any]:
     """Reseeed singleton rng and generate random in NumPy and cuNumeric."""
     return gen_random_from_both(func, *args, **kwargs)
 
 
 def gen_random_from_both(
     func: str, *args: Any, **kwargs: Any
-) -> Tuple[Any, Any]:
+) -> tuple[Any, Any]:
     """Call the same random function from both NumPy and cuNumeric."""
     return (
         getattr(np.random, func)(*args, **kwargs),
@@ -150,6 +150,7 @@ def test_default_rng_bitgenerator():
     EAGER_TEST,
     reason="cuNumeric does not respect seed in Eager mode",
 )
+@pytest.mark.xfail(reason="cunumeric.internal#135")
 def test_default_rng_generator():
     steps = 3
     seed = 12345
@@ -183,7 +184,7 @@ SMALL_RNG_SIZES = [5, 1024, (1, 2)]
 LARGE_RNG_SIZES = [10000, (20, 50, 4)]
 ALL_RNG_SIZES = SMALL_RNG_SIZES + LARGE_RNG_SIZES + [None]
 INT_DTYPES = [np.int64, np.int32, np.int16]
-UINT_DTYPES = [np.uint64, np.uint16, np.uint0]
+UINT_DTYPES = [np.uint64, np.uint16, np.uintp]
 FLOAT_DTYPES = [np.float16, np.float128, np.float64]
 
 

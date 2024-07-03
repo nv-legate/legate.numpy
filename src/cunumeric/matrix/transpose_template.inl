@@ -1,4 +1,4 @@
-/* Copyright 2021-2022 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,10 +31,12 @@ struct TransposeImpl {
   template <Type::Code CODE>
   void operator()(TransposeArgs& args) const
   {
-    using VAL = legate_type_of<CODE>;
+    using VAL = type_of<CODE>;
 
     const auto rect = args.out.shape<2>();
-    if (rect.empty()) return;
+    if (rect.empty()) {
+      return;
+    }
 
     auto out = args.out.write_accessor<VAL, 2>();
     auto in  = args.in.read_accessor<VAL, 2>();
@@ -46,11 +48,11 @@ struct TransposeImpl {
 template <VariantKind KIND>
 static void transpose_template(TaskContext& context)
 {
-  auto& output = context.outputs()[0];
-  auto& input  = context.inputs()[0];
+  auto output = context.output(0);
+  auto input  = context.input(0);
 
   TransposeArgs args{output, input};
-  type_dispatch(input.code(), TransposeImpl<KIND>{}, args);
+  type_dispatch(input.type().code(), TransposeImpl<KIND>{}, args);
 }
 
 }  // namespace cunumeric

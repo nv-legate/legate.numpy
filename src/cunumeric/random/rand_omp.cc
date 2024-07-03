@@ -1,4 +1,4 @@
-/* Copyright 2021-2022 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,13 +34,15 @@ struct RandImplBody<VariantKind::OMP, RNG, VAL, DIM> {
     for (size_t idx = 0; idx < volume; ++idx) {
       const auto point = pitches.unflatten(idx, rect.lo);
       size_t offset    = 0;
-      for (size_t dim = 0; dim < DIM; ++dim) offset += point[dim] * strides[dim];
+      for (size_t dim = 0; dim < DIM; ++dim) {
+        offset += point[dim] * strides[dim];
+      }
       out[point] = rng(HI_BITS(offset), LO_BITS(offset));
     }
   }
 };
 
-/*static*/ void RandTask::omp_variant(TaskContext& context)
+/*static*/ void RandTask::omp_variant(TaskContext context)
 {
   rand_template<VariantKind::OMP>(context);
 }

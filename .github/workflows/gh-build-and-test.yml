@@ -1,92 +1,188 @@
 on:
   workflow_call:
     inputs:
-      image:
+      platform:
         type: string
         required: true
-      device:
+      target-device:
         type: string
         required: true
-
+      build-type:
+        type: string
+        required: true
+      upload-enabled:
+        type: boolean
+        required: true
+      dependencies-workflow:
+        required: true
+        type: string
+        description: The workflow file name used by the dependency
 
 jobs:
+  setup-build:
+    name: Setup build
+    runs-on: linux-amd64-cpu4
+    outputs:
+      runner_type: ${{ steps.set_runner.outputs.runner_type }}
+    steps:
+      - id: set_runner
+        run: |
+          if [ "${{ inputs.platform }}" = "linux" ]; then
+            if [ "${{ github.repository_owner }}" = "nv-legate" ]; then
+              echo "runner_type=linux-amd64-cpu16" >> $GITHUB_OUTPUT
+            else
+              echo "runner_type=ubuntu-latest" >> $GITHUB_OUTPUT
+            fi
+          elif [ "${{ inputs.platform }}" = "linux-aarch64" ]; then
+            echo "runner_type=linux-arm64-cpu16"  >> $GITHUB_OUTPUT
+          elif [ "${{ inputs.platform }}" = "mac" ]; then
+            echo "runner_type=macos-latest"  >> $GITHUB_OUTPUT
+          fi
+
   build:
-    name: "Build cunumeric (with ${{ inputs.device }} legate) on GH"
+    needs: setup-build
+    name: "Build (${{ inputs.platform }}, ${{ inputs.target-device }}, ${{ inputs.build-type }})"
     uses:
-      ./.github/workflows/gh-build.yml
+      nv-legate/legate-gh-ci/.github/workflows/gh-build.yml@v1.8
     with:
-      device: ${{ inputs.device }}
-      image: ${{ inputs.image }}
-      runs-on: ${{ github.repository_owner == 'nv-legate' && 'linux-amd64-32cpu' || 'ubuntu-latest' }}
+      client-repo: ${{ github.event.repository.name }}
+      target-device: ${{ inputs.target-device }}
+      runs-on: ${{ needs.setup-build.outputs.runner_type }}
+      build-type: ${{ inputs.build-type }}
+      use-container: ${{ inputs.platform == 'linux' || inputs.platform == 'linux-aarch64' }}
+      platform: ${{ inputs.platform }}
+      dependencies-file: "cmake/versions.json"
+      dependencies-workflow: ${{ inputs.dependencies-workflow }}
+      legate-gh-ci-tag: "v1.8"
+      build-mode: ""
+      ucx-enabled: false
+      upload-enabled: ${{ inputs.upload-enabled }}
+    secrets: inherit
+
+
+  upload:
+    needs: build
+    if: ${{ github.repository_owner == 'nv-legate' && contains(github.workflow, 'release') && inputs.upload-enabled == true }}
+    name: Upload package to Server
+    uses:
+      nv-legate/legate-gh-ci/.github/workflows/gh-upload.yml@v1.8
+    with:
+      client-repo: ${{ github.event.repository.name }}
+      build-type: ${{ inputs.build-type }}
+      name: Upload package to Server
+      target-device: ${{ inputs.target-device }}
+      platform: ${{ inputs.platform }}
+      legate-gh-ci-tag: "v1.8"
+      build-mode: ""
+      ucx-enabled: false
+      upload-enabled: ${{ inputs.upload-enabled }}
+      upload-action: "upload-package"
+      pkgSubString: "cunumeric-"
+      repos-Root: "cunumeric"
+    secrets: inherit    
+
+  setup-test:
+    if: inputs.upload-enabled == false
+    name: Setup test
+    needs:
+      - build
+    runs-on: linux-amd64-cpu4
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - id: set-matrix
+        run: |
+          set -xeuo pipefail
+          MATRIX_JSON='{"include": ['
+          RUNNERS=(
+            'linux-amd64-gpu-v100-latest-1:gpu:gpu:linux' 'linux-amd64-2gpu:gpu:2gpu:linux'
+            'linux-amd64-cpu16:cpu:cpu:linux'
+            'linux-arm64-cpu16:cpu:cpu:linux-aarch64' 'linux-aarch64-2gpu:gpu:2gpu:linux-aarch64' 'linux-aarch64-2gpu:gpu:gpu:linux-aarch64'
+            'macos-latest:cpu:cpu:mac')
+          TEST_CONFIGS=(
+            '1 CPU test:test --cpus 1 --debug:cpu'
+            '1 CPU test:test --cpus 1 --debug:gpu'
+            '2 CPU test:test --cpus 2 --debug:cpu'
+            '2 CPU test:test --cpus 2 --debug:gpu'
+            # set the number of workers manually because nvidia runners report 6 gpus when onyl one is really available
+            # this workaround can be removed when the number of available gpus is reported correctly (when we run on VMs)
+            'GPU test:test --use cuda --gpus 1 -j 7 --debug:gpu'
+            '2 GPU test:test --use cuda --gpus 2 --debug:2gpu'
+            'OpenMP test:test --use openmp --omps 1 --ompthreads 2 --debug:gpu'
+            'OpenMP test:test --use openmp --omps 1 --ompthreads 2 --debug:cpu'
+            '2 NUMA OpenMPs test:test --use openmp --omps 2 --ompthreads 2 --numamem 2048 --debug:gpu'
+            '2 NUMA OpenMPs test:test --use openmp --omps 2 --ompthreads 2 --numamem 2048 --debug:cpu'
+            'Eager execution test:test --use eager --debug:gpu'
+            'Eager execution test:test --use eager --debug:cpu'
+            'mypy:mypy:cpu'
+            'Documentation:docs:cpu'
+            'Unit tests:unit:cpu'
+          )
+          for RUNNER in "${RUNNERS[@]}"; do
+            IFS=':' read -ra RUNNER_INFO <<< "$RUNNER"
+            RUNNER_NAME=${RUNNER_INFO[0]}
+            RUNNER_TYPE=${RUNNER_INFO[1]}
+            RUNNER_DEVICE=${RUNNER_INFO[2]}
+            RUNNER_PLATFORM=${RUNNER_INFO[3]}
+            if [[ "$RUNNER_TYPE" == "${{ inputs.target-device }}" && "$RUNNER_PLATFORM" == "${{ inputs.platform }}" ]]; then
+              for TEST_CONFIG in "${TEST_CONFIGS[@]}"; do
+                IFS=':' read -ra CONFIG_INFO <<< "$TEST_CONFIG"
+                TEST_NAME=${CONFIG_INFO[0]}
+                TEST_OPTIONS=${CONFIG_INFO[1]}
+                TEST_TARGET_DEVICE=${CONFIG_INFO[2]}
+                if [[ "$TEST_TARGET_DEVICE" == "$RUNNER_DEVICE" ]]; then
+                  MATRIX_JSON+="{\"runner\": {\"name\": \"$RUNNER_NAME\", \"type\": \"$RUNNER_TYPE\", \"platform\": \"$RUNNER_PLATFORM\"}, \"test-config\": {\"name\": \"$TEST_NAME\", \"test-options\": \"$TEST_OPTIONS\"}},"
+                fi
+              done
+            fi
+          done
+          MATRIX_JSON=$(echo "$MATRIX_JSON" | sed 's/,$//') # Remove the trailing comma
+          MATRIX_JSON+=']}'
+          echo "matrix=$MATRIX_JSON" >> $GITHUB_OUTPUT
 
   test:
     needs:
-      - build
+      - setup-test
+    name: ${{ matrix.test-config.name }} (${{ inputs.platform }}, ${{ inputs.target-device }})
+
     strategy:
       fail-fast: false
-      matrix:
-        include:
-          - name: 1 CPU test
-            options: test --cpus 1 --unit --debug
-            runner: ${{ inputs.device == 'gpu' && 'linux-amd64-gpu-v100-latest-1' || 'linux-amd64-cpu4' }}
-            has-gpu: false
-            enabled: true
-
-          - name: 2 CPUs test
-            options: test --cpus 2 --debug
-            runner: ${{ inputs.device == 'gpu' && 'linux-amd64-gpu-v100-latest-1' || 'linux-amd64-cpu8' }}
-            has-gpu: false
-            enabled: true
-
-          - name: GPU test
-            options: test --use cuda --gpus 1 --debug
-            runner: linux-amd64-gpu-v100-latest-1
-            has-gpu: true
-            enabled: ${{ inputs.device == 'gpu' }}
-
-          - name: 2 GPUs test
-            options: test --use cuda --gpus 2 --debug
-            runner: linux-amd64-2gpu
-            has-gpu: true
-            enabled: ${{ inputs.device == 'gpu' }}
-
-          - name: OpenMP test
-            options: test --use openmp --omps 1 --ompthreads 2 --debug
-            runner: ${{ inputs.device == 'gpu' && 'linux-amd64-gpu-v100-latest-1' || 'linux-amd64-32cpu' }}
-            has-gpu: ${{ inputs.device == 'gpu' }}
-            enabled: true
-
-          - name: 2 NUMA OpenMPs test
-            options: test --use openmp --omps 2 --ompthreads 2 --numamem 2048 --debug
-            runner: ${{ inputs.device == 'gpu' && 'linux-amd64-gpu-v100-latest-1' || 'linux-amd64-32cpu' }}
-            has-gpu: ${{ inputs.device == 'gpu' }}
-            enabled: true
-
-          - name: Eager execution test
-            options: test --use eager --debug
-            runner: ${{ inputs.device == 'gpu' && 'linux-amd64-gpu-v100-latest-1' || 'linux-amd64-cpu4' }}
-            has-gpu: ${{ inputs.device == 'gpu' }}
-            enabled: true
-
-          - name: mypy
-            options: mypy
-            runner: linux-amd64-cpu4
-            has-gpu: false
-            enabled: true
-
-          - name: documentation
-            options: docs
-            runner: linux-amd64-32cpu
-            has-gpu: false
-            enabled: ${{ inputs.device == 'gpu' }}
+      matrix: ${{fromJson(needs.setup-test.outputs.matrix)}}
 
     uses:
-      ./.github/workflows/gh-test.yml
+      nv-legate/legate-gh-ci/.github/workflows/gh-test-within-container.yml@v1.8
     with:
-      name: ${{ matrix.name }}
-      device: ${{ inputs.device }}
-      image: ${{ inputs.image }}
-      runs-on: ${{ matrix.runner }}
-      has-gpu: ${{ matrix.has-gpu }}
-      test-options: ${{ matrix.options }}
-      enabled: ${{ matrix.enabled }}
+      client-repo: ${{ github.event.repository.name }}
+      build-type: ${{ inputs.build-type }}
+      name: ${{ matrix.test-config.name }}
+      target-device: ${{ inputs.target-device }}
+      runs-on: ${{ matrix.runner.name }}
+      has-gpu: ${{ matrix.runner.type == 'gpu' }}
+      test-options: ${{ matrix.test-config.test-options }}
+      platform: ${{ inputs.platform }}
+      legate-gh-ci-tag: "v1.8"
+      build-mode: ""
+      ucx-enabled: false
+      upload-enabled: ${{ inputs.upload-enabled }}
+    secrets: inherit
+
+  updateTestStatus:
+    needs: test
+    name: Update Test status on Server
+    if: ${{ (github.repository_owner == 'nv-legate') && contains(github.workflow, 'Nightly') && (inputs.upload-enabled == true) }}
+    uses:
+      nv-legate/legate-gh-ci/.github/workflows/gh-upload.yml@v1.8
+    with:
+      client-repo: ${{ github.event.repository.name }}
+      build-type: ${{ inputs.build-type }}
+      name: UpdateTestStatus
+      target-device: ${{ inputs.target-device }}
+      platform: ${{ inputs.platform }}
+      legate-gh-ci-tag: "v1.8"
+      build-mode: ""
+      ucx-enabled: false
+      upload-enabled: true
+      upload-action: "update-test-status"
+      pkgSubString: "cunumeric-"
+      repos-Root: "cunumeric"  
+    secrets: inherit

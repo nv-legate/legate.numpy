@@ -1,4 +1,4 @@
-/* Copyright 2021-2023 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,8 +45,9 @@ struct ThreadBlock {
     auto remaining = static_cast<coord_t>(THREADS_PER_BLOCK);
 
     Point<DIM> domain_extents;
-    for (int32_t idx = 0; idx < DIM; ++idx)
+    for (int32_t idx = 0; idx < DIM; ++idx) {
       domain_extents[idx] = domain.hi[idx] - domain.lo[idx] + 1;
+    }
 
     // If the innermost dimension is being collapsed, we assign at least one warp to it
     // for warp coalsecing.
@@ -59,15 +60,18 @@ struct ThreadBlock {
     // Then, we compute how many threads there should be along aech dimension,
     // excluding the one being collapsed
     for (int32_t idx = DIM - 1; idx >= 0; --idx) {
-      if (idx == collapsed_dim) continue;
+      if (idx == collapsed_dim) {
+        continue;
+      }
       auto extent   = std::min(remaining, domain_extents[idx]);
       extents_[idx] = extent;
       remaining     = std::max<coord_t>(remaining / extent, 1);
     }
 
     // Finally, we determine degree of parallelism for the collapsed dimension if we didn't above
-    if (collapsed_dim != DIM - 1)
+    if (collapsed_dim != DIM - 1) {
       extents_[collapsed_dim] = std::min(remaining, domain_extents[collapsed_dim]);
+    }
 
     // Cache the aggregate number of threads per increment in each dimension,
     // which later will be used for de-linearization of a thread id
@@ -117,8 +121,11 @@ struct ThreadBlocks {
     // We want the collapsed dimension to be the outermost one when
     // de-linearizing the block id.
     dim_order_[0] = collapsed_dim_;
-    for (int32_t dim = 0, idx = 1; dim < DIM; ++dim)
-      if (dim != collapsed_dim_) dim_order_[idx++] = dim;
+    for (int32_t dim = 0, idx = 1; dim < DIM; ++dim) {
+      if (dim != collapsed_dim_) {
+        dim_order_[idx++] = dim;
+      }
+    }
 
     // Compute the aggregate number of blocks per increment in each dimension
     coord_t num_blocks = 1;
@@ -195,7 +202,9 @@ std::ostream& operator<<(std::ostream& os, const ThreadBlocks<DIM>& blocks)
   os << "ThreadBlocks(" << blocks.block_ << ", extents: " << blocks.extents_
      << ", pitches: " << blocks.pitches_ << ", num concurrent blocks: " << blocks.num_blocks_
      << ", dim order: {";
-  for (int32_t dim : blocks.dim_order_) os << dim << ", ";
+  for (int32_t dim : blocks.dim_order_) {
+    os << dim << ", ";
+  }
   os << "})";
 
   return os;
@@ -220,8 +229,9 @@ static void __device__ __forceinline__ collapse_dims(LHS& result,
     // so instead we do a warp-level reduction so just one thread ends
     // up doing the full atomic
     coord_t bucket = 0;
-    for (int32_t dim = DIM - 2; dim >= 0; --dim)
+    for (int32_t dim = DIM - 2; dim >= 0; --dim) {
       bucket = bucket * (domain.hi[dim] - domain.lo[dim] + 1) + point[dim] - domain.lo[dim];
+    }
 
     const uint32_t same_mask = __match_any_sync(0xffffffff, bucket);
     int32_t laneid;
@@ -234,7 +244,7 @@ static void __device__ __forceinline__ collapse_dims(LHS& result,
       __syncwarp(active_mask);
       // Have the lowest thread in each mask pull in the values
       int32_t lowest_index = -1;
-      for (int32_t i = 0; i < warpSize; i++)
+      for (int32_t i = 0; i < warpSize; i++) {
         if (same_mask & (1 << i)) {
           if (lowest_index == -1) {
             if (i != laneid) {
@@ -244,8 +254,9 @@ static void __device__ __forceinline__ collapse_dims(LHS& result,
               // perform the reduction out to memory
               result = identity;
               break;
-            } else  // Make sure we don't do this test again
+            } else {  // Make sure we don't do this test again
               lowest_index = i;
+            }
             // It was already our value, so just keep going
           } else {
             // Pull in the value from shared memory
@@ -253,17 +264,18 @@ static void __device__ __forceinline__ collapse_dims(LHS& result,
             REDOP::template fold<true>(result, trampoline[index]);
           }
         }
+      }
     }
   }
 #endif
 
-#ifdef LEGATE_BOUNDS_CHECKS
-  // Note: this isn't necessary because we know that the affine transformation on the output
-  // accessor will ignore coordinates of the collapsed dimension. However, Legion's bounds checks
-  // want the accessor to honor the sub-rectangle passed when it was created, so we need to
-  // put points back in the bounds to appease the checks.
-  point[collapsed_dim] = domain.lo[collapsed_dim];
-#endif
+  if (LEGATE_DEFINED(LEGATE_BOUNDS_CHECKS)) {
+    // Note: this isn't necessary because we know that the affine transformation on the output
+    // accessor will ignore coordinates of the collapsed dimension. However, Legion's bounds checks
+    // want the accessor to honor the sub-rectangle passed when it was created, so we need to
+    // put points back in the bounds to appease the checks.
+    point[collapsed_dim] = domain.lo[collapsed_dim];
+  }
 }
 
 template <typename OP, typename REDOP, typename LHS, typename RHS, int32_t DIM, bool HAS_WHERE>
@@ -279,11 +291,15 @@ static __device__ __forceinline__ Point<DIM> local_reduce(LHS& result,
   const coord_t bid = blockIdx.x;
 
   Point<DIM> point = blocks.point(bid, tid, domain.lo);
-  if (!domain.contains(point)) return point;
+  if (!domain.contains(point)) {
+    return point;
+  }
 
   bool mask = true;
   while (point[collapsed_dim] <= domain.hi[collapsed_dim]) {
-    if constexpr (HAS_WHERE) mask = where[point];
+    if constexpr (HAS_WHERE) {
+      mask = where[point];
+    }
     if (mask) {
       LHS value = OP::convert(point, collapsed_dim, identity, in[point]);
       REDOP::template fold<true>(result, value);
@@ -308,14 +324,16 @@ static __global__ void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM)
   auto result = identity;
   auto point  = local_reduce<OP, REDOP, LHS, RHS, DIM, HAS_WHERE>(
     result, in, where, identity, blocks, domain, collapsed_dim);
-  if (result != identity) out.reduce(point, result);
+  if (result != identity) {
+    out.reduce(point, result);
+  }
 }
 
 template <UnaryRedCode OP_CODE, Type::Code CODE, int DIM, bool HAS_WHERE>
 struct UnaryRedImplBody<VariantKind::GPU, OP_CODE, CODE, DIM, HAS_WHERE> {
   using OP    = UnaryRedOp<OP_CODE, CODE>;
   using LG_OP = typename OP::OP;
-  using RHS   = legate_type_of<CODE>;
+  using RHS   = type_of<CODE>;
   using LHS   = typename OP::VAL;
 
   void operator()(AccessorRD<LG_OP, false, DIM> lhs,
@@ -335,11 +353,11 @@ struct UnaryRedImplBody<VariantKind::GPU, OP_CODE, CODE, DIM, HAS_WHERE> {
     blocks.compute_maximum_concurrency(reinterpret_cast<const void*>(Kernel));
     Kernel<<<blocks.num_blocks(), blocks.num_threads(), 0, stream>>>(
       lhs, rhs, where, LG_OP::identity, blocks, rect, collapsed_dim);
-    CHECK_CUDA_STREAM(stream);
+    CUNUMERIC_CHECK_CUDA_STREAM(stream);
   }
 };
 
-/*static*/ void UnaryRedTask::gpu_variant(TaskContext& context)
+/*static*/ void UnaryRedTask::gpu_variant(TaskContext context)
 {
   unary_red_template<VariantKind::GPU>(context);
 }

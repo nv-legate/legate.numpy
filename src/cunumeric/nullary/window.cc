@@ -1,4 +1,4 @@
-/* Copyright 2022 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,14 +30,18 @@ struct WindowImplBody<VariantKind::CPU, OP_CODE> {
     if (dense) {
       auto outptr = out.ptr(rect);
       size_t off  = 0;
-      for (int64_t idx = rect.lo[0]; idx <= rect.hi[0]; ++idx) outptr[off++] = gen(idx);
+      for (int64_t idx = rect.lo[0]; idx <= rect.hi[0]; ++idx) {
+        outptr[off++] = gen(idx);
+      }
     } else {
-      for (int64_t idx = rect.lo[0]; idx <= rect.hi[0]; ++idx) out[idx] = gen(idx);
+      for (int64_t idx = rect.lo[0]; idx <= rect.hi[0]; ++idx) {
+        out[idx] = gen(idx);
+      }
     }
   }
 };
 
-/*static*/ void WindowTask::cpu_variant(TaskContext& context)
+/*static*/ void WindowTask::cpu_variant(TaskContext context)
 {
   window_template<VariantKind::CPU>(context);
 }

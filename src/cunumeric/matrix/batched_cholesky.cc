@@ -1,4 +1,4 @@
-/* Copyright 2023 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 
 #include "cunumeric/matrix/batched_cholesky.h"
-#include "cunumeric/cunumeric.h"
+#include "cunumeric/cunumeric_task.h"
 #include "cunumeric/matrix/batched_cholesky_template.inl"
 
 #include <cblas.h>
@@ -34,7 +34,7 @@ void CopyBlockImpl<VariantKind::CPU>::operator()(void* dst, const void* src, siz
 
 template <Type::Code CODE>
 struct BatchedTransposeImplBody<VariantKind::CPU, CODE> {
-  using VAL = legate_type_of<CODE>;
+  using VAL = type_of<CODE>;
 
   static constexpr int tile_size = 64;
 
@@ -59,16 +59,18 @@ struct BatchedTransposeImplBody<VariantKind::CPU, CODE> {
           }
         }
         for (int r = c_start, tr = 0; r < c_stop; ++r, ++tr) {
-          for (int c = r_start, tc = 0; c < r_stop; ++c, ++tc) { out[r * n + c] = tile[tc][tr]; }
+          for (int c = r_start, tc = 0; c < r_stop; ++c, ++tc) {
+            out[r * n + c] = tile[tc][tr];
+          }
         }
       }
     }
   }
 };
 
-/*static*/ void BatchedCholeskyTask::cpu_variant(TaskContext& context)
+/*static*/ void BatchedCholeskyTask::cpu_variant(TaskContext context)
 {
-#ifdef LEGATE_USE_OPENMP
+#if LEGATE_DEFINED(LEGATE_USE_OPENMP)
   openblas_set_num_threads(1);  // make sure this isn't overzealous
 #endif
   batched_cholesky_task_context_dispatch<VariantKind::CPU>(context);

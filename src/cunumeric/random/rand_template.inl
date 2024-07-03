@@ -1,4 +1,4 @@
-/* Copyright 2021-2022 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ struct RandImpl {
             std::enable_if_t<RandomGenerator<GEN_CODE, CODE>::valid>* = nullptr>
   void operator()(RandArgs& args) const
   {
-    using VAL = legate_type_of<CODE>;
+    using VAL = type_of<CODE>;
     using RNG = RandomGenerator<GEN_CODE, CODE>;
 
     auto rect = args.out.shape<DIM>();
@@ -44,7 +44,9 @@ struct RandImpl {
     Pitches<DIM - 1> pitches;
     size_t volume = pitches.flatten(rect);
 
-    if (volume == 0) return;
+    if (volume == 0) {
+      return;
+    }
 
     auto out = args.out.write_accessor<VAL, DIM>(rect);
     Point<DIM> strides(args.strides);
@@ -74,16 +76,18 @@ struct RandDispatch {
 template <VariantKind KIND>
 static void rand_template(TaskContext& context)
 {
-  auto& inputs  = context.inputs();
-  auto& outputs = context.outputs();
+  auto inputs   = context.inputs();
+  auto outputs  = context.outputs();
   auto& scalars = context.scalars();
 
   auto gen_code = scalars[0].value<RandGenCode>();
   auto epoch    = scalars[1].value<uint32_t>();
   auto strides  = scalars[2].value<DomainPoint>();
 
-  std::vector<Store> extra_args;
-  for (auto& input : inputs) extra_args.push_back(std::move(input));
+  std::vector<Scalar> extra_args;
+  for (uint32_t idx = 3; idx < scalars.size(); ++idx) {
+    extra_args.push_back(scalars[idx]);
+  }
 
   RandArgs args{outputs[0], gen_code, epoch, strides, std::move(extra_args)};
   op_dispatch(args.gen_code, RandDispatch<KIND>{}, args);

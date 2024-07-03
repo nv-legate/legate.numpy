@@ -1,4 +1,4 @@
-# Copyright 2021-2023 NVIDIA Corporation
+# Copyright 2024 NVIDIA Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,16 +14,16 @@
 #
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Dict, Optional, Sequence, Union
+from typing import TYPE_CHECKING, Any, Sequence
 
 import numpy as np
 from legate.core.utils import OrderedSet
 
-from ..array import (
+from .._array.thunk import perform_unary_reduction
+from .._array.util import (
     add_boilerplate,
     check_writeable,
     convert_to_cunumeric_ndarray,
-    ndarray,
 )
 from ..config import BinaryOpCode, UnaryOpCode, UnaryRedCode
 from ..types import NdShape
@@ -31,6 +31,7 @@ from ..types import NdShape
 if TYPE_CHECKING:
     import numpy.typing as npt
 
+    from .._array.array import ndarray
     from ..types import CastingKind
 
 
@@ -184,7 +185,7 @@ def to_dtypes(chars: str) -> tuple[np.dtype[Any], ...]:
 
 
 class ufunc:
-    _types: Dict[Any, str]
+    _types: dict[Any, str]
     _nin: int
     _nout: int
 
@@ -231,12 +232,14 @@ class ufunc:
 
     def _maybe_create_result(
         self,
-        out: Union[ndarray, None],
+        out: ndarray | None,
         out_shape: NdShape,
         res_dtype: np.dtype[Any],
         casting: CastingKind,
         inputs: tuple[ndarray, ...],
     ) -> ndarray:
+        from .._array.array import ndarray
+
         if out is None:
             return ndarray(shape=out_shape, dtype=res_dtype, inputs=inputs)
         elif out.dtype != res_dtype:
@@ -251,9 +254,7 @@ class ufunc:
             return out
 
     @staticmethod
-    def _maybe_cast_output(
-        out: Union[ndarray, None], result: ndarray
-    ) -> ndarray:
+    def _maybe_cast_output(out: ndarray | None, result: ndarray) -> ndarray:
         if out is None or out is result:
             return result
         out._thunk.convert(result._thunk, warn=False)
@@ -261,8 +262,10 @@ class ufunc:
 
     @staticmethod
     def _maybe_convert_output_to_cunumeric_ndarray(
-        out: Union[ndarray, npt.NDArray[Any], None]
-    ) -> Union[ndarray, None]:
+        out: ndarray | npt.NDArray[Any] | None,
+    ) -> ndarray | None:
+        from .._array.array import ndarray
+
         if out is None:
             return None
         if isinstance(out, ndarray):
@@ -274,11 +277,11 @@ class ufunc:
     def _prepare_operands(
         self,
         *args: Any,
-        out: Union[ndarray, tuple[ndarray, ...], None],
+        out: ndarray | tuple[ndarray, ...] | None,
         where: bool = True,
     ) -> tuple[
         Sequence[ndarray],
-        Sequence[Union[ndarray, None]],
+        Sequence[ndarray | None],
         tuple[int, ...],
         bool,
     ]:
@@ -402,11 +405,11 @@ class unary_ufunc(ufunc):
     def __call__(
         self,
         *args: Any,
-        out: Union[ndarray, None] = None,
+        out: ndarray | None = None,
         where: bool = True,
         casting: CastingKind = "same_kind",
         order: str = "K",
-        dtype: Union[np.dtype[Any], None] = None,
+        dtype: np.dtype[Any] | None = None,
         **kwargs: Any,
     ) -> ndarray:
         (x,), (out,), out_shape, where = self._prepare_operands(
@@ -432,7 +435,7 @@ class unary_ufunc(ufunc):
         )
 
         op_code = self._overrides.get(x.dtype.char, self._op_code)
-        result._thunk.unary_op(op_code, x._thunk, where, ())
+        result._thunk.unary_op(op_code, x._thunk, where)
 
         return self._maybe_cast_output(out, result)
 
@@ -487,11 +490,11 @@ class multiout_unary_ufunc(ufunc):
     def __call__(
         self,
         *args: Any,
-        out: Union[ndarray, tuple[ndarray, ...], None] = None,
+        out: ndarray | tuple[ndarray, ...] | None = None,
         where: bool = True,
         casting: CastingKind = "same_kind",
         order: str = "K",
-        dtype: Union[np.dtype[Any], None] = None,
+        dtype: np.dtype[Any] | None = None,
         **kwargs: Any,
     ) -> tuple[ndarray, ...]:
         (x,), outs, out_shape, where = self._prepare_operands(
@@ -535,7 +538,7 @@ class binary_ufunc(ufunc):
         doc: str,
         op_code: BinaryOpCode,
         types: dict[tuple[str, str], str],
-        red_code: Union[UnaryRedCode, None] = None,
+        red_code: UnaryRedCode | None = None,
         use_common_type: bool = True,
     ) -> None:
         super().__init__(name, doc)
@@ -557,6 +560,8 @@ class binary_ufunc(ufunc):
     def _find_common_type(
         arrs: Sequence[ndarray], orig_args: Sequence[Any]
     ) -> np.dtype[Any]:
+        from .._array.array import ndarray
+
         all_ndarray = all(isinstance(arg, ndarray) for arg in orig_args)
         unique_dtypes = OrderedSet(arr.dtype for arr in arrs)
         # If all operands are ndarrays and they all have the same dtype,
@@ -646,11 +651,11 @@ class binary_ufunc(ufunc):
     def __call__(
         self,
         *args: Any,
-        out: Union[ndarray, None] = None,
+        out: ndarray | None = None,
         where: bool = True,
         casting: CastingKind = "same_kind",
         order: str = "K",
-        dtype: Union[np.dtype[Any], None] = None,
+        dtype: np.dtype[Any] | None = None,
         **kwargs: Any,
     ) -> ndarray:
         arrs, (out,), out_shape, where = self._prepare_operands(
@@ -689,12 +694,12 @@ class binary_ufunc(ufunc):
     def reduce(
         self,
         array: ndarray,
-        axis: Union[int, tuple[int, ...], None] = 0,
-        dtype: Union[np.dtype[Any], None] = None,
-        out: Union[ndarray, None] = None,
+        axis: int | tuple[int, ...] | None = 0,
+        dtype: np.dtype[Any] | None = None,
+        out: ndarray | None = None,
         keepdims: bool = False,
-        initial: Union[Any, None] = None,
-        where: Optional[ndarray] = None,
+        initial: Any | None = None,
+        where: ndarray | None = None,
     ) -> ndarray:
         """
         reduce(array, axis=0, dtype=None, out=None, keepdims=False, initial=<no
@@ -753,12 +758,22 @@ class binary_ufunc(ufunc):
                 f"reduction for {self} is not yet implemented"
             )
 
+        if self._op_code in (
+            BinaryOpCode.LOGICAL_AND,
+            BinaryOpCode.LOGICAL_OR,
+        ):
+            res_dtype = bool
+            if dtype is not None:
+                raise TypeError("Cannot set dtype on a logical reduction")
+        else:
+            res_dtype = None
+
         # NumPy seems to be using None as the default axis value for scalars
         if array.ndim == 0 and axis == 0:
             axis = None
 
         # TODO: Unary reductions still need to be refactored
-        return array._perform_unary_reduction(
+        return perform_unary_reduction(
             self._red_code,
             array,
             axis=axis,
@@ -767,6 +782,7 @@ class binary_ufunc(ufunc):
             keepdims=keepdims,
             initial=initial,
             where=where,
+            res_dtype=res_dtype,
         )
 
 
@@ -811,7 +827,7 @@ def create_binary_ufunc(
     name: str,
     op_code: BinaryOpCode,
     types: Sequence[str],
-    red_code: Union[UnaryRedCode, None] = None,
+    red_code: UnaryRedCode | None = None,
     use_common_type: bool = True,
 ) -> binary_ufunc:
     doc = _BINARY_DOCSTRING_TEMPLATE.format(summary, name)

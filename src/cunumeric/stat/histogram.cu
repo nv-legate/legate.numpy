@@ -1,4 +1,4 @@
-/* Copyright 2023 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,7 @@ namespace cunumeric {
 
 template <Type::Code CODE>
 struct HistogramImplBody<VariantKind::GPU, CODE> {
-  using VAL = legate_type_of<CODE>;
+  using VAL = type_of<CODE>;
 
   // for now, it has been decided to hardcode these types:
   //
@@ -69,7 +69,7 @@ struct HistogramImplBody<VariantKind::GPU, CODE> {
   }
 };
 
-/*static*/ void HistogramTask::gpu_variant(TaskContext& context)
+/*static*/ void HistogramTask::gpu_variant(TaskContext context)
 {
   histogram_template<VariantKind::GPU>(context);
 }

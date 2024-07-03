@@ -1,4 +1,4 @@
-/* Copyright 2021-2022 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,12 +55,14 @@ struct MatVecMulImpl {
   template <Type::Code CODE, std::enable_if_t<support_matvecmul<CODE>::value>* = nullptr>
   void operator()(MatVecMulArgs& args) const
   {
-    using VAL = legate_type_of<CODE>;
+    using VAL = type_of<CODE>;
     using ACC = typename support_matvecmul<CODE>::ACC_TYPE;
 
     auto shape = args.rhs1.shape<2>().intersection(args.rhs2.shape<2>());
 
-    if (shape.empty()) return;
+    if (shape.empty()) {
+      return;
+    }
 
     auto m = static_cast<size_t>(shape.hi[0] - shape.lo[0] + 1);
     auto n = static_cast<size_t>(shape.hi[1] - shape.lo[1] + 1);
@@ -72,7 +74,9 @@ struct MatVecMulImpl {
 
     bool transpose_mat;
     size_t mat_stride = stride_for_blas(m, n, mat_strides[0], mat_strides[1], transpose_mat);
-    if (transpose_mat) std::swap(m, n);
+    if (transpose_mat) {
+      std::swap(m, n);
+    }
 
     size_t lhs_strides[2];
     auto lhs = args.lhs.reduce_accessor<SumReduction<ACC>, true, 2>().ptr(shape, lhs_strides);
@@ -96,8 +100,8 @@ struct MatVecMulImpl {
 template <VariantKind KIND>
 static void matvecmul_template(TaskContext& context)
 {
-  auto& reductions = context.reductions();
-  auto& inputs     = context.inputs();
+  auto reductions = context.reductions();
+  auto inputs     = context.inputs();
 
   MatVecMulArgs args{reductions[0], inputs[0], inputs[1]};
   // Note that we can't dispatch on the lhs's type,

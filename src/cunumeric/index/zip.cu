@@ -1,4 +1,4 @@
-/* Copyright 2022 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,10 +31,14 @@ __global__ static void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM)
              std::index_sequence<Is...>)
 {
   const size_t idx = global_tid_1d();
-  if (idx >= volume) return;
+  if (idx >= volume) {
+    return;
+  }
   auto p = pitches.unflatten(idx, rect.lo);
   Point<N> new_point;
-  for (size_t i = 0; i < N; i++) { new_point[i] = compute_idx_cuda(index_arrays[i][p], shape[i]); }
+  for (size_t i = 0; i < N; i++) {
+    new_point[i] = compute_idx_cuda(index_arrays[i][p], shape[i]);
+  }
   out[p] = new_point;
 }
 
@@ -48,7 +52,9 @@ __global__ static void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM)
                    std::index_sequence<Is...>)
 {
   const size_t idx = global_tid_1d();
-  if (idx >= volume) return;
+  if (idx >= volume) {
+    return;
+  }
   Point<N> new_point;
   for (size_t i = 0; i < N; i++) {
     new_point[i] = compute_idx_cuda(index_arrays[i][idx], shape[i]);
@@ -69,10 +75,14 @@ __global__ static void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM)
              const DomainPoint shape)
 {
   const size_t idx = global_tid_1d();
-  if (idx >= volume) return;
+  if (idx >= volume) {
+    return;
+  }
   auto p = pitches.unflatten(idx, rect.lo);
   Point<N> new_point;
-  for (size_t i = 0; i < start_index; i++) { new_point[i] = p[i]; }
+  for (size_t i = 0; i < start_index; i++) {
+    new_point[i] = p[i];
+  }
   for (size_t i = 0; i < narrays; i++) {
     new_point[start_index + i] = compute_idx_cuda(index_arrays[i][p], shape[start_index + i]);
   }
@@ -98,7 +108,9 @@ __global__ static void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM)
   bool value = false;
   for (size_t i = 0; i < iters; i++) {
     const auto idx = (i * gridDim.x + blockIdx.x) * blockDim.x + threadIdx.x;
-    if (idx >= volume) break;
+    if (idx >= volume) {
+      break;
+    }
     auto p = pitches.unflatten(idx, rect.lo);
     for (size_t n = 0; n < narrays; n++) {
       const int64_t extent = shape[start_index + n];
@@ -134,10 +146,12 @@ struct ZipImplBody<VariantKind::GPU, DIM, N> {
       check_kernel<<<blocks, THREADS_PER_BLOCK, shmem_size, stream>>>(
         out_of_bounds, index_arrays, volume, 1, rect, pitches, narrays, start_index, shape);
     }
-    CHECK_CUDA_STREAM(stream);
+    CUNUMERIC_CHECK_CUDA_STREAM(stream);
 
     bool res = out_of_bounds.read(stream);
-    if (res) throw legate::TaskException("index is out of bounds in index array");
+    if (res) {
+      throw legate::TaskException("index is out of bounds in index array");
+    }
   }
 
   template <size_t... Is>
@@ -157,7 +171,9 @@ struct ZipImplBody<VariantKind::GPU, DIM, N> {
 
     auto index_buf =
       create_buffer<AccessorRO<VAL, DIM>, 1>(index_arrays.size(), legate::Memory::Kind::Z_COPY_MEM);
-    for (uint32_t idx = 0; idx < index_arrays.size(); ++idx) index_buf[idx] = index_arrays[idx];
+    for (uint32_t idx = 0; idx < index_arrays.size(); ++idx) {
+      index_buf[idx] = index_arrays[idx];
+    }
     check_out_of_bounds(
       index_buf, volume, rect, pitches, index_arrays.size(), start_index, shape, stream);
 
@@ -182,11 +198,11 @@ struct ZipImplBody<VariantKind::GPU, DIM, N> {
       zip_kernel<DIM, N><<<blocks, THREADS_PER_BLOCK, 0, stream>>>(
         out, index_buf, rect, pitches, num_arrays, volume, key_dim, start_index, shape);
     }
-    CHECK_CUDA_STREAM(stream);
+    CUNUMERIC_CHECK_CUDA_STREAM(stream);
   }
 };
 
-/*static*/ void ZipTask::gpu_variant(TaskContext& context)
+/*static*/ void ZipTask::gpu_variant(TaskContext context)
 {
   zip_template<VariantKind::GPU>(context);
 }

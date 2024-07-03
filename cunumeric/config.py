@@ -1,4 +1,4 @@
-# Copyright 2021-2022 NVIDIA Corporation
+# Copyright 2024 NVIDIA Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,17 +15,22 @@
 from __future__ import annotations
 
 import os
+import platform
 from abc import abstractmethod
+from ctypes import CDLL, RTLD_GLOBAL
 from enum import IntEnum, unique
-from typing import TYPE_CHECKING, Union, cast
+from typing import TYPE_CHECKING, Any, cast
 
+import cffi  # type: ignore
 import numpy as np
-from legate.core import Library, get_legate_runtime
 
 if TYPE_CHECKING:
     import numpy.typing as npt
 
-    from .runtime import Runtime
+
+class _ReductionOpIds:
+    argmax_redop_id: int
+    argmin_redop_id: int
 
 
 class _CunumericSharedLib:
@@ -166,10 +171,13 @@ class _CunumericSharedLib:
     CUNUMERIC_MAX_MAPPERS: int
     CUNUMERIC_MAX_REDOPS: int
     CUNUMERIC_MAX_TASKS: int
+    CUNUMERIC_MP_POTRF: int
+    CUNUMERIC_MP_SOLVE: int
     CUNUMERIC_NONZERO: int
     CUNUMERIC_PACKBITS: int
     CUNUMERIC_POTRF: int
     CUNUMERIC_PUTMASK: int
+    CUNUMERIC_QR: int
     CUNUMERIC_RAND: int
     CUNUMERIC_READ: int
     CUNUMERIC_RED_ALL: int
@@ -200,6 +208,7 @@ class _CunumericSharedLib:
     CUNUMERIC_SELECT: int
     CUNUMERIC_SOLVE: int
     CUNUMERIC_SORT: int
+    CUNUMERIC_SVD: int
     CUNUMERIC_SYRK: int
     CUNUMERIC_TILE: int
     CUNUMERIC_TRANSPOSE_COPY_2D: int
@@ -277,56 +286,74 @@ class _CunumericSharedLib:
         ...
 
     @abstractmethod
-    def cunumeric_register_reduction_op(
-        self, type_uid: int, elem_type_code: int
-    ) -> None:
+    def cunumeric_has_cusolvermp(self) -> int:
         ...
+
+    @abstractmethod
+    def cunumeric_register_reduction_ops(self, code: int) -> _ReductionOpIds:
+        ...
+
+
+def dlopen_no_autoclose(ffi: Any, lib_path: str) -> Any:
+    # Use an already-opened library handle, which cffi will convert to a
+    # regular FFI object (using the definitions previously added using
+    # ffi.cdef), but will not automatically dlclose() on collection.
+    lib = CDLL(lib_path, mode=RTLD_GLOBAL)
+    return ffi.dlopen(ffi.cast("void *", lib._handle))
 
 
 # Load the cuNumeric library first so we have a shard object that
 # we can use to initialize all these configuration enumerations
-class CuNumericLib(Library):
+class CuNumericLib:
     def __init__(self, name: str) -> None:
         self.name = name
-        self.runtime: Union[Runtime, None] = None
-        self.shared_object: Union[_CunumericSharedLib, None] = None
 
-    def get_name(self) -> str:
-        return self.name
+        shared_lib_path = self.get_shared_library()
+        assert shared_lib_path is not None
+        header = self.get_c_header()
+        ffi = cffi.FFI()
+        if header is not None:
+            ffi.cdef(header)
+        # Don't use ffi.dlopen(), because that will call dlclose()
+        # automatically when the object gets collected, thus removing
+        # symbols that may be needed when destroying C++ objects later
+        # (e.g. vtable entries, which will be queried for virtual
+        # destructors), causing errors at shutdown.
+        shared_lib = dlopen_no_autoclose(ffi, shared_lib_path)
+        self.shared_object = cast(_CunumericSharedLib, shared_lib)
+
+    def register(self) -> None:
+        callback = getattr(
+            self.shared_object, "cunumeric_perform_registration"
+        )
+        callback()
 
     def get_shared_library(self) -> str:
-        from cunumeric.install_info import libpath
+        from .install_info import libpath
 
         return os.path.join(
             libpath, "libcunumeric" + self.get_library_extension()
         )
 
     def get_c_header(self) -> str:
-        from cunumeric.install_info import header
+        from .install_info import header
 
         return header
 
-    def get_registration_callback(self) -> str:
-        return "cunumeric_perform_registration"
-
-    def initialize(self, shared_object: _CunumericSharedLib) -> None:
-        assert self.runtime is None
-        self.shared_object = shared_object
-
-    def set_runtime(self, runtime: Runtime) -> None:
-        assert self.runtime is None
-        assert self.shared_object is not None
-        self.runtime = runtime
-
-    def destroy(self) -> None:
-        if self.runtime is not None:
-            self.runtime.destroy()
+    @staticmethod
+    def get_library_extension() -> str:
+        os_name = platform.system()
+        if os_name == "Linux":
+            return ".so"
+        elif os_name == "Darwin":
+            return ".dylib"
+        raise RuntimeError(f"unknown platform {os_name!r}")
 
 
 CUNUMERIC_LIB_NAME = "cunumeric"
 cunumeric_lib = CuNumericLib(CUNUMERIC_LIB_NAME)
-cunumeric_context = get_legate_runtime().register_library(cunumeric_lib)
-_cunumeric = cast(_CunumericSharedLib, cunumeric_lib.shared_object)
+cunumeric_lib.register()
+_cunumeric = cunumeric_lib.shared_object
 
 
 # Match these to CuNumericOpCode in cunumeric_c.h
@@ -355,10 +382,13 @@ class CuNumericOpCode(IntEnum):
     LOAD_CUDALIBS = _cunumeric.CUNUMERIC_LOAD_CUDALIBS
     MATMUL = _cunumeric.CUNUMERIC_MATMUL
     MATVECMUL = _cunumeric.CUNUMERIC_MATVECMUL
+    MP_POTRF = _cunumeric.CUNUMERIC_MP_POTRF
+    MP_SOLVE = _cunumeric.CUNUMERIC_MP_SOLVE
     NONZERO = _cunumeric.CUNUMERIC_NONZERO
     PACKBITS = _cunumeric.CUNUMERIC_PACKBITS
     POTRF = _cunumeric.CUNUMERIC_POTRF
     PUTMASK = _cunumeric.CUNUMERIC_PUTMASK
+    QR = _cunumeric.CUNUMERIC_QR
     RAND = _cunumeric.CUNUMERIC_RAND
     READ = _cunumeric.CUNUMERIC_READ
     REPEAT = _cunumeric.CUNUMERIC_REPEAT
@@ -369,6 +399,7 @@ class CuNumericOpCode(IntEnum):
     SELECT = _cunumeric.CUNUMERIC_SELECT
     SOLVE = _cunumeric.CUNUMERIC_SOLVE
     SORT = _cunumeric.CUNUMERIC_SORT
+    SVD = _cunumeric.CUNUMERIC_SVD
     SYRK = _cunumeric.CUNUMERIC_SYRK
     TILE = _cunumeric.CUNUMERIC_TILE
     TRANSPOSE_COPY_2D = _cunumeric.CUNUMERIC_TRANSPOSE_COPY_2D
@@ -620,6 +651,13 @@ class BitGeneratorDistribution(IntEnum):
     NEGATIVE_BINOMIAL = _cunumeric.CUNUMERIC_BITGENDIST_NEGATIVE_BINOMIAL
 
 
+@unique
+class TransferType(IntEnum):
+    DONATE = 0
+    MAKE_COPY = 1
+    SHARE = 2
+
+
 # Match these to fftType in fft_util.h
 class FFTType:
     def __init__(
@@ -629,7 +667,7 @@ class FFTType:
         input_dtype: npt.DTypeLike,
         output_dtype: npt.DTypeLike,
         single_precision: bool,
-        complex_type: Union[FFTType, None] = None,
+        complex_type: FFTType | None = None,
     ) -> None:
         self._name = name
         self._type_id = type_id
@@ -768,7 +806,7 @@ class FFTNormalization(IntEnum):
     ORTHOGONAL = 3
 
     @staticmethod
-    def from_string(in_string: str) -> Union[FFTNormalization, None]:
+    def from_string(in_string: str) -> FFTNormalization | None:
         if in_string == "forward":
             return FFTNormalization.FORWARD
         elif in_string == "ortho":
@@ -779,7 +817,7 @@ class FFTNormalization(IntEnum):
             return None
 
     @staticmethod
-    def reverse(in_string: Union[str, None]) -> str:
+    def reverse(in_string: str | None) -> str:
         if in_string == "forward":
             return "backward"
         elif in_string == "backward" or in_string is None:

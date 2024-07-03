@@ -1,4 +1,4 @@
-/* Copyright 2021-2022 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,11 +29,15 @@ struct triangular_t<float> {
     float y = curand_uniform(&gen);  // y cannot be 0
     if (y <= ((c - a) / (b - a))) {
       float delta = (y * (b - a) * (c - a));
-      if (delta < 0.0f) delta = 0.0f;
+      if (delta < 0.0f) {
+        delta = 0.0f;
+      }
       return a + ::sqrtf(delta);
     } else {
       float delta = ((1.0f - y) * (b - a) * (b - c));
-      if (delta < 0.0f) delta = 0.0f;
+      if (delta < 0.0f) {
+        delta = 0.0f;
+      }
       return b - ::sqrtf(delta);
     }
   }
@@ -49,11 +53,15 @@ struct triangular_t<double> {
     double y = curand_uniform_double(&gen);  // y cannot be 0
     if (y <= ((c - a) / (b - a))) {
       double delta = (y * (b - a) * (c - a));
-      if (delta < 0.0) delta = 0.0;
+      if (delta < 0.0) {
+        delta = 0.0;
+      }
       return a + ::sqrt(delta);
     } else {
       double delta = ((1.0 - y) * (b - a) * (b - c));
-      if (delta < 0.0) delta = 0.0;
+      if (delta < 0.0) {
+        delta = 0.0;
+      }
       return b - ::sqrt(delta);
     }
   }

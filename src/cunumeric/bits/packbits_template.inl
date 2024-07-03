@@ -1,4 +1,4 @@
-/* Copyright 2022 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,13 +30,15 @@ struct PackbitsImplBody;
 template <VariantKind KIND, Bitorder BITORDER>
 struct PackbitsImpl {
   template <Type::Code CODE, int32_t DIM, std::enable_if_t<is_integral<CODE>::value>* = nullptr>
-  void operator()(Array& output, Array& input, uint32_t axis) const
+  void operator()(legate::PhysicalStore output, legate::PhysicalStore input, uint32_t axis) const
   {
-    using VAL = legate_type_of<CODE>;
+    using VAL = type_of<CODE>;
 
     auto out_rect = output.shape<DIM>();
 
-    if (out_rect.empty()) return;
+    if (out_rect.empty()) {
+      return;
+    }
 
     auto in_rect = input.shape<DIM>();
 
@@ -58,7 +60,7 @@ struct PackbitsImpl {
     assert(unaligned_rect.union_bbox(aligned_rect) == out_rect);
 #endif
 
-    Pitches<DIM - 1> aligned_pitches, unaligned_pitches;
+    Pitches<DIM - 1> aligned_pitches{}, unaligned_pitches{};
     auto aligned_volume   = aligned_pitches.flatten(aligned_rect);
     auto unaligned_volume = unaligned_pitches.flatten(unaligned_rect);
 
@@ -75,7 +77,7 @@ struct PackbitsImpl {
   }
 
   template <Type::Code CODE, int32_t DIM, std::enable_if_t<!is_integral<CODE>::value>* = nullptr>
-  void operator()(Array& output, Array& input, uint32_t axis) const
+  void operator()(legate::PhysicalStore output, legate::PhysicalStore input, uint32_t axis) const
   {
     // Unreachable
     assert(false);
@@ -85,11 +87,11 @@ struct PackbitsImpl {
 template <VariantKind KIND>
 static void packbits_template(TaskContext& context)
 {
-  auto& output  = context.outputs().front();
-  auto& input   = context.inputs().front();
-  auto& scalars = context.scalars();
-  auto axis     = scalars[0].value<uint32_t>();
-  auto bitorder = scalars[1].value<Bitorder>();
+  legate::PhysicalStore output = context.output(0);
+  legate::PhysicalStore input  = context.input(0);
+  auto& scalars                = context.scalars();
+  auto axis                    = scalars[0].value<uint32_t>();
+  auto bitorder                = scalars[1].value<Bitorder>();
 
   auto code = input.code();
   switch (bitorder) {

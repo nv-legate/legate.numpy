@@ -1,4 +1,4 @@
-# Copyright 2021-2022 NVIDIA Corporation
+# Copyright 2024 NVIDIA Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,16 +16,16 @@ from __future__ import annotations
 
 import numpy.random as _nprandom
 
-from cunumeric.array import maybe_convert_to_np_ndarray
-from cunumeric.coverage import clone_module
-from cunumeric.runtime import runtime
+from .._array.util import maybe_convert_to_np_ndarray
+from .._utils.coverage import clone_module
+from ..runtime import runtime
 
 if runtime.has_curand:
-    from cunumeric.random.random import *
-    from cunumeric.random.bitgenerator import *
-    from cunumeric.random.generator import *
+    from ._random import *
+    from ._bitgenerator import *
+    from ._generator import *
 else:
-    from cunumeric.random.legacy import *
+    from ._legacy import *
 
 clone_module(
     _nprandom,
@@ -36,4 +36,5 @@ clone_module(
 
 del maybe_convert_to_np_ndarray
 del clone_module
+del runtime
 del _nprandom

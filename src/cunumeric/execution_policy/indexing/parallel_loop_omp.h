@@ -1,4 +1,4 @@
-/* Copyright 2022 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "cunumeric/cunumeric.h"
+#include "cunumeric/cunumeric_task.h"
 #include "cunumeric/execution_policy/indexing/parallel_loop.h"
 #include "cunumeric/omp_help.h"
 
@@ -31,7 +31,9 @@ struct ParallelLoopPolicy<VariantKind::OMP, Tag> {
   {
     const size_t volume = rect.volume();
 #pragma omp for schedule(static)
-    for (size_t idx = 0; idx < volume; ++idx) { kernel(idx, Tag{}); }
+    for (size_t idx = 0; idx < volume; ++idx) {
+      kernel(idx, Tag{});
+    }
   }
 };
 

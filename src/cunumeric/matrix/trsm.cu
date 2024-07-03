@@ -1,4 +1,4 @@
-/* Copyright 2021-2022 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@ static inline void trsm_template(
 
   CHECK_CUBLAS(trsm(context, side, uplo, transa, diag, m, n, &alpha, rhs, n, lhs, m));
 
-  CHECK_CUDA_STREAM(stream);
+  CUNUMERIC_CHECK_CUDA_STREAM(stream);
 }
 
 template <>
@@ -80,7 +80,7 @@ struct TrsmImplBody<VariantKind::GPU, Type::Code::COMPLEX128> {
   }
 };
 
-/*static*/ void TrsmTask::gpu_variant(TaskContext& context)
+/*static*/ void TrsmTask::gpu_variant(TaskContext context)
 {
   trsm_template<VariantKind::GPU>(context);
 }

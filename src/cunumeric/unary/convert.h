@@ -1,4 +1,4 @@
-/* Copyright 2021-2022 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +16,14 @@
 
 #pragma once
 
+#include "cunumeric/cunumeric_task.h"
 #include "cunumeric/unary/convert_util.h"
-#include "cunumeric/cunumeric.h"
 
 namespace cunumeric {
 
 struct ConvertArgs {
-  const Array& out;
-  const Array& in;
+  legate::PhysicalStore out;
+  legate::PhysicalStore in;
   ConvertCode nan_op;
 };
 
@@ -32,12 +32,12 @@ class ConvertTask : public CuNumericTask<ConvertTask> {
   static const int TASK_ID = CUNUMERIC_CONVERT;
 
  public:
-  static void cpu_variant(legate::TaskContext& context);
-#ifdef LEGATE_USE_OPENMP
-  static void omp_variant(legate::TaskContext& context);
+  static void cpu_variant(legate::TaskContext context);
+#if LEGATE_DEFINED(LEGATE_USE_OPENMP)
+  static void omp_variant(legate::TaskContext context);
 #endif
-#ifdef LEGATE_USE_CUDA
-  static void gpu_variant(legate::TaskContext& context);
+#if LEGATE_DEFINED(LEGATE_USE_CUDA)
+  static void gpu_variant(legate::TaskContext context);
 #endif
 };
 

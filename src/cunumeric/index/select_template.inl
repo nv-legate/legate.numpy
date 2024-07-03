@@ -1,4 +1,4 @@
-/* Copyright 2023 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,16 +32,18 @@ struct SelectImpl {
   template <Type::Code CODE, int DIM>
   void operator()(SelectArgs& args) const
   {
-    using VAL     = legate_type_of<CODE>;
+    using VAL     = type_of<CODE>;
     auto out_rect = args.out.shape<DIM>();
 
     Pitches<DIM - 1> pitches;
     size_t volume = pitches.flatten(out_rect);
-    if (volume == 0) return;
+    if (volume == 0) {
+      return;
+    }
 
-    auto out = args.out.write_accessor<VAL, DIM>(out_rect);
+    auto out = args.out.data().write_accessor<VAL, DIM>(out_rect);
 
-#ifndef LEGATE_BOUNDS_CHECKS
+#if !LEGATE_DEFINED(LEGATE_BOUNDS_CHECKS)
     // Check to see if this is dense or not
     bool dense = out.accessor.is_dense_row_major(out_rect);
 #else
@@ -56,7 +58,7 @@ struct SelectImpl {
 #ifdef DEBUG_CUNUMERIC
       assert(rect_c == out_rect);
 #endif
-      condlist.push_back(args.inputs[i].read_accessor<bool, DIM>(rect_c));
+      condlist.push_back(args.inputs[i].data().read_accessor<bool, DIM>(rect_c));
       dense = dense && condlist.back().accessor.is_dense_row_major(out_rect);
     }
 
@@ -67,7 +69,7 @@ struct SelectImpl {
 #ifdef DEBUG_CUNUMERIC
       assert(rect_c == out_rect);
 #endif
-      choicelist.push_back(args.inputs[i].read_accessor<VAL, DIM>(rect_c));
+      choicelist.push_back(args.inputs[i].data().read_accessor<VAL, DIM>(rect_c));
       dense = dense && choicelist.back().accessor.is_dense_row_major(out_rect);
     }
 
@@ -80,8 +82,8 @@ struct SelectImpl {
 template <VariantKind KIND>
 static void select_template(TaskContext& context)
 {
-  SelectArgs args{context.outputs()[0], context.inputs(), context.scalars()[0]};
-  double_dispatch(args.out.dim(), args.out.code(), SelectImpl<KIND>{}, args);
+  SelectArgs args{context.output(0), context.inputs(), context.scalar(0)};
+  double_dispatch(args.out.dim(), args.out.type().code(), SelectImpl<KIND>{}, args);
 }
 
 }  // namespace cunumeric

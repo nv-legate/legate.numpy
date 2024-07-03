@@ -1,4 +1,4 @@
-/* Copyright 2021-2022 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@
 // generators
 
 // also allow usage of generators on host
-#ifdef LEGATE_USE_CUDA
+#if LEGATE_DEFINED(LEGATE_USE_CUDA)
 
 #define QUALIFIERS static __forceinline__ __device__ __host__
 #define RANDUTIL_QUALIFIERS __forceinline__ __device__ __host__

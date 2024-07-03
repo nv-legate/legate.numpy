@@ -1,7 +1,7 @@
 :html_theme.sidebar_secondary.remove:
 
-Welcome to cuNumeric's documentation!
-=====================================
+NVIDIA cuNumeric
+================
 
 cuNumeric is a `Legate`_ library that aims to provide a distributed and
 accelerated drop-in replacement for the `NumPy API`_ on top of the `Legion`_
@@ -12,12 +12,14 @@ Using cuNumeric you do things like run the final example of the
 `DGX SuperPOD`_ and achieve good weak scaling.
 
 .. toctree::
-  :maxdepth: 2
+  :maxdepth: 1
   :caption: Contents:
 
+  installation
   user/index
-  comparison/index
+  examples/index
   api/index
+  faqs
   developer/index
 
 .. toctree::

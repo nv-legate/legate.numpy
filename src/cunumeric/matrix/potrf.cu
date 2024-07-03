@@ -1,4 +1,4 @@
-/* Copyright 2021-2022 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,10 +42,12 @@ static inline void potrf_template(
   CHECK_CUSOLVER(potrf(context, uplo, n, array, m, buffer.ptr(0), bufferSize, info.ptr(0)));
 
   // TODO: We need a deferred exception to avoid this synchronization
-  CHECK_CUDA(cudaStreamSynchronize(stream));
-  CHECK_CUDA_STREAM(stream);
+  CUNUMERIC_CHECK_CUDA(cudaStreamSynchronize(stream));
+  CUNUMERIC_CHECK_CUDA_STREAM(stream);
 
-  if (info[0] != 0) throw legate::TaskException("Matrix is not positive definite");
+  if (info[0] != 0) {
+    throw legate::TaskException("Matrix is not positive definite");
+  }
 }
 
 template <>
@@ -82,7 +84,7 @@ void PotrfImplBody<VariantKind::GPU, Type::Code::COMPLEX128>::operator()(complex
     cusolverDnZpotrf_bufferSize, cusolverDnZpotrf, reinterpret_cast<cuDoubleComplex*>(array), m, n);
 }
 
-/*static*/ void PotrfTask::gpu_variant(TaskContext& context)
+/*static*/ void PotrfTask::gpu_variant(TaskContext context)
 {
   potrf_template<VariantKind::GPU>(context);
 }

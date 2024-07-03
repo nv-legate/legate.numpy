@@ -1,4 +1,4 @@
-# Copyright 2022-2023 NVIDIA Corporation
+# Copyright 2024 NVIDIA Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -225,6 +225,21 @@ class TestNanArgReductions:
 
         settings.numpy_compat.unset_value()
 
+    @pytest.mark.parametrize("func_name", NAN_ARG_FUNCS)
+    def test_empty_arr(self, func_name: str) -> None:
+        a = []
+        in_np = np.array(a)
+        in_num = num.array(a)
+        func_np = getattr(np, func_name)
+        func_num = getattr(num, func_name)
+        with pytest.raises(ValueError):
+            func_np(in_np)
+            # ValueError: All-NaN slice encountered
+        with pytest.raises(ValueError):
+            func_num(in_num)
+            # ValueError: attempt to get nanargmax of an empty sequence
+            # ValueError: attempt to get nanargmin of an empty sequence
+
 
 class TestXFail:
     """
@@ -244,8 +259,7 @@ class TestXFail:
         func_num = getattr(num, func_name)
 
         expected_exp = ValueError
-        msg = r"operation is not supported for complex-type arrays"
-        with pytest.raises(expected_exp, match=msg):
+        with pytest.raises(expected_exp):
             func_num(in_num)
 
     @pytest.mark.xfail

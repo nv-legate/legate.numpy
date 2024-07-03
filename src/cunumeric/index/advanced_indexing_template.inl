@@ -1,4 +1,4 @@
-/* Copyright 2022 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,10 +34,10 @@ struct AdvancedIndexingImpl {
   template <Type::Code CODE, int DIM>
   void operator()(AdvancedIndexingArgs& args) const
   {
-    using VAL       = legate_type_of<CODE>;
+    using VAL       = type_of<CODE>;
     auto input_rect = args.input_array.shape<DIM>();
     auto input_arr  = args.input_array.read_accessor<VAL, DIM>(input_rect);
-    Pitches<DIM - 1> input_pitches;
+    Pitches<DIM - 1> input_pitches{};
     size_t volume = input_pitches.flatten(input_rect);
 
     auto index_rect = args.indexing_array.shape<DIM>();
@@ -68,10 +68,9 @@ template <VariantKind KIND>
 static void advanced_indexing_template(TaskContext& context)
 {
   // is_set flag is used to fill Point<N> field for in-place assignment operation
-  bool is_set     = context.scalars()[0].value<bool>();
-  int64_t key_dim = context.scalars()[1].value<int64_t>();
-  AdvancedIndexingArgs args{
-    context.outputs()[0], context.inputs()[0], context.inputs()[1], is_set, key_dim};
+  bool is_set     = context.scalar(0).value<bool>();
+  int64_t key_dim = context.scalar(1).value<int64_t>();
+  AdvancedIndexingArgs args{context.output(0), context.input(0), context.input(1), is_set, key_dim};
   double_dispatch(
     args.input_array.dim(), args.input_array.code(), AdvancedIndexingImpl<KIND>{}, args);
 }

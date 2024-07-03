@@ -1,4 +1,4 @@
-/* Copyright 2021-2022 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,14 +32,16 @@ struct FlipImpl {
   template <Type::Code CODE, int DIM>
   void operator()(FlipArgs& args) const
   {
-    using VAL = legate_type_of<CODE>;
+    using VAL = type_of<CODE>;
 
     auto rect = args.out.shape<DIM>().intersection(args.in.shape<DIM>());
 
     Pitches<DIM - 1> pitches;
     size_t volume = pitches.flatten(rect);
 
-    if (volume == 0) return;
+    if (volume == 0) {
+      return;
+    }
 
     auto out = args.out.write_accessor<VAL, DIM>(rect);
     auto in  = args.in.read_accessor<VAL, DIM>(rect);
@@ -51,8 +53,8 @@ struct FlipImpl {
 template <VariantKind KIND>
 static void flip_template(TaskContext& context)
 {
-  auto& inputs  = context.inputs();
-  auto& outputs = context.outputs();
+  auto inputs   = context.inputs();
+  auto outputs  = context.outputs();
   auto& scalars = context.scalars();
 
   FlipArgs args{inputs[0], outputs[0], scalars[0].values<int32_t>()};

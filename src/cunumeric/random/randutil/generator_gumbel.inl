@@ -1,4 +1,4 @@
-/* Copyright 2021-2022 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,9 @@ struct gumbel_t<float> {
   RANDUTIL_QUALIFIERS float operator()(gen_t& gen)
   {
     float y = curand_uniform(&gen);  // y cannot be zero
-    if (y == 1.0f) return mu;
+    if (y == 1.0f) {
+      return mu;
+    }
     float lny = ::logf(y);
     return mu - beta * ::logf(-lny);
   }
@@ -42,7 +44,9 @@ struct gumbel_t<double> {
   RANDUTIL_QUALIFIERS double operator()(gen_t& gen)
   {
     double y = curand_uniform_double(&gen);  // y cannot be zero
-    if (y == 1.0) return mu;
+    if (y == 1.0) {
+      return mu;
+    }
     double lny = ::log(y);
     return mu - beta * ::log(-lny);
   }

@@ -1,4 +1,4 @@
-/* Copyright 2021-2022 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,20 +34,33 @@ struct CUDALibraries {
 
  public:
   void finalize();
+  int get_device_ordinal();
+  const cudaDeviceProp& get_device_properties();
   cublasHandle_t get_cublas();
   cusolverDnHandle_t get_cusolver();
+#if LEGATE_DEFINED(CUNUMERIC_USE_CUSOLVERMP)
+  cusolverMpHandle_t get_cusolvermp();
+#endif
   cutensorHandle_t* get_cutensor();
   cufftContext get_cufft_plan(cufftType type, const cufftPlanParams& params);
 
  private:
   void finalize_cublas();
   void finalize_cusolver();
+#if LEGATE_DEFINED(CUNUMERIC_USE_CUSOLVERMP)
+  void finalize_cusolvermp();
+#endif
   void finalize_cutensor();
 
  private:
   bool finalized_;
+  std::optional<int> ordinal_{};
+  std::unique_ptr<cudaDeviceProp> device_prop_{};
   cublasContext* cublas_;
   cusolverDnContext* cusolver_;
+#if LEGATE_DEFINED(CUNUMERIC_USE_CUSOLVERMP)
+  cusolverMpHandle* cusolvermp_;
+#endif
   cutensorHandle_t* cutensor_;
   std::map<cufftType, cufftPlanCache*> plan_caches_;
 };

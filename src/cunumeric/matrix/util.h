@@ -1,4 +1,4 @@
-/* Copyright 2021-2022 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,9 @@ inline int64_t unflatten_with_strides(int64_t flat_idx,
     flat_idx /= shape[d];
   }
   int64_t idx = 0;
-  for (int d = 0; d < ndim; ++d) { idx += coords[d] * strides[d]; }
+  for (size_t d = 0; d < ndim; ++d) {
+    idx += coords[d] * strides[d];
+  }
   return idx;
 }
 

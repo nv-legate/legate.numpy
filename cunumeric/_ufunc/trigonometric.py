@@ -1,4 +1,4 @@
-# Copyright 2022 NVIDIA Corporation
+# Copyright 2024 NVIDIA Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,8 +14,7 @@
 #
 from __future__ import annotations
 
-from cunumeric.config import BinaryOpCode, UnaryOpCode
-
+from ..config import BinaryOpCode, UnaryOpCode
 from .ufunc import (
     create_binary_ufunc,
     create_unary_ufunc,

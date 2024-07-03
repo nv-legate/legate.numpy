@@ -1,4 +1,4 @@
-# Copyright 2022-2023 NVIDIA Corporation
+# Copyright 2024 NVIDIA Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -280,6 +280,18 @@ class TestNanReductions:
         out_num = num.nanprod(in_num)
 
         assert out_num == 1.0
+
+    def test_dtype_nanprod(self) -> None:
+        in_np = np.arange(1, 10, step=1, dtype=np.int64)
+        out_np = np.nanprod(in_np)
+        in_num = num.arange(1, 10, 1, dtype=np.int64)
+        out_num = num.nanprod(in_num)
+        assert out_np == out_num
+
+    def test_dtype_nansum(self) -> None:
+        arr_num = num.array([1, 2, 3])
+        arr_np = np.array([1, 2, 3])
+        assert num.nansum(arr_num) == np.nansum(arr_np)
 
     @pytest.mark.parametrize("ndim", range(1, LEGATE_MAX_DIM + 1))
     def test_all_nans_nansum(self, ndim):

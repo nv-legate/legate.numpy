@@ -1,4 +1,4 @@
-/* Copyright 2021-2022 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +16,15 @@
 
 #pragma once
 
-#include "cunumeric/cunumeric.h"
+#include "cunumeric/cunumeric_task.h"
 
 namespace cunumeric {
 
 struct BincountArgs {
-  const Array& lhs;
-  const Array& rhs;
-  const Array& weights;
+  legate::PhysicalStore lhs{nullptr};
+  legate::PhysicalStore rhs{nullptr};
+  legate::PhysicalStore weights{nullptr};
+  bool has_weights;
 };
 
 class BincountTask : public CuNumericTask<BincountTask> {
@@ -31,12 +32,12 @@ class BincountTask : public CuNumericTask<BincountTask> {
   static const int TASK_ID = CUNUMERIC_BINCOUNT;
 
  public:
-  static void cpu_variant(legate::TaskContext& context);
-#ifdef LEGATE_USE_OPENMP
-  static void omp_variant(legate::TaskContext& context);
+  static void cpu_variant(legate::TaskContext context);
+#if LEGATE_DEFINED(LEGATE_USE_OPENMP)
+  static void omp_variant(legate::TaskContext context);
 #endif
-#ifdef LEGATE_USE_CUDA
-  static void gpu_variant(legate::TaskContext& context);
+#if LEGATE_DEFINED(LEGATE_USE_CUDA)
+  static void gpu_variant(legate::TaskContext context);
 #endif
 };
 

@@ -1,4 +1,4 @@
-# Copyright 2021-2022 NVIDIA Corporation
+# Copyright 2024 NVIDIA Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ from utils.contractions import check_default
 from utils.generators import mk_0to1_array
 
 import cunumeric as num
-from cunumeric.utils import tensordot_modes
+from cunumeric._utils.linalg import tensordot_modes
 
 
 def gen_axes(a_ndim, b_ndim):

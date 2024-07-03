@@ -1,4 +1,4 @@
-/* Copyright 2021-2022 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,10 +48,10 @@ struct MatVecMulImplBody<VariantKind::GPU, Type::Code::FLOAT32> {
     //      cuBLAS version
     int32_t version;
     CHECK_CUBLAS(cublasGetVersion(cublas_handle, &version));
-    if (version >= 11700)
+    if (version >= 11700) {
       CHECK_CUBLAS(
         cublasSgemv(cublas_handle, trans, n, m, &alpha, mat, mat_stride, vec, 1, &beta, lhs, 1));
-    else
+    } else {
       CHECK_CUBLAS(cublasSgemmEx(cublas_handle,
                                  trans,
                                  CUBLAS_OP_N,
@@ -69,8 +69,9 @@ struct MatVecMulImplBody<VariantKind::GPU, Type::Code::FLOAT32> {
                                  lhs,
                                  CUDA_R_32F,
                                  transpose_mat ? n : m));
+    }
 
-    CHECK_CUDA_STREAM(task_stream);
+    CUNUMERIC_CHECK_CUDA_STREAM(task_stream);
   }
 };
 
@@ -98,10 +99,10 @@ struct MatVecMulImplBody<VariantKind::GPU, Type::Code::FLOAT64> {
     //        64-bit flots as well. We're simply being conservative here.
     int32_t version;
     CHECK_CUBLAS(cublasGetVersion(cublas_handle, &version));
-    if (version >= 11700)
+    if (version >= 11700) {
       CHECK_CUBLAS(
         cublasDgemv(cublas_handle, trans, n, m, &alpha, mat, mat_stride, vec, 1, &beta, lhs, 1));
-    else
+    } else {
       CHECK_CUBLAS(cublasDgemm(cublas_handle,
                                trans,
                                CUBLAS_OP_N,
@@ -116,8 +117,9 @@ struct MatVecMulImplBody<VariantKind::GPU, Type::Code::FLOAT64> {
                                &beta,
                                lhs,
                                transpose_mat ? n : m));
+    }
 
-    CHECK_CUDA_STREAM(task_stream);
+    CUNUMERIC_CHECK_CUDA_STREAM(task_stream);
   }
 };
 
@@ -159,7 +161,7 @@ struct MatVecMulImplBody<VariantKind::GPU, Type::Code::FLOAT16> {
                                CUDA_R_32F,
                                transpose_mat ? n : m));
 
-    CHECK_CUDA_STREAM(task_stream);
+    CUNUMERIC_CHECK_CUDA_STREAM(task_stream);
   }
 };
 
@@ -191,10 +193,10 @@ struct MatVecMulImplBody<VariantKind::GPU, Type::Code::COMPLEX64> {
     //        complex64 as well. We're simply being conservative here.
     int32_t version;
     CHECK_CUBLAS(cublasGetVersion(cublas_handle, &version));
-    if (version >= 11700)
+    if (version >= 11700) {
       CHECK_CUBLAS(
         cublasCgemv(cublas_handle, trans, n, m, &alpha, mat, mat_stride, vec, 1, &beta, lhs, 1));
-    else
+    } else {
       CHECK_CUBLAS(cublasCgemmEx(cublas_handle,
                                  trans,
                                  CUBLAS_OP_N,
@@ -212,8 +214,9 @@ struct MatVecMulImplBody<VariantKind::GPU, Type::Code::COMPLEX64> {
                                  lhs,
                                  CUDA_C_32F,
                                  transpose_mat ? n : m));
+    }
 
-    CHECK_CUDA_STREAM(task_stream);
+    CUNUMERIC_CHECK_CUDA_STREAM(task_stream);
   }
 };
 
@@ -245,10 +248,10 @@ struct MatVecMulImplBody<VariantKind::GPU, Type::Code::COMPLEX128> {
     //        complex128 as well. We're simply being conservative here.
     int32_t version;
     CHECK_CUBLAS(cublasGetVersion(cublas_handle, &version));
-    if (version >= 11700)
+    if (version >= 11700) {
       CHECK_CUBLAS(
         cublasZgemv(cublas_handle, trans, n, m, &alpha, mat, mat_stride, vec, 1, &beta, lhs, 1));
-    else
+    } else {
       CHECK_CUBLAS(cublasZgemm(cublas_handle,
                                trans,
                                CUBLAS_OP_N,
@@ -263,12 +266,13 @@ struct MatVecMulImplBody<VariantKind::GPU, Type::Code::COMPLEX128> {
                                &beta,
                                lhs,
                                transpose_mat ? n : m));
+    }
 
-    CHECK_CUDA_STREAM(task_stream);
+    CUNUMERIC_CHECK_CUDA_STREAM(task_stream);
   }
 };
 
-/*static*/ void MatVecMulTask::gpu_variant(TaskContext& context)
+/*static*/ void MatVecMulTask::gpu_variant(TaskContext context)
 {
   matvecmul_template<VariantKind::GPU>(context);
 }

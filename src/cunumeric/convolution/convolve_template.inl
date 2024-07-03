@@ -1,4 +1,4 @@
-/* Copyright 2021-2022 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,14 +34,16 @@ struct ConvolveImpl {
   template <Type::Code CODE, int DIM, std::enable_if_t<(DIM <= 3)>* = nullptr>
   void operator()(ConvolveArgs& args) const
   {
-    using VAL        = legate_type_of<CODE>;
+    using VAL        = type_of<CODE>;
     auto subrect     = args.out.shape<DIM>();
     auto filter_rect = args.filter.shape<DIM>();
 
-    if (subrect.empty()) return;
+    if (subrect.empty()) {
+      return;
+    }
 
     auto input_subrect = subrect;
-    for (auto idx = 1; idx < args.inputs.size(); ++idx) {
+    for (uint32_t idx = 1; idx < args.inputs.size(); ++idx) {
       auto image_subrect = args.inputs[idx].shape<DIM>();
       input_subrect      = input_subrect.union_bbox(image_subrect);
     }
@@ -67,14 +69,16 @@ static void convolve_template(TaskContext& context)
 {
   ConvolveArgs args;
 
-  auto& inputs  = context.inputs();
-  auto& outputs = context.outputs();
+  auto inputs  = context.inputs();
+  auto outputs = context.outputs();
 
   args.out    = std::move(outputs[0]);
   args.filter = std::move(inputs[0]);
-  for (uint32_t idx = 1; idx < inputs.size(); ++idx) args.inputs.push_back(std::move(inputs[idx]));
+  for (uint32_t idx = 1; idx < inputs.size(); ++idx) {
+    args.inputs.push_back(std::move(inputs[idx]));
+  }
 
-  auto shape           = context.scalars()[0].value<DomainPoint>();
+  auto shape           = context.scalar(0).value<DomainPoint>();
   args.root_domain.dim = shape.dim;
   for (int32_t dim = 0; dim < shape.dim; ++dim) {
     args.root_domain.rect_data[dim]             = 0;
@@ -90,13 +94,15 @@ static unsigned compute_output_tile(Point<DIM>& tile,
                                     const size_t min_last_elements,
                                     const size_t target_volume)
 {
-  for (int d = 0; d < DIM; d++) tile[d] = 1;
+  for (int d = 0; d < DIM; d++) {
+    tile[d] = 1;
+  }
   // Better be a powers of 2
   assert((min_last_elements & (min_last_elements - 1)) == 0);
   assert((target_volume & (target_volume - 1)) == 0);
   unsigned volume = 1;
   // Try to make the last dimension at least the min last elements for locality
-  for (int idx = 1; idx < min_last_elements; idx *= 2) {
+  for (uint32_t idx = 1; idx < min_last_elements; idx *= 2) {
     tile[DIM - 1] *= 2;
     if (bounds[DIM - 1] < tile[DIM - 1]) {
       tile[DIM - 1] /= 2;
@@ -104,39 +110,48 @@ static unsigned compute_output_tile(Point<DIM>& tile,
     } else {
       volume *= 2;
     }
-    if (volume == target_volume) break;
+    if (volume == target_volume) {
+      break;
+    }
   }
   int last_dim = DIM - 1;
   // Round-robin powers of 2 onto the other dimensions until
   // we hit the max or get all the dimensions balanced
   if (DIM > 1) {
-    for (int idx = 1; idx < min_last_elements; idx *= 2) {
+    for (uint32_t idx = 1; idx < min_last_elements; idx *= 2) {
       for (int d = DIM - 2; d >= 0; d--) {
         tile[d] *= 2;
-        if (bounds[d] < tile[d])
+        if (bounds[d] < tile[d]) {
           tile[d] /= 2;
-        else {
+        } else {
           volume *= 2;
           last_dim = d;
-          if (volume == target_volume) break;
+          if (volume == target_volume) {
+            break;
+          }
         }
       }
-      if (volume == target_volume) break;
+      if (volume == target_volume) {
+        break;
+      }
     }
   }
   // If we still have more to go round-robin powers of 2 over
   // all the dimensions
   int unchanged = 0;
   while (volume < target_volume) {
-    if (last_dim == 0)
+    if (last_dim == 0) {
       last_dim = DIM - 1;
-    else
+    } else {
       last_dim--;
+    }
     tile[last_dim] *= 2;
     if (bounds[last_dim] < tile[last_dim]) {
       tile[last_dim] /= 2;
       unchanged++;
-      if (unchanged == DIM) break;
+      if (unchanged == DIM) {
+        break;
+      }
     } else {
       volume *= 2;
       unchanged = 0;
@@ -151,7 +166,9 @@ static unsigned compute_filter_tile(Point<DIM>& tile,
                                     const Point<DIM>& output,
                                     const size_t max_size)
 {
-  for (int d = 0; d < DIM; d++) tile[d] = 1;
+  for (int d = 0; d < DIM; d++) {
+    tile[d] = 1;
+  }
   // Try doubling dimensions until we can't make it any larger
   unsigned result = 0;
   bool done       = false;
@@ -159,18 +176,25 @@ static unsigned compute_filter_tile(Point<DIM>& tile,
     done = true;
     for (int d = DIM - 1; d >= 0; d--) {
       // Skip if it will exceed our bounds
-      if (bounds[d] < (2 * tile[d])) continue;
+      if (bounds[d] < (2 * tile[d])) {
+        continue;
+      }
       unsigned filter_size = sizeof(VAL);
       tile[d] *= 2;
-      for (int d2 = 0; d2 < DIM; d2++) filter_size *= tile[d2];
+      for (int d2 = 0; d2 < DIM; d2++) {
+        filter_size *= tile[d2];
+      }
       unsigned input_size = sizeof(VAL);
-      for (int d2 = 0; d2 < DIM; d2++) input_size *= (output[d2] + 2 * (tile[d2] / 2));
+      for (int d2 = 0; d2 < DIM; d2++) {
+        input_size *= (output[d2] + 2 * (tile[d2] / 2));
+      }
       unsigned total_size = filter_size + input_size;
       if (total_size <= max_size) {
         result = total_size;
         done   = false;
-      } else
+      } else {
         tile[d] /= 2;
+      }
     }
   }
   // Then try incrementally increasing dimensions until we can't
@@ -180,18 +204,25 @@ static unsigned compute_filter_tile(Point<DIM>& tile,
     done = true;
     for (int d = DIM - 1; d >= 0; d--) {
       // Skip if it will exceed our bounds
-      if (bounds[d] == tile[d]) continue;
+      if (bounds[d] == tile[d]) {
+        continue;
+      }
       unsigned filter_size = sizeof(VAL);
       tile[d]++;
-      for (int d2 = 0; d2 < DIM; d2++) filter_size *= tile[d2];
+      for (int d2 = 0; d2 < DIM; d2++) {
+        filter_size *= tile[d2];
+      }
       unsigned input_size = sizeof(VAL);
-      for (int d2 = 0; d2 < DIM; d2++) input_size *= (output[d2] + 2 * (tile[d2] / 2));
+      for (int d2 = 0; d2 < DIM; d2++) {
+        input_size *= (output[d2] + 2 * (tile[d2] / 2));
+      }
       unsigned total_size = filter_size + input_size;
       if (total_size <= max_size) {
         result = total_size;
         done   = false;
-      } else
+      } else {
         tile[d]--;
+      }
     }
   }
   return result;
@@ -209,7 +240,9 @@ static unsigned roundup_tile(Point<DIM>& tile,
     assert(elements > padding[0]);
     if (tile[0] < (elements - padding[0])) {
       tile[0] = elements - padding[0];
-      if (bounds[0] < tile[0]) tile[0] = bounds[0];
+      if (bounds[0] < tile[0]) {
+        tile[0] = bounds[0];
+      }
     }
     return (tile[0] + padding[0]) * sizeof(VAL);
   } else {
@@ -217,8 +250,10 @@ static unsigned roundup_tile(Point<DIM>& tile,
     // Shrink the tile to the bounds if necessary
     unsigned result = sizeof(VAL);
     for (int d = 0; d < DIM; d++) {
-      if (bounds[d] < tile[d]) tile[d] = bounds[d];
-      result *= (tile[d] + padding[d]);
+      if (bounds[d] < tile[d]) {
+        tile[d] = bounds[d];
+      }
+      result *= std::max(static_cast<coord_t>(1), tile[d] + padding[d]);
     }
     // Find the two smallest dimensions and increase one of them
     // until we hit the second smallest one or exceed max_smem_size
@@ -229,11 +264,15 @@ static unsigned roundup_tile(Point<DIM>& tile,
       int t1 = tile[d1], t2 = 0;
       while (t1 == bounds[d1]) {
         skipdims |= (1 << d1);
-        if (--d1 < 0) return result;  // all dims at their bounds so we're done
+        if (--d1 < 0) {
+          return result;  // all dims at their bounds so we're done
+        }
         t1 = tile[d1];
       }
       for (int d = d1 - 1; d >= 0; d--) {
-        if (skipdims & (1 << d)) continue;
+        if (skipdims & (1 << d)) {
+          continue;
+        }
         // Skip any dimension that is at its bound
         if (tile[d] == bounds[d]) {
           skipdims |= (1 << d);
@@ -253,17 +292,22 @@ static unsigned roundup_tile(Point<DIM>& tile,
         // All the other dimensions are at their bounds, check that
         // the last dimension is also at its bound if not solve
         unsigned pitch = sizeof(VAL);
-        for (int d = 0; d < DIM; d++)
-          if (d != d1) pitch *= (tile[d] + padding[d]);
+        for (int d = 0; d < DIM; d++) {
+          if (d != d1) {
+            pitch *= std::max(static_cast<coord_t>(1), tile[d] + padding[d]);
+          }
+        }
         // Make sure the last dimension is as large as it can go too
         if (tile[d1] < bounds[d1]) {
           unsigned elements = max_size / pitch;
           assert(elements > padding[d1]);
           assert(tile[d1] < (elements - padding[d1]));
           tile[d1] = elements - padding[d1];
-          if (bounds[d1] < tile[d1]) tile[d1] = bounds[d1];
+          if (bounds[d1] < tile[d1]) {
+            tile[d1] = bounds[d1];
+          }
         }
-        return pitch * (tile[d1] + padding[d1]);
+        return pitch * std::max(static_cast<coord_t>(1), tile[d1] + padding[d1]);
       }
       // If we ever get two dimensions of the same size then see what dimension
       // has the next largest value. If we can't find one that is larger then
@@ -272,36 +316,45 @@ static unsigned roundup_tile(Point<DIM>& tile,
       if (t1 == t2) {
         d2 = -1;
         for (int d = 0; d < DIM; d++) {
-          if (d == d1) continue;
-          if (tile[d] <= tile[d1]) continue;
+          if (d == d1) {
+            continue;
+          }
+          if (tile[d] <= tile[d1]) {
+            continue;
+          }
           if ((d2 == -1) || (tile[d] < tile[d2])) {
             d2 = d;
             t2 = tile[d];
           }
         }
-        if (d2 == -1) break;
+        if (d2 == -1) {
+          break;
+        }
       }
       // Solve for the max we can walk
       unsigned pitch = sizeof(VAL);
-      for (int d = 0; d < DIM; d++)
-        if (d != d1) pitch *= (tile[d] + padding[d]);
+      for (int d = 0; d < DIM; d++) {
+        if (d != d1) {
+          pitch *= std::max(static_cast<coord_t>(1), tile[d] + padding[d]);
+        }
+      }
       unsigned elements = max_size / pitch;
       if ((elements <= padding[d1]) || (t1 >= (elements - padding[d1]))) {
         skipdims |= (1 << d1);
         continue;
       }
-      unsigned bound = elements - padding[d1];
+      int bound = elements - padding[d1];
       if (bounds[d1] < bound) {
         tile[d1] = bounds[d1];
-        result   = pitch * (tile[d1] + padding[d1]);
+        result   = pitch * std::max(static_cast<coord_t>(1), tile[d1] + padding[d1]);
       } else if (bound < t2) {
         tile[d1] = bound;
-        result   = pitch * (bound + padding[d1]);
+        result   = pitch * std::max(static_cast<coord_t>(1), bound + padding[d1]);
         all_same = false;
         break;
       } else {
         tile[d1] = t2;
-        result   = pitch * (t2 + padding[d1]);
+        result   = pitch * std::max(static_cast<coord_t>(1), t2 + padding[d1]);
       }
     }
     if (all_same) {
@@ -313,18 +366,24 @@ static unsigned roundup_tile(Point<DIM>& tile,
       // of dimensions so it should converge quickly
       while (true) {
         unsigned next_size = sizeof(VAL);
-        for (int d = 0; d < DIM; d++)
-          if (skipdims & (1 << d))
-            next_size *= (tile[d] + padding[d]);
-          else if (tile[d] == bounds[d]) {
-            next_size *= (tile[d] + padding[d]);
+        for (int d = 0; d < DIM; d++) {
+          if (skipdims & (1 << d)) {
+            next_size *= std::max(static_cast<coord_t>(1), tile[d] + padding[d]);
+          } else if (tile[d] == bounds[d]) {
+            next_size *= std::max(static_cast<coord_t>(1), tile[d] + padding[d]);
             skipdims |= (1 << d);
-          } else
+          } else {
             next_size *= (tile[d] + 1 + padding[d]);
-        if ((next_size > max_size) || (next_size == result)) break;
+          }
+        }
+        if ((next_size > max_size) || (next_size == result)) {
+          break;
+        }
         result = next_size;
         for (int d = 0; d < DIM; d++) {
-          if (skipdims && (1 << d)) continue;
+          if (skipdims & (1 << d)) {
+            continue;
+          }
           tile[d]++;
         }
       }

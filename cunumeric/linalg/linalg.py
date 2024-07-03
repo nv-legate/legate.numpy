@@ -1,4 +1,4 @@
-# Copyright 2021-2022 NVIDIA Corporation
+# Copyright 2024 NVIDIA Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,25 +14,29 @@
 #
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Sequence, Union
+from typing import TYPE_CHECKING, Sequence
 
 import numpy as np
-from numpy.core.multiarray import (  # type: ignore [attr-defined]
-    normalize_axis_index,
-)
-from numpy.core.numeric import (  # type: ignore [attr-defined]
-    normalize_axis_tuple,
-)
 
-from cunumeric._ufunc.math import add, sqrt as _sqrt
-from cunumeric.array import add_boilerplate, convert_to_cunumeric_ndarray
-from cunumeric.module import dot, empty_like, eye, matmul, ndarray
+from .._utils import is_np2
 
-from .exception import LinAlgError
+if is_np2:
+    from numpy.lib.array_utils import normalize_axis_index  # type: ignore
+    from numpy.lib.array_utils import normalize_axis_tuple  # type: ignore
+else:
+    from numpy.core.multiarray import (  # type: ignore
+        normalize_axis_index,
+    )
+    from numpy.core.numeric import (  # type: ignore
+        normalize_axis_tuple,
+    )
+
+from .._array.util import add_boilerplate, convert_to_cunumeric_ndarray
+from .._module import dot, empty_like, eye, matmul, ndarray
+from .._ufunc.math import add, sqrt as _sqrt
+from ._exception import LinAlgError
 
 if TYPE_CHECKING:
-    from typing import Optional
-
     import numpy.typing as npt
 
 
@@ -82,11 +86,63 @@ def cholesky(a: ndarray) -> ndarray:
     elif shape[-1] != shape[-2]:
         raise ValueError("Last 2 dimensions of the array must be square")
 
-    return _cholesky(a)
+    return _thunk_cholesky(a)
+
+
+@add_boilerplate("a")
+def qr(a: ndarray) -> tuple[ndarray, ...]:
+    """
+    Compute the qr factorization of a matrix.
+
+    Factor the matrix a as qr, where q is orthonormal
+    and r is upper-triangular.
+
+    Parameters
+    ----------
+    a : (M, N) array_like
+        Array like, at least dimension 2.
+
+    Returns
+    -------
+    q : (M, K) array_like
+        A matrix with orthonormal columns. K = min(M, N).
+    r : (K, N) array_like
+        The uppoer triangular matrix.
+
+    Raises
+    ------
+    LinAlgError
+        If factoring fails.
+
+    Notes
+    -----
+    Currently does not support the parameter 'mode' from numpy 1.8.
+
+    See Also
+    --------
+    numpy.linalg.qr
+
+    Availability
+    --------
+    Single GPU, Single CPU
+    """
+    shape = a.shape
+    if len(shape) < 2:
+        raise LinAlgError(
+            f"{len(shape)}-dimensional array given. "
+            "Array must be at least two-dimensional"
+        )
+    if len(shape) > 2:
+        raise NotImplementedError(
+            "cuNumeric does not yet support stacked 2d arrays"
+        )
+    if np.dtype("e") == a.dtype:
+        raise TypeError("array type float16 is unsupported in linalg")
+    return _thunk_qr(a)
 
 
 @add_boilerplate("a", "b")
-def solve(a: ndarray, b: ndarray, out: Optional[ndarray] = None) -> ndarray:
+def solve(a: ndarray, b: ndarray, out: ndarray | None = None) -> ndarray:
     """
     Solve a linear matrix equation, or system of linear scalar equations.
 
@@ -112,13 +168,17 @@ def solve(a: ndarray, b: ndarray, out: Optional[ndarray] = None) -> ndarray:
     LinAlgError
         If `a` is singular or not square.
 
+    Notes
+    ------
+    Multi-GPU usage is only available when compiled with cusolverMP.
+
     See Also
     --------
     numpy.linalg.solve
 
     Availability
     --------
-    Single GPU, Single CPU
+    Multiple GPUs, Single CPU
     """
     if a.ndim < 2:
         raise LinAlgError(
@@ -154,7 +214,61 @@ def solve(a: ndarray, b: ndarray, out: Optional[ndarray] = None) -> ndarray:
     if a.size == 0 or b.size == 0:
         return empty_like(b)
 
-    return _solve(a, b, out)
+    return _thunk_solve(a, b, out)
+
+
+@add_boilerplate("a")
+def svd(a: ndarray) -> tuple[ndarray, ...]:
+    """
+    Singular Value Decomposition.
+
+    Parameters
+    ----------
+    a : (M, N) array_like
+        Array like, at least dimension 2.
+
+    Returns
+    -------
+    u : (M, M) array_like
+        Unitary array(s).
+    s : (K) array_like
+        The singular values, sorted in descending order
+    vh : (N, N) array_like
+        Unitary array(s).
+
+    Raises
+    ------
+    LinAlgError
+        If SVD computation does not converge.
+
+    Notes
+    -----
+    Currently does not support the parameters 'full_matrices', 'compute_uv',
+    and 'hermitian'.
+
+    See Also
+    --------
+    numpy.linalg.svd
+
+    Availability
+    --------
+    Single GPU, Single CPU
+    """
+    shape = a.shape
+    if len(shape) < 2:
+        raise LinAlgError(
+            f"{len(shape)}-dimensional array given. "
+            "Array must be at least two-dimensional"
+        )
+    if len(shape) > 2:
+        raise NotImplementedError(
+            "cuNumeric does not yet support stacked 2d arrays"
+        )
+    if shape[0] < shape[1]:
+        raise NotImplementedError("cuNumeric only supports M >= N")
+    if np.dtype("e") == a.dtype:
+        raise TypeError("array type float16 is unsupported in linalg")
+    return _thunk_svd(a)
 
 
 # This implementation is adapted closely from NumPy
@@ -222,8 +336,8 @@ def matrix_power(a: ndarray, n: int) -> ndarray:
     # Use binary decomposition to reduce the number of matrix multiplications.
     # Here, we iterate over the bits of n, from LSB to MSB, raise `a` to
     # increasing powers of 2, and multiply into the result as needed.
-    z: Union[ndarray, None] = None
-    result: Union[ndarray, None] = None
+    z: ndarray | None = None
+    result: ndarray | None = None
     while n > 0:
         z = a if z is None else matmul(z, z)
         n, bit = divmod(n, 2)
@@ -237,7 +351,7 @@ def matrix_power(a: ndarray, n: int) -> ndarray:
 
 # This implementation is adapted closely from NumPy
 def multi_dot(
-    arrays: Sequence[ndarray], *, out: Union[ndarray, None] = None
+    arrays: Sequence[ndarray], *, out: ndarray | None = None
 ) -> ndarray:
     """
     Compute the dot product of two or more arrays in a single function call,
@@ -314,7 +428,7 @@ def multi_dot(
 
 
 def _multi_dot_three(
-    A: ndarray, B: ndarray, C: ndarray, out: Union[ndarray, None] = None
+    A: ndarray, B: ndarray, C: ndarray, out: ndarray | None = None
 ) -> ndarray:
     """
     Find the best order for three arrays and do the multiplication.
@@ -359,7 +473,7 @@ def _multi_dot_matrix_chain_order(
     for l_ in range(1, n):
         for i in range(n - l_):
             j = i + l_
-            m[i, j] = np.Inf
+            m[i, j] = np.inf
             for k in range(i, j):
                 q = m[i, k] + m[k + 1, j] + p[i] * p[k + 1] * p[j + 1]
                 if q < m[i, j]:
@@ -374,7 +488,7 @@ def _multi_dot(
     order: npt.NDArray[np.int64],
     i: int,
     j: int,
-    out: Union[ndarray, None] = None,
+    out: ndarray | None = None,
 ) -> ndarray:
     """Actually do the multiplication with the given order."""
     if i == j:
@@ -394,10 +508,10 @@ def _multi_dot(
 @add_boilerplate("x")
 def norm(
     x: ndarray,
-    ord: Union[str, int, float, None] = None,
-    axis: Union[int, tuple[int, int], None] = None,
+    ord: str | int | float | None = None,
+    axis: int | tuple[int, int] | None = None,
     keepdims: bool = False,
-) -> Union[float, ndarray]:
+) -> float | ndarray:
     """
     Matrix or vector norm.
 
@@ -583,7 +697,7 @@ def norm(
         raise ValueError("Improper number of dimensions to norm")
 
 
-def _cholesky(a: ndarray, no_tril: bool = False) -> ndarray:
+def _thunk_cholesky(a: ndarray, no_tril: bool = False) -> ndarray:
     """Cholesky decomposition.
 
     Return the Cholesky decomposition, `L * L.H`, of the square matrix `a`,
@@ -631,8 +745,29 @@ def _cholesky(a: ndarray, no_tril: bool = False) -> ndarray:
     return output
 
 
-def _solve(
-    a: ndarray, b: ndarray, output: Optional[ndarray] = None
+def _thunk_qr(a: ndarray) -> tuple[ndarray, ...]:
+    if a.dtype.kind not in ("f", "c"):
+        a = a.astype("float64")
+
+    k = min(a.shape[0], a.shape[1])
+
+    out_q = ndarray(
+        shape=(a.shape[0], k),
+        dtype=a.dtype,
+        inputs=(a,),
+    )
+    out_r = ndarray(
+        shape=(k, a.shape[1]),
+        dtype=a.dtype,
+        inputs=(a,),
+    )
+
+    a._thunk.qr(out_q._thunk, out_r._thunk)
+    return out_q, out_r
+
+
+def _thunk_solve(
+    a: ndarray, b: ndarray, output: ndarray | None = None
 ) -> ndarray:
     if a.dtype.kind not in ("f", "c"):
         a = a.astype("float64")
@@ -666,3 +801,32 @@ def _solve(
         )
     out._thunk.solve(a._thunk, b._thunk)
     return out
+
+
+def _thunk_svd(a: ndarray) -> tuple[ndarray, ...]:
+    if a.dtype.kind not in ("f", "c"):
+        a = a.astype("float64")
+
+    k = min(a.shape[0], a.shape[1])
+
+    out_u = ndarray(
+        shape=(a.shape[0], a.shape[0]),
+        dtype=a.dtype,
+        inputs=(a,),
+    )
+
+    real_dtype = a.dtype.type(0).real.dtype
+
+    out_s = ndarray(
+        shape=(k,),
+        dtype=real_dtype,
+        inputs=(a,),
+    )
+    out_vh = ndarray(
+        shape=(a.shape[1], a.shape[1]),
+        dtype=a.dtype,
+        inputs=(a,),
+    )
+
+    a._thunk.svd(out_u._thunk, out_s._thunk, out_vh._thunk)
+    return out_u, out_s, out_vh

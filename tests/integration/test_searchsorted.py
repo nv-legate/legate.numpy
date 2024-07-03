@@ -1,4 +1,4 @@
-# Copyright 2022 NVIDIA Corporation
+# Copyright 2024 NVIDIA Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -83,7 +83,7 @@ class TestSearchSortedErrors(object):
             # cuNumeric raises AssertionError
             #       if self.deferred is None:
             #           if self.parent is None:
-            #    >          assert self.runtime.is_supported_type
+            #    >          assert self.runtime.is_supported_dtype
             #                    (self.array.dtype)
             #    E               AssertionError
             # cunumeric/cunumeric/eager.py:to_deferred_array()

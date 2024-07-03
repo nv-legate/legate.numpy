@@ -1,4 +1,4 @@
-/* Copyright 2021-2022 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ using namespace legate;
 
 template <Type::Code CODE, int DIM>
 struct DiagImplBody<VariantKind::OMP, CODE, DIM, true> {
-  using VAL = legate_type_of<CODE>;
+  using VAL = type_of<CODE>;
 
   void operator()(const AccessorRD<SumReduction<VAL>, true, DIM>& out,
                   const AccessorRO<VAL, DIM>& in,
@@ -35,9 +35,11 @@ struct DiagImplBody<VariantKind::OMP, CODE, DIM, true> {
   {
     size_t skip_size = 1;
 
-    for (int i = 0; i < naxes; i++) {
+    for (size_t i = 0; i < naxes; i++) {
       auto diff = 1 + m_shape.hi[DIM - i - 1] - m_shape.lo[DIM - i - 1];
-      if (diff != 0) skip_size *= diff;
+      if (diff != 0) {
+        skip_size *= diff;
+      }
     }
     const size_t volume = m_shape.volume();
 #pragma omp parallel for schedule(static)
@@ -59,7 +61,7 @@ struct DiagImplBody<VariantKind::OMP, CODE, DIM, true> {
 // not extract (create a new 2D matrix with diagonal from vector)
 template <Type::Code CODE>
 struct DiagImplBody<VariantKind::OMP, CODE, 2, false> {
-  using VAL = legate_type_of<CODE>;
+  using VAL = type_of<CODE>;
 
   void operator()(const AccessorRO<VAL, 2>& in,
                   const AccessorRW<VAL, 2>& out,
@@ -75,7 +77,7 @@ struct DiagImplBody<VariantKind::OMP, CODE, 2, false> {
   }
 };
 
-/*static*/ void DiagTask::omp_variant(TaskContext& context)
+/*static*/ void DiagTask::omp_variant(TaskContext context)
 {
   diag_template<VariantKind::OMP>(context);
 }

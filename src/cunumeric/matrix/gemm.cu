@@ -1,4 +1,4 @@
-/* Copyright 2021-2022 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@ static inline void gemm_template(
 
   CHECK_CUBLAS(gemm(context, transa, transb, m, n, k, &alpha, rhs1, m, rhs2, n, &beta, lhs, m));
 
-  CHECK_CUDA_STREAM(stream);
+  CUNUMERIC_CHECK_CUDA_STREAM(stream);
 }
 
 template <typename Gemm, typename VAL, typename CTOR>
@@ -58,7 +58,7 @@ static inline void complex_gemm_template(
 
   CHECK_CUBLAS(gemm(context, transa, transb, m, n, k, &alpha, rhs1, m, rhs2, n, &beta, lhs, m));
 
-  CHECK_CUDA_STREAM(stream);
+  CUNUMERIC_CHECK_CUDA_STREAM(stream);
 }
 
 template <>
@@ -112,7 +112,7 @@ struct GemmImplBody<VariantKind::GPU, Type::Code::COMPLEX128> {
   }
 };
 
-/*static*/ void GemmTask::gpu_variant(TaskContext& context)
+/*static*/ void GemmTask::gpu_variant(TaskContext context)
 {
   gemm_template<VariantKind::GPU>(context);
 }

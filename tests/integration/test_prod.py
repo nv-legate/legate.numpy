@@ -1,4 +1,4 @@
-# Copyright 2021-2022 NVIDIA Corporation
+# Copyright 2024 NVIDIA Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,8 +15,10 @@
 import numpy as np
 import pytest
 from utils.comparisons import allclose
+from utils.utils import AxisError
 
 import cunumeric as num
+from cunumeric._utils import is_np2
 
 # numpy.prod(a, axis=None, dtype=None, out=None, keepdims=<no value>,
 # initial=<no value>, where=<no value>)
@@ -74,7 +76,7 @@ NO_EMPTY_SIZE = [
     (DIM, DIM, DIM),
 ]
 
-ARR = ([], [[]], [[], []], np.inf, np.Inf, -10.3, 0, 200, 5 + 8j)
+ARR = ([], [[]], [[], []], np.inf, -10.3, 0, 200, 5 + 8j)
 
 DTYPE = ("l", "L", "f", "e", "d")
 INTEGER_DTYPE = ("h", "i", "H", "I", "?", "b", "B")
@@ -94,7 +96,7 @@ class TestProdNegative(object):
         assert allclose(np.prod(arr), num.prod(arr))
 
     def test_axis_out_bound(self):
-        expected_exc = np.AxisError
+        expected_exc = AxisError
         arr = [-1, 0, 1, 2, 10]
         with pytest.raises(expected_exc):
             np.prod(arr, axis=2)
@@ -122,19 +124,12 @@ class TestProdNegative(object):
         out_num = num.prod(arr_num, axis=2, keepdims=True)
         assert allclose(out_np, out_num)
 
-    @pytest.mark.parametrize(
-        "initial",
-        ([2, 3], pytest.param([3], marks=pytest.mark.xfail)),
-        ids=str,
-    )
+    @pytest.mark.parametrize("initial", ([2, 3], [3]), ids=str)
     def test_initial_list(self, initial):
-        expected_exc = ValueError
+        expected_exc = TypeError if is_np2 else ValueError
         arr = [[1, 2], [3, 4]]
-        # Numpy raises ValueError:
-        # Input object to FillWithScalar is not a scalar
         with pytest.raises(expected_exc):
             np.prod(arr, initial=initial)
-        # when LEGATE_TEST=1, cuNumeric casts list to scalar and proceeds
         with pytest.raises(expected_exc):
             num.prod(arr, initial=initial)
 
@@ -222,7 +217,7 @@ class TestProdPositive(object):
         # allclose hits assertion error:
         # File "/legate/cunumeric/cunumeric/eager.py", line 293,
         # in to_deferred_array
-        #   assert self.runtime.is_supported_type(self.array.dtype)
+        #   assert self.runtime.is_supported_dtype(self.array.dtype)
         #   AssertionError
         assert allclose(out_np, out_num)
 

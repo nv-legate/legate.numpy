@@ -1,4 +1,4 @@
-# Copyright 2022 NVIDIA Corporation
+# Copyright 2024 NVIDIA Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,14 +15,14 @@
 from __future__ import annotations
 
 from docutils import nodes
-from docutils.statemachine import ViewList
+from docutils.statemachine import StringList
 from sphinx.util.docutils import SphinxDirective
 from sphinx.util.nodes import nested_parse_with_titles
 
 
 class CunumericDirective(SphinxDirective):
     def parse(self, rst_text: str, annotation: str) -> list[nodes.Node]:
-        result = ViewList()
+        result = StringList()
         for line in rst_text.split("\n"):
             result.append(line, annotation)
         node = nodes.paragraph()

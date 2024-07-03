@@ -1,4 +1,4 @@
-/* Copyright 2022 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  *
  */
 
-#include "cunumeric/scan/scan_local_util.h"
+#include "cunumeric/scan/scan_util.h"
 #include "cunumeric/pitches.h"
 
 namespace cunumeric {
@@ -37,7 +37,7 @@ struct ScanLocalImpl {
   void operator()(ScanLocalArgs& args) const
   {
     using OP  = ScanOp<OP_CODE, CODE>;
-    using VAL = legate_type_of<CODE>;
+    using VAL = type_of<CODE>;
 
     auto rect = args.out.shape<DIM>();
 
@@ -63,7 +63,7 @@ struct ScanLocalImpl {
   void operator()(ScanLocalArgs& args) const
   {
     using OP  = ScanOp<OP_CODE, CODE>;
-    using VAL = legate_type_of<CODE>;
+    using VAL = type_of<CODE>;
 
     auto rect = args.out.shape<DIM>();
 
@@ -96,11 +96,11 @@ struct ScanLocalDispatch {
 template <VariantKind KIND>
 static void scan_local_template(TaskContext& context)
 {
-  ScanLocalArgs args{context.outputs()[0],
-                     context.inputs()[0],
-                     context.outputs()[1],
-                     context.scalars()[0].value<ScanCode>(),
-                     context.scalars()[1].value<bool>()};
+  ScanLocalArgs args{context.output(0),
+                     context.input(0),
+                     context.output(1),
+                     context.scalar(0).value<ScanCode>(),
+                     context.scalar(1).value<bool>()};
   op_dispatch(args.op_code, args.nan_to_identity, ScanLocalDispatch<KIND>{}, args);
 }
 

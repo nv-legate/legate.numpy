@@ -1,4 +1,4 @@
-/* Copyright 2023 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ using namespace legate;
 
 template <Type::Code CODE>
 struct HistogramImplBody<VariantKind::CPU, CODE> {
-  using VAL = legate_type_of<CODE>;
+  using VAL = type_of<CODE>;
 
   // for now, it has been decided to hardcode these types:
   //
@@ -62,7 +62,7 @@ struct HistogramImplBody<VariantKind::CPU, CODE> {
   }
 };
 
-/*static*/ void HistogramTask::cpu_variant(TaskContext& context)
+/*static*/ void HistogramTask::cpu_variant(TaskContext context)
 {
   histogram_template<VariantKind::CPU>(context);
 }

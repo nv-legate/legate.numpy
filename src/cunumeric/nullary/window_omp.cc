@@ -1,4 +1,4 @@
-/* Copyright 2022 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,14 +31,18 @@ struct WindowImplBody<VariantKind::OMP, OP_CODE> {
       auto* outptr = out.ptr(rect);
       auto base    = rect.lo[0];
 #pragma omp parallel for schedule(static)
-      for (int64_t idx = base; idx <= rect.hi[0]; ++idx) outptr[idx - base] = gen(idx);
+      for (int64_t idx = base; idx <= rect.hi[0]; ++idx) {
+        outptr[idx - base] = gen(idx);
+      }
     } else
 #pragma omp parallel for schedule(static)
-      for (int64_t idx = rect.lo[0]; idx <= rect.hi[0]; ++idx) out[idx] = gen(idx);
+      for (int64_t idx = rect.lo[0]; idx <= rect.hi[0]; ++idx) {
+        out[idx] = gen(idx);
+      }
   }
 };
 
-/*static*/ void WindowTask::omp_variant(TaskContext& context)
+/*static*/ void WindowTask::omp_variant(TaskContext context)
 {
   window_template<VariantKind::OMP>(context);
 }

@@ -1,4 +1,4 @@
-/* Copyright 2021-2022 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,9 @@ __global__ static void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM)
                 const Point<2> start)
 {
   const int idx = blockIdx.x * blockDim.x + threadIdx.x;
-  if (idx >= distance) return;
+  if (idx >= distance) {
+    return;
+  }
   Point<2> p(start[0] + idx, start[1] + idx);
   out[p] = in[p];
 }
@@ -46,7 +48,9 @@ __global__ static void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM)
                const Rect<DIM> m_shape)
 {
   const int idx = skip_size * (blockIdx.x * blockDim.x + threadIdx.x);
-  if (idx >= volume) return;
+  if (idx >= volume) {
+    return;
+  }
 
   auto in_p  = m_pitches.unflatten(idx, m_shape.lo);
   auto out_p = in_p;
@@ -62,7 +66,7 @@ __global__ static void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM)
 
 template <Type::Code CODE, int DIM>
 struct DiagImplBody<VariantKind::GPU, CODE, DIM, true> {
-  using VAL = legate_type_of<CODE>;
+  using VAL = type_of<CODE>;
 
   void operator()(const AccessorRD<SumReduction<VAL>, true, DIM>& out,
                   const AccessorRO<VAL, DIM>& in,
@@ -76,7 +80,9 @@ struct DiagImplBody<VariantKind::GPU, CODE, DIM, true> {
 
     for (int i = 0; i < naxes; i++) {
       auto diff = 1 + m_shape.hi[DIM - i - 1] - m_shape.lo[DIM - i - 1];
-      if (diff != 0) skip_size *= diff;
+      if (diff != 0) {
+        skip_size *= diff;
+      }
     }
 
     const size_t volume    = m_shape.volume();
@@ -87,14 +93,14 @@ struct DiagImplBody<VariantKind::GPU, CODE, DIM, true> {
     auto stream = get_cached_stream();
     diag_extract<VAL><<<blocks, THREADS_PER_BLOCK, 0, stream>>>(
       out, in, distance, volume, skip_size, start, naxes, m_pitches, m_shape);
-    CHECK_CUDA_STREAM(stream);
+    CUNUMERIC_CHECK_CUDA_STREAM(stream);
   }
 };
 
 // not extract (create a new 2D matrix with diagonal from vector)
 template <Type::Code CODE>
 struct DiagImplBody<VariantKind::GPU, CODE, 2, false> {
-  using VAL = legate_type_of<CODE>;
+  using VAL = type_of<CODE>;
 
   void operator()(const AccessorRO<VAL, 2>& in,
                   const AccessorRW<VAL, 2>& out,
@@ -104,11 +110,11 @@ struct DiagImplBody<VariantKind::GPU, CODE, 2, false> {
     const size_t blocks = (distance + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
     auto stream         = get_cached_stream();
     diag_populate<VAL><<<blocks, THREADS_PER_BLOCK, 0, stream>>>(out, in, distance, start);
-    CHECK_CUDA_STREAM(stream);
+    CUNUMERIC_CHECK_CUDA_STREAM(stream);
   }
 };
 
-/*static*/ void DiagTask::gpu_variant(TaskContext& context)
+/*static*/ void DiagTask::gpu_variant(TaskContext context)
 {
   diag_template<VariantKind::GPU>(context);
 }

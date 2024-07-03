@@ -1,4 +1,4 @@
-/* Copyright 2021-2022 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "cunumeric/cunumeric.h"
+#include "cunumeric/cunumeric_task.h"
 #include "cunumeric/random/philox.h"
 
 #define HI_BITS(x) (static_cast<unsigned>((x) >> 32))
@@ -41,7 +41,7 @@ constexpr decltype(auto) op_dispatch(RandGenCode gen_code, Functor f, Fnargs&&..
       return f.template operator()<RandGenCode::NORMAL>(std::forward<Fnargs>(args)...);
     case RandGenCode::INTEGER:
       return f.template operator()<RandGenCode::INTEGER>(std::forward<Fnargs>(args)...);
-    default: LEGATE_ABORT;
+    default: LEGATE_ABORT("Unknown RNG generator code");
   }
   return f.template operator()<RandGenCode::UNIFORM>(std::forward<Fnargs>(args)...);
 }
@@ -56,7 +56,7 @@ struct RandomGenerator<RandGenCode::UNIFORM, CODE> {
   using RNG                   = Philox_2x32<10>;
   static constexpr bool valid = CODE == legate::Type::Code::FLOAT64;
 
-  RandomGenerator(uint32_t ep, const std::vector<legate::Store>& args) : epoch(ep) {}
+  RandomGenerator(uint32_t ep, const std::vector<legate::Scalar>& args) : epoch(ep) {}
 
   __CUDAPREFIX__ double operator()(uint32_t hi, uint32_t lo) const
   {
@@ -71,7 +71,7 @@ struct RandomGenerator<RandGenCode::NORMAL, CODE> {
   using RNG                   = Philox_2x32<10>;
   static constexpr bool valid = CODE == legate::Type::Code::FLOAT64;
 
-  RandomGenerator(uint32_t ep, const std::vector<legate::Store>& args) : epoch(ep) {}
+  RandomGenerator(uint32_t ep, const std::vector<legate::Scalar>& args) : epoch(ep) {}
 
 #ifndef __NVCC__
   static inline double erfinv(double a)
@@ -83,7 +83,9 @@ struct RandomGenerator<RandGenCode::NORMAL, CODE> {
     if (fa >= 1.0) {
       l = 0xfff8000000000000ull;
       memcpy(&t, &l, sizeof(double)); /* INDEFINITE */
-      if (fa == 1.0) { t = a * exp(1000.0); /* Infinity */ }
+      if (fa == 1.0) {
+        t = a * exp(1000.0); /* Infinity */
+      }
     } else if (fa >= 0.9375) {
       /* Based on: J.M. Blair, C.A. Edwards, J.H. Johnson: Rational Chebyshev
          Approximations for the Inverse of the Error Function. Mathematics of
@@ -113,7 +115,9 @@ struct RandomGenerator<RandGenCode::NORMAL, CODE> {
       q = q * t + 1.3858762165532246059e-4;
       q = q * t + 1.1738313872397777529e-6;
       t = p / (q * t);
-      if (a < 0.0) t = -t;
+      if (a < 0.0) {
+        t = -t;
+      }
     } else if (fa >= 0.75) {
       /* Based on: J.M. Blair, C.A. Edwards, J.H. Johnson: Rational Chebyshev
          Approximations for the Inverse of the Error Function. Mathematics of
@@ -177,15 +181,15 @@ struct RandomGenerator<RandGenCode::NORMAL, CODE> {
 template <legate::Type::Code CODE>
 struct RandomGenerator<RandGenCode::INTEGER, CODE> {
   using RNG = Philox_2x32<10>;
-  using VAL = legate::legate_type_of<CODE>;
+  using VAL = legate::type_of<CODE>;
 
   static constexpr bool valid = legate::is_integral<CODE>::value;
 
-  RandomGenerator(uint32_t ep, const std::vector<legate::Store>& args) : epoch(ep)
+  RandomGenerator(uint32_t ep, const std::vector<legate::Scalar>& args) : epoch(ep)
   {
     assert(args.size() == 2);
-    lo   = args[0].scalar<VAL>();
-    diff = args[1].scalar<VAL>() - lo;
+    lo   = args[0].value<VAL>();
+    diff = args[1].value<VAL>() - lo;
   }
 
   __CUDAPREFIX__ double operator()(uint32_t hi_bits, uint32_t lo_bits) const

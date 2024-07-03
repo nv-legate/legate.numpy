@@ -1,4 +1,4 @@
-/* Copyright 2021-2022 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,8 +24,8 @@ using namespace legate;
 template <ConvertCode NAN_OP, Type::Code DST_TYPE, Type::Code SRC_TYPE, int DIM>
 struct ConvertImplBody<VariantKind::CPU, NAN_OP, DST_TYPE, SRC_TYPE, DIM> {
   using OP  = ConvertOp<NAN_OP, DST_TYPE, SRC_TYPE>;
-  using SRC = legate_type_of<SRC_TYPE>;
-  using DST = legate_type_of<DST_TYPE>;
+  using SRC = type_of<SRC_TYPE>;
+  using DST = type_of<DST_TYPE>;
 
   void operator()(OP func,
                   AccessorWO<DST, DIM> out,
@@ -38,7 +38,9 @@ struct ConvertImplBody<VariantKind::CPU, NAN_OP, DST_TYPE, SRC_TYPE, DIM> {
     if (dense) {
       auto outptr = out.ptr(rect);
       auto inptr  = in.ptr(rect);
-      for (size_t idx = 0; idx < volume; ++idx) outptr[idx] = func(inptr[idx]);
+      for (size_t idx = 0; idx < volume; ++idx) {
+        outptr[idx] = func(inptr[idx]);
+      }
     } else {
       for (size_t idx = 0; idx < volume; ++idx) {
         auto p = pitches.unflatten(idx, rect.lo);
@@ -48,7 +50,7 @@ struct ConvertImplBody<VariantKind::CPU, NAN_OP, DST_TYPE, SRC_TYPE, DIM> {
   }
 };
 
-/*static*/ void ConvertTask::cpu_variant(TaskContext& context)
+/*static*/ void ConvertTask::cpu_variant(TaskContext context)
 {
   convert_template<VariantKind::CPU>(context);
 }

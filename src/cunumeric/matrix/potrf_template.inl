@@ -1,4 +1,4 @@
-/* Copyright 2021-2022 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,13 +60,15 @@ struct support_potrf<Type::Code::COMPLEX128> : std::true_type {};
 template <VariantKind KIND>
 struct PotrfImpl {
   template <Type::Code CODE, std::enable_if_t<support_potrf<CODE>::value>* = nullptr>
-  void operator()(Array& array) const
+  void operator()(legate::PhysicalStore array) const
   {
-    using VAL = legate_type_of<CODE>;
+    using VAL = type_of<CODE>;
 
     auto shape = array.shape<2>();
 
-    if (shape.empty()) return;
+    if (shape.empty()) {
+      return;
+    }
 
     size_t strides[2];
 
@@ -79,7 +81,7 @@ struct PotrfImpl {
   }
 
   template <Type::Code CODE, std::enable_if_t<!support_potrf<CODE>::value>* = nullptr>
-  void operator()(Array& array) const
+  void operator()(legate::PhysicalStore array) const
   {
     assert(false);
   }
@@ -88,8 +90,8 @@ struct PotrfImpl {
 template <VariantKind KIND>
 static void potrf_template(TaskContext& context)
 {
-  auto& array = context.outputs()[0];
-  type_dispatch(array.code(), PotrfImpl<KIND>{}, array);
+  auto array = context.output(0);
+  type_dispatch(array.type().code(), PotrfImpl<KIND>{}, array);
 }
 
 }  // namespace cunumeric

@@ -1,4 +1,4 @@
-/* Copyright 2021-2022 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,9 @@ void PotrfImplBody<VariantKind::OMP, Type::Code::FLOAT32>::operator()(float* arr
   char uplo    = 'L';
   int32_t info = 0;
   LAPACK_spotrf(&uplo, &n, array, &m, &info);
-  if (info != 0) throw legate::TaskException("Matrix is not positive definite");
+  if (info != 0) {
+    throw legate::TaskException("Matrix is not positive definite");
+  }
 }
 
 template <>
@@ -44,7 +46,9 @@ void PotrfImplBody<VariantKind::OMP, Type::Code::FLOAT64>::operator()(double* ar
   char uplo    = 'L';
   int32_t info = 0;
   LAPACK_dpotrf(&uplo, &n, array, &m, &info);
-  if (info != 0) throw legate::TaskException("Matrix is not positive definite");
+  if (info != 0) {
+    throw legate::TaskException("Matrix is not positive definite");
+  }
 }
 
 template <>
@@ -55,7 +59,9 @@ void PotrfImplBody<VariantKind::OMP, Type::Code::COMPLEX64>::operator()(complex<
   char uplo    = 'L';
   int32_t info = 0;
   LAPACK_cpotrf(&uplo, &n, reinterpret_cast<__complex__ float*>(array), &m, &info);
-  if (info != 0) throw legate::TaskException("Matrix is not positive definite");
+  if (info != 0) {
+    throw legate::TaskException("Matrix is not positive definite");
+  }
 }
 
 template <>
@@ -66,10 +72,12 @@ void PotrfImplBody<VariantKind::OMP, Type::Code::COMPLEX128>::operator()(complex
   char uplo    = 'L';
   int32_t info = 0;
   LAPACK_zpotrf(&uplo, &n, reinterpret_cast<__complex__ double*>(array), &m, &info);
-  if (info != 0) throw legate::TaskException("Matrix is not positive definite");
+  if (info != 0) {
+    throw legate::TaskException("Matrix is not positive definite");
+  }
 }
 
-/*static*/ void PotrfTask::omp_variant(TaskContext& context)
+/*static*/ void PotrfTask::omp_variant(TaskContext context)
 {
   openblas_set_num_threads(omp_get_max_threads());
   potrf_template<VariantKind::OMP>(context);

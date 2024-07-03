@@ -1,4 +1,4 @@
-/* Copyright 2021-2022 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,11 +27,14 @@ struct laplace_t<float> {
   RANDUTIL_QUALIFIERS float operator()(gen_t& gen)
   {
     float y = curand_uniform(&gen);  // y cannot be zero
-    if (y == 0.5f) return mu;
-    if (y < 0.5f)
+    if (y == 0.5f) {
+      return mu;
+    }
+    if (y < 0.5f) {
       return mu + beta * ::logf(2.0f * y);
-    else
+    } else {
       return mu - beta * ::logf(2.0f * y - 1.0f);  // y can be 1.0 => revert y to avoid this
+    }
   }
 };
 
@@ -43,10 +46,13 @@ struct laplace_t<double> {
   RANDUTIL_QUALIFIERS double operator()(gen_t& gen)
   {
     double y = curand_uniform_double(&gen);  // y cannot be zero
-    if (y == 0.5) return mu;
-    if (y < 0.5)
+    if (y == 0.5) {
+      return mu;
+    }
+    if (y < 0.5) {
       return mu + beta * ::log(2.0 * y);
-    else
+    } else {
       return mu - beta * ::log(2.0 * y - 1.0);  // y can be 1.0 => revert y to avoid this
+    }
   }
 };

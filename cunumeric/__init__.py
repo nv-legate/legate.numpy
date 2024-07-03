@@ -1,4 +1,4 @@
-# Copyright 2021-2022 NVIDIA Corporation
+# Copyright 2024 NVIDIA Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,18 +24,15 @@ with GPU acceleration.
 """
 from __future__ import annotations
 
-import os
-
 import numpy as _np
 
-from cunumeric import linalg, random, fft, ma
-from cunumeric.array import maybe_convert_to_np_ndarray, ndarray
-from cunumeric.bits import packbits, unpackbits
-from cunumeric.module import *
-from cunumeric._ufunc import *
-from cunumeric.logic import *
-from cunumeric.window import bartlett, blackman, hamming, hanning, kaiser
-from cunumeric.coverage import clone_module
+from . import linalg, random, fft, ma
+from ._array.array import ndarray
+from ._array.util import maybe_convert_to_np_ndarray
+from ._module import *
+from ._ufunc import *
+from ._utils.array import is_supported_dtype
+from ._utils.coverage import clone_module
 
 clone_module(_np, globals(), maybe_convert_to_np_ndarray)
 

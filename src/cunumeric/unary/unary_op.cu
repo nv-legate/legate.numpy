@@ -1,4 +1,4 @@
-/* Copyright 2021-2022 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,9 @@ static __global__ void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM)
   dense_kernel(size_t volume, Function func, RES* out, const ARG* in)
 {
   const size_t idx = global_tid_1d();
-  if (idx >= volume) return;
+  if (idx >= volume) {
+    return;
+  }
   out[idx] = func(in[idx]);
 }
 
@@ -35,7 +37,9 @@ static __global__ void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM)
   generic_kernel(size_t volume, Function func, WriteAcc out, ReadAcc in, Pitches pitches, Rect rect)
 {
   const size_t idx = global_tid_1d();
-  if (idx >= volume) return;
+  if (idx >= volume) {
+    return;
+  }
   auto point = pitches.unflatten(idx, rect.lo);
   out[point] = func(in[point]);
 }
@@ -45,7 +49,9 @@ static __global__ void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM)
   dense_copy_kernel(size_t volume, VAL* out, const VAL* in)
 {
   const size_t idx = global_tid_1d();
-  if (idx >= volume) return;
+  if (idx >= volume) {
+    return;
+  }
   out[idx] = in[idx];
 }
 
@@ -58,7 +64,9 @@ static __global__ void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM)
                       Rect<DIM> rect)
 {
   const size_t idx = global_tid_1d();
-  if (idx >= volume) return;
+  if (idx >= volume) {
+    return;
+  }
   auto point = pitches.unflatten(idx, rect.lo);
   out[point] = in[point];
 }
@@ -87,7 +95,7 @@ struct UnaryOpImplBody<VariantKind::GPU, OP_CODE, CODE, DIM> {
       generic_kernel<<<blocks, THREADS_PER_BLOCK, 0, stream>>>(
         volume, func, out, in, pitches, rect);
     }
-    CHECK_CUDA_STREAM(stream);
+    CUNUMERIC_CHECK_CUDA_STREAM(stream);
   }
 };
 
@@ -109,7 +117,7 @@ struct PointCopyImplBody<VariantKind::GPU, VAL, DIM> {
     } else {
       generic_copy_kernel<<<blocks, THREADS_PER_BLOCK, 0, stream>>>(volume, out, in, pitches, rect);
     }
-    CHECK_CUDA_STREAM(stream);
+    CUNUMERIC_CHECK_CUDA_STREAM(stream);
   }
 };
 
@@ -118,7 +126,9 @@ static __global__ void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM)
   dense_kernel_multiout(size_t volume, Function func, LHS* lhs, const RHS1* rhs1, RHS2* rhs2)
 {
   const size_t idx = global_tid_1d();
-  if (idx >= volume) return;
+  if (idx >= volume) {
+    return;
+  }
   lhs[idx] = func(rhs1[idx], &rhs2[idx]);
 }
 
@@ -138,7 +148,9 @@ static __global__ void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM)
                           Rect rect)
 {
   const size_t idx = global_tid_1d();
-  if (idx >= volume) return;
+  if (idx >= volume) {
+    return;
+  }
   auto point = pitches.unflatten(idx, rect.lo);
   lhs[point] = func(rhs1[point], rhs2.ptr(point));
 }
@@ -171,11 +183,11 @@ struct MultiOutUnaryOpImplBody<VariantKind::GPU, OP_CODE, CODE, DIM> {
       generic_kernel_multiout<<<blocks, THREADS_PER_BLOCK, 0, stream>>>(
         volume, func, lhs, rhs1, rhs2, pitches, rect);
     }
-    CHECK_CUDA_STREAM(stream);
+    CUNUMERIC_CHECK_CUDA_STREAM(stream);
   }
 };
 
-/*static*/ void UnaryOpTask::gpu_variant(TaskContext& context)
+/*static*/ void UnaryOpTask::gpu_variant(TaskContext context)
 {
   unary_op_template<VariantKind::GPU>(context);
 }

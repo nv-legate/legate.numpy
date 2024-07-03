@@ -1,4 +1,4 @@
-# Copyright 2021-2022 NVIDIA Corporation
+# Copyright 2024 NVIDIA Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
 
 from functools import lru_cache
 from itertools import permutations, product
-from typing import List, Optional, Set, Tuple
 
 import numpy as np
 import pytest
@@ -44,7 +43,7 @@ def gen_operand(
     used_modes: int,
     dim_lim: int,
     mode_lim: int,
-    op: Optional[List[int]] = None,
+    op: list[int] | None = None,
 ):
     if op is None:
         op = []
@@ -77,8 +76,8 @@ def gen_operand(
 # Exhaustively generate all (normalized) expressions within some limits. These
 # limits are set low by default, to keep the unit test running time low.
 def gen_expr(
-    opers: Optional[List[List[int]]] = None,
-    cache: Optional[Set[Tuple[Tuple[int]]]] = None,
+    opers: list[list[int]] | None = None,
+    cache: set[tuple[tuple[int]]] | None = None,
 ):
     if opers is None:
         opers = []

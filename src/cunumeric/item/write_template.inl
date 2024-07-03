@@ -1,4 +1,4 @@
-/* Copyright 2021-2022 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,9 +29,9 @@ struct WriteImplBody;
 template <VariantKind KIND>
 struct WriteImpl {
   template <Type::Code CODE>
-  void operator()(Array& out_arr, Array& in_arr) const
+  void operator()(legate::PhysicalStore out_arr, legate::PhysicalStore in_arr) const
   {
-    using VAL = legate_type_of<CODE>;
+    using VAL = type_of<CODE>;
     auto out  = out_arr.write_accessor<VAL, 1>();
     auto in   = in_arr.read_accessor<VAL, 1>();
     WriteImplBody<KIND, VAL>()(out, in);
@@ -41,9 +41,9 @@ struct WriteImpl {
 template <VariantKind KIND>
 static void write_template(TaskContext& context)
 {
-  auto& in  = context.inputs()[0];
-  auto& out = context.outputs()[0];
-  type_dispatch(out.code(), WriteImpl<KIND>{}, out, in);
+  auto in  = context.input(0);
+  auto out = context.output(0);
+  type_dispatch(out.type().code(), WriteImpl<KIND>{}, out, in);
 }
 
 }  // namespace cunumeric

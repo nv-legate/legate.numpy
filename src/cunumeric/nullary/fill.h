@@ -1,4 +1,4 @@
-/* Copyright 2021-2022 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +16,13 @@
 
 #pragma once
 
-#include "cunumeric/cunumeric.h"
+#include "cunumeric/cunumeric_task.h"
 
 namespace cunumeric {
 
 struct FillArgs {
-  const Array& out;
-  const Array& fill_value;
-  bool is_argval;
+  legate::PhysicalStore out;
+  legate::PhysicalStore fill_value;
 };
 
 class FillTask : public CuNumericTask<FillTask> {
@@ -31,12 +30,12 @@ class FillTask : public CuNumericTask<FillTask> {
   static const int TASK_ID = CUNUMERIC_FILL;
 
  public:
-  static void cpu_variant(legate::TaskContext& context);
-#ifdef LEGATE_USE_OPENMP
-  static void omp_variant(legate::TaskContext& context);
+  static void cpu_variant(legate::TaskContext context);
+#if LEGATE_DEFINED(LEGATE_USE_OPENMP)
+  static void omp_variant(legate::TaskContext context);
 #endif
-#ifdef LEGATE_USE_CUDA
-  static void gpu_variant(legate::TaskContext& context);
+#if LEGATE_DEFINED(LEGATE_USE_CUDA)
+  static void gpu_variant(legate::TaskContext context);
 #endif
 };
 

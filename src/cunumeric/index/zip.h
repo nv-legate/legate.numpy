@@ -1,4 +1,4 @@
-/* Copyright 2022 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,13 @@
 
 #pragma once
 
-#include "cunumeric/cunumeric.h"
+#include "cunumeric/cunumeric_task.h"
 
 namespace cunumeric {
 
 struct ZipArgs {
-  const Array& out;
-  const std::vector<Array>& inputs;
+  legate::PhysicalStore out;
+  std::vector<legate::PhysicalStore> inputs;
   const int64_t N;
   const int64_t key_dim;
   const int64_t start_index;
@@ -34,20 +34,21 @@ class ZipTask : public CuNumericTask<ZipTask> {
   static const int TASK_ID = CUNUMERIC_ZIP;
 
  public:
-  static void cpu_variant(legate::TaskContext& context);
-#ifdef LEGATE_USE_OPENMP
-  static void omp_variant(legate::TaskContext& context);
+  static void cpu_variant(legate::TaskContext context);
+#if LEGATE_DEFINED(LEGATE_USE_OPENMP)
+  static void omp_variant(legate::TaskContext context);
 #endif
-#ifdef LEGATE_USE_CUDA
-  static void gpu_variant(legate::TaskContext& context);
+#if LEGATE_DEFINED(LEGATE_USE_CUDA)
+  static void gpu_variant(legate::TaskContext context);
 #endif
 };
 
 constexpr coord_t compute_idx(coord_t index, coord_t extent)
 {
   coord_t new_index = index < 0 ? index + extent : index;
-  if (new_index < 0 || new_index >= extent)
+  if (new_index < 0 || new_index >= extent) {
     throw legate::TaskException("index is out of bounds in index array");
+  }
   return new_index;
 }
 

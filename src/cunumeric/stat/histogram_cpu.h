@@ -1,4 +1,4 @@
-/* Copyright 2023 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,11 +29,12 @@
 #include <tuple>
 #include <vector>
 
-#include "cunumeric/stat/histogram_gen.h"
-
-#ifndef LEGATE_USE_CUDA
-using cudaStream_t = void*;
+#if LEGATE_DEFINED(LEGATE_USE_CUDA) and LEGATE_DEFINED(LEGATE_NVCC)
+#include "cunumeric/cuda_help.h"
+#else
+#define cudaStream_t std::int32_t
 #endif
+#include "cunumeric/stat/histogram_gen.h"
 
 namespace cunumeric {
 namespace detail {
@@ -61,7 +62,7 @@ struct segmented_sum_t<exe_policy_t,
   }
   void operator()(void)
   {
-    for (auto interval_index = 0; interval_index < n_intervals_; ++interval_index) {
+    for (size_t interval_index = 0; interval_index < n_intervals_; ++interval_index) {
       auto next_index = interval_index + 1;
 
       ptr_hist_[interval_index] = thrust::reduce(thrust::seq,

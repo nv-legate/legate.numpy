@@ -1,4 +1,4 @@
-/* Copyright 2021-2022 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ struct NonzeroImpl {
   template <Type::Code CODE, int32_t DIM>
   void operator()(NonzeroArgs& args) const
   {
-    using VAL = legate_type_of<CODE>;
+    using VAL = type_of<CODE>;
 
     auto rect = args.input.shape<DIM>();
 
@@ -40,7 +40,9 @@ struct NonzeroImpl {
     size_t volume = pitches.flatten(rect);
 
     if (volume == 0) {
-      for (auto& store : args.results) store.bind_empty_data();
+      for (auto& store : args.results) {
+        store.bind_empty_data();
+      }
       return;
     }
 
@@ -52,7 +54,11 @@ struct NonzeroImpl {
 template <VariantKind KIND>
 static void nonzero_template(TaskContext& context)
 {
-  NonzeroArgs args{context.inputs()[0], context.outputs()};
+  std::vector<legate::PhysicalStore> outputs;
+  for (auto& output : context.outputs()) {
+    outputs.emplace_back(output);
+  }
+  NonzeroArgs args{context.input(0), std::move(outputs)};
   double_dispatch(args.input.dim(), args.input.code(), NonzeroImpl<KIND>{}, args);
 }
 

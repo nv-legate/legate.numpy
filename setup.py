@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# Copyright 2021-2022 NVIDIA Corporation
+# Copyright 2024 NVIDIA Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -33,9 +33,9 @@ setup(
         "Topic :: Scientific/Engineering",
         "License :: OSI Approved :: Apache Software License",
         "Programming Language :: Python",
-        "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
     ],
     packages=find_packages(
         where=".",
@@ -44,6 +44,6 @@ setup(
     package_data={"cunumeric": ["_sphinxext/_templates/*.rst"]},
     include_package_data=True,
     cmdclass=versioneer.get_cmdclass(),
-    install_requires=["numpy>=1.22"],
+    install_requires=["numpy>=1.22,<2"],
     zip_safe=False,
 )

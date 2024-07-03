@@ -1,4 +1,4 @@
-# Copyright 2022 NVIDIA Corporation
+# Copyright 2024 NVIDIA Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -68,7 +68,7 @@ class TestArgSort(object):
     def test_arr_none(self):
         res_np = np.argsort(
             None
-        )  # numpy.AxisError: axis -1 is out of bounds for array of dimension 0
+        )  # AxisError: axis -1 is out of bounds for array of dimension 0
         res_num = num.argsort(
             None
         )  # AttributeError: 'NoneType' object has no attribute 'shape'
@@ -98,7 +98,7 @@ class TestArgSort(object):
         #     if self.deferred is None:
         #         if self.parent is None:
         #
-        # > assert self.runtime.is_supported_type(self.array.dtype)
+        # > assert self.runtime.is_supported_dtype(self.array.dtype)
         # E
         # AssertionError
         #

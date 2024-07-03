@@ -1,4 +1,4 @@
-/* Copyright 2022 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,14 +39,18 @@ struct WrapImplBody<VariantKind::CPU, DIM> {
     if (dense) {
       auto outptr = out.ptr(rect_out);
       for (int64_t i = start; i <= end; i++) {
-        if (check_bounds) check_idx(i, volume_base, indices);
+        if (check_bounds) {
+          check_idx(i, volume_base, indices);
+        }
         const int64_t input_idx = compute_idx(i, volume_base, indices);
         auto point              = pitches_base.unflatten(input_idx, rect_base.lo);
         outptr[i - start]       = point;
       }
     } else {
       for (int64_t i = start; i <= end; i++) {
-        if (check_bounds) check_idx(i, volume_base, indices);
+        if (check_bounds) {
+          check_idx(i, volume_base, indices);
+        }
         const int64_t input_idx = compute_idx(i, volume_base, indices);
         auto point              = pitches_base.unflatten(input_idx, rect_base.lo);
         out[i]                  = point;
@@ -55,7 +59,7 @@ struct WrapImplBody<VariantKind::CPU, DIM> {
   }
 };
 
-/*static*/ void WrapTask::cpu_variant(TaskContext& context)
+/*static*/ void WrapTask::cpu_variant(TaskContext context)
 {
   wrap_template<VariantKind::CPU>(context);
 }

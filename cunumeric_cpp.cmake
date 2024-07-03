@@ -1,5 +1,5 @@
 #=============================================================================
-# Copyright 2022 NVIDIA Corporation
+# Copyright 2024 NVIDIA Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -56,7 +56,7 @@ endif()
 # add third party dependencies using CPM
 rapids_cpm_init(OVERRIDE ${CMAKE_CURRENT_SOURCE_DIR}/cmake/versions.json)
 
-find_package(OpenMP)
+rapids_find_package(OpenMP GLOBAL_TARGETS OpenMP::OpenMP_CXX)
 
 option(Legion_USE_CUDA "Use CUDA" ON)
 option(Legion_USE_OpenMP "Use OpenMP" ${OpenMP_FOUND})
@@ -124,6 +124,7 @@ list(APPEND cunumeric_SOURCES
   src/cunumeric/scan/scan_global.cc
   src/cunumeric/scan/scan_local.cc
   src/cunumeric/binary/binary_op.cc
+  src/cunumeric/binary/binary_op_util.cc
   src/cunumeric/binary/binary_red.cc
   src/cunumeric/bits/packbits.cc
   src/cunumeric/bits/unpackbits.cc
@@ -152,7 +153,9 @@ list(APPEND cunumeric_SOURCES
   src/cunumeric/matrix/matvecmul.cc
   src/cunumeric/matrix/dot.cc
   src/cunumeric/matrix/potrf.cc
+  src/cunumeric/matrix/qr.cc
   src/cunumeric/matrix/solve.cc
+  src/cunumeric/matrix/svd.cc
   src/cunumeric/matrix/syrk.cc
   src/cunumeric/matrix/tile.cc
   src/cunumeric/matrix/transpose.cc
@@ -167,8 +170,12 @@ list(APPEND cunumeric_SOURCES
   src/cunumeric/stat/bincount.cc
   src/cunumeric/convolution/convolve.cc
   src/cunumeric/transform/flip.cc
+  src/cunumeric/utilities/repartition.cc
   src/cunumeric/arg_redop_register.cc
   src/cunumeric/mapper.cc
+  src/cunumeric/ndarray.cc
+  src/cunumeric/operators.cc
+  src/cunumeric/runtime.cc
   src/cunumeric/cephes/chbevl.cc
   src/cunumeric/cephes/i0.cc
   src/cunumeric/stat/histogram.cc
@@ -206,7 +213,9 @@ if(Legion_USE_OpenMP)
     src/cunumeric/matrix/matvecmul_omp.cc
     src/cunumeric/matrix/dot_omp.cc
     src/cunumeric/matrix/potrf_omp.cc
+    src/cunumeric/matrix/qr_omp.cc
     src/cunumeric/matrix/solve_omp.cc
+    src/cunumeric/matrix/svd_omp.cc
     src/cunumeric/matrix/syrk_omp.cc
     src/cunumeric/matrix/tile_omp.cc
     src/cunumeric/matrix/transpose_omp.cc
@@ -258,7 +267,9 @@ if(Legion_USE_CUDA)
     src/cunumeric/matrix/matvecmul.cu
     src/cunumeric/matrix/dot.cu
     src/cunumeric/matrix/potrf.cu
+    src/cunumeric/matrix/qr.cu
     src/cunumeric/matrix/solve.cu
+    src/cunumeric/matrix/svd.cu
     src/cunumeric/matrix/syrk.cu
     src/cunumeric/matrix/tile.cu
     src/cunumeric/matrix/transpose.cu
@@ -272,6 +283,7 @@ if(Legion_USE_CUDA)
     src/cunumeric/convolution/convolve.cu
     src/cunumeric/fft/fft.cu
     src/cunumeric/transform/flip.cu
+    src/cunumeric/utilities/repartition.cu
     src/cunumeric/arg_redop_register.cu
     src/cunumeric/cudalibs.cu
     src/cunumeric/stat/histogram.cu
@@ -342,6 +354,14 @@ if(Legion_USE_CUDA OR cunumeric_cuRAND_INCLUDE_DIR)
   endif()
 endif()
 
+# add sources for cusolverMp
+if(Legion_USE_CUDA AND CUSOLVERMP_DIR)
+  list(APPEND cunumeric_SOURCES
+    src/cunumeric/matrix/mp_potrf.cu
+    src/cunumeric/matrix/mp_solve.cu
+  )
+endif()
+
 list(APPEND cunumeric_SOURCES
   # This must always be the last file!
   # It guarantees we do our registration callback
@@ -403,13 +423,12 @@ if(NOT Legion_USE_CUDA AND cunumeric_cuRAND_INCLUDE_DIR)
   target_include_directories(cunumeric PRIVATE ${cunumeric_cuRAND_INCLUDE_DIR})
 endif()
 
-# Change THRUST_DEVICE_SYSTEM for `.cpp` files
-if(Legion_USE_OpenMP)
-  list(APPEND cunumeric_CXX_OPTIONS -UTHRUST_DEVICE_SYSTEM)
-  list(APPEND cunumeric_CXX_OPTIONS -DTHRUST_DEVICE_SYSTEM=THRUST_DEVICE_SYSTEM_OMP)
-elseif(NOT Legion_USE_CUDA)
-  list(APPEND cunumeric_CXX_OPTIONS -UTHRUST_DEVICE_SYSTEM)
-  list(APPEND cunumeric_CXX_OPTIONS -DTHRUST_DEVICE_SYSTEM=THRUST_DEVICE_SYSTEM_CPP)
+if(Legion_USE_CUDA AND CUSOLVERMP_DIR)
+  message(VERBOSE "cunumeric: CUSOLVERMP_DIR ${CUSOLVERMP_DIR}")
+  list(APPEND cunumeric_CXX_DEFS CUNUMERIC_USE_CUSOLVERMP)
+  list(APPEND cunumeric_CUDA_DEFS CUNUMERIC_USE_CUSOLVERMP)
+  target_include_directories(cunumeric PRIVATE ${CUSOLVERMP_DIR}/include)
+  target_link_libraries(cunumeric PRIVATE ${CUSOLVERMP_DIR}/lib/libcusolverMp.so)
 endif()
 
 target_compile_options(cunumeric
@@ -421,10 +440,10 @@ target_compile_definitions(cunumeric
           "$<$<COMPILE_LANGUAGE:CUDA>:${cunumeric_CUDA_DEFS}>")
 
 target_include_directories(cunumeric
-  PRIVATE
+  PUBLIC
     $<BUILD_INTERFACE:${cunumeric_SOURCE_DIR}/src>
   INTERFACE
-    $<INSTALL_INTERFACE:include>
+    $<INSTALL_INTERFACE:include/cunumeric>
 )
 
 if(Legion_USE_CUDA)
@@ -453,8 +472,20 @@ install(TARGETS cunumeric
         EXPORT cunumeric-exports)
 
 install(
-  FILES ${CMAKE_CURRENT_BINARY_DIR}/include/cunumeric/version_config.hpp
+  FILES src/cunumeric.h
+        ${CMAKE_CURRENT_BINARY_DIR}/include/cunumeric/version_config.hpp
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/cunumeric)
+
+install(
+  FILES src/cunumeric/cunumeric_c.h
+        src/cunumeric/ndarray.h
+        src/cunumeric/ndarray.inl
+        src/cunumeric/operators.h
+        src/cunumeric/operators.inl
+        src/cunumeric/runtime.h
+        src/cunumeric/slice.h
+        src/cunumeric/typedefs.h
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/cunumeric/cunumeric)
 
 if(cunumeric_INSTALL_TBLIS)
   install(DIRECTORY ${tblis_BINARY_DIR}/lib/ DESTINATION ${lib_dir})
@@ -503,3 +534,9 @@ rapids_export(
   NAMESPACE cunumeric::
   DOCUMENTATION doc_string
   FINAL_CODE_BLOCK code_string)
+
+if(cunumeric_BUILD_TESTS)
+  include(CTest)
+
+  add_subdirectory(tests/cpp)
+endif()

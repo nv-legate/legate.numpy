@@ -1,4 +1,4 @@
-/* Copyright 2021-2022 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,14 +31,16 @@ struct BincountImpl {
   template <Type::Code CODE, std::enable_if_t<is_integral<CODE>::value>* = nullptr>
   void operator()(BincountArgs& args) const
   {
-    using VAL = legate_type_of<CODE>;
+    using VAL = type_of<CODE>;
 
     auto rect     = args.rhs.shape<1>();
     auto lhs_rect = args.lhs.shape<1>();
-    if (rect.empty()) return;
+    if (rect.empty()) {
+      return;
+    }
 
     auto rhs = args.rhs.read_accessor<VAL, 1>(rect);
-    if (args.weights.dim() == 1) {
+    if (args.has_weights) {
       auto weights = args.weights.read_accessor<double, 1>(rect);
       auto lhs =
         args.lhs.reduce_accessor<SumReduction<double>, KIND != VariantKind::GPU, 1>(lhs_rect);
@@ -60,9 +62,19 @@ struct BincountImpl {
 template <VariantKind KIND>
 static void bincount_template(TaskContext& context)
 {
-  auto& inputs     = context.inputs();
-  auto& reductions = context.reductions();
-  BincountArgs args{reductions[0], inputs[0], inputs[1]};
+  auto inputs     = context.inputs();
+  auto reductions = context.reductions();
+
+  BincountArgs args;
+  args.lhs = std::move(reductions[0]);
+  args.rhs = std::move(inputs[0]);
+  if (inputs.size() >= 2) {
+    args.has_weights = true;
+    args.weights     = std::move(inputs[1]);
+  } else {
+    args.has_weights = false;
+  }
+
   type_dispatch(args.rhs.code(), BincountImpl<KIND>{}, args);
 }
 

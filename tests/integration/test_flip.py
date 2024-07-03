@@ -1,4 +1,4 @@
-# Copyright 2021-2022 NVIDIA Corporation
+# Copyright 2024 NVIDIA Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ from itertools import product
 import numpy as np
 import pytest
 from legate.core import LEGATE_MAX_DIM
+from utils.utils import AxisError
 
 import cunumeric as num
 
@@ -48,13 +49,13 @@ class TestFlipErrors:
     def test_axis_outofbound(self):
         axis = 12
         msg = r"out of bounds"
-        with pytest.raises(np.AxisError, match=msg):
+        with pytest.raises(AxisError, match=msg):
             num.flip(a, axis=axis)
 
     def test_axis_outofbound_negative(self):
         axis = -12
         msg = r"out of bounds"
-        with pytest.raises(np.AxisError, match=msg):
+        with pytest.raises(AxisError, match=msg):
             num.flip(a, axis=axis)
 
     def test_repeated_axis(self):
@@ -66,7 +67,7 @@ class TestFlipErrors:
     def test_axis_outofbound_tuple(self):
         axis = (1, 5)
         msg = r"out of bounds"
-        with pytest.raises(np.AxisError, match=msg):
+        with pytest.raises(AxisError, match=msg):
             num.flip(a, axis=axis)
 
 

@@ -1,4 +1,4 @@
-/* Copyright 2021-2022 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,20 +38,24 @@ struct UnaryRedImpl {
   void operator()(UnaryRedArgs& args) const
   {
     using OP  = UnaryRedOp<OP_CODE, CODE>;
-    using RHS = legate_type_of<CODE>;
+    using RHS = type_of<CODE>;
 
     Pitches<DIM - 1> pitches;
     auto rect   = args.rhs.shape<DIM>();
     auto volume = pitches.flatten(rect);
 
-    if (volume == 0) return;
+    if (volume == 0) {
+      return;
+    }
 
     auto rhs = args.rhs.read_accessor<RHS, DIM>(rect);
 
     auto lhs = args.lhs.reduce_accessor<typename OP::OP, KIND != VariantKind::GPU, DIM>(rect);
 
     AccessorRO<bool, DIM> where;
-    if constexpr (HAS_WHERE) { where = args.where.read_accessor<bool, DIM>(rect); }
+    if constexpr (HAS_WHERE) {
+      where = args.where.read_accessor<bool, DIM>(rect);
+    }
     UnaryRedImplBody<KIND, OP_CODE, CODE, DIM, HAS_WHERE>()(
       lhs, rhs, where, rect, pitches, args.collapsed_dim, volume);
   }
@@ -78,14 +82,13 @@ struct UnaryRedDispatch {
 template <VariantKind KIND>
 static void unary_red_template(TaskContext& context)
 {
-  auto& inputs     = context.inputs();
-  auto& reductions = context.reductions();
-  auto& scalars    = context.scalars();
-  bool has_where   = scalars[2].value<bool>();
-  Array dummy_where;
+  auto inputs     = context.inputs();
+  auto reductions = context.reductions();
+  auto& scalars   = context.scalars();
+  bool has_where  = scalars[2].value<bool>();
   UnaryRedArgs args{reductions[0],
                     inputs[0],
-                    has_where ? inputs[1] : dummy_where,
+                    has_where ? inputs[1] : legate::PhysicalStore{nullptr},
                     scalars[0].value<int32_t>(),
                     scalars[1].value<UnaryRedCode>()};
   if (has_where) {

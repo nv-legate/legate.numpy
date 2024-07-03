@@ -1,4 +1,4 @@
-/* Copyright 2022 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,9 @@ __global__ static void copy_kernel(
   size_t volume, TYPE* target, AccessorRO<TYPE, DIM> acc, Pitches<DIM - 1> pitches, Point<DIM> lo)
 {
   size_t offset = blockIdx.x * blockDim.x + threadIdx.x;
-  if (offset >= volume) return;
+  if (offset >= volume) {
+    return;
+  }
   auto p         = pitches.unflatten(offset, Point<DIM>::ZEROES());
   target[offset] = acc[p + lo];
 }
@@ -44,17 +46,17 @@ __host__ static inline void copy_into_buffer(TYPE* target,
                                              cudaStream_t stream)
 {
   if (acc.accessor.is_dense_row_major(rect)) {
-    CHECK_CUDA(cudaMemcpyAsync(
+    CUNUMERIC_CHECK_CUDA(cudaMemcpyAsync(
       target, acc.ptr(rect.lo), volume * sizeof(TYPE), cudaMemcpyDeviceToDevice, stream));
   } else {
-    Pitches<DIM - 1> pitches;
+    Pitches<DIM - 1> pitches{};
     pitches.flatten(rect);
 
     const size_t num_blocks = (volume + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
     copy_kernel<<<num_blocks, THREADS_PER_BLOCK, 0, stream>>>(
       volume, target, acc, pitches, rect.lo);
 
-    CHECK_CUDA_STREAM(stream);
+    CUNUMERIC_CHECK_CUDA_STREAM(stream);
   }
 }
 
@@ -100,9 +102,9 @@ __host__ static inline void cufft_operation(AccessorWO<OUTPUT_TYPE, DIM> out,
   }
 
   const void* in_ptr{nullptr};
-  if (in.accessor.is_dense_row_major(in_rect))
+  if (in.accessor.is_dense_row_major(in_rect)) {
     in_ptr = in.ptr(in_rect.lo);
-  else {
+  } else {
     auto buffer = create_buffer<INPUT_TYPE, DIM>(fft_size_in, Memory::Kind::GPU_FB_MEM);
     in_ptr      = buffer.ptr(zero);
     copy_into_buffer((INPUT_TYPE*)in_ptr, in, in_rect, in_rect.volume(), stream);
@@ -113,7 +115,7 @@ __host__ static inline void cufft_operation(AccessorWO<OUTPUT_TYPE, DIM> out,
                           static_cast<void*>(out.ptr(out_rect.lo)),
                           static_cast<int32_t>(direction)));
   // synchronize before cufft_context runs out of scope
-  CHECK_CUDA(cudaStreamSynchronize(stream));
+  CUNUMERIC_CHECK_CUDA(cudaStreamSynchronize(stream));
 }
 
 // Perform the FFT operation as multiple 1D FFTs along the specified axes (Complex-to-complex case).
@@ -130,8 +132,7 @@ __host__ static inline void cufft_over_axes_c2c(INOUT_TYPE* out,
   dim_t n[DIM];
 
   // Full volume dimensions / strides
-  const Point<DIM> zero = Point<DIM>::ZEROES();
-  const Point<DIM> one  = Point<DIM>::ONES();
+  const Point<DIM> one = Point<DIM>::ONES();
 
   Point<DIM> fft_size = inout_rect.hi - inout_rect.lo + one;
   size_t num_elements = 1;
@@ -143,7 +144,7 @@ __host__ static inline void cufft_over_axes_c2c(INOUT_TYPE* out,
   // Copy input to output buffer (if needed)
   // the computation will be done inplace of the target
   if (in != out) {
-    CHECK_CUDA(cudaMemcpyAsync(
+    CUNUMERIC_CHECK_CUDA(cudaMemcpyAsync(
       out, in, num_elements * sizeof(INOUT_TYPE), cudaMemcpyDeviceToDevice, stream));
   }
 
@@ -156,13 +157,17 @@ __host__ static inline void cufft_over_axes_c2c(INOUT_TYPE* out,
     // Extract number of slices and batches per slice
     int64_t num_slices = 1;
     if (axis != DIM - 1) {
-      for (int32_t i = 0; i < axis; ++i) { num_slices *= n[i]; }
+      for (int32_t i = 0; i < axis; ++i) {
+        num_slices *= n[i];
+      }
     }
     dim_t batches  = num_elements / (num_slices * size_1d);
     int64_t offset = batches * size_1d;
 
     dim_t stride = 1;
-    for (int32_t i = axis + 1; i < DIM; ++i) { stride *= fft_size[i]; }
+    for (int32_t i = axis + 1; i < DIM; ++i) {
+      stride *= fft_size[i];
+    }
     dim_t dist = (axis == DIM - 1) ? size_1d : 1;
 
     // get plan from cache
@@ -171,7 +176,9 @@ __host__ static inline void cufft_over_axes_c2c(INOUT_TYPE* out,
 
     if (cufft_context.workareaSize() > 0) {
       if (cufft_context.workareaSize() > last_workarea_size) {
-        if (last_workarea_size > 0) workarea_buffer.destroy();
+        if (last_workarea_size > 0) {
+          workarea_buffer.destroy();
+        }
         workarea_buffer =
           create_buffer<uint8_t>(cufft_context.workareaSize(), Memory::Kind::GPU_FB_MEM);
         last_workarea_size = cufft_context.workareaSize();
@@ -186,7 +193,7 @@ __host__ static inline void cufft_over_axes_c2c(INOUT_TYPE* out,
                               static_cast<int32_t>(direction)));
     }
     // synchronize before cufft_context runs out of scope
-    CHECK_CUDA(cudaStreamSynchronize(stream));
+    CUNUMERIC_CHECK_CUDA(cudaStreamSynchronize(stream));
   }
 }
 
@@ -207,7 +214,6 @@ __host__ static inline void cufft_r2c_c2r(OUTPUT_TYPE* out,
   dim_t onembed[DIM];
 
   // Full volume dimensions / strides
-  const Point<DIM> zero   = Point<DIM>::ZEROES();
   const Point<DIM> one    = Point<DIM>::ONES();
   Point<DIM> fft_size_in  = in_rect.hi - in_rect.lo + one;
   Point<DIM> fft_size_out = out_rect.hi - out_rect.lo + one;
@@ -227,7 +233,9 @@ __host__ static inline void cufft_r2c_c2r(OUTPUT_TYPE* out,
   // Extract number of slices and batches per slice
   int64_t num_slices = 1;
   if (axis != DIM - 1) {
-    for (int32_t i = 0; i < axis; ++i) { num_slices *= n[i]; }
+    for (int32_t i = 0; i < axis; ++i) {
+      num_slices *= n[i];
+    }
   }
   dim_t batches = ((direction == CUNUMERIC_FFT_FORWARD) ? num_elements_in : num_elements_out) /
                   (num_slices * size_1d);
@@ -261,7 +269,7 @@ __host__ static inline void cufft_r2c_c2r(OUTPUT_TYPE* out,
                             static_cast<int32_t>(direction)));
   }
   // synchronize before cufft_context runs out of scope
-  CHECK_CUDA(cudaStreamSynchronize(stream));
+  CUNUMERIC_CHECK_CUDA(cudaStreamSynchronize(stream));
 }
 
 // Perform the FFT operation as multiple 1D FFTs along the specified axes.
@@ -291,7 +299,9 @@ __host__ static inline void cufft_over_axes(AccessorWO<OUTPUT_TYPE, DIM> out,
   {
     Point<DIM> fft_size_in = in_rect.hi - in_rect.lo + Point<DIM>::ONES();
     size_t num_elements_in = 1;
-    for (int32_t i = 0; i < DIM; ++i) { num_elements_in *= fft_size_in[i]; }
+    for (int32_t i = 0; i < DIM; ++i) {
+      num_elements_in *= fft_size_in[i];
+    }
     if (is_c2c) {
       // utilize out as temporary store for c2c
       in_ptr = (INPUT_TYPE*)out.ptr(out_rect.lo);
@@ -332,8 +342,8 @@ __host__ static inline void cufft_over_axes(AccessorWO<OUTPUT_TYPE, DIM> out,
 
 template <CuNumericFFTType FFT_TYPE, Type::Code CODE_OUT, Type::Code CODE_IN, int32_t DIM>
 struct FFTImplBody<VariantKind::GPU, FFT_TYPE, CODE_OUT, CODE_IN, DIM> {
-  using INPUT_TYPE  = legate_type_of<CODE_IN>;
-  using OUTPUT_TYPE = legate_type_of<CODE_OUT>;
+  using INPUT_TYPE  = type_of<CODE_IN>;
+  using OUTPUT_TYPE = type_of<CODE_OUT>;
 
   __host__ void operator()(AccessorWO<OUTPUT_TYPE, DIM> out,
                            AccessorRO<INPUT_TYPE, DIM> in,
@@ -360,7 +370,7 @@ struct FFTImplBody<VariantKind::GPU, FFT_TYPE, CODE_OUT, CODE_IN, DIM> {
   }
 };
 
-/*static*/ void FFTTask::gpu_variant(TaskContext& context)
+/*static*/ void FFTTask::gpu_variant(TaskContext context)
 {
   fft_template<VariantKind::GPU>(context);
 };

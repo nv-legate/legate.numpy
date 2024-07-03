@@ -1,4 +1,4 @@
-# Copyright 2021 NVIDIA Corporation
+# Copyright 2024 NVIDIA Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-
-import warnings
 
 import numpy as np
 import pytest
@@ -55,12 +53,11 @@ def check_1d_c2c(N, dtype=np.float64):
         assert allclose(out, out_num)
 
     # Odd types
-    warnings.filterwarnings(action="ignore", category=np.ComplexWarning)
-    out = np.fft.rfft(Z)
-    out_num = num.fft.rfft(Z_num)
+    out = np.fft.rfft(Z.real)
+    out_num = num.fft.rfft(Z_num.real)
     assert allclose(out, out_num)
-    out = np.fft.ihfft(Z)
-    out_num = num.fft.ihfft(Z_num)
+    out = np.fft.ihfft(Z.real)
+    out_num = num.fft.ihfft(Z_num.real)
     assert allclose(out, out_num)
     assert allclose(Z, Z_num)
 
@@ -106,11 +103,11 @@ def check_2d_c2c(N, dtype=np.float64):
         assert allclose(out, out_num)
 
     # Odd types
-    out = np.fft.rfft2(Z)
-    out_num = num.fft.rfft2(Z_num)
+    out = np.fft.rfft2(Z.real)
+    out_num = num.fft.rfft2(Z_num.real)
     assert allclose(out, out_num)
-    out = np.fft.ihfft(Z)
-    out_num = num.fft.ihfft(Z_num)
+    out = np.fft.ihfft(Z.real)
+    out_num = num.fft.ihfft(Z_num.real)
     assert allclose(out, out_num)
     assert allclose(Z, Z_num)
 
@@ -155,11 +152,11 @@ def check_3d_c2c(N, dtype=np.float64):
         assert allclose(out, out_num)
 
     # Odd types
-    out = np.fft.rfftn(Z)
-    out_num = num.fft.rfftn(Z_num)
+    out = np.fft.rfftn(Z.real)
+    out_num = num.fft.rfftn(Z_num.real)
     assert allclose(out, out_num)
-    out = np.fft.ihfft(Z)
-    out_num = num.fft.ihfft(Z_num)
+    out = np.fft.ihfft(Z.real)
+    out_num = num.fft.ihfft(Z_num.real)
     assert allclose(out, out_num)
     assert allclose(Z, Z_num)
 
@@ -214,8 +211,8 @@ def check_4d_c2c(N, dtype=np.float64):
 
     # Odd types
     assert allclose(out, out_num)
-    out = np.fft.ihfft(Z)
-    out_num = num.fft.ihfft(Z_num)
+    out = np.fft.ihfft(Z.real)
+    out_num = num.fft.ihfft(Z_num.real)
     assert allclose(out, out_num)
     assert allclose(Z, Z_num)
 

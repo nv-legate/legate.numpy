@@ -1,4 +1,4 @@
-/* Copyright 2021-2022 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ using namespace legate;
 
 template <Type::Code CODE, int32_t DIM>
 struct FlipImplBody<VariantKind::CPU, CODE, DIM> {
-  using VAL = legate_type_of<CODE>;
+  using VAL = type_of<CODE>;
 
   void operator()(AccessorWO<VAL, DIM> out,
                   AccessorRO<VAL, DIM> in,
@@ -34,14 +34,15 @@ struct FlipImplBody<VariantKind::CPU, CODE, DIM> {
   {
     for (PointInRectIterator<DIM> itr(rect); itr.valid(); ++itr) {
       auto q = *itr;
-      for (uint32_t idx = 0; idx < axes.size(); ++idx)
+      for (uint32_t idx = 0; idx < axes.size(); ++idx) {
         q[axes[idx]] = rect.hi[axes[idx]] - q[axes[idx]];
+      }
       out[*itr] = in[q];
     }
   }
 };
 
-/*static*/ void FlipTask::cpu_variant(TaskContext& context)
+/*static*/ void FlipTask::cpu_variant(TaskContext context)
 {
   flip_template<VariantKind::CPU>(context);
 }

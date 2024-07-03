@@ -1,4 +1,4 @@
-/* Copyright 2022 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,15 +30,17 @@ struct WindowImplBody;
 template <VariantKind KIND>
 struct WindowImpl {
   template <WindowOpCode OP_CODE>
-  void operator()(Array& output, int64_t M, double beta) const
+  void operator()(legate::PhysicalStore output, int64_t M, double beta) const
   {
     auto rect = output.shape<1>();
 
-    if (rect.empty()) return;
+    if (rect.empty()) {
+      return;
+    }
 
     auto out = output.write_accessor<double, 1>(rect);
 
-#ifndef LEGATE_BOUNDS_CHECKS
+#if !LEGATE_DEFINED(LEGATE_BOUNDS_CHECKS)
     // Check to see if this is dense or not
     bool dense = out.accessor.is_dense_row_major(rect);
 #else
@@ -53,7 +55,7 @@ struct WindowImpl {
 template <VariantKind KIND>
 static void window_template(TaskContext& context)
 {
-  auto& output  = context.outputs().front();
+  auto output   = context.outputs().front();
   auto& scalars = context.scalars();
   auto op_code  = scalars[0].value<WindowOpCode>();
   auto M        = scalars[1].value<int64_t>();

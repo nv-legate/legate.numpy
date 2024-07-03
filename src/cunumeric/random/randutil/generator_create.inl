@@ -1,4 +1,4 @@
-/* Copyright 2021-2022 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,10 @@ static curandStatus_t inner_randutilCreateGenerator(randutilGenerator_t* generat
     case CURAND_RNG_PSEUDO_MRG32K3A:
       return randutilGenerator<curandStateMRG32k3a_t, location>(
         generator, seed, generatorID, stream);
-    default: LEGATE_ABORT;
+    default: {
+      LEGATE_ABORT("Unknown generator type");
+      break;
+    }
   }
   return CURAND_STATUS_TYPE_ERROR;
 }

@@ -1,4 +1,4 @@
-/* Copyright 2022 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,9 @@ __global__ static void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM)
                    const size_t volume)
 {
   size_t offset = blockIdx.x * blockDim.x + threadIdx.x;
-  if (offset >= volume) return;
+  if (offset >= volume) {
+    return;
+  }
   auto point  = pitches.unflatten(offset, lo);
   out[offset] = accessor[point];
 }
@@ -48,7 +50,7 @@ using Piece = std::pair<Buffer<VAL>, size_t>;
 auto get_aligned_size = [](auto size) { return std::max<size_t>(16, (size + 15) / 16 * 16); };
 
 template <typename VAL>
-static Piece<VAL> tree_reduce(Array& output,
+static Piece<VAL> tree_reduce(legate::PhysicalStore& output,
                               Piece<VAL> my_piece,
                               size_t my_id,
                               size_t num_ranks,
@@ -64,7 +66,7 @@ static Piece<VAL> tree_reduce(Array& output,
     //       but I suspect point-to-point can be slower...
     all_sizes[my_id] = my_piece.second;
     CHECK_NCCL(ncclAllGather(all_sizes.ptr(my_id), all_sizes.ptr(0), 1, ncclUint64, *comm, stream));
-    CHECK_CUDA(cudaStreamSynchronize(stream));
+    CUNUMERIC_CHECK_CUDA(cudaStreamSynchronize(stream));
 
     Piece<VAL> other_piece;
     size_t offset           = radix / 2;
@@ -119,11 +121,11 @@ static Piece<VAL> tree_reduce(Array& output,
       assert(my_piece.second <= buf_size);
       my_piece.first = output.create_output_buffer<VAL, 1>(buf_size);
 
-      CHECK_CUDA(cudaMemcpyAsync(my_piece.first.ptr(0),
-                                 p_merged,
-                                 sizeof(VAL) * my_piece.second,
-                                 cudaMemcpyDeviceToDevice,
-                                 stream));
+      CUNUMERIC_CHECK_CUDA(cudaMemcpyAsync(my_piece.first.ptr(0),
+                                           p_merged,
+                                           sizeof(VAL) * my_piece.second,
+                                           cudaMemcpyDeviceToDevice,
+                                           stream));
       merged.destroy();
     }
 
@@ -141,9 +143,9 @@ static Piece<VAL> tree_reduce(Array& output,
 
 template <Type::Code CODE, int32_t DIM>
 struct UniqueImplBody<VariantKind::GPU, CODE, DIM> {
-  using VAL = legate_type_of<CODE>;
+  using VAL = type_of<CODE>;
 
-  void operator()(Array& output,
+  void operator()(legate::PhysicalStore& output,
                   const AccessorRO<VAL, DIM>& in,
                   const Pitches<DIM - 1>& pitches,
                   const Rect<DIM>& rect,
@@ -161,14 +163,14 @@ struct UniqueImplBody<VariantKind::GPU, CODE, DIM> {
     if (volume > 0) {
       if (in.accessor.is_dense_arbitrary(rect)) {
         auto* src = in.ptr(rect.lo);
-        CHECK_CUDA(
+        CUNUMERIC_CHECK_CUDA(
           cudaMemcpyAsync(ptr, src, sizeof(VAL) * volume, cudaMemcpyDeviceToDevice, stream));
       } else {
         const size_t num_blocks = (volume + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
         copy_into_buffer<<<num_blocks, THREADS_PER_BLOCK, 0, stream>>>(
           ptr, in, rect.lo, pitches, volume);
       }
-      CHECK_CUDA_STREAM(stream);
+      CUNUMERIC_CHECK_CUDA_STREAM(stream);
 
       // Find unique values
       thrust::sort(DEFAULT_POLICY.on(stream), ptr, ptr + volume);
@@ -180,9 +182,10 @@ struct UniqueImplBody<VariantKind::GPU, CODE, DIM> {
     auto buf_size = (get_aligned_size(result.second * sizeof(VAL)) + sizeof(VAL) - 1) / sizeof(VAL);
     assert(end - ptr <= buf_size);
     result.first = output.create_output_buffer<VAL, 1>(buf_size);
-    if (result.second > 0)
-      CHECK_CUDA(cudaMemcpyAsync(
+    if (result.second > 0) {
+      CUNUMERIC_CHECK_CUDA(cudaMemcpyAsync(
         result.first.ptr(0), ptr, sizeof(VAL) * result.second, cudaMemcpyDeviceToDevice, stream));
+    }
 
     if (comms.size() > 0) {
       // The launch domain is 1D because of the output region
@@ -190,14 +193,14 @@ struct UniqueImplBody<VariantKind::GPU, CODE, DIM> {
       auto comm = comms[0].get<ncclComm_t*>();
       result    = tree_reduce(output, result, point[0], launch_domain.get_volume(), stream, comm);
     }
-    CHECK_CUDA_STREAM(stream);
+    CUNUMERIC_CHECK_CUDA_STREAM(stream);
 
     // Finally we pack the result
     output.bind_data(result.first, Point<1>(result.second));
   }
 };
 
-/*static*/ void UniqueTask::gpu_variant(TaskContext& context)
+/*static*/ void UniqueTask::gpu_variant(TaskContext context)
 {
   unique_template<VariantKind::GPU>(context);
 }

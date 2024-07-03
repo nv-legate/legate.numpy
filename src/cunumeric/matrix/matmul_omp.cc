@@ -1,4 +1,4 @@
-/* Copyright 2021-2022 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ namespace cunumeric {
 
 using namespace legate;
 
-/*static*/ void MatMulTask::omp_variant(TaskContext& context)
+/*static*/ void MatMulTask::omp_variant(TaskContext context)
 {
   openblas_set_num_threads(omp_get_max_threads());
   matmul_template<VariantKind::OMP>(context);

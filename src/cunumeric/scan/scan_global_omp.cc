@@ -1,4 +1,4 @@
-/* Copyright 2022 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ using namespace legate;
 template <ScanCode OP_CODE, Type::Code CODE, int DIM>
 struct ScanGlobalImplBody<VariantKind::OMP, OP_CODE, CODE, DIM> {
   using OP  = ScanOp<OP_CODE, CODE>;
-  using VAL = legate_type_of<CODE>;
+  using VAL = type_of<CODE>;
 
   void operator()(OP func,
                   const AccessorRW<VAL, DIM>& out,
@@ -70,7 +70,7 @@ struct ScanGlobalImplBody<VariantKind::OMP, OP_CODE, CODE, DIM> {
   }
 };
 
-/*static*/ void ScanGlobalTask::omp_variant(TaskContext& context)
+/*static*/ void ScanGlobalTask::omp_variant(TaskContext context)
 {
   scan_global_template<VariantKind::OMP>(context);
 }

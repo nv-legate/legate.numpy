@@ -1,4 +1,4 @@
-/* Copyright 2021-2022 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,9 +75,9 @@ struct SyrkImplBody<VariantKind::CPU, Type::Code::COMPLEX128> {
   }
 };
 
-/*static*/ void SyrkTask::cpu_variant(TaskContext& context)
+/*static*/ void SyrkTask::cpu_variant(TaskContext context)
 {
-#ifdef LEGATE_USE_OPENMP
+#if LEGATE_DEFINED(LEGATE_USE_OPENMP)
   openblas_set_num_threads(1);  // make sure this isn't overzealous
 #endif
   syrk_template<VariantKind::CPU>(context);

@@ -1,4 +1,4 @@
-/* Copyright 2021-2022 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,11 +33,11 @@ struct ReadImplBody<VariantKind::GPU, VAL> {
   {
     auto stream = get_cached_stream();
     read_value<VAL><<<1, 1, 0, stream>>>(out, in);
-    CHECK_CUDA_STREAM(stream);
+    CUNUMERIC_CHECK_CUDA_STREAM(stream);
   }
 };
 
-/*static*/ void ReadTask::gpu_variant(TaskContext& context)
+/*static*/ void ReadTask::gpu_variant(TaskContext context)
 {
   read_template<VariantKind::GPU>(context);
 }

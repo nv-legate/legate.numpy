@@ -1,4 +1,4 @@
-/* Copyright 2022 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  *
  */
 
-#include "cunumeric/scan/scan_global_util.h"
+#include "cunumeric/scan/scan_util.h"
 #include "cunumeric/pitches.h"
 
 namespace cunumeric {
@@ -30,7 +30,7 @@ struct ScanGlobalImpl {
   void operator()(ScanGlobalArgs& args) const
   {
     using OP  = ScanOp<OP_CODE, CODE>;
-    using VAL = legate_type_of<CODE>;
+    using VAL = type_of<CODE>;
 
     auto out_rect      = args.out.shape<DIM>();
     auto sum_vals_rect = args.sum_vals.shape<DIM>();
@@ -38,9 +38,10 @@ struct ScanGlobalImpl {
     Pitches<DIM - 1> out_pitches;
     size_t volume = out_pitches.flatten(out_rect);
     Pitches<DIM - 1> sum_vals_pitches;
-    size_t sum_vals_volume = sum_vals_pitches.flatten(sum_vals_rect);
 
-    if (volume == 0) return;
+    if (volume == 0) {
+      return;
+    }
 
     auto out      = args.out.read_write_accessor<VAL, DIM>(out_rect);
     auto sum_vals = args.sum_vals.read_accessor<VAL, DIM>(sum_vals_rect);
@@ -71,7 +72,7 @@ static void scan_global_template(TaskContext& context)
 {
   auto task_index = context.get_task_index();
   ScanGlobalArgs args{
-    context.inputs()[1], context.outputs()[0], context.scalars()[0].value<ScanCode>(), task_index};
+    context.input(1), context.output(0), context.scalar(0).value<ScanCode>(), task_index};
   op_dispatch(args.op_code, ScanGlobalDispatch<KIND>{}, args);
 }
 

@@ -31,7 +31,6 @@ cunumeric.ndarray
       ~ndarray.dump
       ~ndarray.dumps
       ~ndarray.fill
-      ~ndarray.find_common_type
       ~ndarray.flatten
       ~ndarray.flip
       ~ndarray.getfield

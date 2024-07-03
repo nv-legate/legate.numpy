@@ -1,4 +1,4 @@
-/* Copyright 2021-2022 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@
 #include "cunumeric/matrix/matvecmul_cpu.inl"
 
 #include <cblas.h>
-#ifdef LEGATE_USE_OPENMP
+#if LEGATE_DEFINED(LEGATE_USE_OPENMP)
 #include <omp.h>
 #endif
 
@@ -27,9 +27,9 @@ namespace cunumeric {
 
 using namespace legate;
 
-/*static*/ void MatVecMulTask::cpu_variant(TaskContext& context)
+/*static*/ void MatVecMulTask::cpu_variant(TaskContext context)
 {
-#ifdef LEGATE_USE_OPENMP
+#if LEGATE_DEFINED(LEGATE_USE_OPENMP)
   openblas_set_num_threads(1);  // make sure this isn't overzealous
 #endif
   matvecmul_template<VariantKind::CPU>(context);

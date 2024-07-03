@@ -1,4 +1,4 @@
-/* Copyright 2021-2022 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  *
  */
 
-#include "cunumeric.h"
+#include "cunumeric/cunumeric_task.h"
 
 #include "cudalibs.h"
 
@@ -31,7 +31,9 @@ cufftContext::cufftContext(cufftPlan* plan) : plan_(plan) {}
 cufftContext::~cufftContext()
 {
   auto& hdl = handle();
-  for (auto type : callback_types_) CHECK_CUFFT(cufftXtClearCallback(hdl, type));
+  for (auto type : callback_types_) {
+    CHECK_CUFFT(cufftXtClearCallback(hdl, type));
+  }
   CHECK_CUFFT(cufftSetWorkArea(hdl, nullptr));
 }
 
@@ -57,7 +59,9 @@ cufftPlanParams::cufftPlanParams(const DomainPoint& size)
     odist(1),
     batch(1)
 {
-  for (int dim = 0; dim < rank; ++dim) n[dim] = size[dim];
+  for (int dim = 0; dim < rank; ++dim) {
+    n[dim] = size[dim];
+  }
 }
 
 cufftPlanParams::cufftPlanParams(int rank,
@@ -87,7 +91,9 @@ bool cufftPlanParams::operator==(const cufftPlanParams& other) const
       equal = equal && (n[dim] == other.n[dim]);
       equal = equal && (inembed[dim] == other.inembed[dim]);
       equal = equal && (onembed[dim] == other.onembed[dim]);
-      if (!equal) break;
+      if (!equal) {
+        break;
+      }
     }
   }
   return equal;
@@ -97,11 +103,17 @@ std::string cufftPlanParams::to_string() const
 {
   std::ostringstream ss;
   ss << "cufftPlanParams[rank(" << rank << "), n(" << n[0];
-  for (int i = 1; i < rank; ++i) ss << "," << n[i];
+  for (int i = 1; i < rank; ++i) {
+    ss << "," << n[i];
+  }
   ss << "), inembed(" << inembed[0];
-  for (int i = 1; i < rank; ++i) ss << "," << inembed[i];
+  for (int i = 1; i < rank; ++i) {
+    ss << "," << inembed[i];
+  }
   ss << "), istride(" << istride << "), idist(" << idist << "), onembed(" << onembed[0];
-  for (int i = 1; i < rank; ++i) ss << "," << onembed[i];
+  for (int i = 1; i < rank; ++i) {
+    ss << "," << onembed[i];
+  }
   ss << "), ostride(" << ostride << "), odist(" << odist << "), batch(" << batch << ")]";
   return std::move(ss).str();
 }
@@ -135,15 +147,22 @@ struct cufftPlanCache {
 
 cufftPlanCache::cufftPlanCache(cufftType type) : type_(type)
 {
-  for (auto& cache : cache_)
-    for (auto& entry : cache) assert(0 == entry.lru_index);
+  for (auto& cache : cache_) {
+    for (auto& entry : cache) {
+      assert(0 == entry.lru_index);
+    }
+  }
 }
 
 cufftPlanCache::~cufftPlanCache()
 {
-  for (auto& cache : cache_)
-    for (auto& entry : cache)
-      if (entry.plan != nullptr) CHECK_CUFFT(cufftDestroy(entry.plan->handle));
+  for (auto& cache : cache_) {
+    for (auto& entry : cache) {
+      if (entry.plan != nullptr) {
+        CHECK_CUFFT(cufftDestroy(entry.plan->handle));
+      }
+    }
+  }
 }
 
 cufftPlan* cufftPlanCache::get_cufft_plan(const cufftPlanParams& params)
@@ -153,7 +172,9 @@ cufftPlan* cufftPlanCache::get_cufft_plan(const cufftPlanParams& params)
   auto& cache   = cache_[params.rank];
   for (int32_t idx = 0; idx < MAX_PLANS; ++idx) {
     auto& entry = cache[idx];
-    if (nullptr == entry.plan) break;
+    if (nullptr == entry.plan) {
+      break;
+    }
     if (*entry.params == params) {
       match = idx;
       cache_hits_++;
@@ -196,7 +217,9 @@ cufftPlan* cufftPlanCache::get_cufft_plan(const cufftPlanParams& params)
     if (entry.lru_index != 0) {
       for (int32_t idx = plan_index + 1; idx < MAX_PLANS; ++idx) {
         auto& other = cache[idx];
-        if (nullptr == other.plan) break;
+        if (nullptr == other.plan) {
+          break;
+        }
         ++other.lru_index;
       }
       entry.lru_index = 0;
@@ -234,7 +257,9 @@ cufftPlan* cufftPlanCache::get_cufft_plan(const cufftPlanParams& params)
     if (entry.lru_index != 0) {
       for (int32_t idx = 0; idx < MAX_PLANS; ++idx) {
         auto& other = cache[idx];
-        if (other.lru_index < entry.lru_index) ++other.lru_index;
+        if (other.lru_index < entry.lru_index) {
+          ++other.lru_index;
+        }
       }
       entry.lru_index = 0;
     }
@@ -243,7 +268,14 @@ cufftPlan* cufftPlanCache::get_cufft_plan(const cufftPlanParams& params)
 }
 
 CUDALibraries::CUDALibraries()
-  : finalized_(false), cublas_(nullptr), cusolver_(nullptr), cutensor_(nullptr), plan_caches_()
+  : finalized_(false),
+    cublas_(nullptr),
+    cusolver_(nullptr),
+#if LEGATE_DEFINED(CUNUMERIC_USE_CUSOLVERMP)
+    cusolvermp_(nullptr),
+#endif
+    cutensor_(nullptr),
+    plan_caches_()
 {
 }
 
@@ -251,11 +283,26 @@ CUDALibraries::~CUDALibraries() { finalize(); }
 
 void CUDALibraries::finalize()
 {
-  if (finalized_) return;
-  if (cublas_ != nullptr) finalize_cublas();
-  if (cusolver_ != nullptr) finalize_cusolver();
-  if (cutensor_ != nullptr) finalize_cutensor();
-  for (auto& pair : plan_caches_) delete pair.second;
+  if (finalized_) {
+    return;
+  }
+  if (cublas_ != nullptr) {
+    finalize_cublas();
+  }
+  if (cusolver_ != nullptr) {
+    finalize_cusolver();
+  }
+#if LEGATE_DEFINED(CUNUMERIC_USE_CUSOLVERMP)
+  if (cusolvermp_ != nullptr) {
+    finalize_cusolvermp();
+  }
+#endif
+  if (cutensor_ != nullptr) {
+    finalize_cutensor();
+  }
+  for (auto& pair : plan_caches_) {
+    delete pair.second;
+  }
   finalized_ = true;
 }
 
@@ -271,10 +318,39 @@ void CUDALibraries::finalize_cusolver()
   cusolver_ = nullptr;
 }
 
+#if LEGATE_DEFINED(CUNUMERIC_USE_CUSOLVERMP)
+void CUDALibraries::finalize_cusolvermp()
+{
+  CHECK_CUSOLVER(cusolverMpDestroy(cusolvermp_));
+  cusolvermp_ = nullptr;
+}
+#endif
+
 void CUDALibraries::finalize_cutensor()
 {
   delete cutensor_;
   cutensor_ = nullptr;
+}
+
+int CUDALibraries::get_device_ordinal()
+{
+  if (ordinal_.has_value()) {
+    return *ordinal_;
+  }
+  int ordinal{-1};
+  CUNUMERIC_CHECK_CUDA(cudaGetDevice(&ordinal));
+  ordinal_ = ordinal;
+  return ordinal;
+}
+
+const cudaDeviceProp& CUDALibraries::get_device_properties()
+{
+  if (device_prop_) {
+    return *device_prop_;
+  }
+  device_prop_ = std::make_unique<cudaDeviceProp>();
+  CUNUMERIC_CHECK_CUDA(cudaGetDeviceProperties(device_prop_.get(), get_device_ordinal()));
+  return *device_prop_;
 }
 
 cublasHandle_t CUDALibraries::get_cublas()
@@ -285,8 +361,9 @@ cublasHandle_t CUDALibraries::get_cublas()
     if (fast_math != nullptr && atoi(fast_math) > 0) {
       // Enable acceleration of single precision routines using TF32 tensor cores.
       cublasStatus_t status = cublasSetMathMode(cublas_, CUBLAS_TF32_TENSOR_OP_MATH);
-      if (status != CUBLAS_STATUS_SUCCESS)
+      if (status != CUBLAS_STATUS_SUCCESS) {
         fprintf(stderr, "WARNING: cuBLAS does not support Tensor cores!");
+      }
     }
   }
   return cublas_;
@@ -294,9 +371,23 @@ cublasHandle_t CUDALibraries::get_cublas()
 
 cusolverDnHandle_t CUDALibraries::get_cusolver()
 {
-  if (nullptr == cusolver_) CHECK_CUSOLVER(cusolverDnCreate(&cusolver_));
+  if (nullptr == cusolver_) {
+    CHECK_CUSOLVER(cusolverDnCreate(&cusolver_));
+  }
   return cusolver_;
 }
+
+#if LEGATE_DEFINED(CUNUMERIC_USE_CUSOLVERMP)
+cusolverMpHandle_t CUDALibraries::get_cusolvermp()
+{
+  if (nullptr == cusolvermp_) {
+    int device = -1;
+    CUNUMERIC_CHECK_CUDA(cudaGetDevice(&device));
+    CHECK_CUSOLVER(cusolverMpCreate(&cusolvermp_, device, get_cached_stream()));
+  }
+  return cusolvermp_;
+}
+#endif
 
 cutensorHandle_t* CUDALibraries::get_cutensor()
 {
@@ -315,16 +406,16 @@ cufftContext CUDALibraries::get_cufft_plan(cufftType type, const cufftPlanParams
   if (plan_caches_.end() == finder) {
     cache              = new cufftPlanCache(type);
     plan_caches_[type] = cache;
-  } else
+  } else {
     cache = finder->second;
+  }
   return cufftContext(cache->get_cufft_plan(params));
 }
 
 static CUDALibraries& get_cuda_libraries(legate::Processor proc)
 {
   if (proc.kind() != legate::Processor::TOC_PROC) {
-    fprintf(stderr, "Illegal request for CUDA libraries for non-GPU processor");
-    LEGATE_ABORT;
+    LEGATE_ABORT("Illegal request for CUDA libraries for non-GPU processor");
   }
 
   static CUDALibraries cuda_libraries[LEGION_MAX_NUM_PROCS];
@@ -351,6 +442,15 @@ cusolverDnContext* get_cusolver()
   return lib.get_cusolver();
 }
 
+#if LEGATE_DEFINED(CUNUMERIC_USE_CUSOLVERMP)
+cusolverMpHandle* get_cusolvermp()
+{
+  const auto proc = legate::Processor::get_executing_processor();
+  auto& lib       = get_cuda_libraries(proc);
+  return lib.get_cusolvermp();
+}
+#endif
+
 cutensorHandle_t* get_cutensor()
 {
   const auto proc = legate::Processor::get_executing_processor();
@@ -365,17 +465,34 @@ cufftContext get_cufft_plan(cufftType type, const cufftPlanParams& params)
   return lib.get_cufft_plan(type, params);
 }
 
+const cudaDeviceProp& get_device_properties()
+{
+  const auto proc = legate::Processor::get_executing_processor();
+  auto& lib       = get_cuda_libraries(proc);
+  return lib.get_device_properties();
+}
+
+int get_device_ordinal()
+{
+  const auto proc = legate::Processor::get_executing_processor();
+  auto& lib       = get_cuda_libraries(proc);
+  return lib.get_device_ordinal();
+}
+
 class LoadCUDALibsTask : public CuNumericTask<LoadCUDALibsTask> {
  public:
   static const int TASK_ID = CUNUMERIC_LOAD_CUDALIBS;
 
  public:
-  static void gpu_variant(legate::TaskContext& context)
+  static void gpu_variant(legate::TaskContext context)
   {
     const auto proc = legate::Processor::get_executing_processor();
     auto& lib       = get_cuda_libraries(proc);
     lib.get_cublas();
     lib.get_cusolver();
+#if LEGATE_DEFINED(CUNUMERIC_USE_CUSOLVERMP)
+    lib.get_cusolvermp();
+#endif
     lib.get_cutensor();
   }
 };
@@ -385,7 +502,7 @@ class UnloadCUDALibsTask : public CuNumericTask<UnloadCUDALibsTask> {
   static const int TASK_ID = CUNUMERIC_UNLOAD_CUDALIBS;
 
  public:
-  static void gpu_variant(legate::TaskContext& context)
+  static void gpu_variant(legate::TaskContext context)
   {
     const auto proc = legate::Processor::get_executing_processor();
     auto& lib       = get_cuda_libraries(proc);

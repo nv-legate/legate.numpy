@@ -1,4 +1,4 @@
-/* Copyright 2023 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -108,7 +108,7 @@ template <typename exe_policy_t>
 struct sync_policy_t<exe_policy_t, std::enable_if_t<!is_host_policy_v<exe_policy_t>>> {
   sync_policy_t() {}
 
-  void operator()(cudaStream_t stream) { CHECK_CUDA_STREAM(stream); }
+  void operator()(cudaStream_t stream) { CUNUMERIC_CHECK_CUDA_STREAM(stream); }
 };
 
 }  // namespace detail

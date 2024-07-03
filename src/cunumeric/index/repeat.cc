@@ -1,4 +1,4 @@
-/* Copyright 2022 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,20 +23,16 @@ using namespace legate;
 
 template <Type::Code CODE, int DIM>
 struct RepeatImplBody<VariantKind::CPU, CODE, DIM> {
-  using VAL = legate_type_of<CODE>;
+  using VAL = type_of<CODE>;
 
-  void operator()(Array& out_array,
+  void operator()(legate::PhysicalStore& out_array,
                   const AccessorRO<VAL, DIM>& in,
                   const int64_t repeats,
                   const int32_t axis,
                   const Rect<DIM>& in_rect) const
   {
-    Point<DIM> extents = in_rect.hi - in_rect.lo + Point<DIM>::ONES();
-    extents[axis] *= repeats;
-
-    auto out = out_array.create_output_buffer<VAL, DIM>(extents, true);
-
-    Rect<DIM> out_rect(Point<DIM>::ZEROES(), extents - Point<DIM>::ONES());
+    auto out_rect = out_array.shape<DIM>();
+    auto out      = out_array.write_accessor<VAL, DIM>(out_rect);
     Pitches<DIM - 1> pitches;
 
     auto out_volume = pitches.flatten(out_rect);
@@ -44,12 +40,11 @@ struct RepeatImplBody<VariantKind::CPU, CODE, DIM> {
       auto out_p = pitches.unflatten(idx, out_rect.lo);
       auto in_p  = out_p;
       in_p[axis] /= repeats;
-      in_p += in_rect.lo;
       out[out_p] = in[in_p];
     }
   }
 
-  void operator()(Array& out_array,
+  void operator()(legate::PhysicalStore& out_array,
                   const AccessorRO<VAL, 1>& in,
                   const AccessorRO<int64_t, 1>& repeats,
                   const int32_t axis,
@@ -68,12 +63,14 @@ struct RepeatImplBody<VariantKind::CPU, CODE, DIM> {
     int64_t out_idx = 0;
     for (size_t in_idx = 0; in_idx < volume; ++in_idx) {
       auto p = in_pitches.unflatten(in_idx, in_rect.lo);
-      for (size_t r = 0; r < repeats[p]; r++) out[out_idx++] = in[p];
+      for (int64_t r = 0; r < repeats[p]; r++) {
+        out[out_idx++] = in[p];
+      }
     }
   }
 
   template <int32_t _DIM = DIM, std::enable_if_t<(_DIM > 1)>* = nullptr>
-  void operator()(Array& out_array,
+  void operator()(legate::PhysicalStore& out_array,
                   const AccessorRO<VAL, _DIM>& in,
                   const AccessorRO<int64_t, _DIM>& repeats,
                   const int32_t axis,
@@ -115,7 +112,7 @@ struct RepeatImplBody<VariantKind::CPU, CODE, DIM> {
   }
 };
 
-/*static*/ void RepeatTask::cpu_variant(TaskContext& context)
+/*static*/ void RepeatTask::cpu_variant(TaskContext context)
 {
   repeat_template<VariantKind::CPU>(context);
 }

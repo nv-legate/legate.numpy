@@ -1,4 +1,4 @@
-/* Copyright 2021-2022 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,12 +28,13 @@ struct ArangeImplBody<VariantKind::CPU, VAL> {
                   const VAL start,
                   const VAL step) const
   {
-    for (coord_t idx = rect.lo[0]; idx <= rect.hi[0]; ++idx)
+    for (coord_t idx = rect.lo[0]; idx <= rect.hi[0]; ++idx) {
       out[idx] = static_cast<VAL>(idx) * step + start;
+    }
   }
 };
 
-/*static*/ void ArangeTask::cpu_variant(TaskContext& context)
+/*static*/ void ArangeTask::cpu_variant(TaskContext context)
 {
   arange_template<VariantKind::CPU>(context);
 }

@@ -1,4 +1,4 @@
-/* Copyright 2022 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,12 +35,16 @@ static __global__ void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM)
 {
   const size_t v_idx = blockIdx.x * blockDim.x + threadIdx.x;
 
-  if (v_idx >= num_values) return;
+  if (v_idx >= num_values) {
+    return;
+  }
 
   auto v_point        = pitches.unflatten(v_idx, lo);
   int64_t lower_bound = cub::LowerBound(sorted_array.ptr(global_offset), volume, values[v_point]);
 
-  if (lower_bound < volume) { output_reduction.reduce(v_point, lower_bound + global_offset); }
+  if (lower_bound < volume) {
+    output_reduction.reduce(v_point, lower_bound + global_offset);
+  }
 }
 
 template <typename VAL, int32_t DIM>
@@ -56,21 +60,25 @@ static __global__ void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM)
 {
   const size_t v_idx = blockIdx.x * blockDim.x + threadIdx.x;
 
-  if (v_idx >= num_values) return;
+  if (v_idx >= num_values) {
+    return;
+  }
 
   auto v_point        = pitches.unflatten(v_idx, lo);
   int64_t upper_bound = cub::UpperBound(sorted_array.ptr(global_offset), volume, values[v_point]);
 
-  if (upper_bound > 0) { output_reduction.reduce(v_point, upper_bound + global_offset); }
+  if (upper_bound > 0) {
+    output_reduction.reduce(v_point, upper_bound + global_offset);
+  }
 }
 
 template <Type::Code CODE, int32_t DIM>
 struct SearchSortedImplBody<VariantKind::GPU, CODE, DIM> {
-  using VAL = legate_type_of<CODE>;
+  using VAL = type_of<CODE>;
 
-  void operator()(const Array& input_array,
-                  const Array& input_values,
-                  const Array& output_positions,
+  void operator()(const PhysicalStore& input_array,
+                  const PhysicalStore& input_values,
+                  const PhysicalStore& output_positions,
                   const Rect<1>& rect_base,
                   const Rect<DIM>& rect_values,
                   const Pitches<DIM - 1> pitches,
@@ -98,11 +106,11 @@ struct SearchSortedImplBody<VariantKind::GPU, CODE, DIM> {
       searchsorted_kernel_max<VAL><<<num_blocks_desired, THREADS_PER_BLOCK, 0, stream>>>(
         output_reduction, input, input_v, rect_values.lo, pitches, volume, num_values, offset);
     }
-    CHECK_CUDA_STREAM(stream);
+    CUNUMERIC_CHECK_CUDA_STREAM(stream);
   }
 };
 
-/*static*/ void SearchSortedTask::gpu_variant(TaskContext& context)
+/*static*/ void SearchSortedTask::gpu_variant(TaskContext context)
 {
   searchsorted_template<VariantKind::GPU>(context);
 }

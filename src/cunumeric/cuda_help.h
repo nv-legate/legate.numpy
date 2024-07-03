@@ -1,4 +1,4 @@
-/* Copyright 2021-2022 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,12 +17,19 @@
 #pragma once
 
 #include "legate.h"
-#include "core/cuda/cuda_help.h"
+
+#if !LEGATE_DEFINED(LEGATE_NVCC)
+#error "This header can only be included from .cu files"
+#endif
+
 #include "core/cuda/stream_pool.h"
 #include "cunumeric/arg.h"
-#include "cunumeric/device_scalar_reduction_buffer.h"
 #include <cublas_v2.h>
 #include <cusolverDn.h>
+#if LEGATE_DEFINED(CUNUMERIC_USE_CUSOLVERMP)
+#include <cusolverMp.h>
+#include <cal.h>
+#endif
 #include <cuda_runtime.h>
 #include <cufft.h>
 #include <cufftXt.h>
@@ -35,35 +42,177 @@
 #define COOPERATIVE_THREADS 256
 #define COOPERATIVE_CTAS_PER_SM 4
 
-#define CHECK_CUBLAS(expr)                        \
-  do {                                            \
-    cublasStatus_t __result__ = (expr);           \
-    check_cublas(__result__, __FILE__, __LINE__); \
+namespace cunumeric {
+
+__host__ inline void check_cuda(cudaError_t error, const char* file, int line)
+{
+  if (error != cudaSuccess) {
+    fprintf(stderr,
+            "Internal CUDA failure with error %s (%s) in file %s at line %d\n",
+            cudaGetErrorString(error),
+            cudaGetErrorName(error),
+            file,
+            line);
+#ifdef DEBUG_CUNUMERIC
+    assert(false);
+#else
+    exit(error);
+#endif
+  }
+}
+
+__host__ inline void check_cublas(cublasStatus_t status, const char* file, int line)
+{
+  if (status != CUBLAS_STATUS_SUCCESS) {
+    fprintf(stderr,
+            "Internal cuBLAS failure with error code %d in file %s at line %d\n",
+            status,
+            file,
+            line);
+#ifdef DEBUG_CUNUMERIC
+    assert(false);
+#else
+    exit(status);
+#endif
+  }
+}
+
+__host__ inline void check_cufft(cufftResult result, const char* file, int line)
+{
+  if (result != CUFFT_SUCCESS) {
+    fprintf(stderr,
+            "Internal cuFFT failure with error code %d in file %s at line %d\n",
+            result,
+            file,
+            line);
+#ifdef DEBUG_CUNUMERIC
+    assert(false);
+#else
+    exit(result);
+#endif
+  }
+}
+
+__host__ inline void check_cusolver(cusolverStatus_t status, const char* file, int line)
+{
+  if (status != CUSOLVER_STATUS_SUCCESS) {
+    fprintf(stderr,
+            "Internal cuSOLVER failure with error code %d in file %s at line %d\n",
+            status,
+            file,
+            line);
+#ifdef DEBUG_CUNUMERIC
+    assert(false);
+#else
+    exit(status);
+#endif
+  }
+}
+
+#if LEGATE_DEFINED(CUNUMERIC_USE_CUSOLVERMP)
+__host__ inline void check_cal(calError_t status, const char* file, int line)
+{
+  if (status != CAL_OK) {
+    fprintf(stderr,
+            "Internal libcal failure with error code %d in file %s at line %d\n",
+            status,
+            file,
+            line);
+#ifdef DEBUG_CUNUMERIC
+    assert(false);
+#else
+    exit(status);
+#endif
+  }
+}
+#endif
+
+__host__ inline void check_cutensor(cutensorStatus_t result, const char* file, int line)
+{
+  if (result != CUTENSOR_STATUS_SUCCESS) {
+    fprintf(stderr,
+            "Internal Legate CUTENSOR failure with error %s (%d) in file %s at line %d\n",
+            cutensorGetErrorString(result),
+            result,
+            file,
+            line);
+#ifdef DEBUG_CUNUMERIC
+    assert(false);
+#else
+    exit(result);
+#endif
+  }
+}
+
+__host__ inline void check_nccl(ncclResult_t error, const char* file, int line)
+{
+  if (error != ncclSuccess) {
+    fprintf(stderr,
+            "Internal NCCL failure with error %s in file %s at line %d\n",
+            ncclGetErrorString(error),
+            file,
+            line);
+#ifdef DEBUG_CUNUMERIC
+    assert(false);
+#else
+    exit(error);
+#endif
+  }
+}
+
+}  // namespace cunumeric
+
+#define CHECK_CUBLAS(expr)                                   \
+  do {                                                       \
+    cublasStatus_t __result__ = (expr);                      \
+    cunumeric::check_cublas(__result__, __FILE__, __LINE__); \
   } while (false)
 
-#define CHECK_CUFFT(expr)                        \
-  do {                                           \
-    cufftResult __result__ = (expr);             \
-    check_cufft(__result__, __FILE__, __LINE__); \
+#define CHECK_CUFFT(expr)                                   \
+  do {                                                      \
+    cufftResult __result__ = (expr);                        \
+    cunumeric::check_cufft(__result__, __FILE__, __LINE__); \
   } while (false)
 
-#define CHECK_CUSOLVER(expr)                        \
-  do {                                              \
-    cusolverStatus_t __result__ = (expr);           \
-    check_cusolver(__result__, __FILE__, __LINE__); \
+#define CHECK_CUSOLVER(expr)                                   \
+  do {                                                         \
+    cusolverStatus_t __result__ = (expr);                      \
+    cunumeric::check_cusolver(__result__, __FILE__, __LINE__); \
   } while (false)
 
-#define CHECK_CUTENSOR(expr)                        \
-  do {                                              \
-    cutensorStatus_t __result__ = (expr);           \
-    check_cutensor(__result__, __FILE__, __LINE__); \
+#define CHECK_CAL(expr)                                   \
+  do {                                                    \
+    calError_t __result__ = (expr);                       \
+    cunumeric::check_cal(__result__, __FILE__, __LINE__); \
   } while (false)
 
-#define CHECK_NCCL(expr)                    \
-  do {                                      \
-    ncclResult_t result = (expr);           \
-    check_nccl(result, __FILE__, __LINE__); \
+#define CHECK_CUTENSOR(expr)                                   \
+  do {                                                         \
+    cutensorStatus_t __result__ = (expr);                      \
+    cunumeric::check_cutensor(__result__, __FILE__, __LINE__); \
   } while (false)
+
+#define CHECK_NCCL(...)                                    \
+  do {                                                     \
+    ncclResult_t __result__ = (__VA_ARGS__);               \
+    cunumeric::check_nccl(__result__, __FILE__, __LINE__); \
+  } while (false)
+
+#define CUNUMERIC_CHECK_CUDA(...)                          \
+  do {                                                     \
+    cudaError_t __result__ = (__VA_ARGS__);                \
+    cunumeric::check_cuda(__result__, __FILE__, __LINE__); \
+  } while (false)
+
+#ifdef DEBUG_CUNUMERIC
+#define CUNUMERIC_CHECK_CUDA_STREAM(stream)              \
+  do {                                                   \
+    CUNUMERIC_CHECK_CUDA(cudaStreamSynchronize(stream)); \
+    CUNUMERIC_CHECK_CUDA(cudaPeekAtLastError());         \
+  } while (false)
+#else
+#define CUNUMERIC_CHECK_CUDA_STREAM(stream) static_cast<void>(stream)
+#endif
 
 #ifndef MAX
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))
@@ -72,7 +221,33 @@
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
 #endif
 
+// Must go here since it depends on CUNUMERIC_CHECK_CUDA(), which is defined in this header...
+#include "cunumeric/device_scalar_reduction_buffer.h"
+
 namespace cunumeric {
+
+template <typename T>
+struct cudaTypeToDataType;
+
+template <>
+struct cudaTypeToDataType<float> {
+  static constexpr cudaDataType type = CUDA_R_32F;
+};
+
+template <>
+struct cudaTypeToDataType<double> {
+  static constexpr cudaDataType type = CUDA_R_64F;
+};
+
+template <>
+struct cudaTypeToDataType<cuComplex> {
+  static constexpr cudaDataType type = CUDA_C_32F;
+};
+
+template <>
+struct cudaTypeToDataType<cuDoubleComplex> {
+  static constexpr cudaDataType type = CUDA_C_64F;
+};
 
 __device__ inline size_t global_tid_1d()
 {
@@ -137,91 +312,15 @@ struct cufftPlanParams {
 
 // Return a cached stream for the current GPU
 legate::cuda::StreamView get_cached_stream();
+int get_device_ordinal();
+const cudaDeviceProp& get_device_properties();
 cublasHandle_t get_cublas();
 cusolverDnHandle_t get_cusolver();
+#if LEGATE_DEFINED(CUNUMERIC_USE_CUSOLVERMP)
+cusolverMpHandle_t get_cusolvermp();
+#endif
 cutensorHandle_t* get_cutensor();
 cufftContext get_cufft_plan(cufftType type, const cufftPlanParams& params);
-
-__host__ inline void check_cublas(cublasStatus_t status, const char* file, int line)
-{
-  if (status != CUBLAS_STATUS_SUCCESS) {
-    fprintf(stderr,
-            "Internal cuBLAS failure with error code %d in file %s at line %d\n",
-            status,
-            file,
-            line);
-#ifdef DEBUG_CUNUMERIC
-    assert(false);
-#else
-    exit(status);
-#endif
-  }
-}
-
-__host__ inline void check_cufft(cufftResult result, const char* file, int line)
-{
-  if (result != CUFFT_SUCCESS) {
-    fprintf(stderr,
-            "Internal cuFFT failure with error code %d in file %s at line %d\n",
-            result,
-            file,
-            line);
-#ifdef DEBUG_CUNUMERIC
-    assert(false);
-#else
-    exit(result);
-#endif
-  }
-}
-
-__host__ inline void check_cusolver(cusolverStatus_t status, const char* file, int line)
-{
-  if (status != CUSOLVER_STATUS_SUCCESS) {
-    fprintf(stderr,
-            "Internal cuSOLVER failure with error code %d in file %s at line %d\n",
-            status,
-            file,
-            line);
-#ifdef DEBUG_CUNUMERIC
-    assert(false);
-#else
-    exit(status);
-#endif
-  }
-}
-
-__host__ inline void check_cutensor(cutensorStatus_t result, const char* file, int line)
-{
-  if (result != CUTENSOR_STATUS_SUCCESS) {
-    fprintf(stderr,
-            "Internal Legate CUTENSOR failure with error %s (%d) in file %s at line %d\n",
-            cutensorGetErrorString(result),
-            result,
-            file,
-            line);
-#ifdef DEBUG_CUNUMERIC
-    assert(false);
-#else
-    exit(result);
-#endif
-  }
-}
-
-__host__ inline void check_nccl(ncclResult_t error, const char* file, int line)
-{
-  if (error != ncclSuccess) {
-    fprintf(stderr,
-            "Internal NCCL failure with error %s in file %s at line %d\n",
-            ncclGetErrorString(error),
-            file,
-            line);
-#ifdef DEBUG_CUNUMERIC
-    assert(false);
-#else
-    exit(error);
-#endif
-  }
-}
 
 template <typename T>
 __device__ __forceinline__ T shuffle(unsigned mask, T var, int laneMask, int width)
@@ -262,19 +361,23 @@ __device__ __forceinline__ void reduce_output(DeviceScalarReductionBuffer<REDUCT
   const int warpid = threadIdx.x >> 5;
   for (int i = 16; i >= 1; i /= 2) {
     T shuffle_value;
-    if constexpr (HasNativeShuffle<T>::value)
+    if constexpr (HasNativeShuffle<T>::value) {
       shuffle_value = __shfl_xor_sync(0xffffffff, value, i, 32);
-    else
+    } else {
       shuffle_value = shuffle(0xffffffff, value, i, 32);
+    }
     REDUCTION::template fold<true /*exclusive*/>(value, shuffle_value);
   }
   // Write warp values into shared memory
-  if ((laneid == 0) && (warpid > 0)) trampoline[warpid] = value;
+  if ((laneid == 0) && (warpid > 0)) {
+    trampoline[warpid] = value;
+  }
   __syncthreads();
   // Output reduction
   if (threadIdx.x == 0) {
-    for (int i = 1; i < (THREADS_PER_BLOCK / 32); i++)
+    for (int i = 1; i < (THREADS_PER_BLOCK / 32); i++) {
       REDUCTION::template fold<true /*exclusive*/>(value, trampoline[i]);
+    }
     result.reduce<false /*EXCLUSIVE*/>(value);
     // Make sure the result is visible externally
     __threadfence_system();

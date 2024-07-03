@@ -1,4 +1,4 @@
-/* Copyright 2022 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,9 @@ static __global__ void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM)
   dense_kernel(WindowOp<OP_CODE> gen, int64_t volume, double* out, int64_t lo)
 {
   const int64_t idx = blockIdx.x * blockDim.x + threadIdx.x;
-  if (idx >= volume) return;
+  if (idx >= volume) {
+    return;
+  }
   out[idx] = gen(idx + lo);
 }
 
@@ -35,7 +37,9 @@ static __global__ void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM)
   generic_kernel(WindowOp<OP_CODE> gen, int64_t volume, AccessorWO<double, 1> out, int64_t lo)
 {
   int64_t idx = blockIdx.x * blockDim.x + threadIdx.x;
-  if (idx >= volume) return;
+  if (idx >= volume) {
+    return;
+  }
   idx += lo;
   Point<1> point(idx);
   out[point] = gen(idx);
@@ -60,11 +64,11 @@ struct WindowImplBody<VariantKind::GPU, OP_CODE> {
         <<<blocks, THREADS_PER_BLOCK, 0, stream>>>(gen, volume, out, rect.lo[0]);
     }
 
-    CHECK_CUDA_STREAM(stream);
+    CUNUMERIC_CHECK_CUDA_STREAM(stream);
   }
 };
 
-/*static*/ void WindowTask::gpu_variant(TaskContext& context)
+/*static*/ void WindowTask::gpu_variant(TaskContext context)
 {
   window_template<VariantKind::GPU>(context);
 }

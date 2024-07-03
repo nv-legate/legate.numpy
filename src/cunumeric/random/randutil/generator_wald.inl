@@ -1,4 +1,4 @@
-/* Copyright 2022 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,10 +32,11 @@ struct wald_t<float> {
     float x = mu + (mu * mu * y) / (2.0f * lambda) -
               (mu / (2.0f * lambda)) * ::sqrtf(mu * y * (4.0f * lambda + mu * y));
     float z = curand_uniform(&gen);
-    if (z <= (mu) / (mu + x))
+    if (z <= (mu) / (mu + x)) {
       return x;
-    else
+    } else {
       return (mu * mu) / x;
+    }
   }
 };
 
@@ -51,9 +52,10 @@ struct wald_t<double> {
     double x = mu + (mu * mu * y) / (2.0 * lambda) -
                (mu / (2.0 * lambda)) * ::sqrtf(mu * y * (4.0 * lambda + mu * y));
     double z = curand_uniform(&gen);
-    if (z <= (mu) / (mu + x))
+    if (z <= (mu) / (mu + x)) {
       return x;
-    else
+    } else {
       return (mu * mu) / x;
+    }
   }
 };

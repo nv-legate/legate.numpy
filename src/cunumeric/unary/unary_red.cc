@@ -1,4 +1,4 @@
-/* Copyright 2021-2023 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ template <UnaryRedCode OP_CODE, Type::Code CODE, int DIM, bool HAS_WHERE>
 struct UnaryRedImplBody<VariantKind::CPU, OP_CODE, CODE, DIM, HAS_WHERE> {
   using OP    = UnaryRedOp<OP_CODE, CODE>;
   using LG_OP = typename OP::OP;
-  using RHS   = legate_type_of<CODE>;
+  using RHS   = type_of<CODE>;
 
   void operator()(AccessorRD<LG_OP, true, DIM> lhs,
                   AccessorRO<RHS, DIM> rhs,
@@ -38,7 +38,9 @@ struct UnaryRedImplBody<VariantKind::CPU, OP_CODE, CODE, DIM, HAS_WHERE> {
     for (size_t idx = 0; idx < volume; ++idx) {
       auto point = pitches.unflatten(idx, rect.lo);
       bool mask  = true;
-      if constexpr (HAS_WHERE) mask = where[point];
+      if constexpr (HAS_WHERE) {
+        mask = where[point];
+      }
       if (mask) {
         auto identity = LG_OP::identity;
         lhs.reduce(point, OP::convert(point, collapsed_dim, identity, rhs[point]));
@@ -47,7 +49,7 @@ struct UnaryRedImplBody<VariantKind::CPU, OP_CODE, CODE, DIM, HAS_WHERE> {
   }
 };
 
-/*static*/ void UnaryRedTask::cpu_variant(TaskContext& context)
+/*static*/ void UnaryRedTask::cpu_variant(TaskContext context)
 {
   unary_red_template<VariantKind::CPU>(context);
 }

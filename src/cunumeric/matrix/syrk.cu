@@ -1,4 +1,4 @@
-/* Copyright 2021-2022 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ static inline void syrk_template(
 
   CHECK_CUBLAS(syrk(context, uplo, trans, m, n, &alpha, rhs, m, &beta, lhs, m));
 
-  CHECK_CUDA_STREAM(stream);
+  CUNUMERIC_CHECK_CUDA_STREAM(stream);
 }
 
 template <>
@@ -81,7 +81,7 @@ struct SyrkImplBody<VariantKind::GPU, Type::Code::COMPLEX128> {
   }
 };
 
-/*static*/ void SyrkTask::gpu_variant(TaskContext& context)
+/*static*/ void SyrkTask::gpu_variant(TaskContext context)
 {
   syrk_template<VariantKind::GPU>(context);
 }

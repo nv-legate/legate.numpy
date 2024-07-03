@@ -1,4 +1,4 @@
-/* Copyright 2021-2022 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,9 @@ struct logistic_t<float> {
   {
     float y = curand_uniform(&gen);  // y cannot be 0
     float t = 1.0f / y - 1.0f;
-    if (t == 0) t = 1.0f;
+    if (t == 0) {
+      t = 1.0f;
+    }
     return mu - beta * ::logf(t);
   }
 };
@@ -42,7 +44,9 @@ struct logistic_t<double> {
   {
     float y = curand_uniform_double(&gen);  // y cannot be 0
     float t = 1.0 / y - 1.0;
-    if (t == 0) t = 1.0;
+    if (t == 0) {
+      t = 1.0;
+    }
     return mu - beta * ::log(t);
   }
 };

@@ -1,4 +1,4 @@
-/* Copyright 2021-2022 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,7 +70,7 @@ std::map<legate::Processor, std::unique_ptr<generator_map<VariantKind::CPU>>>
 template <>
 std::mutex BitGeneratorImplBody<VariantKind::CPU>::lock_generators = {};
 
-/*static*/ void BitGeneratorTask::cpu_variant(TaskContext& context)
+/*static*/ void BitGeneratorTask::cpu_variant(TaskContext context)
 {
   bitgenerator_template<VariantKind::CPU>(context);
 }

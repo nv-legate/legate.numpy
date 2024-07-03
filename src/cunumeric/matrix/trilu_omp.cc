@@ -1,4 +1,4 @@
-/* Copyright 2021-2022 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ using namespace legate;
 
 template <Type::Code CODE, int32_t DIM, bool LOWER>
 struct TriluImplBody<VariantKind::OMP, CODE, DIM, LOWER> {
-  using VAL = legate_type_of<CODE>;
+  using VAL = type_of<CODE>;
 
   template <bool C_ORDER>
   void operator()(const AccessorWO<VAL, DIM>& out,
@@ -37,24 +37,26 @@ struct TriluImplBody<VariantKind::OMP, CODE, DIM, LOWER> {
 #pragma omp parallel for schedule(static)
       for (size_t idx = 0; idx < volume; ++idx) {
         auto p = pitches.unflatten(idx, lo);
-        if (p[DIM - 2] + k >= p[DIM - 1])
+        if (p[DIM - 2] + k >= p[DIM - 1]) {
           out[p] = in[p];
-        else
+        } else {
           out[p] = 0;
+        }
       }
     else
 #pragma omp parallel for schedule(static)
       for (size_t idx = 0; idx < volume; ++idx) {
         auto p = pitches.unflatten(idx, lo);
-        if (p[DIM - 2] + k <= p[DIM - 1])
+        if (p[DIM - 2] + k <= p[DIM - 1]) {
           out[p] = in[p];
-        else
+        } else {
           out[p] = 0;
+        }
       }
   }
 };
 
-/*static*/ void TriluTask::omp_variant(TaskContext& context)
+/*static*/ void TriluTask::omp_variant(TaskContext context)
 {
   trilu_template<VariantKind::OMP>(context);
 }

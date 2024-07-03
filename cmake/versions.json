@@ -1,11 +1,13 @@
 {
   "packages" : {
     "legate_core" : {
-      "version": "24.01.00",
-      "git_url" : "https://github.com/nv-legate/legate.core.git",
+      "repo": "legate.core.internal",
+      "artifact_name": "${{ inputs.platform }}-${{ inputs.build-type }}-<<repo>>-${{ inputs.target-device }}-release-<<git_tag>>",
+      "version": "24.05.00",
+      "git_url" : "git@github.com:nv-legate/legate.core.internal.git",
       "git_shallow": false,
       "always_download": false,
-      "git_tag" : "b84e86e9e3518d7102cdf531b5b733dc09c0e8d9"
+      "git_tag" : "2e1ca409a4f67593aeb859834085919907e9e531"
     }
   }
 }

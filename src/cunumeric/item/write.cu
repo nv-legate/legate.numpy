@@ -1,4 +1,4 @@
-/* Copyright 2021-2022 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,11 +33,11 @@ struct WriteImplBody<VariantKind::GPU, VAL> {
   {
     auto stream = get_cached_stream();
     write_value<VAL><<<1, 1, 0, stream>>>(out, value);
-    CHECK_CUDA_STREAM(stream);
+    CUNUMERIC_CHECK_CUDA_STREAM(stream);
   }
 };
 
-/*static*/ void WriteTask::gpu_variant(TaskContext& context)
+/*static*/ void WriteTask::gpu_variant(TaskContext context)
 {
   write_template<VariantKind::GPU>(context);
 }

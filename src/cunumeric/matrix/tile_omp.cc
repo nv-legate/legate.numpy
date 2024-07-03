@@ -1,4 +1,4 @@
-/* Copyright 2021-2022 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@ struct TileImplBody<VariantKind::OMP, VAL, OUT_DIM, IN_DIM> {
   }
 };
 
-/*static*/ void TileTask::omp_variant(TaskContext& context)
+/*static*/ void TileTask::omp_variant(TaskContext context)
 {
   tile_template<VariantKind::OMP>(context);
 }

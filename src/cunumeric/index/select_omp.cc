@@ -1,4 +1,4 @@
-/* Copyright 2023 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ using namespace legate;
 
 template <Type::Code CODE, int DIM>
 struct SelectImplBody<VariantKind::OMP, CODE, DIM> {
-  using VAL = legate_type_of<CODE>;
+  using VAL = type_of<CODE>;
 
   void operator()(const AccessorWO<VAL, DIM>& out,
                   const std::vector<AccessorRO<bool, DIM>>& condlist,
@@ -42,13 +42,17 @@ struct SelectImplBody<VariantKind::OMP, CODE, DIM> {
     if (dense) {
       auto outptr = out.ptr(rect);
 #pragma omp parallel for schedule(static)
-      for (size_t idx = 0; idx < volume; ++idx) { outptr[idx] = default_val; }
+      for (size_t idx = 0; idx < volume; ++idx) {
+        outptr[idx] = default_val;
+      }
       for (int32_t c = (narrays - 1); c >= 0; c--) {
         auto condptr   = condlist[c].ptr(rect);
         auto choiseptr = choicelist[c].ptr(rect);
 #pragma omp parallel for schedule(static)
         for (int32_t idx = 0; idx < volume; idx++) {
-          if (condptr[idx]) outptr[idx] = choiseptr[idx];
+          if (condptr[idx]) {
+            outptr[idx] = choiseptr[idx];
+          }
         }
       }
     } else {
@@ -61,14 +65,16 @@ struct SelectImplBody<VariantKind::OMP, CODE, DIM> {
 #pragma omp parallel for schedule(static)
         for (int32_t idx = 0; idx < volume; idx++) {
           auto p = pitches.unflatten(idx, rect.lo);
-          if (condlist[c][p]) { out[p] = choicelist[c][p]; }
+          if (condlist[c][p]) {
+            out[p] = choicelist[c][p];
+          }
         }
       }
     }
   }
 };
 
-/*static*/ void SelectTask::omp_variant(TaskContext& context)
+/*static*/ void SelectTask::omp_variant(TaskContext context)
 {
   select_template<VariantKind::OMP>(context);
 }

@@ -1,4 +1,4 @@
-/* Copyright 2021-2022 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,9 @@ struct FillImplBody<VariantKind::OMP, VAL, DIM> {
     if (dense) {
       auto outptr = out.ptr(rect);
 #pragma omp parallel for schedule(static)
-      for (size_t idx = 0; idx < volume; ++idx) outptr[idx] = fill_value;
+      for (size_t idx = 0; idx < volume; ++idx) {
+        outptr[idx] = fill_value;
+      }
     } else {
 #pragma omp parallel for schedule(static)
       for (size_t idx = 0; idx < volume; ++idx) {
@@ -50,7 +52,7 @@ struct FillImplBody<VariantKind::OMP, VAL, DIM> {
   }
 };
 
-/*static*/ void FillTask::omp_variant(TaskContext& context)
+/*static*/ void FillTask::omp_variant(TaskContext context)
 {
   fill_template<VariantKind::OMP>(context);
 }

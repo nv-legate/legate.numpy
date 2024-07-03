@@ -1,4 +1,4 @@
-/* Copyright 2022 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,9 +25,9 @@ using namespace legate;
 
 template <Type::Code CODE, int32_t DIM>
 struct UniqueImplBody<VariantKind::OMP, CODE, DIM> {
-  using VAL = legate_type_of<CODE>;
+  using VAL = type_of<CODE>;
 
-  void operator()(Array& output,
+  void operator()(legate::PhysicalStore& output,
                   const AccessorRO<VAL, DIM>& in,
                   const Pitches<DIM - 1>& pitches,
                   const Rect<DIM>& rect,
@@ -68,11 +68,13 @@ struct UniqueImplBody<VariantKind::OMP, CODE, DIM> {
     auto& final_dedup_set = dedup_set[0];
     auto result           = output.create_output_buffer<VAL, 1>(final_dedup_set.size(), true);
     size_t pos            = 0;
-    for (auto e : final_dedup_set) result[pos++] = e;
+    for (auto e : final_dedup_set) {
+      result[pos++] = e;
+    }
   }
 };
 
-/*static*/ void UniqueTask::omp_variant(TaskContext& context)
+/*static*/ void UniqueTask::omp_variant(TaskContext context)
 {
   unique_template<VariantKind::OMP>(context);
 }

@@ -111,9 +111,9 @@ extern double chbevl(double x, double array[], int n);
 
 double i0(double x)
 {
-  double y;
-
-  if (x < 0) x = -x;
+  if (x < 0) {
+    x = -x;
+  }
   if (x <= 8.0) {
     double y = x / 2.0 - 2.0;
     return exp(x) * chbevl(y, A, 30);

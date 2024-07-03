@@ -1,4 +1,4 @@
-/* Copyright 2021-2022 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ struct ReadImplBody<VariantKind::CPU, VAL> {
   void operator()(AccessorWO<VAL, 1> out, AccessorRO<VAL, 1> in) const { out[0] = in[0]; }
 };
 
-/*static*/ void ReadTask::cpu_variant(TaskContext& context)
+/*static*/ void ReadTask::cpu_variant(TaskContext context)
 {
   read_template<VariantKind::CPU>(context);
 }

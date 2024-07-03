@@ -1,4 +1,4 @@
-/* Copyright 2022 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,9 @@ static int get_rank(Domain domain, DomainPoint index_point)
   auto hi          = domain.hi();
   auto lo          = domain.lo();
   for (int i = 0; i < domain.get_dim(); ++i) {
-    if (i > 0) domain_index *= hi[i] - lo[i] + 1;
+    if (i > 0) {
+      domain_index *= hi[i] - lo[i] + 1;
+    }
     domain_index += index_point[i];
   }
   return domain_index;
@@ -42,10 +44,8 @@ static int get_rank(Domain domain, DomainPoint index_point)
 template <VariantKind KIND>
 struct SortImpl {
   template <Type::Code CODE, int32_t DIM>
-  void operator()(SortArgs& args, std::vector<comm::Communicator>& comms) const
+  void operator()(SortArgs& args, std::vector<comm::Communicator> comms) const
   {
-    using VAL = legate_type_of<CODE>;
-
     auto rect = args.input.shape<DIM>();
 
     Pitches<DIM - 1> pitches;
@@ -64,7 +64,12 @@ struct SortImpl {
     // we shall not return on empty rectangle in case of distributed sort data
     // as the process needs to participate in collective communication
     // to identify rank-index to sort participant mapping
-    if ((segment_size_l == args.segment_size_g || !args.is_index_space) && rect.empty()) return;
+    if ((segment_size_l == args.segment_size_g || !args.is_index_space) && rect.empty()) {
+      if (args.output.is_unbound_store()) {
+        args.output.bind_empty_data();
+      }
+      return;
+    }
 
     SortImplBody<KIND, CODE, DIM>()(args.input,
                                     args.output,
@@ -86,17 +91,17 @@ struct SortImpl {
 template <VariantKind KIND>
 static void sort_template(TaskContext& context)
 {
-  auto shape_span       = context.scalars()[1].values<int64_t>();
+  auto shape_span       = context.scalar(1).values<int64_t>();
   size_t segment_size_g = shape_span[shape_span.size() - 1];
   auto domain           = context.get_launch_domain();
   size_t local_rank     = get_rank(domain, context.get_task_index());
   size_t num_ranks      = domain.get_volume();
   size_t num_sort_ranks = domain.hi()[domain.get_dim() - 1] - domain.lo()[domain.get_dim() - 1] + 1;
 
-  SortArgs args{context.inputs()[0],
-                context.outputs()[0],
-                context.scalars()[0].value<bool>(),  // argsort
-                context.scalars()[2].value<bool>(),  // stable
+  SortArgs args{context.input(0),
+                context.output(0),
+                context.scalar(0).value<bool>(),  // argsort
+                context.scalar(2).value<bool>(),  // stable
                 segment_size_g,
                 !context.is_single_task(),
                 local_rank,

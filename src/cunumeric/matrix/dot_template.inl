@@ -1,4 +1,4 @@
-/* Copyright 2021-2022 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,7 @@ struct DotImpl {
   template <Type::Code CODE>
   void operator()(DotArgs& args) const
   {
-    using VAL = legate_type_of<CODE>;
+    using VAL = type_of<CODE>;
     using ACC = acc_type_of<VAL>;
 
     assert(args.rhs1.dim() == 1);
@@ -55,9 +55,11 @@ struct DotImpl {
     auto rhs1 = args.rhs1.read_accessor<VAL, 1>(rect);
     auto rhs2 = args.rhs2.read_accessor<VAL, 1>(rect);
 
-    if (rect.empty()) return;
+    if (rect.empty()) {
+      return;
+    }
 
-#ifndef LEGATE_BOUNDS_CHECKS
+#if !LEGATE_DEFINED(LEGATE_BOUNDS_CHECKS)
     // Check to see if this is dense or not
     bool dense = rhs1.accessor.is_dense_row_major(rect) && rhs2.accessor.is_dense_row_major(rect);
 #else
@@ -72,8 +74,8 @@ struct DotImpl {
 template <VariantKind KIND>
 static void dot_template(TaskContext& context)
 {
-  auto& inputs = context.inputs();
-  DotArgs args{context.reductions()[0], inputs[0], inputs[1]};
+  auto inputs = context.inputs();
+  DotArgs args{context.reduction(0), inputs[0], inputs[1]};
   type_dispatch(args.rhs1.code(), DotImpl<KIND>{}, args);
 }
 

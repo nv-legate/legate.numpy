@@ -1,4 +1,4 @@
-/* Copyright 2022 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,13 +47,15 @@ static inline void solve_template(GetrfBufferSize getrf_buffer_size,
   auto info   = create_buffer<int32_t>(1, Memory::Kind::Z_COPY_MEM);
 
   CHECK_CUSOLVER(getrf(handle, m, n, a, m, buffer.ptr(0), ipiv.ptr(0), info.ptr(0)));
-  CHECK_CUDA(cudaStreamSynchronize(stream));
+  CUNUMERIC_CHECK_CUDA(cudaStreamSynchronize(stream));
 
-  if (info[0] != 0) throw legate::TaskException(SolveTask::ERROR_MESSAGE);
+  if (info[0] != 0) {
+    throw legate::TaskException(SolveTask::ERROR_MESSAGE);
+  }
 
   CHECK_CUSOLVER(getrs(handle, trans, n, nrhs, a, m, ipiv.ptr(0), b, n, info.ptr(0)));
 
-  CHECK_CUDA_STREAM(stream);
+  CUNUMERIC_CHECK_CUDA_STREAM(stream);
 
 #ifdef DEBUG_CUNUMERIC
   assert(info[0] == 0);
@@ -108,7 +110,7 @@ struct SolveImplBody<VariantKind::GPU, Type::Code::COMPLEX128> {
   }
 };
 
-/*static*/ void SolveTask::gpu_variant(TaskContext& context)
+/*static*/ void SolveTask::gpu_variant(TaskContext context)
 {
   solve_template<VariantKind::GPU>(context);
 }

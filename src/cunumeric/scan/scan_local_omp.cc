@@ -1,4 +1,4 @@
-/* Copyright 2022 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,12 +31,12 @@ using namespace legate;
 template <ScanCode OP_CODE, Type::Code CODE, int DIM>
 struct ScanLocalImplBody<VariantKind::OMP, OP_CODE, CODE, DIM> {
   using OP  = ScanOp<OP_CODE, CODE>;
-  using VAL = legate_type_of<CODE>;
+  using VAL = type_of<CODE>;
 
   void operator()(OP func,
                   const AccessorWO<VAL, DIM>& out,
                   const AccessorRO<VAL, DIM>& in,
-                  Array& sum_vals,
+                  legate::PhysicalStore& sum_vals,
                   const Pitches<DIM - 1>& pitches,
                   const Rect<DIM>& rect) const
   {
@@ -67,7 +67,7 @@ struct ScanLocalImplBody<VariantKind::OMP, OP_CODE, CODE, DIM> {
 template <ScanCode OP_CODE, Type::Code CODE, int DIM>
 struct ScanLocalNanImplBody<VariantKind::OMP, OP_CODE, CODE, DIM> {
   using OP  = ScanOp<OP_CODE, CODE>;
-  using VAL = legate_type_of<CODE>;
+  using VAL = type_of<CODE>;
 
   struct convert_nan_func {
     VAL operator()(VAL x) const
@@ -79,7 +79,7 @@ struct ScanLocalNanImplBody<VariantKind::OMP, OP_CODE, CODE, DIM> {
   void operator()(OP func,
                   const AccessorWO<VAL, DIM>& out,
                   const AccessorRO<VAL, DIM>& in,
-                  Array& sum_vals,
+                  legate::PhysicalStore& sum_vals,
                   const Pitches<DIM - 1>& pitches,
                   const Rect<DIM>& rect) const
   {
@@ -111,7 +111,7 @@ struct ScanLocalNanImplBody<VariantKind::OMP, OP_CODE, CODE, DIM> {
   }
 };
 
-/*static*/ void ScanLocalTask::omp_variant(TaskContext& context)
+/*static*/ void ScanLocalTask::omp_variant(TaskContext context)
 {
   scan_local_template<VariantKind::OMP>(context);
 }

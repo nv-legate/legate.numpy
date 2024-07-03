@@ -1,4 +1,4 @@
-/* Copyright 2021-2023 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@
 
 namespace cunumeric {
 
-/*static*/ void ScalarUnaryRedTask::omp_variant(TaskContext& context)
+/*static*/ void ScalarUnaryRedTask::omp_variant(TaskContext context)
 {
   scalar_unary_red_template<VariantKind::OMP>(context);
 }

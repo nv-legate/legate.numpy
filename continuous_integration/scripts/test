@@ -1,0 +1,82 @@
+#!/usr/bin/env bash
+
+set -x
+
+setup_env() {
+    set -xeuo pipefail
+
+    export DEBIAN_FRONTEND=non-interactive
+
+    # Run package updates and install packages
+    apt-get update
+    apt-get install -y numactl make
+
+    mamba create -yn legate -c "${ARTIFACTS_DIR}/conda-build/legate_core" -c "${ARTIFACTS_DIR}/conda-build/cunumeric" -c conda-forge -c "nvidia/label/cuda-12.0.0" legate-core cunumeric
+}
+
+setup_test_env() {
+    mamba install -y "clang-tools>=8" "clang>=8" colorama coverage mock pre-commit pytest-cov pytest-mock "pytest" types-docutils pynvml psutil
+
+    pip install tifffile
+}
+
+setup_docs_env() {
+    mamba install -y pandoc doxygen
+    pip install ipython jinja2 "markdown<3.4.0" "pydata-sphinx-theme>=0.13"  myst-parser  nbsphinx  sphinx-copybutton  "sphinx>=4.4.0"
+}
+
+setup_mypy_env() {
+    mamba install -y "mypy>=0.961" jinja2 nbsphinx sphinx-copybutton  "sphinx>=4.4.0" types-docutils
+}
+
+setup_unit_env() {
+    mamba install -y pytest pytest-mock mock
+}
+
+test_cunumeric() {
+    set -xeo pipefail
+
+    . conda-utils;
+    export CONDA_ENV=legate
+
+    setup_env;
+
+    activate_conda_env;
+    conda_info;
+
+    cd "${REPO_DIR}";
+
+    case "$1" in
+        "test")
+            echo "Executing tests..."
+            shift;
+            setup_test_env;
+            ./test.py --verbose "$@"
+            ;;
+        "mypy")
+            echo "Installing and executing mypy..."
+            shift;
+            setup_mypy_env;
+            mypy cunumeric
+            ;;
+        "docs")
+            echo "Building docs..."
+            shift;
+            setup_docs_env;
+            cd docs/cunumeric
+            make clean html
+            ;;
+        "unit")
+            echo "Running Unit tests..."
+            shift;
+            setup_unit_env;
+            pytest tests/unit
+            ;;
+        *)
+            echo "Invalid command: $1"
+            return 1
+            ;;
+    esac
+}
+
+(test_cunumeric "$@");

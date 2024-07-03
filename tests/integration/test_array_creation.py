@@ -1,4 +1,4 @@
-# Copyright 2021-2022 NVIDIA Corporation
+# Copyright 2024 NVIDIA Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-
+import copy
 from itertools import product
 
 import numpy as np
@@ -28,10 +28,34 @@ def test_array():
     assert np.array_equal(x, z)
     assert x.dtype == z.dtype
 
+    assert x.data == y.data
+    assert x.itemsize == y.itemsize
+    assert x.nbytes == y.nbytes
+    assert x.strides == y.strides
+    assert isinstance(x.ctypes, type(y.ctypes))
+
     x = num.array([1, 2, 3])
     y = num.array(x)
     assert num.array_equal(x, y)
     assert x.dtype == y.dtype
+
+
+def test_array_deepcopy() -> None:
+    x = num.array([1, 2, 3])
+    y = np.array([1, 2, 3])
+    copy_x = copy.deepcopy(x)
+    copy_y = copy.deepcopy(y)
+    x[1] = 0
+    y[1] = 0
+    assert not np.array_equal(x, copy_x)
+    assert not np.array_equal(y, copy_y)
+    assert np.array_equal(copy_x, copy_y)
+
+
+def test_array_float() -> None:
+    p = num.array(2)
+    q = np.array(2)
+    assert p.__float__() == q.__float__()
 
 
 CREATION_FUNCTIONS = ("zeros", "ones")
@@ -90,19 +114,18 @@ SHAPES_NEGATIVE = [
 
 
 class TestCreationErrors:
-    def setup_method(self):
-        self.bad_type_shape = (2, 3.0)
+    bad_type_shape = (2, 3.0)
+
+    @pytest.mark.parametrize("fn", ("empty", "zeros", "ones"))
+    @pytest.mark.parametrize("shape", SHAPES_NEGATIVE, ids=str)
+    def test_creation_negative_shape(self, shape, fn):
+        with pytest.raises(ValueError):
+            getattr(num, fn)(shape)
 
     @pytest.mark.parametrize("shape", SHAPES_NEGATIVE, ids=str)
-    class TestNegativeShape:
-        @pytest.mark.parametrize("fn", ("empty", "zeros", "ones"))
-        def test_creation(self, shape, fn):
-            with pytest.raises(ValueError):
-                getattr(num, fn)(shape)
-
-        def test_full(self, shape):
-            with pytest.raises(ValueError):
-                num.full(shape, 10)
+    def test_full_negative_shape(self, shape):
+        with pytest.raises(ValueError):
+            num.full(shape, 10)
 
     @pytest.mark.parametrize("fn", ("empty", "zeros", "ones"))
     def test_creation_bad_type(self, fn):

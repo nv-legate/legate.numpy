@@ -1,4 +1,4 @@
-/* Copyright 2022 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,12 +39,14 @@ struct FFTImpl {
             std::enable_if_t<(FFT<FFT_TYPE, CODE_IN>::valid)>* = nullptr>
   void operator()(FFTArgs& args) const
   {
-    using INPUT_TYPE  = legate_type_of<CODE_IN>;
-    using OUTPUT_TYPE = legate_type_of<FFT<FFT_TYPE, CODE_IN>::CODE_OUT>;
+    using INPUT_TYPE  = type_of<CODE_IN>;
+    using OUTPUT_TYPE = type_of<FFT<FFT_TYPE, CODE_IN>::CODE_OUT>;
 
     auto in_rect  = args.input.shape<DIM>();
     auto out_rect = args.output.shape<DIM>();
-    if (in_rect.empty() || out_rect.empty()) return;
+    if (in_rect.empty() || out_rect.empty()) {
+      return;
+    }
 
     auto input  = args.input.read_accessor<INPUT_TYPE, DIM>(in_rect);
     auto output = args.output.write_accessor<OUTPUT_TYPE, DIM>(out_rect);
@@ -80,8 +82,8 @@ static void fft_template(TaskContext& context)
 {
   FFTArgs args;
 
-  auto& inputs  = context.inputs();
-  auto& outputs = context.outputs();
+  auto inputs   = context.inputs();
+  auto outputs  = context.outputs();
   auto& scalars = context.scalars();
 
   args.output = std::move(outputs[0]);
@@ -91,7 +93,9 @@ static void fft_template(TaskContext& context)
   args.direction         = scalars[1].value<CuNumericFFTDirection>();
   args.operate_over_axes = scalars[2].value<bool>();
 
-  for (size_t i = 3; i < scalars.size(); ++i) args.axes.push_back(scalars[i].value<int64_t>());
+  for (size_t i = 3; i < scalars.size(); ++i) {
+    args.axes.push_back(scalars[i].value<int64_t>());
+  }
 
   fft_dispatch(args.type, FFTDispatch<KIND>{}, args);
 }

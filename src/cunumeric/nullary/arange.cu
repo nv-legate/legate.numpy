@@ -1,4 +1,4 @@
-/* Copyright 2021-2022 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,9 @@ __global__ static void __launch_bounds__(THREADS_PER_BLOCK, MIN_CTAS_PER_SM) ara
   const AccessorWO<VAL, 1> out, const coord_t lo, const VAL start, const VAL step, const size_t max)
 {
   const size_t offset = blockIdx.x * blockDim.x + threadIdx.x;
-  if (offset >= max) return;
+  if (offset >= max) {
+    return;
+  }
   const auto p = lo + offset;
   out[p]       = static_cast<VAL>(p) * step + start;
 }
@@ -43,11 +45,11 @@ struct ArangeImplBody<VariantKind::GPU, VAL> {
     auto stream         = get_cached_stream();
     arange_kernel<VAL>
       <<<blocks, THREADS_PER_BLOCK, 0, stream>>>(out, rect.lo[0], start, step, distance);
-    CHECK_CUDA_STREAM(stream);
+    CUNUMERIC_CHECK_CUDA_STREAM(stream);
   }
 };
 
-/*static*/ void ArangeTask::gpu_variant(TaskContext& context)
+/*static*/ void ArangeTask::gpu_variant(TaskContext context)
 {
   arange_template<VariantKind::GPU>(context);
 }

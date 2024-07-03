@@ -1,4 +1,4 @@
-# Copyright 2021-2022 NVIDIA Corporation
+# Copyright 2024 NVIDIA Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,17 +14,15 @@
 #
 from __future__ import annotations
 
-from typing import Literal, Tuple, Union
-
-from typing_extensions import TypeAlias
+from typing import Literal, TypeAlias
 
 BoundsMode: TypeAlias = Literal["raise", "wrap", "clip"]
 
 CastingKind: TypeAlias = Literal["no", "equiv", "safe", "same_kind", "unsafe"]
 
-NdShape: TypeAlias = Tuple[int, ...]
+NdShape: TypeAlias = tuple[int, ...]
 
-NdShapeLike: TypeAlias = Union[int, NdShape]
+NdShapeLike: TypeAlias = int | NdShape
 
 SortSide: TypeAlias = Literal["left", "right"]
 

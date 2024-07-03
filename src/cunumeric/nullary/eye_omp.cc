@@ -1,4 +1,4 @@
-/* Copyright 2021-2022 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,11 +28,13 @@ struct EyeImplBody<VariantKind::OMP, VAL> {
                   const coord_t distance) const
   {
 #pragma omp parallel for
-    for (coord_t idx = 0; idx < distance; idx++) out[start[0] + idx][start[1] + idx] = VAL{1};
+    for (coord_t idx = 0; idx < distance; idx++) {
+      out[start[0] + idx][start[1] + idx] = VAL{1};
+    }
   }
 };
 
-/*static*/ void EyeTask::omp_variant(TaskContext& context)
+/*static*/ void EyeTask::omp_variant(TaskContext context)
 {
   eye_template<VariantKind::OMP>(context);
 }

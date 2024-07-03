@@ -1,4 +1,4 @@
-/* Copyright 2021-2022 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "cunumeric/cunumeric.h"
+#include "cunumeric/cunumeric_task.h"
 
 // We'll make some assumptions here about cache size
 // that should hold up against most CPUs out there today
@@ -30,9 +30,9 @@
 namespace cunumeric {
 
 struct ConvolveArgs {
-  Array out;
-  Array filter;
-  std::vector<Array> inputs;
+  legate::PhysicalStore out{nullptr};
+  legate::PhysicalStore filter{nullptr};
+  std::vector<legate::PhysicalStore> inputs;
   legate::Domain root_domain;
 };
 
@@ -41,12 +41,12 @@ class ConvolveTask : public CuNumericTask<ConvolveTask> {
   static const int TASK_ID = CUNUMERIC_CONVOLVE;
 
  public:
-  static void cpu_variant(legate::TaskContext& context);
-#ifdef LEGATE_USE_OPENMP
-  static void omp_variant(legate::TaskContext& context);
+  static void cpu_variant(legate::TaskContext context);
+#if LEGATE_DEFINED(LEGATE_USE_OPENMP)
+  static void omp_variant(legate::TaskContext context);
 #endif
-#ifdef LEGATE_USE_CUDA
-  static void gpu_variant(legate::TaskContext& context);
+#if LEGATE_DEFINED(LEGATE_USE_CUDA)
+  static void gpu_variant(legate::TaskContext context);
 #endif
 };
 

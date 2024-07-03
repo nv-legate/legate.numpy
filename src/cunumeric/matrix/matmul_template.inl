@@ -1,4 +1,4 @@
-/* Copyright 2021-2022 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,7 +55,7 @@ struct MatMulImpl {
   template <Type::Code CODE, std::enable_if_t<support_matmul<CODE>::value>* = nullptr>
   void operator()(MatMulArgs& args) const
   {
-    using VAL = legate_type_of<CODE>;
+    using VAL = type_of<CODE>;
     using ACC = typename support_matmul<CODE>::ACC_TYPE;
 
     // Note that rhs1 and rhs2 may have different shapes. Here's why: rhs1 and rhs2 are promoted
@@ -66,7 +66,9 @@ struct MatMulImpl {
     // in their bloated domains.
     auto shape = args.rhs1.shape<3>().intersection(args.rhs2.shape<3>());
 
-    if (shape.empty()) return;
+    if (shape.empty()) {
+      return;
+    }
 
     const auto m = shape.hi[0] - shape.lo[0] + 1;
     const auto k = shape.hi[1] - shape.lo[1] + 1;
@@ -115,8 +117,8 @@ struct MatMulImpl {
 template <VariantKind KIND>
 static void matmul_template(TaskContext& context)
 {
-  auto& reductions = context.reductions();
-  auto& inputs     = context.inputs();
+  auto reductions = context.reductions();
+  auto inputs     = context.inputs();
 
   MatMulArgs args{reductions[0], inputs[0], inputs[1]};
   // Note that we can't dispatch on the lhs's type,

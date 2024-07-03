@@ -1,4 +1,4 @@
-/* Copyright 2022 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,18 +16,18 @@
 
 #pragma once
 
-#include "cunumeric/cunumeric.h"
+#include "cunumeric/cunumeric_task.h"
 
 namespace cunumeric {
 
 struct WrapArgs {
-  const Array& out;                 // Array with Point<N> type that is used to
-                                    // copy information from original array to the
-                                    //  `wrapped` one
-  const legate::DomainPoint shape;  // shape of the original array
+  legate::PhysicalStore out{nullptr};  // Array with Point<N> type that is used to
+                                       // copy information from original array to the
+                                       //  `wrapped` one
+  const legate::DomainPoint shape;     // shape of the original array
   const bool has_input;
   const bool check_bounds;
-  const Array& in = Array();
+  legate::PhysicalStore in{nullptr};
 };
 
 class WrapTask : public CuNumericTask<WrapTask> {
@@ -35,21 +35,21 @@ class WrapTask : public CuNumericTask<WrapTask> {
   static const int TASK_ID = CUNUMERIC_WRAP;
 
  public:
-  static void cpu_variant(legate::TaskContext& context);
-#ifdef LEGATE_USE_OPENMP
-  static void omp_variant(legate::TaskContext& context);
+  static void cpu_variant(legate::TaskContext context);
+#if LEGATE_DEFINED(LEGATE_USE_OPENMP)
+  static void omp_variant(legate::TaskContext context);
 #endif
-#ifdef LEGATE_USE_CUDA
-  static void gpu_variant(legate::TaskContext& context);
+#if LEGATE_DEFINED(LEGATE_USE_CUDA)
+  static void gpu_variant(legate::TaskContext context);
 #endif
 };
 
-__CUDA_HD__ static int64_t compute_idx(const int64_t i, const int64_t volume, const bool&)
+__CUDA_HD__ inline int64_t compute_idx(const int64_t i, const int64_t volume, const bool&)
 {
   return i % volume;
 }
 
-__CUDA_HD__ static int64_t compute_idx(const int64_t i,
+__CUDA_HD__ inline int64_t compute_idx(const int64_t i,
                                        const int64_t volume,
                                        const legate::AccessorRO<int64_t, 1>& indices)
 {
@@ -58,21 +58,22 @@ __CUDA_HD__ static int64_t compute_idx(const int64_t i,
   return index;
 }
 
-static void check_idx(const int64_t i,
+inline void check_idx(const int64_t i,
                       const int64_t volume,
                       const legate::AccessorRO<int64_t, 1>& indices)
 {
   int64_t idx   = indices[i];
   int64_t index = idx < 0 ? idx + volume : idx;
-  if (index < 0 || index >= volume)
+  if (index < 0 || index >= volume) {
     throw legate::TaskException("index is out of bounds in index array");
+  }
 }
-static void check_idx(const int64_t i, const int64_t volume, const bool&)
+inline void check_idx(const int64_t i, const int64_t volume, const bool&)
 {
   // don't do anything when wrapping indices
 }
 
-static bool check_idx_omp(const int64_t i,
+inline bool check_idx_omp(const int64_t i,
                           const int64_t volume,
                           const legate::AccessorRO<int64_t, 1>& indices)
 {
@@ -80,6 +81,6 @@ static bool check_idx_omp(const int64_t i,
   int64_t index = idx < 0 ? idx + volume : idx;
   return (index < 0 || index >= volume);
 }
-static bool check_idx_omp(const int64_t i, const int64_t volume, const bool&) { return false; }
+inline bool check_idx_omp(const int64_t i, const int64_t volume, const bool&) { return false; }
 
 }  // namespace cunumeric

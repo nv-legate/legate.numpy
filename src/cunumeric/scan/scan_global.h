@@ -1,4 +1,4 @@
-/* Copyright 2022 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +16,14 @@
 
 #pragma once
 
-#include "cunumeric/scan/scan_global_util.h"
-#include "cunumeric/cunumeric.h"
+#include "cunumeric/scan/scan_util.h"
+#include "cunumeric/cunumeric_task.h"
 
 namespace cunumeric {
 
 struct ScanGlobalArgs {
-  const Array& sum_vals;
-  const Array& out;
+  legate::PhysicalStore sum_vals;
+  legate::PhysicalStore out;
   ScanCode op_code;
   const legate::DomainPoint& partition_index;
 };
@@ -33,12 +33,12 @@ class ScanGlobalTask : public CuNumericTask<ScanGlobalTask> {
   static const int TASK_ID = CUNUMERIC_SCAN_GLOBAL;
 
  public:
-  static void cpu_variant(legate::TaskContext& context);
-#ifdef LEGATE_USE_OPENMP
-  static void omp_variant(legate::TaskContext& context);
+  static void cpu_variant(legate::TaskContext context);
+#if LEGATE_DEFINED(LEGATE_USE_OPENMP)
+  static void omp_variant(legate::TaskContext context);
 #endif
-#ifdef LEGATE_USE_CUDA
-  static void gpu_variant(legate::TaskContext& context);
+#if LEGATE_DEFINED(LEGATE_USE_CUDA)
+  static void gpu_variant(legate::TaskContext context);
 #endif
 };
 

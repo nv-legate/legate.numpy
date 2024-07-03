@@ -1,4 +1,4 @@
-/* Copyright 2021-2022 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,7 +45,7 @@ static __global__ void __launch_bounds__(1, 1) copy_kernel(Buffer result, RedAcc
 
 template <Type::Code CODE>
 struct DotImplBody<VariantKind::GPU, CODE> {
-  using VAL = legate_type_of<CODE>;
+  using VAL = type_of<CODE>;
   using ACC = acc_type_of<VAL>;
 
   template <typename AccessorRD>
@@ -66,16 +66,17 @@ struct DotImplBody<VariantKind::GPU, CODE> {
       const size_t iters = (blocks + MAX_REDUCTION_CTAS - 1) / MAX_REDUCTION_CTAS;
       reduction_kernel<<<MAX_REDUCTION_CTAS, THREADS_PER_BLOCK, shmem_size, stream>>>(
         volume, result, rhs1, rhs2, rect.lo, iters, SumReduction<ACC>::identity);
-    } else
+    } else {
       reduction_kernel<<<blocks, THREADS_PER_BLOCK, shmem_size, stream>>>(
         volume, result, rhs1, rhs2, rect.lo, 1, SumReduction<ACC>::identity);
+    }
 
     copy_kernel<<<1, 1, 0, stream>>>(result, out);
-    CHECK_CUDA_STREAM(stream);
+    CUNUMERIC_CHECK_CUDA_STREAM(stream);
   }
 };
 
-/*static*/ void DotTask::gpu_variant(TaskContext& context)
+/*static*/ void DotTask::gpu_variant(TaskContext context)
 {
   dot_template<VariantKind::GPU>(context);
 }

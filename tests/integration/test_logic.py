@@ -1,4 +1,4 @@
-# Copyright 2021-2022 NVIDIA Corporation
+# Copyright 2024 NVIDIA Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -141,16 +141,11 @@ SCALAR_PAIRS = (
 )
 
 
-@pytest.mark.xfail
 @pytest.mark.parametrize(
     ("a", "b"),
     SCALAR_PAIRS,
 )
 def test_isclose_scalars(a, b):
-    # for all cases,
-    # In Numpy, it pass
-    # In cuNumeric, it raises IndexError: too many indices for array:
-    # array is 0-dimensional, but 1 were indexed
     out_np = np.isclose(a, b)
     out_num = num.isclose(a, b)
     assert np.array_equal(out_np, out_num)

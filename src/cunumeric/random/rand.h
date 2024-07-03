@@ -1,4 +1,4 @@
-/* Copyright 2021-2022 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +16,17 @@
 
 #pragma once
 
-#include "cunumeric/cunumeric.h"
+#include "cunumeric/cunumeric_task.h"
 #include "cunumeric/random/rand_util.h"
 
 namespace cunumeric {
 
 struct RandArgs {
-  const Array& out;
+  legate::PhysicalStore out;
   RandGenCode gen_code;
   uint32_t epoch;
   legate::DomainPoint strides;
-  std::vector<legate::Store> args;
+  std::vector<legate::Scalar> args;
 };
 
 class RandTask : public CuNumericTask<RandTask> {
@@ -34,12 +34,12 @@ class RandTask : public CuNumericTask<RandTask> {
   static const int TASK_ID = CUNUMERIC_RAND;
 
  public:
-  static void cpu_variant(legate::TaskContext& context);
-#ifdef LEGATE_USE_OPENMP
-  static void omp_variant(legate::TaskContext& context);
+  static void cpu_variant(legate::TaskContext context);
+#if LEGATE_DEFINED(LEGATE_USE_OPENMP)
+  static void omp_variant(legate::TaskContext context);
 #endif
-#ifdef LEGATE_USE_CUDA
-  static void gpu_variant(legate::TaskContext& context);
+#if LEGATE_DEFINED(LEGATE_USE_CUDA)
+  static void gpu_variant(legate::TaskContext context);
 #endif
 };
 

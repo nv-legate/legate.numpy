@@ -1,4 +1,4 @@
-/* Copyright 2022 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,9 +42,9 @@ struct support_solve<Type::Code::COMPLEX128> : std::true_type {};
 template <VariantKind KIND>
 struct SolveImpl {
   template <Type::Code CODE, std::enable_if_t<support_solve<CODE>::value>* = nullptr>
-  void operator()(Array& a_array, Array& b_array) const
+  void operator()(legate::PhysicalStore a_array, legate::PhysicalStore b_array) const
   {
-    using VAL = legate_type_of<CODE>;
+    using VAL = type_of<CODE>;
 
 #ifdef DEBUG_CUNUMERIC
     assert(a_array.dim() == 2);
@@ -63,7 +63,7 @@ struct SolveImpl {
     size_t a_strides[2];
     VAL* a = a_array.read_write_accessor<VAL, 2>(a_shape).ptr(a_shape, a_strides);
 #ifdef DEBUG_CUNUMERIC
-    assert(a_array.is_future() || (a_strides[0] == 1 && a_strides[1] == m));
+    assert(a_array.is_future() || (a_strides[0] == 1 && static_cast<int64_t>(a_strides[1]) == m));
 #endif
     VAL* b = nullptr;
 
@@ -84,7 +84,7 @@ struct SolveImpl {
       size_t b_strides[2];
       b = b_array.read_write_accessor<VAL, 2>(b_shape).ptr(b_shape, b_strides);
 #ifdef DEBUG_CUNUMERIC
-      assert(b_array.is_future() || (b_strides[0] == 1 && b_strides[1] == m));
+      assert(b_array.is_future() || (b_strides[0] == 1 && static_cast<int64_t>(b_strides[1]) == m));
 #endif
     }
 
@@ -96,7 +96,7 @@ struct SolveImpl {
   }
 
   template <Type::Code CODE, std::enable_if_t<!support_solve<CODE>::value>* = nullptr>
-  void operator()(Array& a_array, Array& b_array) const
+  void operator()(legate::PhysicalStore a_array, legate::PhysicalStore b_array) const
   {
     assert(false);
   }
@@ -105,9 +105,9 @@ struct SolveImpl {
 template <VariantKind KIND>
 static void solve_template(TaskContext& context)
 {
-  auto& a_array = context.outputs()[0];
-  auto& b_array = context.outputs()[1];
-  type_dispatch(a_array.code(), SolveImpl<KIND>{}, a_array, b_array);
+  auto a_array = context.output(0);
+  auto b_array = context.output(1);
+  type_dispatch(a_array.type().code(), SolveImpl<KIND>{}, a_array, b_array);
 }
 
 }  // namespace cunumeric

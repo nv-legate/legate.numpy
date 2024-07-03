@@ -1,4 +1,4 @@
-/* Copyright 2022 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ using namespace legate;
 
 template <Type::Code CODE, int32_t DIM, Bitorder BITORDER>
 struct PackbitsImplBody<VariantKind::OMP, CODE, DIM, BITORDER> {
-  using VAL = legate_type_of<CODE>;
+  using VAL = type_of<CODE>;
 
   void operator()(const AccessorWO<uint8_t, DIM>& out,
                   const AccessorRO<VAL, DIM>& in,
@@ -52,7 +52,7 @@ struct PackbitsImplBody<VariantKind::OMP, CODE, DIM, BITORDER> {
   }
 };
 
-/*static*/ void PackbitsTask::omp_variant(TaskContext& context)
+/*static*/ void PackbitsTask::omp_variant(TaskContext context)
 {
   packbits_template<VariantKind::OMP>(context);
 }

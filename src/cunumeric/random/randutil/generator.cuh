@@ -1,4 +1,4 @@
-/* Copyright 2021-2022 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@
 
 #include "generator.h"
 
-#include <core/cuda/cuda_help.h>
+#include "cunumeric/cuda_help.h"
 
 namespace randutilimpl {
 static constexpr int blocksPerMultiProcessor = 2;    // TODO: refine => number of blocks per mp
@@ -51,7 +51,9 @@ __global__ void __launch_bounds__(blockDimX, blocksPerMultiProcessor)
   assert(id < ngenerators);
   // TODO: improve load
   gen_t gen = gens[id];
-  for (size_t k = id; k < N; k += blockDim.x * gridDim.x) { draws[k] = func(gen); }
+  for (size_t k = id; k < N; k += blockDim.x * gridDim.x) {
+    draws[k] = func(gen);
+  }
   // save state
   gens[id] = gen;
 }
@@ -71,8 +73,8 @@ struct inner_generator<gen_t, randutilimpl::execlocation::DEVICE> : basegenerato
     : seed(seed), generatorID(generatorID), stream(stream)
   {
     int deviceId;
-    CHECK_CUDA(::cudaGetDevice(&deviceId));
-    CHECK_CUDA(
+    CUNUMERIC_CHECK_CUDA(::cudaGetDevice(&deviceId));
+    CUNUMERIC_CHECK_CUDA(
       ::cudaDeviceGetAttribute(&multiProcessorCount, cudaDevAttrMultiProcessorCount, deviceId));
     // get number of generators
     ngenerators = blockDimX * multiProcessorCount * blocksPerMultiProcessor;
@@ -82,35 +84,37 @@ struct inner_generator<gen_t, randutilimpl::execlocation::DEVICE> : basegenerato
 
     // allocate buffer for generators state
     int driverVersion, runtimeVersion;
-    CHECK_CUDA(::cudaDriverGetVersion(&driverVersion));
-    CHECK_CUDA(::cudaRuntimeGetVersion(&runtimeVersion));
+    CUNUMERIC_CHECK_CUDA(::cudaDriverGetVersion(&driverVersion));
+    CUNUMERIC_CHECK_CUDA(::cudaRuntimeGetVersion(&runtimeVersion));
     asyncsupported = ((driverVersion >= 10020) && (runtimeVersion >= 10020));
     if (asyncsupported) {
 #if (__CUDACC_VER_MAJOR__ > 11 || ((__CUDACC_VER_MAJOR__ >= 11) && (__CUDACC_VER_MINOR__ >= 2)))
-      CHECK_CUDA(::cudaMallocAsync(&generators, ngenerators * sizeof(gen_t), stream));
+      CUNUMERIC_CHECK_CUDA(::cudaMallocAsync(&generators, ngenerators * sizeof(gen_t), stream));
 #else
-      CHECK_CUDA(::cudaMalloc(&generators, ngenerators * sizeof(gen_t)));
+      CUNUMERIC_CHECK_CUDA(::cudaMalloc(&generators, ngenerators * sizeof(gen_t)));
 #endif
-    } else
-      CHECK_CUDA(::cudaMalloc(&generators, ngenerators * sizeof(gen_t)));
+    } else {
+      CUNUMERIC_CHECK_CUDA(::cudaMalloc(&generators, ngenerators * sizeof(gen_t)));
+    }
 
     // initialize generators
     initgenerators<<<blocksPerMultiProcessor * multiProcessorCount, blockDimX, 0, stream>>>(
       generators, seed, generatorID);
-    CHECK_CUDA(::cudaPeekAtLastError());
+    CUNUMERIC_CHECK_CUDA(::cudaPeekAtLastError());
   }
 
   virtual void destroy() override
   {
-    CHECK_CUDA(::cudaStreamSynchronize(stream));
+    CUNUMERIC_CHECK_CUDA(::cudaStreamSynchronize(stream));
     if (asyncsupported) {
 #if (__CUDACC_VER_MAJOR__ > 11 || ((__CUDACC_VER_MAJOR__ >= 11) && (__CUDACC_VER_MINOR__ >= 2)))
-      CHECK_CUDA(::cudaFreeAsync(generators, stream));
+      CUNUMERIC_CHECK_CUDA(::cudaFreeAsync(generators, stream));
 #else
-      CHECK_CUDA(::cudaFree(generators));
+      CUNUMERIC_CHECK_CUDA(::cudaFree(generators));
 #endif
-    } else
-      CHECK_CUDA(::cudaFree(generators));
+    } else {
+      CUNUMERIC_CHECK_CUDA(::cudaFree(generators));
+    }
 
     generators = nullptr;
   }
@@ -127,8 +131,9 @@ struct inner_generator<gen_t, randutilimpl::execlocation::DEVICE> : basegenerato
   template <typename func_t, typename out_t>
   curandStatus_t draw(func_t func, size_t N, out_t* out)
   {
-    if (generators == nullptr)  // destroyed was called
+    if (generators == nullptr) {  // destroyed was called
       return CURAND_STATUS_NOT_INITIALIZED;
+    }
     gpu_draw<gen_t, func_t, out_t><<<multiProcessorCount * blocksPerMultiProcessor, blockDimX>>>(
       ngenerators, generators, func, N, out);
     return ::cudaPeekAtLastError() == cudaSuccess ? CURAND_STATUS_SUCCESS

@@ -1,4 +1,4 @@
-/* Copyright 2021-2022 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,14 +43,17 @@ __global__ static void __launch_bounds__((TILE_DIM * BLOCK_ROWS), MIN_CTAS_PER_S
     if ((lo[0] + (blockIdx.y + 1) * TILE_DIM - 1) <= hi[0]) {
 // No overflow case
 #pragma unroll
-      for (int i = 0; i < TILE_DIM; i += BLOCK_ROWS)
+      for (int i = 0; i < TILE_DIM; i += BLOCK_ROWS) {
         tile[threadIdx.y + i][threadIdx.x] = in[lo + Point<2>(x + i, y)];
+      }
     } else {
 // Overflow case
 #pragma unroll
-      for (int i = 0; i < TILE_DIM; i += BLOCK_ROWS)
-        if ((lo[0] + x + i) <= hi[0])
+      for (int i = 0; i < TILE_DIM; i += BLOCK_ROWS) {
+        if ((lo[0] + x + i) <= hi[0]) {
           tile[threadIdx.y + i][threadIdx.x] = in[lo + Point<2>(x + i, y)];
+        }
+      }
     }
   }
 
@@ -66,21 +69,24 @@ __global__ static void __launch_bounds__((TILE_DIM * BLOCK_ROWS), MIN_CTAS_PER_S
     if ((lo[1] + (blockIdx.x + 1) * TILE_DIM - 1) <= hi[1]) {
 // No overflow case
 #pragma unroll
-      for (int i = 0; i < TILE_DIM; i += BLOCK_ROWS)
+      for (int i = 0; i < TILE_DIM; i += BLOCK_ROWS) {
         out[lo + Point<2>(x, y + i)] = tile[threadIdx.x][threadIdx.y + i];
+      }
     } else {
 // Overflow case
 #pragma unroll
-      for (int i = 0; i < TILE_DIM; i += BLOCK_ROWS)
-        if ((lo[1] + y + i) <= hi[1])
+      for (int i = 0; i < TILE_DIM; i += BLOCK_ROWS) {
+        if ((lo[1] + y + i) <= hi[1]) {
           out[lo + Point<2>(x, y + i)] = tile[threadIdx.x][threadIdx.y + i];
+        }
+      }
     }
   }
 }
 
 template <Type::Code CODE>
 struct TransposeImplBody<VariantKind::GPU, CODE> {
-  using VAL = legate_type_of<CODE>;
+  using VAL = type_of<CODE>;
 
   void operator()(const Rect<2>& rect,
                   const AccessorWO<VAL, 2>& out,
@@ -93,11 +99,11 @@ struct TransposeImplBody<VariantKind::GPU, CODE> {
 
     auto stream = get_cached_stream();
     transpose_2d_physical<VAL><<<blocks, threads, 0, stream>>>(out, in, rect.lo, rect.hi);
-    CHECK_CUDA_STREAM(stream);
+    CUNUMERIC_CHECK_CUDA_STREAM(stream);
   }
 };
 
-/*static*/ void TransposeTask::gpu_variant(TaskContext& context)
+/*static*/ void TransposeTask::gpu_variant(TaskContext context)
 {
   transpose_template<VariantKind::GPU>(context);
 }

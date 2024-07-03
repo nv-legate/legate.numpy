@@ -1,4 +1,4 @@
-/* Copyright 2023 NVIDIA Corporation
+/* Copyright 2024 NVIDIA Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -78,7 +78,9 @@ __global__ static void __launch_bounds__((TILE_DIM * BLOCK_ROWS), MIN_CTAS_PER_S
 #pragma unroll
     for (int i = 0; i < TILE_DIM; i += BLOCK_ROWS, offset += stride) {
       if (r < n && (c + i) < n) {
-        if (r >= (c + i)) { out[offset] = tile[tc + i][tr]; }
+        if (r >= (c + i)) {
+          out[offset] = tile[tc + i][tr];
+        }
       }
     }
   }
@@ -86,7 +88,7 @@ __global__ static void __launch_bounds__((TILE_DIM * BLOCK_ROWS), MIN_CTAS_PER_S
 
 template <Type::Code CODE>
 struct BatchedTransposeImplBody<VariantKind::GPU, CODE> {
-  using VAL = legate_type_of<CODE>;
+  using VAL = type_of<CODE>;
 
   void operator()(VAL* out, int n) const
   {
@@ -99,11 +101,11 @@ struct BatchedTransposeImplBody<VariantKind::GPU, CODE> {
     // the lower diagonal
     transpose_2d_lower<VAL><<<blocks, threads, 0, stream>>>(out, n);
 
-    CHECK_CUDA_STREAM(stream);
+    CUNUMERIC_CHECK_CUDA_STREAM(stream);
   }
 };
 
-/*static*/ void BatchedCholeskyTask::gpu_variant(TaskContext& context)
+/*static*/ void BatchedCholeskyTask::gpu_variant(TaskContext context)
 {
   batched_cholesky_task_context_dispatch<VariantKind::GPU>(context);
 }

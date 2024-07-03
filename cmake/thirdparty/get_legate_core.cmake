@@ -1,5 +1,5 @@
 #=============================================================================
-# Copyright 2022-2023 NVIDIA Corporation
+# Copyright 2024 NVIDIA Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -59,6 +59,7 @@ function(find_or_configure_legate_core)
     message(VERBOSE "cunumeric: legate.core git_repo: ${git_repo}")
     message(VERBOSE "cunumeric: legate.core git_branch: ${git_branch}")
     message(VERBOSE "cunumeric: legate.core exclude_from_all: ${exclude_from_all}")
+    message(VERBOSE "cunumeric: legate.core legate_core_cpm_git_args: ${legate_core_cpm_git_args}")
 
     rapids_cpm_find(legate_core ${version} ${FIND_PKG_ARGS}
         CPM_ARGS
