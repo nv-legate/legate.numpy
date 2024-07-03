@@ -1,4 +1,4 @@
-# Copyright 2021-2022 NVIDIA Corporation
+# Copyright 2024 NVIDIA Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ import os
 # -- Project information -----------------------------------------------------
 
 project = "NVIDIA cuNumeric"
-copyright = "2021-2023, NVIDIA"
+copyright = "2024, NVIDIA"
 author = "NVIDIA Corporation"
 
 # -- General configuration ---------------------------------------------------
