@@ -17,6 +17,11 @@ on:
         required: true
         type: string
         description: The workflow file name used by the dependency
+      waive-gpu-tests:
+         required: true
+         type: boolean
+         description: Waive GPU tests based on specific configuration
+
 
 jobs:
   setup-build:
@@ -131,7 +136,9 @@ jobs:
                 TEST_OPTIONS=${CONFIG_INFO[1]}
                 TEST_TARGET_DEVICE=${CONFIG_INFO[2]}
                 if [[ "$TEST_TARGET_DEVICE" == "$RUNNER_DEVICE" ]]; then
-                  MATRIX_JSON+="{\"runner\": {\"name\": \"$RUNNER_NAME\", \"type\": \"$RUNNER_TYPE\", \"platform\": \"$RUNNER_PLATFORM\"}, \"test-config\": {\"name\": \"$TEST_NAME\", \"test-options\": \"$TEST_OPTIONS\"}},"
+                  if ! [[ "$TEST_NAME" =~ "GPU" && "${{ inputs.waive-gpu-tests }}" == 'true' ]]; then
+                    MATRIX_JSON+="{\"runner\": {\"name\": \"$RUNNER_NAME\", \"type\": \"$RUNNER_TYPE\", \"platform\": \"$RUNNER_PLATFORM\"}, \"test-config\": {\"name\": \"$TEST_NAME\", \"test-options\": \"$TEST_OPTIONS\"}},"
+                  fi
                 fi
               done
             fi

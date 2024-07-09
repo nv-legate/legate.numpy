@@ -25,9 +25,6 @@ jobs:
           - cpu
         upload-enabled:
           - false
-        exclude:
-          - platform: linux-aarch64
-            target-device: gpu
     uses:
       ./.github/workflows/gh-build-and-test.yml
     with:
@@ -36,4 +33,5 @@ jobs:
       build-type: release
       upload-enabled: ${{ matrix.upload-enabled }}
       dependencies-workflow: "ci-gh-nightly-release.yml"
+      waive-gpu-tests: ${{ github.workflow == 'Build Release package' && matrix.platform == 'linux-aarch64' }}
     secrets: inherit
