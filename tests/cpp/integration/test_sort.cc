@@ -495,7 +495,7 @@ template <typename T, int32_t SIZE, int32_t DIM>
 void test_sort(std::array<T, SIZE>& in_array,
                std::array<T, SIZE>& expect,
                legate::Type leg_type,
-               std::vector<size_t> shape,
+               std::vector<uint64_t> shape,
                std::optional<int32_t> axis)
 {
   auto A1 = cunumeric::zeros(shape, leg_type);
@@ -516,7 +516,7 @@ void test_sort(std::array<T, SIZE>& in_array,
 }
 
 template <typename T>
-void sort_basic_axis_impl(std::vector<std::vector<size_t>>& test_shapes,
+void sort_basic_axis_impl(std::vector<std::vector<uint64_t>>& test_shapes,
                           std::array<T, 12> in_array,
                           std::vector<std::map<int32_t, std::array<T, 12>>>& expect_result,
                           legate::Type leg_type)
@@ -540,7 +540,7 @@ void sort_basic_axis_impl(std::vector<std::vector<size_t>>& test_shapes,
 
 void sort_basic_axis()
 {
-  std::vector<std::vector<size_t>> test_shapes = {
+  std::vector<std::vector<uint64_t>> test_shapes = {
     {12}, {1, 12}, {12, 1}, {3, 4}, {12, 1, 1}, {1, 12, 1}, {1, 1, 12}, {2, 2, 3}};
 
   // Test int type
@@ -572,7 +572,7 @@ void sort_basic_axis()
 
 void sort_empty_array()
 {
-  std::vector<std::vector<size_t>> test_shapes = {
+  std::vector<std::vector<uint64_t>> test_shapes = {
     {0}, {0, 1}, {1, 0}, {1, 0, 0}, {1, 1, 0}, {1, 0, 1}};
 
   std::array<int32_t, 0> in_array = {};
@@ -594,7 +594,7 @@ void sort_empty_array()
 
 void sort_single_item_array()
 {
-  std::vector<std::vector<size_t>> test_shapes = {{1}, {1, 1}, {1, 1, 1}};
+  std::vector<std::vector<uint64_t>> test_shapes = {{1}, {1, 1}, {1, 1, 1}};
 
   std::array<int32_t, 1> in_array = {12};
   size_t test_shape_size          = test_shapes.size();

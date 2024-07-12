@@ -36,6 +36,7 @@ template <bool I_ROW_MAJOR, bool O_ROW_MAJOR>
 struct CheckRepartitionTask
   : public legate::LegateTask<CheckRepartitionTask<I_ROW_MAJOR, O_ROW_MAJOR>> {
   static const std::int32_t TASK_ID = CHECK_REPARTITION_TASK + I_ROW_MAJOR * 2 + O_ROW_MAJOR;
+
   static void gpu_variant(legate::TaskContext context);
 };
 
@@ -98,6 +99,7 @@ int get_rank_row_major(legate::Domain domain, legate::DomainPoint index_point)
   return domain_index;
 }
 
+#if LEGATE_DEFINED(LEGATE_USE_CUDA)
 void repartition_2dbc_test(legate::AccessorRO<int32_t, 2> input,
                            legate::Rect<2> in_rect,
                            bool in_row_major,
@@ -167,6 +169,7 @@ void repartition_2dbc_test(legate::AccessorRO<int32_t, 2> input,
                                       output_offset_c,
                                       comm);
 }
+#endif
 
 void register_tasks()
 {
@@ -189,6 +192,7 @@ template <bool I_ROW_MAJOR, bool O_ROW_MAJOR>
 /*static*/ void CheckRepartitionTask<I_ROW_MAJOR, O_ROW_MAJOR>::gpu_variant(
   legate::TaskContext context)
 {
+#if LEGATE_DEFINED(LEGATE_USE_CUDA)
   auto input     = context.input(0);
   auto output    = context.output(0);
   auto shape_in  = input.shape<2>();
@@ -251,11 +255,12 @@ template <bool I_ROW_MAJOR, bool O_ROW_MAJOR>
                         tile_c,
                         local_rank,
                         context.communicator(0));
+#endif
 }
 
 template <bool I_ROW_MAJOR, bool O_ROW_MAJOR>
-void run_test_aligned_default_launch(std::vector<size_t>& data_shape,
-                                     std::vector<size_t>& tile_shape)
+void run_test_aligned_default_launch(std::vector<uint64_t>& data_shape,
+                                     std::vector<uint64_t>& tile_shape)
 {
   auto runtime  = legate::Runtime::get_runtime();
   auto library  = runtime->find_library(library_name);
@@ -292,7 +297,7 @@ void run_test_aligned_default_launch(std::vector<size_t>& data_shape,
   check_array_eq<int32_t, 2>(data_input, data_output);
 }
 
-void run_tests_with_shape(std::vector<size_t>& data_shape, std::vector<size_t>& tile_shape)
+void run_tests_with_shape(std::vector<uint64_t>& data_shape, std::vector<uint64_t>& tile_shape)
 {
   auto machine  = legate::Runtime::get_runtime()->get_machine();
   auto num_gpus = machine.count(legate::mapping::TaskTarget::GPU);
@@ -306,8 +311,8 @@ void run_tests_with_shape(std::vector<size_t>& data_shape, std::vector<size_t>& 
   run_test_aligned_default_launch<true, false>(data_shape, tile_shape);
 }
 
-std::vector<std::vector<size_t>> NICE_SHAPES   = {{64, 64}, {64, 32}, {256, 256}, {512, 1}};
-std::vector<std::vector<size_t>> NICE_TILESIZE = {{4, 4}, {32, 32}, {64, 64}, {256, 256}};
+std::vector<std::vector<uint64_t>> NICE_SHAPES   = {{64, 64}, {64, 32}, {256, 256}, {512, 1}};
+std::vector<std::vector<uint64_t>> NICE_TILESIZE = {{4, 4}, {32, 32}, {64, 64}, {256, 256}};
 
 TEST(Repartition, NiceValues_C_C)
 {
@@ -354,10 +359,10 @@ TEST(Repartition, NiceValues_F_C)
   }
 }
 
-std::vector<std::vector<size_t>> ODD_SHAPES = {
+std::vector<std::vector<uint64_t>> ODD_SHAPES = {
   {120, 257}, {148, 12}, {12, 2325}, {1112, 31}, {256, 256}, {12, 1}};
 
-std::vector<std::vector<size_t>> ODD_TILESIZE = {
+std::vector<std::vector<uint64_t>> ODD_TILESIZE = {
   {2, 2}, {64, 32}, {255, 256}, {16, 5}, {1, 1}, {4, 4}};
 
 TEST(Repartition, OddValues_C_C)
@@ -400,10 +405,10 @@ TEST(Repartition, OddValues_F_C)
   }
 }
 
-std::vector<std::vector<size_t>> STRANGE_SHAPES = {
+std::vector<std::vector<uint64_t>> STRANGE_SHAPES = {
   {120, 257}, {148, 12}, {12, 2325}, {1112, 31}, {256, 256}, {12, 1}};
 
-std::vector<std::vector<size_t>> STRANGE_TILESIZE = {
+std::vector<std::vector<uint64_t>> STRANGE_TILESIZE = {
   {2, 2}, {64, 32}, {255, 256}, {16, 5}, {1, 1}, {4, 4}};
 
 TEST(Repartition, StrangeValues_C_C)

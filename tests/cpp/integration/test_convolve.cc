@@ -55,8 +55,8 @@ TEST(Convolve, test_diff_dims)
 std::vector<std::tuple<std::vector<int32_t>,
                        std::vector<int32_t>,
                        std::vector<int32_t>,
-                       std::vector<size_t>,
-                       std::vector<size_t>>>
+                       std::vector<uint64_t>,
+                       std::vector<uint64_t>>>
   test_data{
     {{0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0},
      {1, 1, 0, 1, 0, 0, 1},
@@ -112,8 +112,8 @@ TEST(Convolve, test_double)
 
 TEST(Convolve, test_ndim)
 {
-  std::vector<size_t> shape;
-  std::vector<size_t> filter_shape;
+  std::vector<uint64_t> shape;
+  std::vector<uint64_t> filter_shape;
   for (int32_t ndim = 1; ndim <= LEGATE_MAX_DIM; ++ndim) {
     shape.emplace_back(5);
     filter_shape.emplace_back(3);

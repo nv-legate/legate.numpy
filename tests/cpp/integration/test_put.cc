@@ -94,7 +94,7 @@ TEST(Put, test_scalar_indices_values_mode)
   std::vector<std::vector<int32_t>> values_list{{10}, {10, 20}};
   std::vector<std::vector<int32_t>> indices_list{{100}, {-100}};
 
-  std::vector<size_t> shape{3, 4, 5};
+  std::vector<uint64_t> shape{3, 4, 5};
   auto x_in = mk_seq_vector<int32_t>(shape);
 
   for (auto indices : indices_list) {
@@ -113,9 +113,9 @@ TEST(Put, test_scalar_indices_values_mode)
 
 TEST(Put, test_scalar_arr)
 {
-  std::vector<std::tuple<std::vector<int32_t>, std::vector<size_t>>> values_list{
+  std::vector<std::tuple<std::vector<int32_t>, std::vector<uint64_t>>> values_list{
     {{10}, {}}, {{10}, {1}}, {{10, 20}, {}}};
-  std::vector<std::tuple<std::vector<int32_t>, std::vector<size_t>>> indices_list{
+  std::vector<std::tuple<std::vector<int32_t>, std::vector<uint64_t>>> indices_list{
     {{0}, {}}, {{0}, {1}}, {{-1}, {}}, {{-1}, {1}}};
   std::vector<int32_t> x_in{0};
   for (auto [indices, shape_ind] : indices_list) {
@@ -151,7 +151,7 @@ TEST(Put, test_scalar_arr_mode)
 
 TEST(Put, test_indices_type_convert)
 {
-  std::vector<size_t> shape{3, 4, 5};
+  std::vector<uint64_t> shape{3, 4, 5};
   auto x_in   = mk_seq_vector<int64_t>(shape);
   auto values = mk_seq_vector<int64_t>({6}, 10);
   std::vector<int32_t> indices{-2, 2};
@@ -165,7 +165,7 @@ TEST(Put, test_indices_type_convert)
 
 TEST(Put, test_indices_array_and_shape_array)
 {
-  std::vector<std::tuple<std::vector<size_t>, std::vector<size_t>>> INDICES_VALUES_SHAPE{
+  std::vector<std::tuple<std::vector<uint64_t>, std::vector<uint64_t>>> INDICES_VALUES_SHAPE{
     {{0}, {1}},
     {{2}, {0}},
     {{2}, {1}},
@@ -180,7 +180,7 @@ TEST(Put, test_indices_array_and_shape_array)
     {{2, 2}, {2, 2}},
     {{2, 2}, {3, 3}},
   };
-  std::vector<std::vector<size_t>> shape_list{{2, 3, 4}, {6}};
+  std::vector<std::vector<uint64_t>> shape_list{{2, 3, 4}, {6}};
 
   for (auto shape : shape_list) {
     for (auto [shape_ind, shape_val] : INDICES_VALUES_SHAPE) {
@@ -199,7 +199,7 @@ TEST(Put, test_indices_array_and_shape_array)
 
 TEST(Put, test_ndim_default_mode)
 {
-  std::vector<size_t> shape, shape_ind, shape_val;
+  std::vector<uint64_t> shape, shape_ind, shape_val;
 
   for (int ndim = 1; ndim <= LEGATE_MAX_DIM; ++ndim) {
     shape.push_back(5);
@@ -220,10 +220,10 @@ TEST(Put, test_ndim_default_mode)
 TEST(Put, test_ndim_mode)
 {
   std::vector<std::string> mode_list{"wrap", "clip"};
-  std::vector<std::tuple<std::vector<double>, std::vector<size_t>>> INDICES = {
+  std::vector<std::tuple<std::vector<double>, std::vector<uint64_t>>> INDICES = {
     {{1, 2, 3.2, 100}, {}}, {{2, 1, 3, 100}, {2, 2}}, {{1}, {1}}, {{100}, {1}}};
 
-  std::vector<size_t> shape, shape_val;
+  std::vector<uint64_t> shape, shape_val;
   for (int ndim = 1; ndim <= LEGATE_MAX_DIM; ++ndim) {
     shape.push_back(5);
     shape_val.push_back(2);
@@ -254,7 +254,7 @@ TEST(Put, test_empty_array)
 TEST(Put, test_indices_out_of_bound)
 {
   std::vector<std::vector<int32_t>> indices_list{{-13}, {12}, {0, 1, 12}};
-  std::vector<size_t> shape{3, 4};
+  std::vector<uint64_t> shape{3, 4};
   auto x_in = mk_seq_vector<int32_t>(shape);
   auto x    = mk_array(x_in, shape);
   auto v    = mk_array<int32_t>({10});
@@ -267,7 +267,7 @@ TEST(Put, test_indices_out_of_bound)
 
 TEST(Put, test_indices_out_of_bound_arr_is_scalar)
 {
-  std::vector<std::tuple<std::vector<int64_t>, std::vector<size_t>>> indices_list = {
+  std::vector<std::tuple<std::vector<int64_t>, std::vector<uint64_t>>> indices_list = {
     {{-2}, {}}, {{1}, {}}, {{1}, {1}}};
   auto x = mk_array<int32_t>({0});
   auto v = mk_array<int32_t>({10});
@@ -281,7 +281,7 @@ TEST(Put, test_indices_out_of_bound_arr_is_scalar)
 TEST(Put, test_invalid_mode)
 {
   std::string mode = "unknown";
-  std::vector<size_t> shape{3, 4};
+  std::vector<uint64_t> shape{3, 4};
   auto x_in = mk_seq_vector<int32_t>(shape);
   auto x    = mk_array(x_in, shape);
   auto ind  = mk_array<int32_t>({0});

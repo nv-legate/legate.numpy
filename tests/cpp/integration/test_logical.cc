@@ -31,7 +31,7 @@ template <typename T,
 void test_all(std::array<T, IN_SIZE>& in_array,
               std::array<OUT_T, OUT_SIZE>& expect_result,
               legate::Type leg_type,
-              std::vector<size_t> shape,
+              std::vector<uint64_t> shape,
               std::optional<std::vector<int32_t>> axis = std::nullopt,
               std::optional<cunumeric::NDArray> out    = std::nullopt,
               std::optional<bool> keepdims             = std::nullopt,
@@ -59,7 +59,7 @@ template <typename T, int32_t IN_SIZE, int32_t OUT_SIZE>
 void test_all_each_axis(std::array<T, IN_SIZE>& in_array,
                         std::map<int32_t, std::array<bool, OUT_SIZE>>& expect_result,
                         legate::Type leg_type,
-                        std::vector<size_t> shape,
+                        std::vector<uint64_t> shape,
                         bool keepdims = false)
 {
   int32_t dim = shape.size();
@@ -137,21 +137,21 @@ void test_all_basic()
 {
   // Test int type
   std::array<int32_t, 3> in_array1                      = {-1, 4, 5};
-  std::vector<size_t> shape1                            = {3};
+  std::vector<uint64_t> shape1                          = {3};
   std::map<int32_t, std::array<bool, 1>> expect_result1 = {{0, {true}}};
   test_all_each_axis<int32_t, 3, 1>(in_array1, expect_result1, legate::int32(), shape1);
   test_all_each_axis<int32_t, 3, 1>(in_array1, expect_result1, legate::int32(), shape1, true);
 
   std::array<int32_t, 4> in_array2                      = {5, 10, 0, 100};
   std::map<int32_t, std::array<bool, 1>> expect_result2 = {{0, {false}}};
-  std::vector<size_t> shape2                            = {4};
+  std::vector<uint64_t> shape2                          = {4};
   test_all_each_axis<int32_t, 4, 1>(in_array2, expect_result2, legate::int32(), shape2);
   test_all_each_axis<int32_t, 4, 1>(in_array2, expect_result2, legate::int32(), shape2, true);
 
   std::array<int32_t, 4> in_array3                      = {0, 0, 0, 0};
   std::map<int32_t, std::array<bool, 2>> expect_result3 = {{0, {false, false}},
                                                            {1, {false, false}}};
-  std::vector<size_t> shape3                            = {2, 2};
+  std::vector<uint64_t> shape3                          = {2, 2};
   test_all_each_axis<int32_t, 4, 2>(in_array3, expect_result3, legate::int32(), shape3);
   test_all_each_axis<int32_t, 4, 2>(in_array3, expect_result3, legate::int32(), shape3, true);
 
@@ -159,7 +159,7 @@ void test_all_basic()
   std::map<int32_t, std::array<bool, 4>> expect_result4 = {{0, {false, false, true, true}},
                                                            {1, {false, true, true, false}},
                                                            {2, {false, true, false, true}}};
-  std::vector<size_t> shape4                            = {2, 2, 2};
+  std::vector<uint64_t> shape4                          = {2, 2, 2};
   test_all_each_axis<int32_t, 8, 4>(in_array4, expect_result4, legate::int32(), shape4);
   test_all_each_axis<int32_t, 8, 4>(in_array4, expect_result4, legate::int32(), shape4, true);
 
@@ -167,7 +167,7 @@ void test_all_basic()
   std::array<bool, 9> in_array5 = {true, true, false, true, true, true, true, true, false};
   std::map<int32_t, std::array<bool, 3>> expect_result5 = {{0, {true, true, false}},
                                                            {1, {false, true, false}}};
-  std::vector<size_t> shape5                            = {3, 3};
+  std::vector<uint64_t> shape5                          = {3, 3};
   test_all_each_axis<bool, 9, 3>(in_array5, expect_result5, legate::bool_(), shape5);
   test_all_each_axis<bool, 9, 3>(in_array5, expect_result5, legate::bool_(), shape5, true);
 
@@ -175,7 +175,7 @@ void test_all_basic()
   std::array<double, 9> in_array6 = {0.0, 1.0, 0.0, 5.0, 2.0, 1.0, 1.0, 2.0, 3.0};
   std::map<int32_t, std::array<bool, 3>> expect_result6 = {{0, {false, true, false}},
                                                            {1, {false, true, true}}};
-  std::vector<size_t> shape6                            = {3, 3};
+  std::vector<uint64_t> shape6                          = {3, 3};
   test_all_each_axis<double, 9, 3>(in_array6, expect_result6, legate::float64(), shape6);
   test_all_each_axis<double, 9, 3>(in_array6, expect_result6, legate::float64(), shape6, true);
 
@@ -183,14 +183,14 @@ void test_all_basic()
   std::array<complex<float>, 4> in_array7 = {
     complex<float>(0, 1), complex<float>(1, 1), complex<float>(1, 0), complex<float>(0, 0)};
   std::map<int32_t, std::array<bool, 2>> expect_result7 = {{0, {true, false}}, {1, {true, false}}};
-  std::vector<size_t> shape7                            = {2, 2};
+  std::vector<uint64_t> shape7                          = {2, 2};
   test_all_each_axis<complex<float>, 4, 2>(in_array7, expect_result7, legate::complex64(), shape7);
   test_all_each_axis<complex<float>, 4, 2>(
     in_array7, expect_result7, legate::complex64(), shape7, true);
 
   std::array<complex<double>, 1> in_array8              = {complex<double>(0, 1)};
   std::map<int32_t, std::array<bool, 1>> expect_result8 = {{0, {true}}};
-  std::vector<size_t> shape8                            = {1};
+  std::vector<uint64_t> shape8                          = {1};
   test_all_each_axis<complex<double>, 1, 1>(
     in_array8, expect_result8, legate::complex128(), shape8);
   test_all_each_axis<complex<double>, 1, 1>(
@@ -200,7 +200,7 @@ void test_all_basic()
 void test_all_axis_input()
 {
   std::array<int32_t, 4> in_array = {5, 10, 0, 100};
-  std::vector<size_t> shape       = {1, 2, 2};
+  std::vector<uint64_t> shape     = {1, 2, 2};
 
   std::vector<int32_t> axis1      = {0};
   std::array<bool, 4> expect_val1 = {true, true, false, true};
@@ -218,7 +218,7 @@ void test_all_axis_input()
 void test_all_where_input()
 {
   std::array<bool, 4> in_array = {true, false, true, true};
-  std::vector<size_t> shape    = {2, 2};
+  std::vector<uint64_t> shape  = {2, 2};
 
   // Test where with multiple bool values
   std::array<bool, 2> where_in1 = {true, false};
@@ -250,8 +250,8 @@ void test_all_where_input()
 void test_all_out_input()
 {
   std::array<int32_t, 8> in_array = {0, 1, 2, 3, 4, 5, 6, 7};
-  std::vector<size_t> shape       = {2, 2, 2};
-  std::vector<size_t> out_shape   = {2, 2};
+  std::vector<uint64_t> shape     = {2, 2, 2};
+  std::vector<uint64_t> out_shape = {2, 2};
   std::vector<int32_t> axis       = {0};
 
   auto out1                          = cunumeric::zeros(out_shape, legate::int32());
@@ -282,7 +282,7 @@ void test_all_max_dim(int32_t dim)
   }
 
   int32_t count = IN_SIZE / OUT_SIZE;
-  std::vector<size_t> shapes;
+  std::vector<uint64_t> shapes;
   for (int32_t i = 0; i < dim; i++) {
     shapes.push_back(count);
   }
@@ -337,7 +337,7 @@ void test_all_max_dim()
 void test_all_empty_array()
 {
   std::array<int32_t, 0> in_array = {};
-  std::vector<size_t> shape       = {0};
+  std::vector<uint64_t> shape     = {0};
   std::array<bool, 1> expect_val  = {true};
 
   test_all<int32_t, bool, 0, 1, 1, 1>(in_array, expect_val, legate::int32(), shape);
@@ -346,7 +346,7 @@ void test_all_empty_array()
 void test_all_large_array()
 {
   const int32_t count            = 100000;
-  std::vector<size_t> shape      = {count};
+  std::vector<uint64_t> shape    = {count};
   std::array<bool, 1> expect_val = {true};
 
   // Test int type for large array
@@ -374,7 +374,7 @@ void test_all_large_array()
 void test_all_invalid_axis()
 {
   std::array<int32_t, 4> in_array = {5, 10, 0, 100};
-  std::vector<size_t> shape       = {1, 2, 2};
+  std::vector<uint64_t> shape     = {1, 2, 2};
   auto array                      = cunumeric::zeros(shape, legate::int32());
   assign_values_to_array<int32_t, 3>(array, in_array.data(), in_array.size());
 
@@ -396,29 +396,29 @@ void test_all_invalid_axis()
 void test_all_invalid_shape()
 {
   std::array<int32_t, 4> in_array = {5, 10, 0, 100};
-  std::vector<size_t> shape       = {1, 2, 2};
+  std::vector<uint64_t> shape     = {1, 2, 2};
   auto array                      = cunumeric::zeros(shape, legate::int32());
   assign_values_to_array<int32_t, 3>(array, in_array.data(), in_array.size());
 
-  std::vector<size_t> out_shape1 = {1};
-  auto out1                      = cunumeric::zeros(out_shape1, legate::int32());
+  std::vector<uint64_t> out_shape1 = {1};
+  auto out1                        = cunumeric::zeros(out_shape1, legate::int32());
   EXPECT_THROW(cunumeric::all(array, std::nullopt, out1), std::invalid_argument);
 
-  std::vector<size_t> out_shape2 = {2};
-  std::vector<int32_t> axis2     = {1};
-  auto out2                      = cunumeric::zeros(out_shape2, legate::int32());
+  std::vector<uint64_t> out_shape2 = {2};
+  std::vector<int32_t> axis2       = {1};
+  auto out2                        = cunumeric::zeros(out_shape2, legate::int32());
   EXPECT_THROW(cunumeric::all(array, axis2, out2), std::invalid_argument);
 
-  std::vector<size_t> out_shape3 = {2, 2};
-  std::vector<int32_t> axis3     = {1};
-  auto out3                      = cunumeric::zeros(out_shape3, legate::int32());
+  std::vector<uint64_t> out_shape3 = {2, 2};
+  std::vector<int32_t> axis3       = {1};
+  auto out3                        = cunumeric::zeros(out_shape3, legate::int32());
   EXPECT_THROW(cunumeric::all(array, axis3, out3), std::invalid_argument);
 }
 
 void test_all_invalid_where()
 {
   std::array<int32_t, 4> in_array = {5, 10, 0, 100};
-  std::vector<size_t> shape       = {1, 2, 2};
+  std::vector<uint64_t> shape     = {1, 2, 2};
   auto array                      = cunumeric::zeros(shape, legate::int32());
   assign_values_to_array<int32_t, 3>(array, in_array.data(), in_array.size());
 
@@ -430,9 +430,9 @@ void test_all_invalid_where()
                std::invalid_argument);
 
   // Test where with invalid shape
-  std::vector<size_t> where_shape = {2, 2, 1};
-  std::array<bool, 4> in_where2   = {false, true, false, true};
-  auto where2                     = cunumeric::zeros(where_shape, legate::bool_());
+  std::vector<uint64_t> where_shape = {2, 2, 1};
+  std::array<bool, 4> in_where2     = {false, true, false, true};
+  auto where2                       = cunumeric::zeros(where_shape, legate::bool_());
   assign_values_to_array<bool, 3>(where2, in_where2.data(), in_where2.size());
   EXPECT_THROW(cunumeric::all(array, std::nullopt, std::nullopt, false, where2), std::exception);
 }

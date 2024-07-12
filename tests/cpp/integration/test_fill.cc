@@ -65,7 +65,7 @@ TEST(Fill, test_fill_float_to_float)
 
 TEST(Fill, test_fill_ndim)
 {
-  std::vector<size_t> shape;
+  std::vector<uint64_t> shape;
   for (int32_t ndim = 1; ndim <= LEGATE_MAX_DIM; ++ndim) {
     shape.push_back(ndim);
     int32_t value = ndim * 10;
@@ -78,7 +78,7 @@ TEST(Fill, test_fill_ndim)
 
 TEST(Fill, test_full_ndim)
 {
-  std::vector<size_t> shape;
+  std::vector<uint64_t> shape;
   for (int32_t ndim = 1; ndim <= LEGATE_MAX_DIM; ++ndim) {
     shape.push_back(ndim);
     int32_t value = ndim * 10;

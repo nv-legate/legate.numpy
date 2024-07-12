@@ -22,10 +22,10 @@ using namespace cunumeric;
 namespace {
 
 template <typename T>
-std::tuple<std::vector<T>, std::vector<size_t>> trilu_result(std::vector<T> a,
-                                                             std::vector<size_t> shape,
-                                                             int32_t k  = 0,
-                                                             bool lower = true)
+std::tuple<std::vector<T>, std::vector<uint64_t>> trilu_result(std::vector<T> a,
+                                                               std::vector<uint64_t> shape,
+                                                               int32_t k  = 0,
+                                                               bool lower = true)
 {
   if (shape.empty()) {
     throw std::invalid_argument("Array must be at least 1-D");
@@ -69,7 +69,7 @@ std::tuple<std::vector<T>, std::vector<size_t>> trilu_result(std::vector<T> a,
 }
 
 template <typename T>
-void _test(std::string func, std::vector<T> x_in, std::vector<size_t> shape, int32_t k)
+void _test(std::string func, std::vector<T> x_in, std::vector<uint64_t> shape, int32_t k)
 {
   bool lower            = (func == "tril") ? true : false;
   auto num_f            = (func == "tril") ? tril : triu;
@@ -83,7 +83,7 @@ TEST(Trilu, test_trilu)
 {
   std::vector<std::string> func_list{"tril", "triu"};
   std::vector<int32_t> k_list{0, -1, 1, -2, 2, -10, 10};
-  std::vector<std::vector<size_t>> shape_list{
+  std::vector<std::vector<uint64_t>> shape_list{
     {0}, {1}, {10}, {1, 10}, {10, 10}, {1, 1, 10}, {1, 10, 10}, {10, 10, 10}};
   for (auto shape : shape_list) {
     auto x_int32 = mk_seq_vector<int32_t>(shape, 0, 1);
@@ -100,7 +100,7 @@ TEST(Trilu, test_trilu)
 TEST(Trilu, test_ndim)
 {
   std::vector<std::string> func_list{"tril", "triu"};
-  std::vector<size_t> shape;
+  std::vector<uint64_t> shape;
   for (int32_t ndim = 1; ndim <= LEGATE_MAX_DIM; ++ndim) {
     shape.push_back(ndim);
     for (int32_t k = -ndim; k <= ndim; ++k) {

@@ -183,33 +183,32 @@ struct UnaryOpDispatch {
 template <VariantKind KIND>
 static void unary_op_template(TaskContext& context)
 {
-  auto inputs   = context.inputs();
-  auto outputs  = context.outputs();
-  auto& scalars = context.scalars();
-
-  auto op_code = scalars[0].value<UnaryOpCode>();
+  auto op_code = context.scalar(0).value<UnaryOpCode>();
   switch (op_code) {
     case UnaryOpCode::FREXP: {
-      MultiOutUnaryOpArgs args{inputs[0], outputs[0], outputs[1], op_code};
+      MultiOutUnaryOpArgs args{context.input(0), context.output(0), context.output(1), op_code};
       auto dim = std::max(args.in.dim(), 1);
       legate::double_dispatch(
         dim, args.in.code(), MultiOutUnaryOpImpl<KIND, UnaryOpCode::FREXP>{}, args);
       break;
     }
     case UnaryOpCode::MODF: {
-      MultiOutUnaryOpArgs args{inputs[0], outputs[0], outputs[1], op_code};
+      MultiOutUnaryOpArgs args{context.input(0), context.output(0), context.output(1), op_code};
       auto dim = std::max(args.in.dim(), 1);
       legate::double_dispatch(
         dim, args.in.code(), MultiOutUnaryOpImpl<KIND, UnaryOpCode::MODF>{}, args);
       break;
     }
     default: {
+      const auto num_scalars = context.num_scalars();
       std::vector<Scalar> extra_args;
-      for (size_t idx = 1; idx < scalars.size(); ++idx) {
-        extra_args.push_back(scalars[idx]);
+
+      extra_args.reserve(num_scalars - 1);
+      for (size_t idx = 1; idx < num_scalars; ++idx) {
+        extra_args.push_back(context.scalar(idx));
       }
 
-      UnaryOpArgs args{inputs[0], outputs[0], op_code, std::move(extra_args)};
+      UnaryOpArgs args{context.input(0), context.output(0), op_code, std::move(extra_args)};
       op_dispatch(args.op_code, UnaryOpDispatch<KIND>{}, args);
       break;
     }

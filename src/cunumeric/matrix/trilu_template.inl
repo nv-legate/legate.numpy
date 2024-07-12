@@ -73,11 +73,10 @@ struct TriluImpl {
 template <VariantKind KIND>
 static void trilu_template(TaskContext& context)
 {
-  auto& scalars = context.scalars();
-  auto lower    = scalars[0].value<bool>();
-  auto k        = scalars[1].value<int32_t>();
-  auto input    = context.input(0);
-  auto output   = context.output(0);
+  auto lower  = context.scalar(0).value<bool>();
+  auto k      = context.scalar(1).value<int32_t>();
+  auto input  = context.input(0);
+  auto output = context.output(0);
   TriluArgs args{lower, k, output, input};
   double_dispatch(args.output.dim(), args.output.type().code(), TriluImpl<KIND>{}, args);
 }

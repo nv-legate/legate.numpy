@@ -55,11 +55,10 @@ struct WindowImpl {
 template <VariantKind KIND>
 static void window_template(TaskContext& context)
 {
-  auto output   = context.outputs().front();
-  auto& scalars = context.scalars();
-  auto op_code  = scalars[0].value<WindowOpCode>();
-  auto M        = scalars[1].value<int64_t>();
-  auto beta     = scalars.size() > 2 ? scalars[2].value<double>() : 0.0;
+  auto output  = context.output(0);
+  auto op_code = context.scalar(0).value<WindowOpCode>();
+  auto M       = context.scalar(1).value<int64_t>();
+  auto beta    = context.num_scalars() > 2 ? context.scalar(2).value<double>() : 0.0;
 
   op_dispatch(op_code, WindowImpl<KIND>{}, output, M, beta);
 }

@@ -82,15 +82,12 @@ struct UnaryRedDispatch {
 template <VariantKind KIND>
 static void unary_red_template(TaskContext& context)
 {
-  auto inputs     = context.inputs();
-  auto reductions = context.reductions();
-  auto& scalars   = context.scalars();
-  bool has_where  = scalars[2].value<bool>();
-  UnaryRedArgs args{reductions[0],
-                    inputs[0],
-                    has_where ? inputs[1] : legate::PhysicalStore{nullptr},
-                    scalars[0].value<int32_t>(),
-                    scalars[1].value<UnaryRedCode>()};
+  bool has_where = context.scalar(2).value<bool>();
+  UnaryRedArgs args{context.reduction(0),
+                    context.input(0),
+                    has_where ? context.input(1) : legate::PhysicalStore{nullptr},
+                    context.scalar(0).value<int32_t>(),
+                    context.scalar(1).value<UnaryRedCode>()};
   if (has_where) {
     op_dispatch(args.op_code, UnaryRedDispatch<KIND, true>{}, args);
   } else {

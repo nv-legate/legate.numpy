@@ -90,7 +90,7 @@ TEST(Utils, test_check_array)
     check_array<int32_t>(x, {1, 2, 3, 4}, {2, 2});
   }
   {
-    std::vector<size_t> shape{2, 3, 4};
+    std::vector<uint64_t> shape{2, 3, 4};
     auto x_in = mk_seq_vector<int32_t>(shape, 10);
     auto x    = mk_array(x_in, shape);
     debug_array(x);
@@ -100,7 +100,7 @@ TEST(Utils, test_check_array)
 
 void fail1()
 {
-  std::vector<size_t> shape{2, 3};
+  std::vector<uint64_t> shape{2, 3};
   auto x    = mk_array<int32_t>({1, 2, 3, 4, 50, 6}, shape);
   auto x_gt = mk_seq_vector<int32_t>(shape);
   check_array(x, x_gt, shape);
@@ -158,7 +158,7 @@ TEST(Utils, test_ndarray_warn_and_convert)
 
 TEST(Utils, test_wrap_indices_and_clip_indices)
 {
-  std::vector<size_t> shape{10};
+  std::vector<uint64_t> shape{10};
   auto x_in   = mk_seq_vector<int64_t>(shape);
   auto x      = mk_array(x_in, shape);
   auto x_warp = x.wrap_indices(Scalar(int64_t(4)));

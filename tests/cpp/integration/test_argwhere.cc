@@ -26,21 +26,21 @@
 using namespace cunumeric;
 
 namespace {
-std::vector<std::vector<size_t>> get_in_shapes_basic()
+std::vector<std::vector<uint64_t>> get_in_shapes_basic()
 {
-  std::vector<std::vector<size_t>> in_shapes = {{12},
-                                                {4, 3},
-                                                {2, 2, 3},
-                                                {2, 1, 2, 3},
-                                                {2, 1, 2, 1, 3},
-                                                {2, 1, 2, 1, 3, 1},
-                                                {1, 2, 1, 2, 1, 3, 1}};
+  std::vector<std::vector<uint64_t>> in_shapes = {{12},
+                                                  {4, 3},
+                                                  {2, 2, 3},
+                                                  {2, 1, 2, 3},
+                                                  {2, 1, 2, 1, 3},
+                                                  {2, 1, 2, 1, 3, 1},
+                                                  {1, 2, 1, 2, 1, 3, 1}};
   return in_shapes;
 }
 
-std::vector<std::vector<size_t>> get_exp_shapes_basic()
+std::vector<std::vector<uint64_t>> get_exp_shapes_basic()
 {
-  std::vector<std::vector<size_t>> exp_shapes = {
+  std::vector<std::vector<uint64_t>> exp_shapes = {
     {6, 1}, {6, 2}, {6, 3}, {6, 4}, {6, 5}, {6, 6}, {6, 7}};
   return exp_shapes;
 }
@@ -63,8 +63,8 @@ std::vector<std::vector<int64_t>> get_exp_vectors_basic()
 template <typename T>
 void test_argwhere(std::vector<T>& in_vec,
                    std::vector<int64_t>& exp_vec,
-                   const std::vector<size_t>& in_shape,
-                   const std::vector<size_t>& exp_shape)
+                   const std::vector<uint64_t>& in_shape,
+                   const std::vector<uint64_t>& exp_shape)
 {
   auto a = mk_array(in_vec, in_shape);
   auto x = argwhere(a);
@@ -142,8 +142,8 @@ void argwhere_bool()
 }
 
 void test_argwhere_empty_array(legate::Type leg_type,
-                               std::vector<size_t> in_shape,
-                               std::vector<size_t> exp_shape)
+                               std::vector<uint64_t> in_shape,
+                               std::vector<uint64_t> exp_shape)
 {
   auto a = zeros(in_shape, leg_type);
   auto x = argwhere(a);
@@ -165,7 +165,7 @@ std::vector<T> init_large_vector(size_t size)
 
 template <typename T>
 std::vector<int64_t> argwhere_result(const std::vector<T>& in_vec,
-                                     const std::vector<size_t>& in_shape)
+                                     const std::vector<uint64_t>& in_shape)
 {
   std::vector<int64_t> a(in_shape.size(), 0);
   std::vector<int64_t> result;
@@ -188,9 +188,9 @@ std::vector<int64_t> argwhere_result(const std::vector<T>& in_vec,
   return result;
 }
 
-std::vector<size_t> gen_shape(uint32_t dim, size_t in_size)
+std::vector<uint64_t> gen_shape(uint32_t dim, size_t in_size)
 {
-  std::vector<size_t> shape(dim, 1);
+  std::vector<uint64_t> shape(dim, 1);
   size_t value = 2;
   size_t prod  = 1;
   for (int i = 0; i < dim - 1; i++) {
@@ -212,10 +212,10 @@ void argwhere_large_array(uint32_t dim)
   // for dim = 7, in_shape is {2, 3, 4, 5, 6, 7}
   auto in_shape = gen_shape(dim, in_size);
 
-  auto a                        = mk_array(in_vec, in_shape);
-  auto x                        = argwhere(a);
-  auto x_comp                   = argwhere_result<int32_t>(in_vec, in_shape);
-  std::vector<size_t> exp_shape = {x_comp.size() / in_shape.size(), dim};
+  auto a                          = mk_array(in_vec, in_shape);
+  auto x                          = argwhere(a);
+  auto x_comp                     = argwhere_result<int32_t>(in_vec, in_shape);
+  std::vector<uint64_t> exp_shape = {x_comp.size() / in_shape.size(), dim};
   check_array(x, x_comp, exp_shape);
 }
 
@@ -252,16 +252,16 @@ TEST(Argwhere, LargeArray)
 
 TEST(Argwhere, EmptyArray)
 {
-  std::vector<std::vector<size_t>> in_shapes = {{
-                                                  0,
-                                                },
-                                                {0, 1},
-                                                {1, 0},
-                                                {1, 0, 0},
-                                                {1, 1, 0},
-                                                {1, 0, 1}};
+  std::vector<std::vector<uint64_t>> in_shapes = {{
+                                                    0,
+                                                  },
+                                                  {0, 1},
+                                                  {1, 0},
+                                                  {1, 0, 0},
+                                                  {1, 1, 0},
+                                                  {1, 0, 1}};
 
-  std::vector<std::vector<size_t>> exp_shapes = {
+  std::vector<std::vector<uint64_t>> exp_shapes = {
     // {0, 1}, {0, 2}, {0, 2}, {0, 3}, {0, 3}, {0, 3}}；//This is shape of numpy output array.
     {0, 0},
     {0, 0},
@@ -279,15 +279,15 @@ TEST(Argwhere, EmptyArray)
 
 TEST(Argwhere, Scalar)
 {
-  std::vector<size_t> exp_shape1 = {0, 0};
-  auto A1                        = zeros({}, legate::int32());
-  auto B1                        = argwhere(A1);
+  std::vector<uint64_t> exp_shape1 = {0, 0};
+  auto A1                          = zeros({}, legate::int32());
+  auto B1                          = argwhere(A1);
   EXPECT_EQ(B1.size(), 0);
   EXPECT_EQ(B1.type(), legate::int64());
   EXPECT_EQ(B1.shape(), exp_shape1);
 
-  std::vector<size_t> exp_shape2 = {1, 0};
-  auto A2                        = zeros({}, legate::float64());
+  std::vector<uint64_t> exp_shape2 = {1, 0};
+  auto A2                          = zeros({}, legate::float64());
   A2.fill(legate::Scalar(static_cast<double>(1)));
   auto B2 = cunumeric::argwhere(A2);
   EXPECT_EQ(B2.size(), 0);

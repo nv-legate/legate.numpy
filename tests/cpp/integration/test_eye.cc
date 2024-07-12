@@ -73,8 +73,8 @@ auto get_eye_expect_result_3_4()
 template <typename T>
 auto test_eye_3_2(std::vector<int32_t>& k_vals, std::optional<legate::Type> type = std::nullopt)
 {
-  auto expect_result               = get_eye_expect_result_3_2<T>();
-  std::vector<size_t> expect_shape = {3, 2};
+  auto expect_result                 = get_eye_expect_result_3_2<T>();
+  std::vector<uint64_t> expect_shape = {3, 2};
   for (auto k : k_vals) {
     if (type.has_value()) {
       auto result = cunumeric::eye(3, 2, k, type.value());
@@ -95,8 +95,8 @@ auto test_eye_3_2(std::vector<int32_t>& k_vals, std::optional<legate::Type> type
 template <typename T>
 auto test_eye_3_3(std::vector<int32_t>& k_vals, std::optional<legate::Type> type = std::nullopt)
 {
-  auto expect_result               = get_eye_expect_result_3_3<T>();
-  std::vector<size_t> expect_shape = {3, 3};
+  auto expect_result                 = get_eye_expect_result_3_3<T>();
+  std::vector<uint64_t> expect_shape = {3, 3};
   for (auto k : k_vals) {
     if (type.has_value()) {
       auto result = cunumeric::eye(3, 3, k, type.value());
@@ -117,8 +117,8 @@ auto test_eye_3_3(std::vector<int32_t>& k_vals, std::optional<legate::Type> type
 template <typename T>
 auto test_eye_3_4(std::vector<int32_t>& k_vals, std::optional<legate::Type> type = std::nullopt)
 {
-  auto expect_result               = get_eye_expect_result_3_4<T>();
-  std::vector<size_t> expect_shape = {3, 4};
+  auto expect_result                 = get_eye_expect_result_3_4<T>();
+  std::vector<uint64_t> expect_shape = {3, 4};
   for (auto k : k_vals) {
     if (type.has_value()) {
       auto result = cunumeric::eye(3, 4, k, type.value());
@@ -140,8 +140,8 @@ template <typename T>
 auto test_eye_square_3(std::optional<std::vector<int32_t>> k_vals = std::nullopt,
                        std::optional<legate::Type> type           = std::nullopt)
 {
-  auto expect_result               = get_eye_expect_result_3_3<T>();
-  std::vector<size_t> expect_shape = {3, 3};
+  auto expect_result                 = get_eye_expect_result_3_3<T>();
+  std::vector<uint64_t> expect_shape = {3, 3};
   if (k_vals.has_value()) {
     for (auto k : k_vals.value()) {
       if (type.has_value()) {
@@ -214,15 +214,15 @@ void eye_square()
 void eye_input_zero()
 {
   // Test n=0
-  auto result1                      = cunumeric::eye(0);
-  std::vector<size_t> expect_shape1 = {0, 0};
+  auto result1                        = cunumeric::eye(0);
+  std::vector<uint64_t> expect_shape1 = {0, 0};
   EXPECT_EQ(result1.type(), legate::float64());
   EXPECT_EQ(result1.size(), 0);
   EXPECT_EQ(result1.shape(), expect_shape1);
 
   // Test m=0
-  auto result2                      = cunumeric::eye(3, 0);
-  std::vector<size_t> expect_shape2 = {3, 0};
+  auto result2                        = cunumeric::eye(3, 0);
+  std::vector<uint64_t> expect_shape2 = {3, 0};
   EXPECT_EQ(result2.type(), legate::float64());
   EXPECT_EQ(result2.size(), 0);
   EXPECT_EQ(result2.shape(), expect_shape2);
@@ -233,8 +233,8 @@ void eye_large_array()
   const size_t n_or_m = 1000;
 
   // Test 1000 * 1000 array
-  auto result1                      = cunumeric::eye(n_or_m);
-  std::vector<size_t> expect_shape1 = {n_or_m, n_or_m};
+  auto result1                        = cunumeric::eye(n_or_m);
+  std::vector<uint64_t> expect_shape1 = {n_or_m, n_or_m};
   std::array<double, n_or_m * n_or_m> expect_result1;
   expect_result1.fill(0);
   for (size_t i = 0; i < n_or_m; i++) {
@@ -245,9 +245,9 @@ void eye_large_array()
   check_array_eq<double, 2>(result1, expect_result1.data(), expect_result1.size());
 
   // Test 3 * 1000 array
-  const size_t n                    = 3;
-  auto result2                      = cunumeric::eye(n, n_or_m, 0, legate::int32());
-  std::vector<size_t> expect_shape2 = {n, n_or_m};
+  const size_t n                      = 3;
+  auto result2                        = cunumeric::eye(n, n_or_m, 0, legate::int32());
+  std::vector<uint64_t> expect_shape2 = {n, n_or_m};
   std::array<int32_t, n * n_or_m> expect_result2;
   expect_result2.fill(0);
   for (size_t i = 0; i < n; i++) {
@@ -258,9 +258,9 @@ void eye_large_array()
   check_array_eq<int32_t, 2>(result2, expect_result2.data(), expect_result2.size());
 
   // Test 1000 * 3 array
-  const size_t m                    = 3;
-  auto result3                      = cunumeric::eye(n_or_m, m, 0, legate::complex64());
-  std::vector<size_t> expect_shape3 = {n_or_m, m};
+  const size_t m                      = 3;
+  auto result3                        = cunumeric::eye(n_or_m, m, 0, legate::complex64());
+  std::vector<uint64_t> expect_shape3 = {n_or_m, m};
   std::array<complex<float>, n_or_m * m> expect_result3;
   expect_result3.fill(0);
   for (size_t i = 0; i < n_or_m; i++) {

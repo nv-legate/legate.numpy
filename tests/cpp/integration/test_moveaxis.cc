@@ -26,8 +26,8 @@
 template <int32_t DIM>
 static void moveaxis_int32_test(std::vector<int32_t> input,
                                 std::vector<int32_t> exp,
-                                std::vector<size_t> in_shape,
-                                std::vector<size_t> out_shape,
+                                std::vector<uint64_t> in_shape,
+                                std::vector<uint64_t> out_shape,
                                 std::vector<int32_t> source,
                                 std::vector<int32_t> destination)
 {
@@ -38,8 +38,8 @@ static void moveaxis_int32_test(std::vector<int32_t> input,
   EXPECT_EQ(a_output.shape(), out_shape);
 }
 
-static void moveaxis_int32_test_2(std::vector<size_t> in_shape,
-                                  std::vector<size_t> out_shape,
+static void moveaxis_int32_test_2(std::vector<uint64_t> in_shape,
+                                  std::vector<uint64_t> out_shape,
                                   std::vector<int32_t> source,
                                   std::vector<int32_t> destination)
 {

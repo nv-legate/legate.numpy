@@ -82,19 +82,16 @@ static void fft_template(TaskContext& context)
 {
   FFTArgs args;
 
-  auto inputs   = context.inputs();
-  auto outputs  = context.outputs();
-  auto& scalars = context.scalars();
-
-  args.output = std::move(outputs[0]);
-  args.input  = std::move(inputs[0]);
+  args.output = context.output(0);
+  args.input  = context.input(0);
   // Scalar arguments. Pay attention to indexes / ranges when adding or reordering arguments
-  args.type              = scalars[0].value<CuNumericFFTType>();
-  args.direction         = scalars[1].value<CuNumericFFTDirection>();
-  args.operate_over_axes = scalars[2].value<bool>();
+  args.type              = context.scalar(0).value<CuNumericFFTType>();
+  args.direction         = context.scalar(1).value<CuNumericFFTDirection>();
+  args.operate_over_axes = context.scalar(2).value<bool>();
 
-  for (size_t i = 3; i < scalars.size(); ++i) {
-    args.axes.push_back(scalars[i].value<int64_t>());
+  const auto num_scalars = context.num_scalars();
+  for (uint32_t i = 3; i < num_scalars; ++i) {
+    args.axes.push_back(context.scalar(i).value<int64_t>());
   }
 
   fft_dispatch(args.type, FFTDispatch<KIND>{}, args);

@@ -207,7 +207,7 @@ template <typename T, int32_t SIZE, int32_t DIM>
 void test_argsort(std::array<T, SIZE>& in_array,
                   std::array<int64_t, SIZE>& expect,
                   legate::Type leg_type,
-                  std::vector<size_t> shape,
+                  std::vector<uint64_t> shape,
                   std::optional<int32_t> axis,
                   bool test_only_stable = false)
 {
@@ -233,7 +233,7 @@ void test_argsort(std::array<T, SIZE>& in_array,
 
 template <typename T, int32_t SIZE>
 void argsort_basic_axis_impl(
-  std::vector<std::vector<size_t>>& test_shapes,
+  std::vector<std::vector<uint64_t>>& test_shapes,
   std::array<T, SIZE> in_array,
   std::vector<std::map<int32_t, std::array<int64_t, SIZE>>>& expect_result,
   legate::Type leg_type,
@@ -282,7 +282,7 @@ void argsort_basic_axis_impl(
 
 void argsort_basic_axis()
 {
-  std::vector<std::vector<size_t>> test_shapes = {
+  std::vector<std::vector<uint64_t>> test_shapes = {
     {12}, {1, 12}, {12, 1}, {3, 4}, {12, 1, 1}, {1, 12, 1}, {1, 1, 12}, {2, 2, 3}};
 
   auto expect_result = get_argsort_expect_result();
@@ -314,7 +314,7 @@ void argsort_basic_axis()
 
 void argsort_basic_axis_stable()
 {
-  std::vector<std::vector<size_t>> test_shapes = {
+  std::vector<std::vector<uint64_t>> test_shapes = {
     {12}, {1, 12}, {12, 1}, {3, 4}, {12, 1, 1}, {1, 12, 1}, {1, 1, 12}, {2, 2, 3}};
   auto expect_result = get_argsort_expect_result();
 
@@ -350,27 +350,27 @@ void argsort_basic_axis_max_dim()
   // Only test int type for max dim
   std::array<int32_t, 16> in_array = {14, 10, 3, 12, 5, 13, 2, 4, 16, 8, 9, 7, 6, 11, 1, 15};
 #if LEGATE_MAX_DIM >= 4
-  std::vector<std::vector<size_t>> test_shapes_4d = {{1, 1, 1, 16}, {16, 1, 1, 1}, {2, 2, 1, 4}};
-  auto expect_result_4d                           = get_argsort_expect_result_4d();
+  std::vector<std::vector<uint64_t>> test_shapes_4d = {{1, 1, 1, 16}, {16, 1, 1, 1}, {2, 2, 1, 4}};
+  auto expect_result_4d                             = get_argsort_expect_result_4d();
   argsort_basic_axis_impl<int32_t, 16>(test_shapes_4d, in_array, expect_result_4d, legate::int32());
 #endif
 
 #if LEGATE_MAX_DIM >= 5
-  std::vector<std::vector<size_t>> test_shapes_5d = {
+  std::vector<std::vector<uint64_t>> test_shapes_5d = {
     {1, 1, 1, 16, 1}, {1, 16, 1, 1, 1}, {1, 2, 2, 1, 4}};
   auto expect_result_5d = get_argsort_expect_result_5d();
   argsort_basic_axis_impl<int32_t, 16>(test_shapes_5d, in_array, expect_result_5d, legate::int32());
 #endif
 
 #if LEGATE_MAX_DIM >= 6
-  std::vector<std::vector<size_t>> test_shapes_6d = {
+  std::vector<std::vector<uint64_t>> test_shapes_6d = {
     {16, 1, 1, 1, 1, 1}, {1, 1, 16, 1, 1, 1}, {1, 2, 1, 2, 2, 2}};
   auto expect_result_6d = get_argsort_expect_result_6d();
   argsort_basic_axis_impl<int32_t, 16>(test_shapes_6d, in_array, expect_result_6d, legate::int32());
 #endif
 
 #if LEGATE_MAX_DIM >= 7
-  std::vector<std::vector<size_t>> test_shapes_7d = {
+  std::vector<std::vector<uint64_t>> test_shapes_7d = {
     {1, 16, 1, 1, 1, 1, 1}, {1, 1, 2, 2, 1, 4, 1}, {2, 2, 1, 1, 2, 1, 2}};
   auto expect_result_7d = get_argsort_expect_result_7d();
   argsort_basic_axis_impl<int32_t, 16>(test_shapes_7d, in_array, expect_result_7d, legate::int32());
@@ -379,8 +379,8 @@ void argsort_basic_axis_max_dim()
 
 void argsort_large_array()
 {
-  const int32_t count                          = 10000;
-  std::vector<std::vector<size_t>> test_shapes = {{count}};
+  const int32_t count                            = 10000;
+  std::vector<std::vector<uint64_t>> test_shapes = {{count}};
   std::array<int64_t, count> expect_val;
   for (int64_t j = 0; j < count; j++) {
     expect_val[j] = count - 1 - j;
@@ -412,7 +412,7 @@ void argsort_large_array()
 
 void argsort_empty_array()
 {
-  std::vector<std::vector<size_t>> test_shapes = {
+  std::vector<std::vector<uint64_t>> test_shapes = {
     {0}, {0, 1}, {1, 0}, {1, 0, 0}, {1, 1, 0}, {1, 0, 1}};
 
   std::array<int32_t, 0> in_array   = {};
@@ -435,7 +435,7 @@ void argsort_empty_array()
 
 void argsort_single_item_array()
 {
-  std::vector<std::vector<size_t>> test_shapes = {{1}, {1, 1}, {1, 1, 1}};
+  std::vector<std::vector<uint64_t>> test_shapes = {{1}, {1, 1}, {1, 1, 1}};
 
   std::array<int32_t, 1> in_array   = {12};
   std::array<int64_t, 1> expect_val = {0};

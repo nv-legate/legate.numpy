@@ -41,6 +41,12 @@ if(POLICY CMP0132)
   set(CMAKE_POLICY_DEFAULT_CMP0132 NEW)
 endif()
 
+set(CMAKE_CXX_STANDARD 17 CACHE STRING "" FORCE)
+set(CMAKE_CXX_STANDARD_REQUIRED ON CACHE STRING "" FORCE)
+
+set(CMAKE_CUDA_STANDARD 17 CACHE STRING "" FORCE)
+set(CMAKE_CUDA_STANDARD_REQUIRED ON CACHE STRING "" FORCE)
+
 ##############################################################################
 # - Download and initialize RAPIDS CMake helpers -----------------------------
 

@@ -192,16 +192,14 @@ struct ScalarUnaryRedDispatch {
 template <VariantKind KIND>
 static void scalar_unary_red_template(TaskContext& context)
 {
-  auto& scalars = context.scalars();
-
-  auto op_code   = scalars[0].value<UnaryRedCode>();
-  auto shape     = scalars[1].value<DomainPoint>();
-  bool has_where = scalars[2].value<bool>();
+  auto op_code   = context.scalar(0).value<UnaryRedCode>();
+  auto shape     = context.scalar(1).value<DomainPoint>();
+  bool has_where = context.scalar(2).value<bool>();
 
   std::vector<Scalar> extra_args;
-  extra_args.reserve(scalars.size() - 3);
-  for (size_t idx = 3; idx < scalars.size(); ++idx) {
-    extra_args.emplace_back(std::move(scalars[idx]));
+  extra_args.reserve(context.num_scalars() - 3);
+  for (size_t idx = 3; idx < context.num_scalars(); ++idx) {
+    extra_args.emplace_back(context.scalar(idx));
   }
 
   // If the RHS was a scalar, use (1,) as the shape

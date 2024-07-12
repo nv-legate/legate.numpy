@@ -22,23 +22,23 @@ using Code = legate::Type::Code;
 namespace {
 
 const size_t DIM = 4;
-std::vector<std::vector<size_t>> shape_list{{0},
-                                            {1},
-                                            {DIM},
-                                            {0, 1},
-                                            {1, 0},
-                                            {1, 1},
-                                            {1, DIM},
-                                            {DIM, 1},
-                                            {DIM, DIM},
-                                            {1, 0, 0},
-                                            {1, 1, 0},
-                                            {1, 0, 1},
-                                            {1, 1, 1},
-                                            {DIM, 1, 1},
-                                            {1, DIM, 1},
-                                            {1, 1, DIM},
-                                            {DIM, DIM, DIM}};
+std::vector<std::vector<uint64_t>> shape_list{{0},
+                                              {1},
+                                              {DIM},
+                                              {0, 1},
+                                              {1, 0},
+                                              {1, 1},
+                                              {1, DIM},
+                                              {DIM, 1},
+                                              {DIM, DIM},
+                                              {1, 0, 0},
+                                              {1, 1, 0},
+                                              {1, 0, 1},
+                                              {1, 1, 1},
+                                              {DIM, 1, 1},
+                                              {1, DIM, 1},
+                                              {1, 1, DIM},
+                                              {DIM, DIM, DIM}};
 
 std::vector<Code> code_list{Code::BOOL,
                             Code::INT8,
@@ -55,7 +55,7 @@ std::vector<Code> code_list{Code::BOOL,
                             Code::COMPLEX128};
 
 template <Code CODE>
-void _test(std::vector<size_t> shape)
+void _test(std::vector<uint64_t> shape)
 {
   auto x    = zeros(shape, legate::primitive_type(CODE));
   using VAL = legate::type_of<CODE>;
@@ -90,7 +90,7 @@ TEST(Zeros, test_basic_dtype)
 
 TEST(Zeros, test_ndim)
 {
-  std::vector<size_t> shape;
+  std::vector<uint64_t> shape;
   for (int32_t ndim = 1; ndim <= LEGATE_MAX_DIM; ++ndim) {
     shape.push_back(ndim);
     _test<Code::BOOL>(shape);

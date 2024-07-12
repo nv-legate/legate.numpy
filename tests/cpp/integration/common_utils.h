@@ -36,12 +36,12 @@ namespace cunumeric {
 void debug_array(NDArray a, bool show_data = true);
 
 template <typename T>
-NDArray mk_array(std::vector<T> const& values, std::vector<size_t> shape = {})
+NDArray mk_array(std::vector<T> const& values, std::vector<uint64_t> shape = {})
 {
   if (shape.empty() && values.size() > 1) {
     shape.push_back(values.size());
   }
-  auto out = zeros(shape, legate::primitive_type(legate::type_code_of<T>));
+  auto out = zeros(shape, legate::primitive_type(legate::type_code_of_v<T>));
   if (values.size() != out.size()) {
     throw std::invalid_argument("size and shape mismatch");
   }
@@ -49,7 +49,10 @@ NDArray mk_array(std::vector<T> const& values, std::vector<size_t> shape = {})
     return out;
   }
   if (out.size() == 1) {
-    out.fill(legate::Scalar(values[0]));
+    // must static cast here in case T = bool, in which case operator[] may return the stupid
+    // "proxy bool" that std::vector<bool> is allowed to return. In that case the Scalar
+    // constructor cannot deduce the type, because it has not been specialized for that type.
+    out.fill(legate::Scalar(static_cast<const T&>(values[0])));
     return out;
   }
   auto assign_values = [](NDArray& a, std::vector<T> const& values) {
@@ -71,14 +74,14 @@ NDArray mk_array(std::vector<T> const& values, std::vector<size_t> shape = {})
 }
 
 template <typename T>
-void check_array(NDArray a, std::vector<T> values, std::vector<size_t> shape = {})
+void check_array(NDArray a, std::vector<T> values, std::vector<uint64_t> shape = {})
 {
   if (shape.empty() && values.size() > 1) {
     shape.push_back(values.size());
   }
   ASSERT_EQ(a.size(), values.size());
   ASSERT_EQ(a.shape(), shape);
-  ASSERT_EQ(a.type().code(), legate::type_code_of<T>);
+  ASSERT_EQ(a.type().code(), legate::type_code_of_v<T>);
   if (a.size() == 0) {
     return;
   }
@@ -140,7 +143,7 @@ void debug_vector(const std::vector<T>& vec)
 
 // x = a * i + b, i = 1, 2, 3, ...
 template <typename T>
-std::vector<T> mk_seq_vector(std::vector<size_t> shape, T a = 1, T b = 0)
+std::vector<T> mk_seq_vector(std::vector<uint64_t> shape, T a = 1, T b = 0)
 {
   size_t size = std::accumulate(shape.begin(), shape.end(), size_t(1), std::multiplies<size_t>());
   std::vector<T> v(size);

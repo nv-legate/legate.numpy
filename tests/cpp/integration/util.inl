@@ -46,7 +46,7 @@ std::stringstream& print_value<complex<double>>(std::stringstream& ss, complex<d
 
 template <typename T, int32_t DIM>
 std::string to_string(legate::AccessorRO<T, DIM> acc,
-                      const std::vector<size_t>& shape,
+                      const std::vector<uint64_t>& shape,
                       legate::Rect<DIM> rect)
 {
   std::stringstream ss;
@@ -107,7 +107,7 @@ std::string to_string(legate::AccessorRO<T, DIM> acc,
 template <typename T, int32_t DIM>
 std::string check_array_eq(legate::AccessorRO<T, DIM> acc,
                            T* values_ptr,
-                           const std::vector<size_t>& shape,
+                           const std::vector<uint64_t>& shape,
                            legate::Rect<DIM> rect)
 {
   std::stringstream ss;
@@ -138,7 +138,7 @@ std::string check_array_eq(legate::AccessorRO<T, DIM> acc,
 template <typename T, int32_t DIM>
 struct print_fn {
   void operator()(legate::AccessorRO<T, DIM> acc,
-                  const std::vector<size_t>& shape,
+                  const std::vector<uint64_t>& shape,
                   legate::Rect<DIM> rect)
   {
     std::cerr << to_string<T, DIM>(acc, shape, rect) << std::endl;
@@ -149,7 +149,7 @@ template <typename T, int32_t DIM>
 struct check_array_eq_fn {
   void operator()(legate::AccessorRO<T, DIM> acc,
                   T* values_ptr,
-                  const std::vector<size_t>& shape,
+                  const std::vector<uint64_t>& shape,
                   legate::Rect<DIM> rect)
   {
     auto string_result = check_array_eq<T, DIM>(acc, values_ptr, shape, rect);

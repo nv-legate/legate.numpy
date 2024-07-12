@@ -195,7 +195,7 @@ template <typename T_IN, typename T_OUT, int32_t SIZE, int32_t DIM>
 void test_sort_complex(std::array<T_IN, SIZE>& in_array,
                        std::array<T_OUT, SIZE>& expect,
                        legate::Type leg_type,
-                       std::vector<size_t> shape)
+                       std::vector<uint64_t> shape)
 {
   auto A1 = cunumeric::zeros(shape, leg_type);
   if (in_array.size() != 0) {
@@ -212,7 +212,7 @@ void test_sort_complex(std::array<T_IN, SIZE>& in_array,
 }
 
 template <typename T_IN, typename T_OUT, int32_t SIZE>
-void sort_complex_basic_impl(std::vector<std::vector<size_t>>& test_shapes,
+void sort_complex_basic_impl(std::vector<std::vector<uint64_t>>& test_shapes,
                              std::array<T_IN, SIZE> in_array,
                              std::vector<std::array<T_OUT, SIZE>>& expect_result,
                              legate::Type leg_type)
@@ -251,9 +251,10 @@ void sort_complex_basic_impl(std::vector<std::vector<size_t>>& test_shapes,
 void sort_complex_basic()
 {
   // Test int8 type
-  std::vector<std::vector<size_t>> test_shapes_int = {{12}, {12, 1}, {3, 4}, {12, 1, 1}, {2, 2, 3}};
-  std::array<int8_t, 12> in_array1                 = {10, 3, 12, 5, 2, 4, 8, 9, 7, 6, 11, 1};
-  auto expect_result1 = get_sort_complex_expect_result_from_int<float>();
+  std::vector<std::vector<uint64_t>> test_shapes_int = {
+    {12}, {12, 1}, {3, 4}, {12, 1, 1}, {2, 2, 3}};
+  std::array<int8_t, 12> in_array1 = {10, 3, 12, 5, 2, 4, 8, 9, 7, 6, 11, 1};
+  auto expect_result1              = get_sort_complex_expect_result_from_int<float>();
   sort_complex_basic_impl<int8_t, complex<float>, 12>(
     test_shapes_int, in_array1, expect_result1, legate::int8());
 
@@ -270,7 +271,7 @@ void sort_complex_basic()
     test_shapes_int, int_array3, expect_result3, legate::int32());
 
   // Test complex type
-  std::vector<std::vector<size_t>> test_shapes = {
+  std::vector<std::vector<uint64_t>> test_shapes = {
     {12}, {1, 12}, {12, 1}, {3, 4}, {12, 1, 1}, {1, 12, 1}, {1, 1, 12}, {2, 2, 3}};
 
   std::array<complex<float>, 12> in_array4 = {complex<float>(10, 3),
@@ -311,14 +312,14 @@ void sort_complex_basic_max_dim()
   // Only test int type for max dim
   std::array<int16_t, 16> in_array = {14, 10, 3, 12, 5, 13, 2, 4, 16, 8, 9, 7, 6, 11, 1, 15};
 #if LEGATE_MAX_DIM >= 4
-  std::vector<std::vector<size_t>> test_shapes_4d = {{1, 1, 1, 16}, {16, 1, 1, 1}, {2, 2, 1, 4}};
-  auto expect_result_4d                           = get_sort_complex_expect_result_4d();
+  std::vector<std::vector<uint64_t>> test_shapes_4d = {{1, 1, 1, 16}, {16, 1, 1, 1}, {2, 2, 1, 4}};
+  auto expect_result_4d                             = get_sort_complex_expect_result_4d();
   sort_complex_basic_impl<int16_t, complex<float>, 16>(
     test_shapes_4d, in_array, expect_result_4d, legate::int16());
 #endif
 
 #if LEGATE_MAX_DIM >= 5
-  std::vector<std::vector<size_t>> test_shapes_5d = {
+  std::vector<std::vector<uint64_t>> test_shapes_5d = {
     {1, 1, 1, 1, 16}, {1, 16, 1, 1, 1}, {1, 2, 2, 1, 4}};
   auto expect_result_5d = get_sort_complex_expect_result_5d();
   sort_complex_basic_impl<int16_t, complex<float>, 16>(
@@ -326,7 +327,7 @@ void sort_complex_basic_max_dim()
 #endif
 
 #if LEGATE_MAX_DIM >= 6
-  std::vector<std::vector<size_t>> test_shapes_6d = {
+  std::vector<std::vector<uint64_t>> test_shapes_6d = {
     {1, 1, 1, 1, 1, 16}, {1, 1, 16, 1, 1, 1}, {2, 1, 1, 2, 2, 2}};
   auto expect_result_6d = get_sort_complex_expect_result_6d();
   sort_complex_basic_impl<int16_t, complex<float>, 16>(
@@ -334,7 +335,7 @@ void sort_complex_basic_max_dim()
 #endif
 
 #if LEGATE_MAX_DIM >= 7
-  std::vector<std::vector<size_t>> test_shapes_7d = {
+  std::vector<std::vector<uint64_t>> test_shapes_7d = {
     {1, 16, 1, 1, 1, 1, 1}, {4, 1, 2, 2, 1, 1, 1}, {2, 2, 1, 1, 2, 1, 2}};
   auto expect_result_7d = get_sort_complex_expect_result_7d();
   sort_complex_basic_impl<int16_t, complex<float>, 16>(
@@ -344,8 +345,8 @@ void sort_complex_basic_max_dim()
 
 void sort_complex_large_array()
 {
-  const int32_t count                          = 10000;
-  std::vector<std::vector<size_t>> test_shapes = {{count}};
+  const int32_t count                            = 10000;
+  std::vector<std::vector<uint64_t>> test_shapes = {{count}};
 
   // Test int16 type for large array
   std::array<int16_t, count> in_array1;
@@ -389,7 +390,7 @@ void sort_complex_large_array()
 
 void sort_complex_empty_array()
 {
-  std::vector<std::vector<size_t>> test_shapes = {
+  std::vector<std::vector<uint64_t>> test_shapes = {
     {0}, {0, 1}, {1, 0}, {1, 0, 0}, {1, 1, 0}, {1, 0, 1}};
 
   std::array<complex<float>, 0> in_array = {};
@@ -412,7 +413,7 @@ void sort_complex_empty_array()
 
 void sort_complex_single_item_array()
 {
-  std::vector<std::vector<size_t>> test_shapes = {{1}, {1, 1}, {1, 1, 1}};
+  std::vector<std::vector<uint64_t>> test_shapes = {{1}, {1, 1}, {1, 1, 1}};
 
   std::array<double, 1> in_array               = {12};
   std::array<complex<double>, 1> expect_result = {complex<double>(12, 0)};

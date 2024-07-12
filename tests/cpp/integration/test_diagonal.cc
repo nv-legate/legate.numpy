@@ -21,7 +21,7 @@
 template <size_t IN_SIZE, size_t IN_DIM, size_t EXP_SIZE, size_t EXP_DIM>
 void diagonal_test(std::array<double, IN_SIZE> input,
                    std::array<double, EXP_SIZE> exp,
-                   std::vector<size_t> in_shape,
+                   std::vector<uint64_t> in_shape,
                    int32_t offset = 0,
                    int32_t axis1  = 0,
                    int32_t axis2  = 1,
@@ -43,7 +43,7 @@ TEST(Diagonal, Singleton)
   std::array<double, exp_size> exp  = {1.3, 0., 0.,  0., 0., 0., 0., 2., 0., 0., 0., 0.,
                                        0.,  0., 3.6, 0., 0., 0., 0., 0., 0., 4., 0., 0.,
                                        0.,  0., 0.,  0., 5., 0., 0., 0., 0., 0., 0., 6.};
-  std::vector<size_t> in_shape      = {6};
+  std::vector<uint64_t> in_shape    = {6};
 
   auto a_input = cunumeric::zeros(in_shape);
   assign_values_to_array<double, in_dim>(a_input, input.data(), input.size());
@@ -53,7 +53,7 @@ TEST(Diagonal, Singleton)
 
 TEST(Diagonal, SingletonExtract)
 {
-  std::vector<size_t> in_shape = {6};
+  std::vector<uint64_t> in_shape = {6};
 
   auto a_input = cunumeric::zeros(in_shape);
   EXPECT_THROW(cunumeric::diagonal(a_input, 0, std::nullopt, std::nullopt, true),
@@ -62,7 +62,7 @@ TEST(Diagonal, SingletonExtract)
 
 TEST(Diagonal, SingletonAxes)
 {
-  std::vector<size_t> in_shape = {6};
+  std::vector<uint64_t> in_shape = {6};
 
   auto a_input = cunumeric::zeros(in_shape);
   EXPECT_THROW(cunumeric::diagonal(a_input, 0, 0, 1, false), std::invalid_argument);
@@ -76,7 +76,7 @@ TEST(Diagonal, Defaults)
   const size_t exp_dim              = 1;
   std::array<double, in_size> input = {9, 7, 0.5, 1.3, 2, 3.6, 4, 5, 6};
   std::array<double, exp_size> exp  = {9, 2, 6};
-  std::vector<size_t> in_shape      = {3, 3};
+  std::vector<uint64_t> in_shape    = {3, 3};
 
   auto a_input = cunumeric::zeros(in_shape);
   assign_values_to_array<double, in_dim>(a_input, input.data(), input.size());
@@ -103,7 +103,7 @@ TEST(Diagonal, Simple)
   const size_t exp_dim              = 1;
   std::array<double, in_size> input = {9, 7, 0.5, 1.3, 2, 3.6, 4, 5, 6};
   std::array<double, exp_size> exp  = {9, 2, 6};
-  std::vector<size_t> in_shape      = {3, 3};
+  std::vector<uint64_t> in_shape    = {3, 3};
 
   diagonal_test<in_size, in_dim, exp_size, exp_dim>(input, exp, in_shape);
 }
@@ -116,7 +116,7 @@ TEST(Diagonal, Offset)
   const size_t exp_dim              = 2;
   std::array<double, in_size> input = {9, 7, 0.5, 1.3, 2, 3.6, 4, 5, 6};
   std::array<double, exp_size> exp  = {0.5};
-  std::vector<size_t> in_shape      = {3, 3, 1};
+  std::vector<uint64_t> in_shape    = {3, 3, 1};
 
   diagonal_test<in_size, in_dim, exp_size, exp_dim>(input, exp, in_shape, 2);
 }
@@ -129,7 +129,7 @@ TEST(Diagonal, Axes)
   const size_t exp_dim              = 1;
   std::array<double, in_size> input = {1.3, 2, 3.6, 4, 5, 6};
   std::array<double, exp_size> exp  = {1.3, 5};
-  std::vector<size_t> in_shape      = {2, 3};
+  std::vector<uint64_t> in_shape    = {2, 3};
 
   diagonal_test<in_size, in_dim, exp_size, exp_dim>(input, exp, in_shape, 0, 1, 0);
 }
@@ -139,7 +139,7 @@ TEST(Diagonal, InvalidAxes)
   const size_t in_size              = 6;
   const size_t in_dim               = 2;
   std::array<double, in_size> input = {1.3, 2, 3.6, 4, 5, 6};
-  std::vector<size_t> in_shape      = {2, 3};
+  std::vector<uint64_t> in_shape    = {2, 3};
 
   auto a_input = cunumeric::zeros(in_shape);
   assign_values_to_array<double, in_dim>(a_input, input.data(), input.size());
@@ -152,7 +152,7 @@ TEST(Diagonal, InvalidOffset)
   const size_t in_size              = 6;
   const size_t in_dim               = 2;
   std::array<double, in_size> input = {1.3, 2, 3.6, 4, 5, 6};
-  std::vector<size_t> in_shape      = {2, 3};
+  std::vector<uint64_t> in_shape    = {2, 3};
 
   auto a_input = cunumeric::zeros(in_shape);
   assign_values_to_array<double, in_dim>(a_input, input.data(), input.size());
@@ -167,7 +167,7 @@ TEST(Diagonal, IntArray)
   const size_t exp_dim               = 1;
   std::array<int32_t, in_size> input = {1, 2, 3, 4, 5, 6};
   std::array<int32_t, exp_size> exp  = {1, 5};
-  std::vector<size_t> in_shape       = {2, 3};
+  std::vector<uint64_t> in_shape     = {2, 3};
 
   auto a_input = cunumeric::zeros(in_shape, legate::int32());
   assign_values_to_array<int32_t, in_dim>(a_input, input.data(), input.size());
@@ -200,7 +200,7 @@ TEST(Diagonal, MaxDim)
 template <size_t IN_SIZE, size_t IN_DIM, size_t EXP_SIZE, size_t EXP_DIM>
 void trace_test(std::array<double, IN_SIZE> input,
                 std::array<double, EXP_SIZE> exp,
-                std::vector<size_t> in_shape,
+                std::vector<uint64_t> in_shape,
                 int32_t offset                        = 0,
                 int32_t axis1                         = 0,
                 int32_t axis2                         = 1,
@@ -221,7 +221,7 @@ TEST(Trace, Simple)
   const size_t exp_dim              = 1;
   std::array<double, in_size> input = {9, 7, 0.5, 1.3, 2, 3.6, 4, 5};
   std::array<double, exp_size> exp  = {9, 7, 0.5, 1.3};
-  std::vector<size_t> in_shape      = {2, 1, 4};
+  std::vector<uint64_t> in_shape    = {2, 1, 4};
   trace_test<in_size, in_dim, exp_size, exp_dim>(input, exp, in_shape);
 }
 
@@ -233,7 +233,7 @@ TEST(Trace, Offset)
   const size_t exp_dim              = 1;
   std::array<double, in_size> input = {9, 7, 0.5, 1.3, 2, 3.6, 4, 5};
   std::array<double, exp_size> exp  = {5.5};
-  std::vector<size_t> in_shape      = {2, 4, 1};
+  std::vector<uint64_t> in_shape    = {2, 4, 1};
   trace_test<in_size, in_dim, exp_size, exp_dim>(input, exp, in_shape, 2);
 }
 
@@ -245,7 +245,7 @@ TEST(Trace, Axes)
   const size_t exp_dim              = 1;
   std::array<double, in_size> input = {9, 7, 0.5, 1.3, 2, 3.6, 4, 5};
   std::array<double, exp_size> exp  = {9, 2};
-  std::vector<size_t> in_shape      = {2, 4, 1};
+  std::vector<uint64_t> in_shape    = {2, 4, 1};
   trace_test<in_size, in_dim, exp_size, exp_dim>(input, exp, in_shape, 0, 2, 1);
 }
 
@@ -257,7 +257,7 @@ TEST(Trace, IntArray)
   const size_t exp_dim               = 1;
   std::array<int32_t, in_size> input = {9, 7, 5, 3, 2, 6, 4, 1};
   std::array<int32_t, exp_size> exp  = {15};
-  std::vector<size_t> in_shape       = {2, 4, 1};
+  std::vector<uint64_t> in_shape     = {2, 4, 1};
   auto a_input                       = cunumeric::zeros(in_shape, legate::int32());
   assign_values_to_array<int32_t, in_dim>(a_input, input.data(), input.size());
   auto a_output = cunumeric::trace(a_input, 0, 0, 1);
@@ -272,7 +272,7 @@ TEST(Trace, TypeInt)
   const size_t exp_dim              = 1;
   std::array<double, in_size> input = {9, 7, 0.5, 1.3, 2, 3.6, 4, 5};
   std::array<int32_t, exp_size> exp = {12};
-  std::vector<size_t> in_shape      = {2, 4, 1};
+  std::vector<uint64_t> in_shape    = {2, 4, 1};
 
   auto a_input = cunumeric::zeros(in_shape);
   assign_values_to_array<double, in_dim>(a_input, input.data(), input.size());
@@ -288,8 +288,8 @@ TEST(Trace, OutType)
   const size_t exp_dim              = 1;
   std::array<double, in_size> input = {9, 7, 0.5, 1.3, 2, 3.6, 4, 5};
   std::array<int32_t, exp_size> exp = {12};
-  std::vector<size_t> in_shape      = {2, 4, 1};
-  std::vector<size_t> out_shape     = {1};
+  std::vector<uint64_t> in_shape    = {2, 4, 1};
+  std::vector<uint64_t> out_shape   = {1};
 
   auto a_input  = cunumeric::zeros(in_shape);
   auto a_output = cunumeric::zeros(out_shape, legate::int32());
@@ -303,7 +303,7 @@ TEST(Trace, InvalidArray)
   const size_t in_size              = 8;
   const size_t in_dim               = 1;
   std::array<double, in_size> input = {9, 7, 0.5, 1.3, 2, 3.6, 4, 5};
-  std::vector<size_t> in_shape      = {8};
+  std::vector<uint64_t> in_shape    = {8};
 
   auto a_input = cunumeric::zeros(in_shape);
   assign_values_to_array<double, in_dim>(a_input, input.data(), input.size());

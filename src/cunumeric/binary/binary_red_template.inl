@@ -88,20 +88,13 @@ struct BinaryRedDispatch {
 template <VariantKind KIND>
 static void binary_red_template(TaskContext& context)
 {
-  auto inputs   = context.inputs();
-  auto& scalars = context.scalars();
+  auto scalars = context.scalars();
+  auto op_code = scalars.front().value<BinaryOpCode>();
 
-  std::vector<Scalar> extra_args;
-  extra_args.reserve(scalars.size() - 1);
-  for (size_t idx = 1; idx < scalars.size(); ++idx) {
-    extra_args.emplace_back(scalars[idx]);
-  }
+  scalars.erase(scalars.begin());
 
-  BinaryRedArgs args{context.reduction(0),
-                     inputs[0],
-                     inputs[1],
-                     scalars[0].value<BinaryOpCode>(),
-                     std::move(extra_args)};
+  BinaryRedArgs args{
+    context.reduction(0), context.input(0), context.input(1), op_code, std::move(scalars)};
   reduce_op_dispatch(args.op_code, BinaryRedDispatch<KIND>{}, args);
 }
 

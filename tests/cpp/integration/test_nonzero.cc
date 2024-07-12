@@ -118,13 +118,13 @@ auto get_nonzero_expect_result_7d()
 template <typename T>
 void test_nonzero(const std::vector<T>& in_array,
                   const std::vector<std::vector<int64_t>>& expect,
-                  const std::vector<size_t>& shape)
+                  const std::vector<uint64_t>& shape)
 {
   auto array         = cunumeric::mk_array<T>(in_array, shape);
   auto result_vec    = cunumeric::nonzero(array);
   size_t result_size = result_vec.size();
   ASSERT_EQ(result_size, expect.size());
-  std::vector<size_t> expect_shape = {};
+  std::vector<uint64_t> expect_shape = {};
   if (shape.size() > 0) {
     if (result_vec[0].size() == 0) {
       expect_shape.push_back(0);
@@ -138,7 +138,7 @@ void test_nonzero(const std::vector<T>& in_array,
 }
 
 template <typename T>
-void nonzero_basic_impl(const std::vector<std::vector<size_t>>& test_shapes,
+void nonzero_basic_impl(const std::vector<std::vector<uint64_t>>& test_shapes,
                         const std::vector<T>& in_array,
                         const std::vector<std::vector<std::vector<int64_t>>>& expect_result)
 {
@@ -150,7 +150,7 @@ void nonzero_basic_impl(const std::vector<std::vector<size_t>>& test_shapes,
 
 void nonzero_basic()
 {
-  std::vector<std::vector<size_t>> test_shapes = {
+  std::vector<std::vector<uint64_t>> test_shapes = {
     {12}, {1, 12}, {12, 1}, {3, 4}, {12, 1, 1}, {1, 12, 1}, {1, 1, 12}, {2, 2, 3}};
   auto expect_result = get_nonzero_expect_result();
 
@@ -184,27 +184,27 @@ void nonzero_basic_max_dim()
   std::vector<int32_t> in_array = {14, 0, 3, 12, 0, 13, 0, 4, 0, 8, 0, 7, 0, 0, 1, 0};
 
 #if LEGATE_MAX_DIM >= 4
-  std::vector<std::vector<size_t>> test_shapes_4d = {{1, 1, 1, 16}, {16, 1, 1, 1}, {2, 2, 1, 4}};
-  auto expect_result_4d                           = get_nonzero_expect_result_4d();
+  std::vector<std::vector<uint64_t>> test_shapes_4d = {{1, 1, 1, 16}, {16, 1, 1, 1}, {2, 2, 1, 4}};
+  auto expect_result_4d                             = get_nonzero_expect_result_4d();
   nonzero_basic_impl<int32_t>(test_shapes_4d, in_array, expect_result_4d);
 #endif
 
 #if LEGATE_MAX_DIM >= 5
-  std::vector<std::vector<size_t>> test_shapes_5d = {
+  std::vector<std::vector<uint64_t>> test_shapes_5d = {
     {1, 1, 1, 16, 1}, {1, 16, 1, 1, 1}, {1, 2, 2, 1, 4}};
   auto expect_result_5d = get_nonzero_expect_result_5d();
   nonzero_basic_impl<int32_t>(test_shapes_5d, in_array, expect_result_5d);
 #endif
 
 #if LEGATE_MAX_DIM >= 6
-  std::vector<std::vector<size_t>> test_shapes_6d = {
+  std::vector<std::vector<uint64_t>> test_shapes_6d = {
     {16, 1, 1, 1, 1, 1}, {1, 1, 16, 1, 1, 1}, {1, 2, 1, 2, 2, 2}};
   auto expect_result_6d = get_nonzero_expect_result_6d();
   nonzero_basic_impl<int32_t>(test_shapes_6d, in_array, expect_result_6d);
 #endif
 
 #if LEGATE_MAX_DIM >= 7
-  std::vector<std::vector<size_t>> test_shapes_7d = {
+  std::vector<std::vector<uint64_t>> test_shapes_7d = {
     {1, 16, 1, 1, 1, 1, 1}, {1, 1, 2, 2, 1, 4, 1}, {2, 2, 1, 1, 2, 1, 2}};
   auto expect_result_7d = get_nonzero_expect_result_7d();
   nonzero_basic_impl<int32_t>(test_shapes_7d, in_array, expect_result_7d);
@@ -214,7 +214,7 @@ void nonzero_basic_max_dim()
 void nonzero_large_array()
 {
   const int32_t count                             = 10000;
-  std::vector<size_t> test_shape                  = {count};
+  std::vector<uint64_t> test_shape                = {count};
   std::vector<std::vector<int64_t>> expect_result = {{0, 9999}};
 
   // Test int type for large array
@@ -241,7 +241,7 @@ void nonzero_large_array()
 
 void nonzero_empty_array()
 {
-  std::vector<std::vector<size_t>> test_shapes = {
+  std::vector<std::vector<uint64_t>> test_shapes = {
     {0}, {0, 1}, {1, 0}, {1, 0, 0}, {1, 1, 0}, {1, 0, 1}};
 
   std::vector<int32_t> in_array                                = {};
@@ -253,7 +253,7 @@ void nonzero_empty_array()
 
 void single_item_array()
 {
-  std::vector<std::vector<size_t>> test_shapes = {{1}, {1, 1}, {1, 1, 1}};
+  std::vector<std::vector<uint64_t>> test_shapes = {{1}, {1, 1}, {1, 1, 1}};
 
   std::vector<int32_t> in_array1                                = {1};
   std::vector<std::vector<std::vector<int64_t>>> expect_result1 = {

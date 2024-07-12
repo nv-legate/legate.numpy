@@ -327,7 +327,7 @@ template <typename T, int32_t SIZE, int32_t DIM>
 void test_flip(std::array<T, SIZE>& in_array,
                std::array<T, SIZE>& expect,
                legate::Type leg_type,
-               std::vector<size_t> shape,
+               std::vector<uint64_t> shape,
                std::optional<std::vector<int32_t>> axis = std::nullopt)
 {
   auto A1 = cunumeric::zeros(shape, leg_type);
@@ -344,7 +344,7 @@ void test_flip(std::array<T, SIZE>& in_array,
 }
 
 template <typename T, int32_t SIZE>
-void test_flip_none_axis(std::vector<std::vector<size_t>>& test_shapes,
+void test_flip_none_axis(std::vector<std::vector<uint64_t>>& test_shapes,
                          std::array<T, SIZE>& in_array,
                          std::array<T, SIZE>& expect_result,
                          legate::Type leg_type)
@@ -380,7 +380,7 @@ void test_flip_none_axis(std::vector<std::vector<size_t>>& test_shapes,
 }
 
 template <typename T, int32_t SIZE>
-void test_flip_each_axis(std::vector<std::vector<size_t>>& test_shapes,
+void test_flip_each_axis(std::vector<std::vector<uint64_t>>& test_shapes,
                          std::array<T, SIZE>& in_array,
                          std::vector<std::map<int32_t, std::array<T, SIZE>>>& expect_result,
                          legate::Type leg_type)
@@ -424,7 +424,7 @@ void flip_basic()
 {
   // If no axis is input, the expect result would equal reverse result of the input array, no matter
   // what's the array shape is.
-  std::vector<std::vector<size_t>> test_shapes = {
+  std::vector<std::vector<uint64_t>> test_shapes = {
     {12}, {1, 12}, {12, 1}, {3, 4}, {12, 1, 1}, {1, 12, 1}, {1, 1, 12}, {2, 2, 3}};
 
   // Test int type
@@ -460,7 +460,7 @@ void flip_basic()
 
 void flip_single_axis()
 {
-  std::vector<std::vector<size_t>> test_shapes = {
+  std::vector<std::vector<uint64_t>> test_shapes = {
     {12}, {1, 12}, {12, 1}, {3, 4}, {12, 1, 1}, {1, 12, 1}, {1, 1, 12}, {2, 2, 3}};
 
   // Test int type
@@ -494,8 +494,8 @@ void flip_single_axis()
 void flip_multi_axis()
 {
   // Test float type
-  std::vector<size_t> test_shape  = {2, 2, 3};
-  std::array<double, 12> in_array = {1.5, 3.66, 6, 5.98, 2.2, 10.5, 8, 11, 7.9, 12, 9, 4};
+  std::vector<uint64_t> test_shape = {2, 2, 3};
+  std::array<double, 12> in_array  = {1.5, 3.66, 6, 5.98, 2.2, 10.5, 8, 11, 7.9, 12, 9, 4};
 
   auto axes1                            = {-1, 0};
   std::array<double, 12> expect_result1 = {7.9, 11, 8, 4, 9, 12, 6, 3.66, 1.5, 10.5, 2.2, 5.98};
@@ -519,7 +519,7 @@ void flip_max_dim()
   std::array<int32_t, 16> in_array      = {14, 10, 3, 12, 5, 13, 2, 4, 16, 8, 9, 7, 6, 11, 1, 15};
   std::array<int32_t, 16> expect_result = {15, 1, 11, 6, 7, 9, 8, 16, 4, 2, 13, 5, 12, 3, 10, 14};
 #if LEGATE_MAX_DIM >= 4
-  std::vector<size_t> test_shape_4d = {2, 2, 2, 2};
+  std::vector<uint64_t> test_shape_4d = {2, 2, 2, 2};
   // Flip with none axis
   test_flip<int32_t, 16, 4>(in_array, expect_result, legate::int32(), test_shape_4d);
   // Flip with axis
@@ -530,7 +530,7 @@ void flip_max_dim()
 #endif
 
 #if LEGATE_MAX_DIM >= 5
-  std::vector<size_t> test_shape_5d = {1, 2, 2, 1, 4};
+  std::vector<uint64_t> test_shape_5d = {1, 2, 2, 1, 4};
   // Flip with none axis
   test_flip<int32_t, 16, 5>(in_array, expect_result, legate::int32(), test_shape_5d);
   // Flip with axis
@@ -541,7 +541,7 @@ void flip_max_dim()
 #endif
 
 #if LEGATE_MAX_DIM >= 6
-  std::vector<size_t> test_shape_6d = {2, 1, 1, 2, 2, 2};
+  std::vector<uint64_t> test_shape_6d = {2, 1, 1, 2, 2, 2};
   // Flip with none axis
   test_flip<int32_t, 16, 6>(in_array, expect_result, legate::int32(), test_shape_6d);
   // Flip with axis
@@ -552,7 +552,7 @@ void flip_max_dim()
 #endif
 
 #if LEGATE_MAX_DIM >= 7
-  std::vector<size_t> test_shape_7d = {1, 16, 1, 1, 1, 1, 1};
+  std::vector<uint64_t> test_shape_7d = {1, 16, 1, 1, 1, 1, 1};
   // Flip with none axis
   test_flip<int32_t, 16, 7>(in_array, expect_result, legate::int32(), test_shape_7d);
   // Flip with axis
@@ -565,8 +565,8 @@ void flip_max_dim()
 
 void flip_large_array()
 {
-  const int32_t count            = 10000;
-  std::vector<size_t> test_shape = {count};
+  const int32_t count              = 10000;
+  std::vector<uint64_t> test_shape = {count};
 
   // Test int type for large array
   std::array<int32_t, count> in_array1;
@@ -604,8 +604,8 @@ void flip_large_array()
 
 void flip_empty_array()
 {
-  std::array<int32_t, 0> in_array = {};
-  std::vector<size_t> test_shape  = {0};
+  std::array<int32_t, 0> in_array  = {};
+  std::vector<uint64_t> test_shape = {0};
 
   // Without axis input
   test_flip<int32_t, 0, 1>(in_array, in_array, legate::int32(), test_shape);
@@ -617,8 +617,8 @@ void flip_empty_array()
 
 void flip_single_item_array()
 {
-  std::vector<size_t> test_shape  = {1, 1, 1};
-  std::array<int32_t, 1> in_array = {12};
+  std::vector<uint64_t> test_shape = {1, 1, 1};
+  std::array<int32_t, 1> in_array  = {12};
 
   // Without axis input
   test_flip<int32_t, 1, 3>(in_array, in_array, legate::int32(), test_shape);

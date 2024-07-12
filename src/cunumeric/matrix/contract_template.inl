@@ -211,16 +211,12 @@ struct ContractImpl {
 template <VariantKind KIND>
 static void contract_template(legate::TaskContext& context)
 {
-  auto reductions = context.reductions();
-  auto inputs     = context.inputs();
-  auto& scalars   = context.scalars();
-
-  ContractArgs args{reductions[0],
-                    inputs[0],
-                    inputs[1],
-                    scalars[0].values<const bool>(),
-                    scalars[1].values<const bool>(),
-                    scalars[2].values<const bool>()};
+  ContractArgs args{context.reduction(0),
+                    context.input(0),
+                    context.input(1),
+                    context.scalar(0).values<const bool>(),
+                    context.scalar(1).values<const bool>(),
+                    context.scalar(2).values<const bool>()};
 
   auto dim  = args.lhs.dim();
   auto code = args.lhs.code();

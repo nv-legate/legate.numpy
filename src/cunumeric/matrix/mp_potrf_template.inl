@@ -150,10 +150,10 @@ struct MpPotrfImpl {
 template <VariantKind KIND>
 static void mp_potrf_template(TaskContext& context)
 {
-  legate::PhysicalStore input_array  = context.inputs()[0];
-  legate::PhysicalStore output_array = context.outputs()[0];
-  auto n                             = context.scalars()[0].value<int64_t>();
-  auto nb                            = context.scalars()[1].value<int64_t>();
+  legate::PhysicalStore input_array  = context.input(0);
+  legate::PhysicalStore output_array = context.output(0);
+  auto n                             = context.scalar(0).value<int64_t>();
+  auto nb                            = context.scalar(1).value<int64_t>();
   type_dispatch(input_array.code(),
                 MpPotrfImpl<KIND>{},
                 n,

@@ -22,8 +22,8 @@
 template <size_t SIZE, int32_t DIM>
 void transpose_int32_test(std::array<int32_t, SIZE> input,
                           std::array<int32_t, SIZE> exp,
-                          std::vector<size_t> in_shape,
-                          std::vector<size_t> out_shape,
+                          std::vector<uint64_t> in_shape,
+                          std::vector<uint64_t> out_shape,
                           std::optional<std::vector<int32_t>> axes = std::nullopt)
 {
   auto a_input = cunumeric::zeros(in_shape, legate::int32());
@@ -46,8 +46,8 @@ TEST(Transpose, Dim)
   const int32_t dim               = 2;
   std::array<int32_t, size> input = {1, 2, 3, 4, 5, 6};
   std::array<int32_t, size> exp   = {1, 4, 2, 5, 3, 6};
-  std::vector<size_t> in_shape    = {2, 3};
-  std::vector<size_t> out_shape   = {3, 2};
+  std::vector<uint64_t> in_shape  = {2, 3};
+  std::vector<uint64_t> out_shape = {3, 2};
   auto axes                       = std::nullopt;
 
   transpose_int32_test<size, dim>(input, exp, in_shape, out_shape, axes);
@@ -59,8 +59,8 @@ TEST(Transpose, Axes)
   const int32_t dim               = 3;
   std::array<int32_t, size> input = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12};
   std::array<int32_t, size> exp   = {1, 7, 4, 10, 2, 8, 5, 11, 3, 9, 6, 12};
-  std::vector<size_t> in_shape    = {2, 2, 3};
-  std::vector<size_t> out_shape   = {3, 2, 2};
+  std::vector<uint64_t> in_shape  = {2, 2, 3};
+  std::vector<uint64_t> out_shape = {3, 2, 2};
   auto axes                       = {2, 1, 0};
 
   transpose_int32_test<size, dim>(input, exp, in_shape, out_shape, axes);
@@ -72,8 +72,8 @@ TEST(Transpose, EmptyArray)
   const int32_t dim               = 1;
   std::array<int32_t, size> input = {};
   std::array<int32_t, size> exp   = input;
-  std::vector<size_t> in_shape    = {0};
-  std::vector<size_t> out_shape   = in_shape;
+  std::vector<uint64_t> in_shape  = {0};
+  std::vector<uint64_t> out_shape = in_shape;
   auto axes                       = std::nullopt;
 
   transpose_int32_test<size, dim>(input, exp, in_shape, out_shape, axes);
@@ -85,8 +85,8 @@ TEST(Transpose, SingletonAxes)
   const int32_t dim               = 1;
   std::array<int32_t, size> input = {1, 2, 3, 4, 5, 6};
   std::array<int32_t, size> exp   = input;
-  std::vector<size_t> in_shape    = {6};
-  std::vector<size_t> out_shape   = in_shape;
+  std::vector<uint64_t> in_shape  = {6};
+  std::vector<uint64_t> out_shape = in_shape;
   auto axes                       = {1};
 
   transpose_int32_test<size, dim>(input, exp, in_shape, out_shape, axes);
@@ -98,8 +98,8 @@ TEST(Transpose, Singleton)
   const int32_t dim               = 1;
   std::array<int32_t, size> input = {1, 2, 3, 4, 5, 6};
   std::array<int32_t, size> exp   = input;
-  std::vector<size_t> in_shape    = {6};
-  std::vector<size_t> out_shape   = in_shape;
+  std::vector<uint64_t> in_shape  = {6};
+  std::vector<uint64_t> out_shape = in_shape;
   auto axes                       = std::nullopt;
 
   transpose_int32_test<size, dim>(input, exp, in_shape, out_shape, axes);
@@ -107,12 +107,12 @@ TEST(Transpose, Singleton)
 
 TEST(Transpose, DefaultType)
 {
-  const size_t size              = 6;
-  const int32_t dim              = 2;
-  std::array<double, size> input = {1.3, 2, 3.6, 4, 5, 6};
-  std::array<double, size> exp   = {1.3, 4, 2, 5, 3.6, 6};
-  std::vector<size_t> in_shape   = {2, 3};
-  std::vector<size_t> out_shape  = {3, 2};
+  const size_t size               = 6;
+  const int32_t dim               = 2;
+  std::array<double, size> input  = {1.3, 2, 3.6, 4, 5, 6};
+  std::array<double, size> exp    = {1.3, 4, 2, 5, 3.6, 6};
+  std::vector<uint64_t> in_shape  = {2, 3};
+  std::vector<uint64_t> out_shape = {3, 2};
 
   auto a_input = cunumeric::zeros(in_shape);
   assign_values_to_array<double, dim>(a_input, input.data(), input.size());
@@ -123,11 +123,11 @@ TEST(Transpose, DefaultType)
 
 TEST(TransposeErrors, InvalidAxes)
 {
-  const size_t size              = 6;
-  const int32_t dim              = 2;
-  std::array<double, size> input = {1.3, 2, 3.6, 4, 5, 6};
-  std::vector<size_t> in_shape   = {2, 3};
-  std::vector<size_t> out_shape  = {3, 2};
+  const size_t size               = 6;
+  const int32_t dim               = 2;
+  std::array<double, size> input  = {1.3, 2, 3.6, 4, 5, 6};
+  std::vector<uint64_t> in_shape  = {2, 3};
+  std::vector<uint64_t> out_shape = {3, 2};
 
   auto a_input = cunumeric::zeros(in_shape);
   assign_values_to_array<double, dim>(a_input, input.data(), input.size());

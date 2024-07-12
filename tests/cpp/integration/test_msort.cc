@@ -191,7 +191,7 @@ template <typename T, int32_t SIZE, int32_t DIM>
 void test_msort(std::array<T, SIZE>& in_array,
                 std::array<T, SIZE>& expect,
                 legate::Type leg_type,
-                std::vector<size_t> shape)
+                std::vector<uint64_t> shape)
 {
   auto A1 = cunumeric::zeros(shape, leg_type);
   if (in_array.size() != 0) {
@@ -208,7 +208,7 @@ void test_msort(std::array<T, SIZE>& in_array,
 }
 
 template <typename T, int32_t SIZE>
-void msort_basic_impl(std::vector<std::vector<size_t>>& test_shapes,
+void msort_basic_impl(std::vector<std::vector<uint64_t>>& test_shapes,
                       std::array<T, SIZE> in_array,
                       std::vector<std::array<T, SIZE>>& expect_result,
                       legate::Type leg_type)
@@ -246,7 +246,7 @@ void msort_basic_impl(std::vector<std::vector<size_t>>& test_shapes,
 
 void msort_basic()
 {
-  std::vector<std::vector<size_t>> test_shapes = {
+  std::vector<std::vector<uint64_t>> test_shapes = {
     {12}, {1, 12}, {12, 1}, {3, 4}, {12, 1, 1}, {1, 12, 1}, {1, 1, 12}, {2, 2, 3}};
 
   // Test int type
@@ -281,27 +281,27 @@ void msort_basic_max_dim()
   // Only test int type for max dim
   std::array<int32_t, 16> in_array = {14, 10, 3, 12, 5, 13, 2, 4, 16, 8, 9, 7, 6, 11, 1, 15};
 #if LEGATE_MAX_DIM >= 4
-  std::vector<std::vector<size_t>> test_shapes_4d = {{1, 1, 1, 16}, {16, 1, 1, 1}, {2, 2, 1, 4}};
-  auto expect_result_4d                           = get_msort_expect_result_int_4d();
+  std::vector<std::vector<uint64_t>> test_shapes_4d = {{1, 1, 1, 16}, {16, 1, 1, 1}, {2, 2, 1, 4}};
+  auto expect_result_4d                             = get_msort_expect_result_int_4d();
   msort_basic_impl<int32_t, 16>(test_shapes_4d, in_array, expect_result_4d, legate::int32());
 #endif
 
 #if LEGATE_MAX_DIM >= 5
-  std::vector<std::vector<size_t>> test_shapes_5d = {
+  std::vector<std::vector<uint64_t>> test_shapes_5d = {
     {16, 1, 1, 1, 1}, {1, 16, 1, 1, 1}, {1, 2, 2, 1, 4}};
   auto expect_result_5d = get_msort_expect_result_int_5d();
   msort_basic_impl<int32_t, 16>(test_shapes_5d, in_array, expect_result_5d, legate::int32());
 #endif
 
 #if LEGATE_MAX_DIM >= 6
-  std::vector<std::vector<size_t>> test_shapes_6d = {
+  std::vector<std::vector<uint64_t>> test_shapes_6d = {
     {16, 1, 1, 1, 1, 1}, {1, 1, 16, 1, 1, 1}, {2, 1, 1, 2, 2, 2}};
   auto expect_result_6d = get_msort_expect_result_int_6d();
   msort_basic_impl<int32_t, 16>(test_shapes_6d, in_array, expect_result_6d, legate::int32());
 #endif
 
 #if LEGATE_MAX_DIM >= 7
-  std::vector<std::vector<size_t>> test_shapes_7d = {
+  std::vector<std::vector<uint64_t>> test_shapes_7d = {
     {1, 16, 1, 1, 1, 1, 1}, {4, 1, 2, 2, 1, 1, 1}, {2, 2, 1, 1, 2, 1, 2}};
   auto expect_result_7d = get_msort_expect_result_int_7d();
   msort_basic_impl<int32_t, 16>(test_shapes_7d, in_array, expect_result_7d, legate::int32());
@@ -310,8 +310,8 @@ void msort_basic_max_dim()
 
 void msort_large_array()
 {
-  const int32_t count                          = 10000;
-  std::vector<std::vector<size_t>> test_shapes = {{count}};
+  const int32_t count                            = 10000;
+  std::vector<std::vector<uint64_t>> test_shapes = {{count}};
 
   // Test int type for large array
   std::array<int32_t, count> in_array1;
@@ -353,7 +353,7 @@ void msort_large_array()
 
 void msort_empty_array()
 {
-  std::vector<std::vector<size_t>> test_shapes = {
+  std::vector<std::vector<uint64_t>> test_shapes = {
     {0}, {0, 1}, {1, 0}, {1, 0, 0}, {1, 1, 0}, {1, 0, 1}};
 
   std::array<int32_t, 0> in_array = {};
@@ -373,7 +373,7 @@ void msort_empty_array()
 
 void msort_single_item_array()
 {
-  std::vector<std::vector<size_t>> test_shapes = {{1}, {1, 1}, {1, 1, 1}};
+  std::vector<std::vector<uint64_t>> test_shapes = {{1}, {1, 1}, {1, 1, 1}};
 
   std::array<int32_t, 1> in_array = {12};
   size_t test_shape_size          = test_shapes.size();

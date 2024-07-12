@@ -28,60 +28,60 @@ void swapaxes_test()
   // Test small
   {
     auto A = cunumeric::zeros({3, 3}, legate::int32());
-    EXPECT_EQ(A.shape(), (std::vector<size_t>{3, 3}));
+    EXPECT_EQ(A.shape(), (std::vector<uint64_t>{3, 3}));
     auto B = cunumeric::swapaxes(A, 0, 1);
-    EXPECT_EQ(B.shape(), (std::vector<size_t>{3, 3}));
+    EXPECT_EQ(B.shape(), (std::vector<uint64_t>{3, 3}));
   }
 
   // Test tall
   {
     auto A_tall = cunumeric::zeros({300, 3}, legate::int32());
-    EXPECT_EQ(A_tall.shape(), (std::vector<size_t>{300, 3}));
+    EXPECT_EQ(A_tall.shape(), (std::vector<uint64_t>{300, 3}));
     auto B_tall = cunumeric::swapaxes(A_tall, 0, 1);
-    EXPECT_EQ(B_tall.shape(), (std::vector<size_t>{3, 300}));
+    EXPECT_EQ(B_tall.shape(), (std::vector<uint64_t>{3, 300}));
   }
 
   // Test wide
   {
     auto A_wide = cunumeric::zeros({3, 300}, legate::int32());
-    EXPECT_EQ(A_wide.shape(), (std::vector<size_t>{3, 300}));
+    EXPECT_EQ(A_wide.shape(), (std::vector<uint64_t>{3, 300}));
     auto B_wide = cunumeric::swapaxes(A_wide, 0, 1);
-    EXPECT_EQ(B_wide.shape(), (std::vector<size_t>{300, 3}));
+    EXPECT_EQ(B_wide.shape(), (std::vector<uint64_t>{300, 3}));
   }
 
   // Test big
   {
     auto A_big = cunumeric::zeros({300, 300}, legate::int32());
-    EXPECT_EQ(A_big.shape(), (std::vector<size_t>{300, 300}));
+    EXPECT_EQ(A_big.shape(), (std::vector<uint64_t>{300, 300}));
     auto B_big = cunumeric::swapaxes(A_big, 0, 1);
-    EXPECT_EQ(B_big.shape(), (std::vector<size_t>{300, 300}));
+    EXPECT_EQ(B_big.shape(), (std::vector<uint64_t>{300, 300}));
   }
 
   // Test 3-dim array with different swap axes
   {
     auto A = cunumeric::zeros({3, 4, 5}, legate::int32());
-    EXPECT_EQ(A.shape(), (std::vector<size_t>{3, 4, 5}));
+    EXPECT_EQ(A.shape(), (std::vector<uint64_t>{3, 4, 5}));
 
     auto B1 = cunumeric::swapaxes(A, 0, 0);
-    EXPECT_EQ(B1.shape(), (std::vector<size_t>{3, 4, 5}));
+    EXPECT_EQ(B1.shape(), (std::vector<uint64_t>{3, 4, 5}));
 
     auto B2 = cunumeric::swapaxes(A, -3, 1);
-    EXPECT_EQ(B2.shape(), (std::vector<size_t>{4, 3, 5}));
+    EXPECT_EQ(B2.shape(), (std::vector<uint64_t>{4, 3, 5}));
 
     auto B3 = cunumeric::swapaxes(A, 0, 2);
-    EXPECT_EQ(B3.shape(), (std::vector<size_t>{5, 4, 3}));
+    EXPECT_EQ(B3.shape(), (std::vector<uint64_t>{5, 4, 3}));
 
     auto B4 = cunumeric::swapaxes(A, -3, -2);
-    EXPECT_EQ(B4.shape(), (std::vector<size_t>{4, 3, 5}));
+    EXPECT_EQ(B4.shape(), (std::vector<uint64_t>{4, 3, 5}));
   }
 
   // Test empty array
   {
     auto A = cunumeric::zeros({0}, legate::int32());
-    EXPECT_EQ(A.shape(), (std::vector<size_t>{0}));
+    EXPECT_EQ(A.shape(), (std::vector<uint64_t>{0}));
 
     auto B = cunumeric::swapaxes(A, 0, 0);
-    EXPECT_EQ(B.shape(), (std::vector<size_t>{0}));
+    EXPECT_EQ(B.shape(), (std::vector<uint64_t>{0}));
   }
 }
 

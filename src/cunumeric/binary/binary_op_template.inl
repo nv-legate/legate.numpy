@@ -84,18 +84,13 @@ struct BinaryOpDispatch {
 template <VariantKind KIND>
 static void binary_op_template(TaskContext& context)
 {
-  auto inputs   = context.inputs();
-  auto outputs  = context.outputs();
-  auto& scalars = context.scalars();
+  auto scalars = context.scalars();
+  auto op_code = scalars.front().value<BinaryOpCode>();
 
-  std::vector<Scalar> extra_args;
-  extra_args.reserve(scalars.size() - 1);
-  for (size_t idx = 1; idx < scalars.size(); ++idx) {
-    extra_args.emplace_back(scalars[idx]);
-  }
+  scalars.erase(scalars.begin());
 
   BinaryOpArgs args{
-    inputs[0], inputs[1], outputs[0], scalars[0].value<BinaryOpCode>(), std::move(extra_args)};
+    context.input(0), context.input(1), context.output(0), op_code, std::move(scalars)};
   op_dispatch(args.op_code, BinaryOpDispatch<KIND>{}, args);
 }
 

@@ -62,9 +62,8 @@ static void unpackbits_template(TaskContext& context)
 {
   legate::PhysicalStore output = context.output(0);
   legate::PhysicalStore input  = context.input(0);
-  auto& scalars                = context.scalars();
-  auto axis                    = scalars[0].value<uint32_t>();
-  auto bitorder                = scalars[1].value<Bitorder>();
+  auto axis                    = context.scalar(0).value<uint32_t>();
+  auto bitorder                = context.scalar(1).value<Bitorder>();
 
   switch (bitorder) {
     case Bitorder::BIG: {
