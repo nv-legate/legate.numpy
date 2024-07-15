@@ -517,6 +517,7 @@ void NDArray::unary_reduction(int32_t op_code_, NDArray input)
   task.add_input(input.store_);
   task.add_scalar_arg(legate::Scalar(op_code_));
   task.add_scalar_arg(legate::Scalar(input.shape()));
+  task.add_scalar_arg(legate::Scalar(false));  // has_where
 
   runtime->submit(std::move(task));
 }
