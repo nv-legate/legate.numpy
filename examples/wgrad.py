@@ -101,7 +101,7 @@ if __name__ == "__main__":
         dest="W",
         help="width of images in pixels",
     )
-    args = parser.parse_args(parser)
+    args = parser.parse_args()
     run_wgrad(
         args.H, args.W, args.B, args.C, args.K, args.R, args.R, args.timing
     )
