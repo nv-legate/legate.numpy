@@ -11,6 +11,8 @@ Order statistics
 
    quantile
    percentile
+   nanquantile
+   nanpercentile
 
 Averages and variances
 ----------------------

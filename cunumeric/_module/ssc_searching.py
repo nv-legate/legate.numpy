@@ -14,7 +14,7 @@
 #
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, overload
 
 from .._array.array import ndarray
 from .._array.thunk import perform_where
@@ -22,6 +22,8 @@ from .._array.util import add_boilerplate
 from .array_shape import ravel, reshape
 
 if TYPE_CHECKING:
+    import numpy.typing as npt
+
     from ..types import SortSide
 
 
@@ -194,7 +196,21 @@ def flatnonzero(a: ndarray) -> ndarray:
     return nonzero(ravel(a))[0]
 
 
-@add_boilerplate("a", "x", "y")
+@overload
+def where(a: npt.ArrayLike | ndarray, x: None, y: None) -> tuple[ndarray, ...]:
+    ...
+
+
+@overload
+def where(
+    a: npt.ArrayLike | ndarray,
+    x: npt.ArrayLike | ndarray,
+    y: npt.ArrayLike | ndarray,
+) -> ndarray:
+    ...
+
+
+@add_boilerplate("a", "x", "y")  # type: ignore [misc]
 def where(
     a: ndarray, x: ndarray | None = None, y: ndarray | None = None
 ) -> ndarray | tuple[ndarray, ...]:

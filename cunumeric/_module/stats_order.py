@@ -20,8 +20,13 @@ from typing import TYPE_CHECKING, Any, Iterable
 import numpy as np
 
 from .._array.util import add_boilerplate
+from .._ufunc.comparison import logical_not
+from .._ufunc.floating import isnan
 from .array_transpose import moveaxis
+from .creation_data import asarray
 from .creation_shape import zeros
+from .ssc_counting import count_nonzero
+from .ssc_searching import where
 from .ssc_sorting import sort
 
 if TYPE_CHECKING:
@@ -100,7 +105,7 @@ def _inverted_cdf(q: float, n: int) -> tuple[float, int]:
     g = pos - k
     gamma = 1.0 if g > 0 else 0.0
 
-    j = int(k) - 1
+    j = int(k - 1)
     if j < 0:
         return (0.0, 0)
     else:
@@ -114,11 +119,11 @@ def _averaged_inverted_cdf(q: float, n: int) -> tuple[float, int]:
     g = pos - k
     gamma = 1.0 if g > 0 else 0.5
 
-    j = int(k) - 1
+    j = int(k - 1)
     if j < 0:
         return (0.0, 0)
     elif j >= n - 1:
-        return (1.0, n - 2)
+        return (1.0, int(n - 2))
     else:
         return (gamma, j)
 
@@ -196,7 +201,7 @@ def _weibull(q: float, n: int) -> tuple[float, int]:
     j = _floor_i(k)
 
     if j >= n:
-        j = n - 1
+        j = int(n - 1)
 
     return (gamma, j)
 
@@ -404,6 +409,23 @@ def _quantile_impl(
     return qs_all
 
 
+_ORDER_FUNCS = {
+    "inverted_cdf": _inverted_cdf,
+    "averaged_inverted_cdf": _averaged_inverted_cdf,
+    "closest_observation": _closest_observation,
+    "interpolated_inverted_cdf": _interpolated_inverted_cdf,
+    "hazen": _hazen,
+    "weibull": _weibull,
+    "linear": _linear,
+    "median_unbiased": _median_unbiased,
+    "normal_unbiased": _normal_unbiased,
+    "lower": _lower,
+    "higher": _higher,
+    "midpoint": _midpoint,
+    "nearest": _nearest,
+}
+
+
 @add_boilerplate("a")
 def quantile(
     a: ndarray,
@@ -491,22 +513,6 @@ def quantile(
        The American Statistician, 50(4), pp. 361-365, 1996
     """
 
-    dict_methods = {
-        "inverted_cdf": _inverted_cdf,
-        "averaged_inverted_cdf": _averaged_inverted_cdf,
-        "closest_observation": _closest_observation,
-        "interpolated_inverted_cdf": _interpolated_inverted_cdf,
-        "hazen": _hazen,
-        "weibull": _weibull,
-        "linear": _linear,
-        "median_unbiased": _median_unbiased,
-        "normal_unbiased": _normal_unbiased,
-        "lower": _lower,
-        "higher": _higher,
-        "midpoint": _midpoint,
-        "nearest": _nearest,
-    }
-
     real_axis: int | None
     axes_set: Iterable[int] = []
     original_shape = a.shape
@@ -586,7 +592,7 @@ def quantile(
         real_axis,
         axes_set,
         original_shape,
-        dict_methods[method],
+        _ORDER_FUNCS[method],
         keepdims,
         to_dtype,
         out,
@@ -690,6 +696,423 @@ def percentile(
     q01 = q_arr / 100.0
 
     return quantile(
+        a,
+        q01,
+        axis,
+        out=out,
+        overwrite_input=overwrite_input,
+        method=method,
+        keepdims=keepdims,
+    )
+
+
+# args:
+#
+# arr:      [in] source nd-array on which quantiles are calculated;
+#                NaNs ignored; precondition: assumed sorted!
+# q_arr:    [in] quantile input values nd-array;
+# axis:     [in] axis along which quantiles are calculated;
+# method:   [in] func(q, n) returning (gamma, j),
+#                where = array1D.size;
+# keepdims: [in] boolean flag specifying whether collapsed axis
+#                should be kept as dim=1;
+# to_dtype: [in] dtype to convert the result to;
+# qs_all:   [in/out] result pass through or created (returned)
+#
+def nanquantile_impl(
+    arr: ndarray,
+    q_arr: npt.NDArray[Any],
+    non_nan_counts: ndarray,
+    axis: int | None,
+    axes_set: Iterable[int],
+    original_shape: tuple[int, ...],
+    method: Callable[[float, int], tuple[float, int]],
+    keepdims: bool,
+    to_dtype: np.dtype[Any],
+    qs_all: ndarray | None,
+) -> ndarray:
+    ndims = len(arr.shape)
+
+    if axis is None:
+        if keepdims:
+            remaining_shape = (1,) * len(original_shape)
+        else:
+            remaining_shape = ()  # only `q_arr` dictates shape;
+        # quantile applied to `arr` seen as 1D;
+    else:
+        # arr.shape -{axis}; if keepdims use 1 for arr.shape[axis]:
+        # (can be empty [])
+        #
+        if keepdims:
+            remaining_shape = tuple(
+                1 if k in axes_set else original_shape[k]
+                for k in range(0, len(original_shape))
+            )
+        else:
+            remaining_shape = tuple(
+                arr.shape[k] for k in range(0, ndims) if k != axis
+            )
+
+    # compose qarr.shape with arr.shape:
+    #
+    # result.shape = (q_arr.shape, arr.shape -{axis}):
+    #
+    qresult_shape = (*q_arr.shape, *remaining_shape)
+
+    # construct result Ndarray, non-flattening approach:
+    #
+    if qs_all is None:
+        qs_all = zeros(qresult_shape, dtype=to_dtype)
+    else:
+        # implicit conversion from to_dtype to qs_all.dtype assumed
+        #
+        if qs_all.shape != qresult_shape:
+            raise ValueError("wrong shape on output array")
+
+    assert non_nan_counts.shape == remaining_shape
+
+    arr_gammas = zeros(remaining_shape, dtype=arr.dtype)
+    arr_lvals = zeros(remaining_shape, dtype=arr.dtype)
+    arr_rvals = zeros(remaining_shape, dtype=arr.dtype)
+
+    for qindex, q in np.ndenumerate(q_arr):
+        assert qs_all[qindex].shape == remaining_shape
+
+        # TODO(aschaffer): Vectorize this operation, see
+        # github.com/nv-legate/cunumeric/pull/1121#discussion_r1484731763
+        for aindex, n in np.ndenumerate(non_nan_counts):
+            (gamma, left_pos) = method(q, n)
+
+            # assumption: since `non_nan_counts` has the same
+            # shape as `remaining_shape` (checked above),
+            # `aindex` are the same indices as those needed
+            # to access `a`'s remaining shape slices;
+            #
+            full_l_index = (*aindex[:axis], left_pos, *aindex[axis:])
+            arr_lvals[aindex] = arr[full_l_index]
+            # TODO(mpapadakis): mypy mysteriously complains that
+            # expression has type "float", target has type "ndarray"
+            arr_gammas[aindex] = gamma  # type: ignore[assignment]
+
+            right_pos = left_pos + 1
+            #
+            # this test _IS_ needed
+            # hence, cannot fill arr_rvals same as arr_lvals;
+            #
+            if right_pos < n:
+                # reconstruct full index from aindex entries everywhere except
+                # `right_pos` on `axis`:
+                #
+                full_r_index = (*aindex[:axis], right_pos, *aindex[axis:])
+                arr_rvals[aindex] = arr[full_r_index]
+
+        # vectorized for axis != None;
+        #
+        if len(qindex) == 0:
+            left = (1 - arr_gammas.reshape(qs_all.shape)) * arr_lvals.reshape(
+                qs_all.shape
+            )
+            right = arr_gammas.reshape(qs_all.shape) * arr_rvals.reshape(
+                qs_all.shape
+            )
+            qs_all[...] = left + right
+        else:
+            left = (
+                1 - arr_gammas.reshape(qs_all[qindex].shape)
+            ) * arr_lvals.reshape(qs_all[qindex].shape)
+            right = arr_gammas.reshape(
+                qs_all[qindex].shape
+            ) * arr_rvals.reshape(qs_all[qindex].shape)
+            qs_all[qindex] = left + right
+
+    return qs_all
+
+
+@add_boilerplate("a")
+def nanquantile(
+    a: ndarray,
+    q: float | Iterable[float] | ndarray,
+    axis: int | tuple[int, ...] | None = None,
+    out: ndarray | None = None,
+    overwrite_input: bool = False,
+    method: str = "linear",
+    keepdims: bool = False,
+) -> ndarray:
+    """
+    Compute the q-th quantile of the data along the specified axis,
+    while ignoring nan values.
+
+    Parameters
+    ----------
+    a : array_like
+        Input array or object that can be converted to an array,
+        containing nan values to be ignored.
+    q : array_like of float
+        Quantile or sequence of quantiles to compute, which must be between
+        0 and 1 inclusive.
+    axis : {int, tuple of int, None}, optional
+        Axis or axes along which the quantiles are computed. The default is
+        to compute the quantile(s) along a flattened version of the array.
+    out : ndarray, optional
+        Alternative output array in which to place the result. It must have
+        the same shape as the expected output.
+    overwrite_input : bool, optional
+        If True, then allow the input array `a` to be modified by
+        intermediate calculations, to save memory. In this case, the
+        contents of the input `a` after this function completes is
+        undefined.
+    method : str, optional
+        This parameter specifies the method to use for estimating the
+        quantile.  The options sorted by their R type
+        as summarized in the H&F paper [1]_ are:
+        1. 'inverted_cdf'
+        2. 'averaged_inverted_cdf'
+        3. 'closest_observation'
+        4. 'interpolated_inverted_cdf'
+        5. 'hazen'
+        6. 'weibull'
+        7. 'linear'  (default)
+        8. 'median_unbiased'
+        9. 'normal_unbiased'
+        The first three methods are discontinuous.  NumPy further defines the
+        following discontinuous variations of the default 'linear' (7.) option:
+        * 'lower'
+        * 'higher',
+        * 'midpoint'
+        * 'nearest'
+    keepdims : bool, optional
+        If this is set to True, the axes which are reduced are left in
+        the result as dimensions with size one. With this option, the
+        result will broadcast correctly against the original array `a`.
+
+    Returns
+    -------
+    quantile : scalar or ndarray
+        If `q` is a single quantile and `axis=None`, then the result
+        is a scalar. If multiple quantiles are given, first axis of
+        the result corresponds to the quantiles. The other axes are
+        the axes that remain after the reduction of `a`. If the input
+        contains integers or floats smaller than ``float64``, the output
+        data-type is ``float64``. Otherwise, the output data-type is the
+        same as that of the input. If `out` is specified, that array is
+        returned instead.
+
+    Raises
+    ------
+    TypeError
+        If the type of the input is complex.
+
+    See Also
+    --------
+    numpy.nanquantile
+
+    Availability
+    --------
+    Multiple GPUs, Multiple CPUs
+
+    References
+    ----------
+    .. [1] R. J. Hyndman and Y. Fan,
+       "Sample quantiles in statistical packages,"
+       The American Statistician, 50(4), pp. 361-365, 1996
+    """
+
+    real_axis: int | None
+    axes_set: Iterable[int] = []
+    original_shape = a.shape
+
+    if axis is not None and isinstance(axis, Iterable):
+        if len(axis) == 1:
+            real_axis = axis[0]
+            a_rr = a
+        else:
+            (real_axis, a_rr) = _reshuffle_reshape(a, axis)
+            # What happens with multiple axes and overwrite_input = True ?
+            # It seems overwrite_input is reset to False;
+            # But `overwrite_input` doesn't matter for the NaN version of this
+            # function
+            # overwrite_input = False
+        axes_set = axis
+    else:
+        real_axis = axis
+        a_rr = a
+        if real_axis is not None:
+            axes_set = [real_axis]
+
+    # ndarray of non-NaNs:
+    #
+    non_nan_counts = asarray(
+        count_nonzero(
+            logical_not(isnan(a_rr)),
+            axis=real_axis,
+        )
+    )
+
+    # covers both array-like and scalar cases:
+    #
+    q_arr = np.asarray(q)
+
+    # in the future k-sort (partition)
+    # might be faster, for now it uses sort
+    # arr = partition(arr, k = floor(nq), axis = real_axis)
+    # but that would require a k-sort call for each `q`!
+    # too expensive for many `q` values...
+    # if no axis given then elements are sorted as a 1D array
+    #
+    # replace NaN's by dtype.max:
+    #
+    arr = where(isnan(a_rr), np.finfo(a_rr.dtype).max, a_rr)
+    arr.sort(axis=real_axis)
+
+    if arr.dtype.kind == "c":
+        raise TypeError("input array cannot be of complex type")
+
+    # return type dependency on arr.dtype:
+    #
+    # it depends on interpolation method;
+    # For discontinuous methods returning either end of the interval within
+    # which the quantile falls, or the other; arr.dtype is returned;
+    # else, logic below:
+    #
+    # if is_float(arr_dtype) && (arr.dtype >= dtype('float64')) then
+    #    arr.dtype
+    # else
+    #    dtype('float64')
+    #
+    # see https://github.com/numpy/numpy/issues/22323
+    #
+    if method in [
+        "inverted_cdf",
+        "closest_observation",
+        "lower",
+        "higher",
+        "nearest",
+    ]:
+        to_dtype = arr.dtype
+    else:
+        to_dtype = np.dtype("float64")
+
+        # in case dtype("float128") becomes supported:
+        #
+        # to_dtype = (
+        #     arr.dtype
+        #     if (arr.dtype == np.dtype("float128"))
+        #     else np.dtype("float64")
+        # )
+
+    res = nanquantile_impl(
+        arr,
+        q_arr,
+        non_nan_counts,
+        real_axis,
+        axes_set,
+        original_shape,
+        _ORDER_FUNCS[method],
+        keepdims,
+        to_dtype,
+        out,
+    )
+
+    if out is not None:
+        # out = res.astype(out.dtype) -- conversion done inside impl
+        return out
+    else:
+        return res
+
+
+@add_boilerplate("a")
+def nanpercentile(
+    a: ndarray,
+    q: float | Iterable[float] | ndarray,
+    axis: int | tuple[int, ...] | None = None,
+    out: ndarray | None = None,
+    overwrite_input: bool = False,
+    method: str = "linear",
+    keepdims: bool = False,
+) -> ndarray:
+    """
+    Compute the q-th percentile of the data along the specified axis,
+    while ignoring nan values.
+
+    Parameters
+    ----------
+    a : array_like
+        Input array or object that can be converted to an array,
+        containing nan values to be ignored.
+    q : array_like of float
+        Percentile or sequence of percentiles to compute, which must be between
+        0 and 100 inclusive.
+    axis : {int, tuple of int, None}, optional
+        Axis or axes along which the percentiles are computed. The default is
+        to compute the percentile(s) along a flattened version of the array.
+    out : ndarray, optional
+        Alternative output array in which to place the result. It must have
+        the same shape as the expected output.
+    overwrite_input : bool, optional
+        If True, then allow the input array `a` to be modified by
+        intermediate calculations, to save memory. In this case, the
+        contents of the input `a` after this function completes is
+        undefined.
+    method : str, optional
+        This parameter specifies the method to use for estimating the
+        percentile.  The options sorted by their R type
+        as summarized in the H&F paper [1]_ are:
+        1. 'inverted_cdf'
+        2. 'averaged_inverted_cdf'
+        3. 'closest_observation'
+        4. 'interpolated_inverted_cdf'
+        5. 'hazen'
+        6. 'weibull'
+        7. 'linear'  (default)
+        8. 'median_unbiased'
+        9. 'normal_unbiased'
+        The first three methods are discontinuous.  NumPy further defines the
+        following discontinuous variations of the default 'linear' (7.) option:
+        * 'lower'
+        * 'higher',
+        * 'midpoint'
+        * 'nearest'
+    keepdims : bool, optional
+        If this is set to True, the axes which are reduced are left in
+        the result as dimensions with size one. With this option, the
+        result will broadcast correctly against the original array `a`.
+
+    Returns
+    -------
+    percentile : scalar or ndarray
+        If `q` is a single percentile and `axis=None`, then the result
+        is a scalar. If multiple percentiles are given, first axis of
+        the result corresponds to the percentiles. The other axes are
+        the axes that remain after the reduction of `a`. If the input
+        contains integers or floats smaller than ``float64``, the output
+        data-type is ``float64``. Otherwise, the output data-type is the
+        same as that of the input. If `out` is specified, that array is
+        returned instead.
+
+    Raises
+    ------
+    TypeError
+        If the type of the input is complex.
+
+    See Also
+    --------
+    numpy.nanpercentile
+
+    Availability
+    --------
+    Multiple GPUs, Multiple CPUs
+
+    References
+    ----------
+    .. [1] R. J. Hyndman and Y. Fan,
+       "Sample quantiles in statistical packages,"
+       The American Statistician, 50(4), pp. 361-365, 1996
+    """
+
+    q_arr = np.asarray(q)
+    q01 = q_arr / 100.0
+
+    return nanquantile(
         a,
         q01,
         axis,
