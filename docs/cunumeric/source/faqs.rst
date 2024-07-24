@@ -73,6 +73,29 @@ on the machine, try reducing the number of cores (``--cpus``) passed to legate.
 
 This warning is currently expected on MacOS.
 
+How to determine available memory?
+----------------------------------
+
+On Linux, running the following command will display the amount of 
+available system memory:
+
+.. code-block:: sh
+
+    cat /proc/meminfo | grep MemAvailable
+
+Available GPU memory (for each GPU) can be displayed by running:
+
+.. code-block:: sh
+
+    nvidia-smi --query-gpu memory.free --format=csv
+
+Both of these represent the available amount of memory, which may be shared 
+with other processes or libraries. You may need to reduce these amounts to 
+account for these, or to reflect the actual size of your problem more closely.
+
+If you do not have access to run the commands above, then refer to published
+machine specs or cluster documentation.
+
 How to handle Out-Of-Memory errors?
 -----------------------------------
 
