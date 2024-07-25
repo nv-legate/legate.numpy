@@ -32,7 +32,7 @@ struct WrapArgs {
 
 class WrapTask : public CuNumericTask<WrapTask> {
  public:
-  static const int TASK_ID = CUNUMERIC_WRAP;
+  static constexpr auto TASK_ID = legate::LocalTaskID{CUNUMERIC_WRAP};
 
  public:
   static void cpu_variant(legate::TaskContext context);

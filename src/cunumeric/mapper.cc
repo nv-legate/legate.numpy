@@ -78,7 +78,7 @@ Scalar CuNumericMapper::tunable_value(TunableID tunable_id)
 std::vector<StoreMapping> CuNumericMapper::store_mappings(
   const mapping::Task& task, const std::vector<mapping::StoreTarget>& options)
 {
-  switch (task.task_id()) {
+  switch (static_cast<std::int64_t>(task.task_id())) {
     case CUNUMERIC_CONVOLVE: {
       std::vector<StoreMapping> mappings;
       auto inputs = task.inputs();

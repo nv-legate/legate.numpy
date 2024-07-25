@@ -94,7 +94,7 @@ struct modulusWithOffset : public thrust::binary_function<int64_t, int64_t, int6
 
 class SortTask : public CuNumericTask<SortTask> {
  public:
-  static const int TASK_ID = CUNUMERIC_SORT;
+  static constexpr auto TASK_ID = legate::LocalTaskID{CUNUMERIC_SORT};
 
  public:
   static void cpu_variant(legate::TaskContext context);

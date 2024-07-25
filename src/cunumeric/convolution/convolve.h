@@ -38,7 +38,7 @@ struct ConvolveArgs {
 
 class ConvolveTask : public CuNumericTask<ConvolveTask> {
  public:
-  static const int TASK_ID = CUNUMERIC_CONVOLVE;
+  static constexpr auto TASK_ID = legate::LocalTaskID{CUNUMERIC_CONVOLVE};
 
  public:
   static void cpu_variant(legate::TaskContext context);

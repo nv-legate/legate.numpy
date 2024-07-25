@@ -80,7 +80,7 @@ struct BitGeneratorArgs {
 
 class BitGeneratorTask : public CuNumericTask<BitGeneratorTask> {
  public:
-  static const int TASK_ID = CUNUMERIC_BITGENERATOR;
+  static constexpr auto TASK_ID = legate::LocalTaskID{CUNUMERIC_BITGENERATOR};
 
  public:
   static void cpu_variant(legate::TaskContext context);

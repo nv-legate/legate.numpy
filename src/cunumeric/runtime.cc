@@ -78,7 +78,7 @@ legate::Type CuNumericRuntime::get_argred_type(const legate::Type& value_type)
 
 legate::AutoTask CuNumericRuntime::create_task(CuNumericOpCode op_code)
 {
-  return legate_runtime_->create_task(library_, op_code);
+  return legate_runtime_->create_task(library_, legate::LocalTaskID{op_code});
 }
 
 void CuNumericRuntime::submit(legate::AutoTask&& task) { legate_runtime_->submit(std::move(task)); }

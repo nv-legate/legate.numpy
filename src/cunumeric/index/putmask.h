@@ -28,7 +28,7 @@ struct PutmaskArgs {
 
 class PutmaskTask : public CuNumericTask<PutmaskTask> {
  public:
-  static const int TASK_ID = CUNUMERIC_PUTMASK;
+  static constexpr auto TASK_ID = legate::LocalTaskID{CUNUMERIC_PUTMASK};
 
  public:
   static void cpu_variant(legate::TaskContext context);

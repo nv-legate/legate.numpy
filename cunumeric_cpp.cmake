@@ -62,6 +62,28 @@ option(Legion_USE_CUDA "Use CUDA" ON)
 option(Legion_USE_OpenMP "Use OpenMP" ${OpenMP_FOUND})
 option(Legion_BOUNDS_CHECKS "Build cuNumeric with bounds checks (expensive)" OFF)
 
+# If legate.core has CUDA support, then including it in a project will automatically call
+# enable_language(CUDA). However, this does not play nice with the rapids-cmake CUDA utils
+# which support a wider range of values for CMAKE_CUDA_ARCHITECTURES than cmake does. You
+# end up with the following error:
+#
+# CMAKE_CUDA_ARCHITECTURES:
+#
+#    RAPIDS
+#
+#  is not one of the following:
+#
+#    * a semicolon-separated list of integers, each optionally
+#      followed by '-real' or '-virtual'
+#    * a special value: all, all-major, native
+#
+set(cmake_cuda_arch_backup "${CMAKE_CUDA_ARCHITECTURES}")
+set(cmake_cuda_arch_cache_backup "$CACHE{CMAKE_CUDA_ARCHITECTURES}")
+if(("${CMAKE_CUDA_ARCHITECTURES}" STREQUAL "RAPIDS") OR ("${CMAKE_CUDA_ARCHITECTURES}" STREQUAL "NATIVE"))
+  unset(CMAKE_CUDA_ARCHITECTURES)
+  unset(CMAKE_CUDA_ARCHITECTURES CACHE)
+endif()
+
 ###
 # If we find legate.core already configured on the system, it will report
 # whether it was compiled with bounds checking (Legion_BOUNDS_CHECKS),
@@ -73,6 +95,11 @@ option(Legion_BOUNDS_CHECKS "Build cuNumeric with bounds checks (expensive)" OFF
 # with CUDA support).
 ###
 include(cmake/thirdparty/get_legate_core.cmake)
+
+set(CMAKE_CUDA_ARCHITECTURES "${cmake_cuda_arch_cache_backup}" CACHE STRING "" FORCE)
+set(CMAKE_CUDA_ARCHITECTURES "${cmake_cuda_arch_backup}")
+unset(cmake_cuda_arch_backup)
+unset(cmake_cuda_arch_cache_backup)
 
 if(Legion_USE_CUDA)
   include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules/cuda_arch_helpers.cmake)

@@ -33,7 +33,7 @@ struct ScalarUnaryRedArgs {
 // Unary reduction task that produces scalar results
 class ScalarUnaryRedTask : public CuNumericTask<ScalarUnaryRedTask> {
  public:
-  static const int TASK_ID = CUNUMERIC_SCALAR_UNARY_RED;
+  static constexpr auto TASK_ID = legate::LocalTaskID{CUNUMERIC_SCALAR_UNARY_RED};
 
  public:
   static void cpu_variant(legate::TaskContext context);

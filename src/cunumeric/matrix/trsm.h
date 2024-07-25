@@ -22,7 +22,7 @@ namespace cunumeric {
 
 class TrsmTask : public CuNumericTask<TrsmTask> {
  public:
-  static const int TASK_ID = CUNUMERIC_TRSM;
+  static constexpr auto TASK_ID = legate::LocalTaskID{CUNUMERIC_TRSM};
 
  public:
   static void cpu_variant(legate::TaskContext context);

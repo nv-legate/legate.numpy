@@ -31,7 +31,7 @@ struct ZipArgs {
 
 class ZipTask : public CuNumericTask<ZipTask> {
  public:
-  static const int TASK_ID = CUNUMERIC_ZIP;
+  static constexpr auto TASK_ID = legate::LocalTaskID{CUNUMERIC_ZIP};
 
  public:
   static void cpu_variant(legate::TaskContext context);

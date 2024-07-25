@@ -27,7 +27,7 @@ struct ChooseArgs {
 
 class ChooseTask : public CuNumericTask<ChooseTask> {
  public:
-  static const int TASK_ID = CUNUMERIC_CHOOSE;
+  static constexpr auto TASK_ID = legate::LocalTaskID{CUNUMERIC_CHOOSE};
 
  public:
   static void cpu_variant(legate::TaskContext context);

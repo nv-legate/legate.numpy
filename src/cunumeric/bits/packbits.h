@@ -103,7 +103,7 @@ struct Pack<Bitorder::LITTLE, false /*ALIGNED*/> {
 
 class PackbitsTask : public CuNumericTask<PackbitsTask> {
  public:
-  static const int TASK_ID = CUNUMERIC_PACKBITS;
+  static constexpr auto TASK_ID = legate::LocalTaskID{CUNUMERIC_PACKBITS};
 
  public:
   static void cpu_variant(legate::TaskContext context);

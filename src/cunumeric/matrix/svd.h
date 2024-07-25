@@ -22,7 +22,7 @@ namespace cunumeric {
 
 class SvdTask : public CuNumericTask<SvdTask> {
  public:
-  static const int TASK_ID = CUNUMERIC_SVD;
+  static constexpr auto TASK_ID = legate::LocalTaskID{CUNUMERIC_SVD};
   static const char* ERROR_MESSAGE;
 
  public:

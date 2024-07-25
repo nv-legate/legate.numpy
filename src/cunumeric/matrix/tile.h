@@ -27,7 +27,7 @@ struct TileArgs {
 
 class TileTask : public CuNumericTask<TileTask> {
  public:
-  static const int TASK_ID = CUNUMERIC_TILE;
+  static constexpr auto TASK_ID = legate::LocalTaskID{CUNUMERIC_TILE};
 
  public:
   static void cpu_variant(legate::TaskContext context);

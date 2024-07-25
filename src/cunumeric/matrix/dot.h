@@ -28,7 +28,7 @@ struct DotArgs {
 
 class DotTask : public CuNumericTask<DotTask> {
  public:
-  static const int TASK_ID = CUNUMERIC_DOT;
+  static constexpr auto TASK_ID = legate::LocalTaskID{CUNUMERIC_DOT};
 
  public:
   static void cpu_variant(legate::TaskContext context);

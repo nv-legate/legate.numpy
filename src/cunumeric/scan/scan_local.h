@@ -31,7 +31,7 @@ struct ScanLocalArgs {
 
 class ScanLocalTask : public CuNumericTask<ScanLocalTask> {
  public:
-  static const int TASK_ID = CUNUMERIC_SCAN_LOCAL;
+  static constexpr auto TASK_ID = legate::LocalTaskID{CUNUMERIC_SCAN_LOCAL};
 
  public:
   static void cpu_variant(legate::TaskContext context);

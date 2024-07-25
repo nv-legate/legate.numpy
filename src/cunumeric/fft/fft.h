@@ -32,7 +32,7 @@ struct FFTArgs {
 
 class FFTTask : public CuNumericTask<FFTTask> {
  public:
-  static const int TASK_ID = CUNUMERIC_FFT;
+  static constexpr auto TASK_ID = legate::LocalTaskID{CUNUMERIC_FFT};
 
  public:
 #if LEGATE_DEFINED(LEGATE_USE_CUDA)

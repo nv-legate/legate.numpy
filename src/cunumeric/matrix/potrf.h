@@ -22,7 +22,7 @@ namespace cunumeric {
 
 class PotrfTask : public CuNumericTask<PotrfTask> {
  public:
-  static const int TASK_ID = CUNUMERIC_POTRF;
+  static constexpr auto TASK_ID = legate::LocalTaskID{CUNUMERIC_POTRF};
 
  public:
   static void cpu_variant(legate::TaskContext context);

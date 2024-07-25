@@ -29,7 +29,7 @@ struct HistogramArgs {
 
 class HistogramTask : public CuNumericTask<HistogramTask> {
  public:
-  static const int TASK_ID = CUNUMERIC_HISTOGRAM;
+  static constexpr auto TASK_ID = legate::LocalTaskID{CUNUMERIC_HISTOGRAM};
 
  public:
   static void cpu_variant(legate::TaskContext context);

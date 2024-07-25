@@ -22,7 +22,7 @@ namespace cunumeric {
 
 class SolveTask : public CuNumericTask<SolveTask> {
  public:
-  static const int TASK_ID = CUNUMERIC_SOLVE;
+  static constexpr auto TASK_ID = legate::LocalTaskID{CUNUMERIC_SOLVE};
   static const char* ERROR_MESSAGE;
 
  public:

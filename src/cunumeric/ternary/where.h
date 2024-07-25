@@ -29,7 +29,7 @@ struct WhereArgs {
 
 class WhereTask : public CuNumericTask<WhereTask> {
  public:
-  static const int TASK_ID = CUNUMERIC_WHERE;
+  static constexpr auto TASK_ID = legate::LocalTaskID{CUNUMERIC_WHERE};
 
  public:
   static void cpu_variant(legate::TaskContext context);

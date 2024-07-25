@@ -22,7 +22,7 @@ namespace cunumeric {
 
 class QrTask : public CuNumericTask<QrTask> {
  public:
-  static const int TASK_ID = CUNUMERIC_QR;
+  static constexpr auto TASK_ID = legate::LocalTaskID{CUNUMERIC_QR};
   static const char* ERROR_MESSAGE;
 
  public:

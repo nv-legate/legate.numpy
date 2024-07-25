@@ -27,7 +27,7 @@ struct NonzeroArgs {
 
 class NonzeroTask : public CuNumericTask<NonzeroTask> {
  public:
-  static const int TASK_ID = CUNUMERIC_NONZERO;
+  static constexpr auto TASK_ID = legate::LocalTaskID{CUNUMERIC_NONZERO};
 
  public:
   static void cpu_variant(legate::TaskContext context);

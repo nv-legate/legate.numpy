@@ -29,7 +29,7 @@ struct TriluArgs {
 
 class TriluTask : public CuNumericTask<TriluTask> {
  public:
-  static const int TASK_ID = CUNUMERIC_TRILU;
+  static constexpr auto TASK_ID = legate::LocalTaskID{CUNUMERIC_TRILU};
 
  public:
   static void cpu_variant(legate::TaskContext context);

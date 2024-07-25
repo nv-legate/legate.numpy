@@ -22,7 +22,7 @@ namespace cunumeric {
 
 class SyrkTask : public CuNumericTask<SyrkTask> {
  public:
-  static const int TASK_ID = CUNUMERIC_SYRK;
+  static constexpr auto TASK_ID = legate::LocalTaskID{CUNUMERIC_SYRK};
 
  public:
   static void cpu_variant(legate::TaskContext context);

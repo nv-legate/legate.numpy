@@ -31,7 +31,7 @@ struct RepeatArgs {
 
 class RepeatTask : public CuNumericTask<RepeatTask> {
  public:
-  static const int TASK_ID = CUNUMERIC_REPEAT;
+  static constexpr auto TASK_ID = legate::LocalTaskID{CUNUMERIC_REPEAT};
 
  public:
   static void cpu_variant(legate::TaskContext context);

@@ -28,7 +28,7 @@ struct ArangeArgs {
 
 class ArangeTask : public CuNumericTask<ArangeTask> {
  public:
-  static const int TASK_ID = CUNUMERIC_ARANGE;
+  static constexpr auto TASK_ID = legate::LocalTaskID{CUNUMERIC_ARANGE};
 
  public:
   static void cpu_variant(legate::TaskContext context);

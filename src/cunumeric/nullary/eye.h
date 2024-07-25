@@ -27,7 +27,7 @@ struct EyeArgs {
 
 class EyeTask : public CuNumericTask<EyeTask> {
  public:
-  static const int TASK_ID = CUNUMERIC_EYE;
+  static constexpr auto TASK_ID = legate::LocalTaskID{CUNUMERIC_EYE};
 
  public:
   static void cpu_variant(legate::TaskContext context);

@@ -29,7 +29,7 @@ struct ConvertArgs {
 
 class ConvertTask : public CuNumericTask<ConvertTask> {
  public:
-  static const int TASK_ID = CUNUMERIC_CONVERT;
+  static constexpr auto TASK_ID = legate::LocalTaskID{CUNUMERIC_CONVERT};
 
  public:
   static void cpu_variant(legate::TaskContext context);

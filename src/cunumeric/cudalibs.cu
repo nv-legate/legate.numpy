@@ -481,7 +481,7 @@ int get_device_ordinal()
 
 class LoadCUDALibsTask : public CuNumericTask<LoadCUDALibsTask> {
  public:
-  static const int TASK_ID = CUNUMERIC_LOAD_CUDALIBS;
+  static constexpr auto TASK_ID = legate::LocalTaskID{CUNUMERIC_LOAD_CUDALIBS};
 
  public:
   static void gpu_variant(legate::TaskContext context)
@@ -499,7 +499,7 @@ class LoadCUDALibsTask : public CuNumericTask<LoadCUDALibsTask> {
 
 class UnloadCUDALibsTask : public CuNumericTask<UnloadCUDALibsTask> {
  public:
-  static const int TASK_ID = CUNUMERIC_UNLOAD_CUDALIBS;
+  static constexpr auto TASK_ID = legate::LocalTaskID{CUNUMERIC_UNLOAD_CUDALIBS};
 
  public:
   static void gpu_variant(legate::TaskContext context)

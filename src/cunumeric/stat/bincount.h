@@ -29,7 +29,7 @@ struct BincountArgs {
 
 class BincountTask : public CuNumericTask<BincountTask> {
  public:
-  static const int TASK_ID = CUNUMERIC_BINCOUNT;
+  static constexpr auto TASK_ID = legate::LocalTaskID{CUNUMERIC_BINCOUNT};
 
  public:
   static void cpu_variant(legate::TaskContext context);

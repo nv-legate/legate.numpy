@@ -31,7 +31,7 @@ struct ContractArgs {
 
 class ContractTask : public CuNumericTask<ContractTask> {
  public:
-  static const int TASK_ID = CUNUMERIC_CONTRACT;
+  static constexpr auto TASK_ID = legate::LocalTaskID{CUNUMERIC_CONTRACT};
 
  public:
   static void cpu_variant(legate::TaskContext context);

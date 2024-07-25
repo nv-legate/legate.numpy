@@ -27,7 +27,7 @@ struct ArgWhereArgs {
 
 class ArgWhereTask : public CuNumericTask<ArgWhereTask> {
  public:
-  static const int TASK_ID = CUNUMERIC_ARGWHERE;
+  static constexpr auto TASK_ID = legate::LocalTaskID{CUNUMERIC_ARGWHERE};
 
  public:
   static void cpu_variant(legate::TaskContext context);

@@ -22,7 +22,7 @@ namespace cunumeric {
 
 class MpPotrfTask : public CuNumericTask<MpPotrfTask> {
  public:
-  static const int TASK_ID = CUNUMERIC_MP_POTRF;
+  static constexpr auto TASK_ID = legate::LocalTaskID{CUNUMERIC_MP_POTRF};
 
  public:
 #if LEGATE_DEFINED(LEGATE_USE_CUDA)

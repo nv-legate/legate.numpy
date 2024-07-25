@@ -22,7 +22,7 @@ namespace cunumeric {
 
 class UniqueReduceTask : public CuNumericTask<UniqueReduceTask> {
  public:
-  static const int TASK_ID = CUNUMERIC_UNIQUE_REDUCE;
+  static constexpr auto TASK_ID = legate::LocalTaskID{CUNUMERIC_UNIQUE_REDUCE};
 
  public:
   static void cpu_variant(legate::TaskContext context);

@@ -22,7 +22,7 @@ namespace cunumeric {
 
 class WriteTask : public CuNumericTask<WriteTask> {
  public:
-  static const int TASK_ID = CUNUMERIC_WRITE;
+  static constexpr auto TASK_ID = legate::LocalTaskID{CUNUMERIC_WRITE};
 
  public:
   static void cpu_variant(legate::TaskContext context);

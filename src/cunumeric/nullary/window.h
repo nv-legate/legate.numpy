@@ -22,7 +22,7 @@ namespace cunumeric {
 
 class WindowTask : public CuNumericTask<WindowTask> {
  public:
-  static const int TASK_ID = CUNUMERIC_WINDOW;
+  static constexpr auto TASK_ID = legate::LocalTaskID{CUNUMERIC_WINDOW};
 
  public:
   static void cpu_variant(legate::TaskContext context);

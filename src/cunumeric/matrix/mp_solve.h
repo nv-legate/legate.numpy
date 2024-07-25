@@ -22,7 +22,7 @@ namespace cunumeric {
 
 class MpSolveTask : public CuNumericTask<MpSolveTask> {
  public:
-  static const int TASK_ID = CUNUMERIC_MP_SOLVE;
+  static constexpr auto TASK_ID = legate::LocalTaskID{CUNUMERIC_MP_SOLVE};
 
  public:
 #if LEGATE_DEFINED(LEGATE_USE_CUDA)

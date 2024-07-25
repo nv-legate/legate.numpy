@@ -35,7 +35,8 @@ enum TaskIDs {
 template <bool I_ROW_MAJOR, bool O_ROW_MAJOR>
 struct CheckRepartitionTask
   : public legate::LegateTask<CheckRepartitionTask<I_ROW_MAJOR, O_ROW_MAJOR>> {
-  static const std::int32_t TASK_ID = CHECK_REPARTITION_TASK + I_ROW_MAJOR * 2 + O_ROW_MAJOR;
+  static constexpr auto TASK_ID =
+    legate::LocalTaskID{CHECK_REPARTITION_TASK + I_ROW_MAJOR * 2 + O_ROW_MAJOR};
 
   static void gpu_variant(legate::TaskContext context);
 };
@@ -52,7 +53,7 @@ class RepartitionLayoutMapper : public legate::mapping::Mapper {
     const legate::mapping::Task& task,
     const std::vector<legate::mapping::StoreTarget>& options) override
   {
-    auto task_id       = task.task_id();
+    auto task_id       = static_cast<std::int64_t>(task.task_id());
     bool out_row_major = task_id % 2 == 1;
     bool in_row_major  = task_id > 1;
 
@@ -285,7 +286,8 @@ void run_test_aligned_default_launch(std::vector<uint64_t>& data_shape,
   }
 
   // start custom test-task with aligned in/out
-  auto task = runtime->create_task(library, CHECK_REPARTITION_TASK + I_ROW_MAJOR * 2 + O_ROW_MAJOR);
+  auto task = runtime->create_task(
+    library, legate::LocalTaskID{CHECK_REPARTITION_TASK + I_ROW_MAJOR * 2 + O_ROW_MAJOR});
   auto part_in  = task.add_input(data_input.get_store());
   auto part_out = task.add_output(data_output.get_store());
   task.add_scalar_arg(legate::Scalar{tile_shape[0]});

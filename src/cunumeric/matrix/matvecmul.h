@@ -28,7 +28,7 @@ struct MatVecMulArgs {
 
 class MatVecMulTask : public CuNumericTask<MatVecMulTask> {
  public:
-  static const int TASK_ID = CUNUMERIC_MATVECMUL;
+  static constexpr auto TASK_ID = legate::LocalTaskID{CUNUMERIC_MATVECMUL};
 
  public:
   static void cpu_variant(legate::TaskContext context);

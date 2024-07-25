@@ -22,7 +22,7 @@ namespace cunumeric {
 
 class ReadTask : public CuNumericTask<ReadTask> {
  public:
-  static const int TASK_ID = CUNUMERIC_READ;
+  static constexpr auto TASK_ID = legate::LocalTaskID{CUNUMERIC_READ};
 
  public:
   static void cpu_variant(legate::TaskContext context);

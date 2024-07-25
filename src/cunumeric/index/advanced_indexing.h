@@ -30,7 +30,7 @@ struct AdvancedIndexingArgs {
 
 class AdvancedIndexingTask : public CuNumericTask<AdvancedIndexingTask> {
  public:
-  static const int TASK_ID = CUNUMERIC_ADVANCED_INDEXING;
+  static constexpr auto TASK_ID = legate::LocalTaskID{CUNUMERIC_ADVANCED_INDEXING};
 
  public:
   static void cpu_variant(legate::TaskContext context);

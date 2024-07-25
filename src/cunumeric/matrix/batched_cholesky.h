@@ -23,7 +23,7 @@ namespace cunumeric {
 
 class BatchedCholeskyTask : public CuNumericTask<BatchedCholeskyTask> {
  public:
-  static const int TASK_ID = CUNUMERIC_BATCHED_CHOLESKY;
+  static constexpr auto TASK_ID = legate::LocalTaskID{CUNUMERIC_BATCHED_CHOLESKY};
 
  public:
   static void cpu_variant(legate::TaskContext context);

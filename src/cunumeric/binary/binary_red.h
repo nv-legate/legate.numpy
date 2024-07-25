@@ -31,7 +31,7 @@ struct BinaryRedArgs {
 
 class BinaryRedTask : public CuNumericTask<BinaryRedTask> {
  public:
-  static const int TASK_ID = CUNUMERIC_BINARY_RED;
+  static constexpr auto TASK_ID = legate::LocalTaskID{CUNUMERIC_BINARY_RED};
 
  public:
   static void cpu_variant(legate::TaskContext context);

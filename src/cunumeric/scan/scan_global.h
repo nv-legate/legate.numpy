@@ -30,7 +30,7 @@ struct ScanGlobalArgs {
 
 class ScanGlobalTask : public CuNumericTask<ScanGlobalTask> {
  public:
-  static const int TASK_ID = CUNUMERIC_SCAN_GLOBAL;
+  static constexpr auto TASK_ID = legate::LocalTaskID{CUNUMERIC_SCAN_GLOBAL};
 
  public:
   static void cpu_variant(legate::TaskContext context);

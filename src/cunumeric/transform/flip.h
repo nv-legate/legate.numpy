@@ -28,7 +28,7 @@ struct FlipArgs {
 
 class FlipTask : public CuNumericTask<FlipTask> {
  public:
-  static const int TASK_ID = CUNUMERIC_FLIP;
+  static constexpr auto TASK_ID = legate::LocalTaskID{CUNUMERIC_FLIP};
 
  public:
   static void cpu_variant(legate::TaskContext context);
