@@ -13,7 +13,13 @@
 # limitations under the License.
 #
 
-import os
+from os import getenv
+
+from cunumeric import __version__
+
+SWITCHER_PROD = "https://docs.nvidia.com/cunumeric/switcher.json"
+SWITCHER_DEV = "http://localhost:8000/switcher.json"
+JSON_URL = SWITCHER_DEV if getenv("SWITCHER_DEV") == "1" else SWITCHER_PROD
 
 # -- Project information -----------------------------------------------------
 
@@ -54,8 +60,16 @@ html_static_path = ["_static"]
 
 # This is pretty kludgy but the nv theme is not publicly available to
 # install on CI, etc. We will use the pydata theme in those situations
-if os.environ.get("NV_THEME") == "1":
+if getenv("NV_THEME") == "1":
     html_theme = "nvidia_sphinx_theme"
+
+    html_theme_options = {
+        "switcher": {
+            "json_url": JSON_URL,
+            "navbar_start": ["navbar-logo", "version-switcher"],
+            "version_match": ".".join(__version__.split(".", 2)[:2]),
+        }
+    }
 
 else:
     html_theme = "pydata_sphinx_theme"

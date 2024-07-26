@@ -44,6 +44,7 @@ html:
 	; $(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) -j $(PARALLEL_BUILD) \
 	&& mkdir -p build/html/docs \
 	&& cp -r ../figures build/html/docs/ \
+	&& cp switcher.json build/html/ \
 	&& echo "\nBuild finished in $$(($$(date +%s)-start)) seconds\n"
 
 linkcheck: html
@@ -52,3 +53,5 @@ linkcheck: html
 	; echo "\nLink check finished in $$(($$(date +%s)-start)) seconds. Any broken links are listed below:\n" \
 	&& [ -f "$(BUILDDIR)/output.txt" ] && cat "$(BUILDDIR)/output.txt"
 
+docserve:
+	python -m http.server -d build/html/
