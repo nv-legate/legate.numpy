@@ -17,10 +17,7 @@
 #ifndef __CUNUMERIC_C_H__
 #define __CUNUMERIC_C_H__
 
-#ifndef LEGATE_USE_PYTHON_CFFI
-#include "legate_preamble.h"
-#include "core/legate_c.h"
-#endif
+#include <stdint.h>
 
 // Match these to CuNumericOpCode in config.py
 // Also, sort these alphabetically except the first one for easy lookup later

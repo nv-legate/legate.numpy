@@ -43,25 +43,26 @@ class ZipTask : public CuNumericTask<ZipTask> {
 #endif
 };
 
-constexpr coord_t compute_idx(coord_t index, coord_t extent)
+constexpr legate::coord_t compute_idx(legate::coord_t index, legate::coord_t extent)
 {
-  coord_t new_index = index < 0 ? index + extent : index;
+  legate::coord_t new_index = index < 0 ? index + extent : index;
   if (new_index < 0 || new_index >= extent) {
     throw legate::TaskException("index is out of bounds in index array");
   }
   return new_index;
 }
 
-constexpr std::pair<coord_t, bool> compute_idx_omp(coord_t index, coord_t extent)
+constexpr std::pair<legate::coord_t, bool> compute_idx_omp(legate::coord_t index,
+                                                           legate::coord_t extent)
 {
-  coord_t new_index  = index < 0 ? index + extent : index;
-  bool out_of_bounds = (new_index < 0 || new_index >= extent);
+  legate::coord_t new_index = index < 0 ? index + extent : index;
+  bool out_of_bounds        = (new_index < 0 || new_index >= extent);
   return {new_index, out_of_bounds};
 }
 
-constexpr coord_t compute_idx_cuda(coord_t index, coord_t extent)
+constexpr legate::coord_t compute_idx_cuda(legate::coord_t index, legate::coord_t extent)
 {
-  coord_t new_index = index < 0 ? index + extent : index;
+  legate::coord_t new_index = index < 0 ? index + extent : index;
   return new_index;
 }
 
