@@ -140,10 +140,10 @@ class Runtime(object):
             value_dtype.code
         )
         argred_dtype.record_reduction_op(
-            ty.ReductionOp.MAX, ids.argmax_redop_id
+            ty.ReductionOpKind.MAX, ids.argmax_redop_id
         )
         argred_dtype.record_reduction_op(
-            ty.ReductionOp.MIN, ids.argmin_redop_id
+            ty.ReductionOpKind.MIN, ids.argmin_redop_id
         )
         return argred_dtype
 

@@ -36,7 +36,7 @@ import numpy as np
 from legate.core import (
     Annotation,
     LogicalStore,
-    ReductionOp,
+    ReductionOpKind,
     Scalar,
     align,
     bloat,
@@ -153,24 +153,24 @@ def auto_convert(
 
 
 _UNARY_RED_TO_REDUCTION_OPS: dict[int, int] = {
-    UnaryRedCode.SUM: ReductionOp.ADD,
-    UnaryRedCode.SUM_SQUARES: ReductionOp.ADD,
-    UnaryRedCode.VARIANCE: ReductionOp.ADD,
-    UnaryRedCode.PROD: ReductionOp.MUL,
-    UnaryRedCode.MAX: ReductionOp.MAX,
-    UnaryRedCode.MIN: ReductionOp.MIN,
-    UnaryRedCode.ARGMAX: ReductionOp.MAX,
-    UnaryRedCode.ARGMIN: ReductionOp.MIN,
-    UnaryRedCode.NANARGMAX: ReductionOp.MAX,
-    UnaryRedCode.NANARGMIN: ReductionOp.MIN,
-    UnaryRedCode.NANMAX: ReductionOp.MAX,
-    UnaryRedCode.NANMIN: ReductionOp.MIN,
-    UnaryRedCode.NANPROD: ReductionOp.MUL,
-    UnaryRedCode.NANSUM: ReductionOp.ADD,
-    UnaryRedCode.CONTAINS: ReductionOp.ADD,
-    UnaryRedCode.COUNT_NONZERO: ReductionOp.ADD,
-    UnaryRedCode.ALL: ReductionOp.MUL,
-    UnaryRedCode.ANY: ReductionOp.ADD,
+    UnaryRedCode.SUM: ReductionOpKind.ADD,
+    UnaryRedCode.SUM_SQUARES: ReductionOpKind.ADD,
+    UnaryRedCode.VARIANCE: ReductionOpKind.ADD,
+    UnaryRedCode.PROD: ReductionOpKind.MUL,
+    UnaryRedCode.MAX: ReductionOpKind.MAX,
+    UnaryRedCode.MIN: ReductionOpKind.MIN,
+    UnaryRedCode.ARGMAX: ReductionOpKind.MAX,
+    UnaryRedCode.ARGMIN: ReductionOpKind.MIN,
+    UnaryRedCode.NANARGMAX: ReductionOpKind.MAX,
+    UnaryRedCode.NANARGMIN: ReductionOpKind.MIN,
+    UnaryRedCode.NANMAX: ReductionOpKind.MAX,
+    UnaryRedCode.NANMIN: ReductionOpKind.MIN,
+    UnaryRedCode.NANPROD: ReductionOpKind.MUL,
+    UnaryRedCode.NANSUM: ReductionOpKind.ADD,
+    UnaryRedCode.CONTAINS: ReductionOpKind.ADD,
+    UnaryRedCode.COUNT_NONZERO: ReductionOpKind.ADD,
+    UnaryRedCode.ALL: ReductionOpKind.MUL,
+    UnaryRedCode.ANY: ReductionOpKind.ADD,
 }
 
 
@@ -1503,7 +1503,7 @@ class DeferredArray(NumPyThunk):
                 task = legate_runtime.create_auto_task(
                     self.library, CuNumericOpCode.DOT
                 )
-                task.add_reduction(lhs, ReductionOp.ADD)
+                task.add_reduction(lhs, ReductionOpKind.ADD)
                 p_rhs1 = task.add_input(rhs1)
                 p_rhs2 = task.add_input(rhs2)
                 task.add_constraint(align(p_rhs1, p_rhs2))
@@ -1528,7 +1528,7 @@ class DeferredArray(NumPyThunk):
                 task = legate_runtime.create_auto_task(
                     self.library, CuNumericOpCode.MATVECMUL
                 )
-                p_lhs = task.add_reduction(lhs, ReductionOp.ADD)
+                p_lhs = task.add_reduction(lhs, ReductionOpKind.ADD)
                 p_rhs1 = task.add_input(rhs1)
                 p_rhs2 = task.add_input(rhs2)
                 task.add_constraint(align(p_lhs, p_rhs1))
@@ -1567,7 +1567,7 @@ class DeferredArray(NumPyThunk):
                 task = legate_runtime.create_auto_task(
                     self.library, CuNumericOpCode.MATMUL
                 )
-                p_lhs = task.add_reduction(lhs, ReductionOp.ADD)
+                p_lhs = task.add_reduction(lhs, ReductionOpKind.ADD)
                 p_rhs1 = task.add_input(rhs1)
                 p_rhs2 = task.add_input(rhs2)
                 task.add_constraint(align(p_lhs, p_rhs1))
@@ -1631,7 +1631,7 @@ class DeferredArray(NumPyThunk):
         task = legate_runtime.create_auto_task(
             self.library, CuNumericOpCode.CONTRACT
         )
-        p_lhs = task.add_reduction(lhs, ReductionOp.ADD)
+        p_lhs = task.add_reduction(lhs, ReductionOpKind.ADD)
         p_rhs1 = task.add_input(rhs1)
         p_rhs2 = task.add_input(rhs2)
         task.add_scalar_arg(tuple(lhs_dim_mask), (ty.bool_,))
@@ -1748,7 +1748,7 @@ class DeferredArray(NumPyThunk):
         )
 
         if extract:
-            p_diag = task.add_reduction(diag, ReductionOp.ADD)
+            p_diag = task.add_reduction(diag, ReductionOpKind.ADD)
             p_mat = task.add_input(matrix)
             task.add_constraint(align(p_mat, p_diag))
         else:
@@ -2012,7 +2012,7 @@ class DeferredArray(NumPyThunk):
         task = legate_runtime.create_auto_task(
             self.library, CuNumericOpCode.BINCOUNT
         )
-        p_dst = task.add_reduction(dst_array.base, ReductionOp.ADD)
+        p_dst = task.add_reduction(dst_array.base, ReductionOpKind.ADD)
         p_src = task.add_input(src_array.base)
         task.add_constraint(broadcast(p_dst))
         if weight_array is not None:
@@ -3293,10 +3293,10 @@ class DeferredArray(NumPyThunk):
 
         # Populate the Legate launcher
         if op == BinaryOpCode.NOT_EQUAL:
-            redop = ReductionOp.ADD
+            redop = ReductionOpKind.ADD
             self.fill(np.array(False))
         else:
-            redop = ReductionOp.MUL
+            redop = ReductionOpKind.MUL
             self.fill(np.array(True))
         task = legate_runtime.create_auto_task(
             self.library, CuNumericOpCode.BINARY_RED
@@ -3468,10 +3468,10 @@ class DeferredArray(NumPyThunk):
 
         if is_left:
             self.fill(np.array(rhs.size, self.dtype))
-            p_self = task.add_reduction(self.base, ReductionOp.MIN)
+            p_self = task.add_reduction(self.base, ReductionOpKind.MIN)
         else:
             self.fill(np.array(0, self.dtype))
-            p_self = task.add_reduction(self.base, ReductionOp.MAX)
+            p_self = task.add_reduction(self.base, ReductionOpKind.MAX)
 
         task.add_input(rhs.base)
         p_v = task.add_input(v.base)
@@ -3626,7 +3626,7 @@ class DeferredArray(NumPyThunk):
         task = legate_runtime.create_auto_task(
             self.library, CuNumericOpCode.HISTOGRAM
         )
-        p_dst = task.add_reduction(dst_array.base, ReductionOp.ADD)
+        p_dst = task.add_reduction(dst_array.base, ReductionOpKind.ADD)
         p_src = task.add_input(src_array.base)
         p_bins = task.add_input(bins_array.base)
         p_weight = task.add_input(weight_array.base)
