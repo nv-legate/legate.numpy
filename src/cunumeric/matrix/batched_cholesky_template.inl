@@ -28,15 +28,6 @@ namespace cunumeric {
 
 using namespace legate;
 
-template <VariantKind KIND, Type::Code CODE>
-struct BatchedCholeskyImplBody {
-  template <class T>
-  void operator()(T* array, int32_t m, int32_t n)
-  {
-    PotrfImplBody<KIND, CODE>()(array, m, n);
-  }
-};
-
 template <VariantKind KIND>
 struct CopyBlockImpl {
   void operator()(void* dst, const void* src, size_t n);
