@@ -118,7 +118,7 @@ requirements:
 {% if gpu_enabled_bool %}
     - legate-core >={{ core_version }}
     - cuda-cccl
-    - cutensor >=1.3,<2.0 =*_*
+    - cutensor >=2.0 =*_*
     - libcublas-dev
     - libcusolver-dev
     - libcufft-dev
@@ -133,7 +133,7 @@ requirements:
     - opt_einsum >=3.3
     - scipy
 {% if gpu_enabled_bool %}
-    - cutensor >=1.3,<2.0 =*_*
+    - cutensor >=2.0 =*_*
 {% endif %}
 
   run_constrained:

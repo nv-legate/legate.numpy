@@ -41,7 +41,7 @@ struct CUDALibraries {
 #if LEGATE_DEFINED(CUNUMERIC_USE_CUSOLVERMP)
   cusolverMpHandle_t get_cusolvermp();
 #endif
-  cutensorHandle_t* get_cutensor();
+  [[nodiscard]] const cutensorHandle_t& get_cutensor();
   cufftContext get_cufft_plan(cufftType type, const cufftPlanParams& params);
 
  private:
@@ -61,7 +61,7 @@ struct CUDALibraries {
 #if LEGATE_DEFINED(CUNUMERIC_USE_CUSOLVERMP)
   cusolverMpHandle* cusolvermp_;
 #endif
-  cutensorHandle_t* cutensor_;
+  std::optional<cutensorHandle_t> cutensor_{};
   std::map<cufftType, cufftPlanCache*> plan_caches_;
 };
 

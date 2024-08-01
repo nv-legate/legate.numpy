@@ -319,7 +319,7 @@ cusolverDnHandle_t get_cusolver();
 #if LEGATE_DEFINED(CUNUMERIC_USE_CUSOLVERMP)
 cusolverMpHandle_t get_cusolvermp();
 #endif
-cutensorHandle_t* get_cutensor();
+[[nodiscard]] const cutensorHandle_t& get_cutensor();
 cufftContext get_cufft_plan(cufftType type, const cufftPlanParams& params);
 
 template <typename T>

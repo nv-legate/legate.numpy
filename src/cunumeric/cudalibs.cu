@@ -274,7 +274,6 @@ CUDALibraries::CUDALibraries()
 #if LEGATE_DEFINED(CUNUMERIC_USE_CUSOLVERMP)
     cusolvermp_(nullptr),
 #endif
-    cutensor_(nullptr),
     plan_caches_()
 {
 }
@@ -328,8 +327,10 @@ void CUDALibraries::finalize_cusolvermp()
 
 void CUDALibraries::finalize_cutensor()
 {
-  delete cutensor_;
-  cutensor_ = nullptr;
+  if (cutensor_.has_value()) {
+    CHECK_CUTENSOR(cutensorDestroy(*cutensor_));
+  }
+  cutensor_.reset();
 }
 
 int CUDALibraries::get_device_ordinal()
@@ -389,13 +390,12 @@ cusolverMpHandle_t CUDALibraries::get_cusolvermp()
 }
 #endif
 
-cutensorHandle_t* CUDALibraries::get_cutensor()
+const cutensorHandle_t& CUDALibraries::get_cutensor()
 {
-  if (nullptr == cutensor_) {
-    cutensor_ = new cutensorHandle_t;
-    CHECK_CUTENSOR(cutensorInit(cutensor_));
+  if (!cutensor_.has_value()) {
+    CHECK_CUTENSOR(cutensorCreate(&cutensor_.emplace()));
   }
-  return cutensor_;
+  return *cutensor_;
 }
 
 cufftContext CUDALibraries::get_cufft_plan(cufftType type, const cufftPlanParams& params)
@@ -451,7 +451,7 @@ cusolverMpHandle* get_cusolvermp()
 }
 #endif
 
-cutensorHandle_t* get_cutensor()
+const cutensorHandle_t& get_cutensor()
 {
   const auto proc = legate::Processor::get_executing_processor();
   auto& lib       = get_cuda_libraries(proc);
@@ -493,7 +493,7 @@ class LoadCUDALibsTask : public CuNumericTask<LoadCUDALibsTask> {
 #if LEGATE_DEFINED(CUNUMERIC_USE_CUSOLVERMP)
     lib.get_cusolvermp();
 #endif
-    lib.get_cutensor();
+    static_cast<void>(lib.get_cutensor());
   }
 };
 
