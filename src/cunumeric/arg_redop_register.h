@@ -28,12 +28,12 @@ struct register_reduction_op_fn {
   {
     using VAL = legate::type_of<CODE>;
     ReductionOpIds result;
-    auto runtime = legate::Runtime::get_runtime();
-    auto context = runtime->find_library("cunumeric");
-    result.argmax_redop_id =
-      context.register_reduction_operator<ArgmaxReduction<VAL>>(next_reduction_operator_id());
-    result.argmin_redop_id =
-      context.register_reduction_operator<ArgminReduction<VAL>>(next_reduction_operator_id());
+    auto runtime           = legate::Runtime::get_runtime();
+    auto context           = runtime->find_library("cunumeric");
+    result.argmax_redop_id = static_cast<int>(
+      context.register_reduction_operator<ArgmaxReduction<VAL>>(next_reduction_operator_id()));
+    result.argmin_redop_id = static_cast<int>(
+      context.register_reduction_operator<ArgminReduction<VAL>>(next_reduction_operator_id()));
     return result;
   }
 
@@ -44,7 +44,7 @@ struct register_reduction_op_fn {
     return ReductionOpIds{};
   }
 
-  static int32_t next_reduction_operator_id();
+  static legate::LocalRedopID next_reduction_operator_id();
 };
 
 }  // namespace cunumeric
