@@ -14,6 +14,9 @@
 #
 from __future__ import annotations
 
+from typing import Any
+from warnings import warn
+
 # The CLLR functions for the numpy module are broken up more or less according
 # to the docs at https://numpy.org/doc/stable/reference/routines.html
 #
@@ -131,3 +134,13 @@ from .stats_histograms import *  # Histograms
 # https://numpy.org/doc/stable/reference/routines.window.html
 
 from .window import *  # Various windows
+
+# --- numpy.test (disabled)
+
+
+def test(*args: Any, **kw: Any) -> None:
+    warn(
+        "cuNumeric cannot execute numpy.test() due to reliance "
+        "on Numpy internals. For information about running the "
+        "cuNumeric test suite, see: https://docs.nvidia.com/cunumeric/latest/developer/index.html"
+    )
