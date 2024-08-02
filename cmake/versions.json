@@ -3,6 +3,7 @@
     "legate_core" : {
       "repo": "legate.core.internal",
       "artifact_name": "${{ inputs.platform }}-${{ inputs.build-type }}-<<repo>>-${{ inputs.target-device }}-release-<<git_tag>>",
+      "artifact_workflow": "ci-gh-nightly-release.yml",
       "version": "24.09.00",
       "git_url" : "git@github.com:nv-legate/legate.core.internal.git",
       "git_shallow": false,
