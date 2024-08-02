@@ -117,6 +117,10 @@ NDArray flip(NDArray input, std::optional<std::vector<int32_t>> axis = std::null
 
 void put(NDArray& a, NDArray indices, NDArray values, std::string mode = "raise");
 
+NDArray repeat(NDArray a, NDArray repeats, std::optional<int32_t> axis = std::nullopt);
+
+NDArray repeat(NDArray a, int64_t repeats, std::optional<int32_t> axis = std::nullopt);
+
 // helper methods
 int32_t normalize_axis_index(int32_t axis, int32_t ndim);
 

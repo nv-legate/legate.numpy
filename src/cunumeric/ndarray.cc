@@ -255,6 +255,26 @@ void NDArray::fill(const Scalar& value)
   runtime->submit(std::move(task));
 }
 
+void NDArray::_fill(legate::LogicalStore const& value)
+{
+  if (value.volume() != 1 || value.dim() > 1) {
+    throw std::invalid_argument("Filled value size is not equal to 1");
+  }
+  if (type() != value.type()) {
+    throw std::invalid_argument("Filled value type mismatch");
+  }
+  if (size() == 0) {
+    return;
+  }
+
+  auto runtime = CuNumericRuntime::get_runtime();
+  auto task    = runtime->create_task(CuNumericOpCode::CUNUMERIC_FILL);
+  task.add_output(store_);
+  task.add_input(value);
+  task.add_scalar_arg(Scalar(false));
+  runtime->submit(std::move(task));
+}
+
 void NDArray::eye(int32_t k)
 {
   if (size() == 0) {
@@ -1310,6 +1330,145 @@ void NDArray::put(NDArray indices, NDArray values, std::string mode)
     }
     assign(self_tmp);
   }
+}
+
+NDArray NDArray::copy()
+{
+  auto runtime        = CuNumericRuntime::get_runtime();
+  auto legate_runtime = legate::Runtime::get_runtime();
+  auto out            = runtime->create_array(shape(), type());
+  if (store_.has_scalar_storage() && out.store_.has_scalar_storage()) {
+    legate_runtime->issue_fill(out.store_, store_);
+  } else {
+    out.assign(*this);
+  }
+  return out;
+}
+
+NDArray NDArray::repeat(int64_t repeats, std::optional<int32_t> axis)
+{
+  if (repeats < 0) {
+    throw std::invalid_argument("negative dimensions are not allowed");
+  }
+
+  auto runtime = CuNumericRuntime::get_runtime();
+
+  // when array is a scalar
+  if (dim() == 0) {
+    if (axis.has_value() && axis.value() != 0 && axis.value() != -1) {
+      throw std::invalid_argument("axis is out of bounds for array of dimension 0");
+    }
+    auto out = runtime->create_array({static_cast<size_t>(repeats)}, type());
+    out._fill(store_);
+    return out;
+  }
+
+  // if no axes specified, flatten array
+  auto src = *this;
+  if (!axis.has_value() && src.dim() > 1) {
+    // When reshape is ready, reshape can be used.
+    src = src._wrap(src.size());
+  }
+
+  int32_t axis_int = normalize_axis_index(axis.value_or(0), src.dim());
+
+  // If repeats is on a zero sized axis_int, then return the array.
+  if (src.shape()[axis_int] == 0) {
+    return src.copy();
+  }
+
+  // repeats is a scalar
+  if (0 == repeats) {
+    auto empty_shape      = src.shape();
+    empty_shape[axis_int] = 0;
+    return runtime->create_array(empty_shape, src.type());
+  }
+
+  auto task = runtime->create_task(CuNumericOpCode::CUNUMERIC_REPEAT);
+
+  auto out_shape = src.shape();
+  out_shape[axis_int] *= repeats;
+  auto out    = runtime->create_array(out_shape, src.type());
+  auto p_self = task.declare_partition();
+  auto p_out  = task.declare_partition();
+  task.add_input(src.store_, p_self);
+  task.add_output(out.store_, p_out);
+  std::vector<std::uint64_t> factors(src.dim(), 1);
+  factors[axis_int] = uint64_t(repeats);
+  task.add_constraint(legate::scale(legate::tuple<std::uint64_t>(factors), p_self, p_out));
+  task.add_scalar_arg(Scalar(axis_int));
+  task.add_scalar_arg(Scalar(true));  // scalar_repeats
+  task.add_scalar_arg(Scalar(repeats));
+  runtime->submit(std::move(task));
+
+  return out;
+}
+
+NDArray NDArray::repeat(NDArray repeats, std::optional<int32_t> axis)
+{
+  if (repeats.size() == 0 || repeats.dim() > 1) {
+    throw std::invalid_argument("`repeats` should be scalar or 1D array");
+  }
+
+  // when array is a scalar
+  if (dim() == 0) {
+    throw std::invalid_argument(
+      "`repeat` with a scalar is only "
+      "implemented for scalar values of the parameter `repeats`.");
+  }
+
+  // if no axes specified, flatten array
+  auto src = *this;
+  if (!axis.has_value() && src.dim() > 1) {
+    // When reshape is ready, reshape can be used.
+    src = src._wrap(src.size());
+  }
+
+  int32_t axis_int = normalize_axis_index(axis.value_or(0), src.dim());
+
+  // If repeats is on a zero sized axis_int, then return the array.
+  if (src.shape()[axis_int] == 0) {
+    return src.copy();
+  }
+
+  if (repeats.get_store().has_scalar_storage()) {
+    size_t len = src.shape()[axis_int];
+    if (len > 1) {
+      repeats = repeats._wrap(len);
+    } else {
+      repeats = repeats._convert_future_to_regionfield(true);
+    }
+  }
+
+  // repeats is an array
+  if (repeats.shape()[0] != src.shape()[axis_int]) {
+    throw std::invalid_argument("incorrect shape of repeats array");
+  }
+  if (repeats.type() != legate::int64()) {
+    repeats = repeats._warn_and_convert(legate::int64());
+  }
+
+  auto runtime        = CuNumericRuntime::get_runtime();
+  auto legate_runtime = legate::Runtime::get_runtime();
+  auto out_store      = legate_runtime->create_store(src.type(), src.dim());
+  auto task           = runtime->create_task(CuNumericOpCode::CUNUMERIC_REPEAT);
+  auto p_src          = task.add_input(src.store_);
+  task.add_output(out_store);
+  task.add_scalar_arg(Scalar(axis_int));
+  task.add_scalar_arg(Scalar(false));  // scalar_repeats
+  auto shape         = src.shape();
+  auto repeats_store = repeats.store_;
+  for (int32_t dim = 0; dim < src.dim(); ++dim) {
+    if (dim == axis_int) {
+      continue;
+    }
+    repeats_store = repeats_store.promote(dim, shape[dim]);
+  }
+  auto p_repeats = task.add_input(repeats_store);
+  task.add_constraint(legate::align(p_src, p_repeats));
+  runtime->submit(std::move(task));
+
+  return runtime->create_array(std::move(out_store));
 }
 
 NDArray NDArray::_convert_future_to_regionfield(bool change_shape)

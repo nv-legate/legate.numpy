@@ -507,4 +507,14 @@ NDArray trace(NDArray a,
   return a.trace(offset, axis1, axis2, type, out);
 }
 
+NDArray repeat(NDArray a, NDArray repeats, std::optional<int32_t> axis)
+{
+  return a.repeat(repeats, axis);
+}
+
+NDArray repeat(NDArray a, int64_t repeats, std::optional<int32_t> axis)
+{
+  return a.repeat(repeats, axis);
+}
+
 }  // namespace cunumeric

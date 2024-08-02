@@ -106,6 +106,8 @@ class NDArray {
                 int32_t axis2                    = 1,
                 std::optional<legate::Type> type = std::nullopt,
                 std::optional<NDArray> out       = std::nullopt);
+  NDArray repeat(NDArray repeats, std::optional<int32_t> axis = std::nullopt);
+  NDArray repeat(int64_t repeats, std::optional<int32_t> axis = std::nullopt);
 
  public:
   NDArray as_type(const legate::Type& type);
@@ -116,6 +118,7 @@ class NDArray {
   NDArray _warn_and_convert(legate::Type const& type);
   NDArray wrap_indices(Scalar const& n);
   NDArray clip_indices(Scalar const& min, Scalar const& max);
+  NDArray copy();
 
  private:
   legate::LogicalStore broadcast(const std::vector<uint64_t>& shape, legate::LogicalStore& store);
@@ -150,6 +153,7 @@ class NDArray {
                       bool trace                              = false,
                       const std::optional<legate::Type>& type = std::nullopt,
                       std::optional<NDArray> out              = std::nullopt);
+  void _fill(legate::LogicalStore const& value);
 
  public:
   static legate::Library get_library();
