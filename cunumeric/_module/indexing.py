@@ -31,6 +31,7 @@ from ..types import NdShape
 from .array_joining import hstack
 from .array_shape import reshape
 from .array_tiling import tile
+from .creation_data import asarray
 from .creation_matrices import tri
 from .creation_ranges import arange
 from .creation_shape import empty, ones
@@ -515,6 +516,64 @@ def take(
     Multiple GPUs, Multiple CPUs
     """
     return a.take(indices=indices, axis=axis, out=out, mode=mode)
+
+
+def ix_(*args: Any) -> tuple[ndarray, ...]:
+    """
+    Construct an open mesh from multiple sequences.
+
+    This function takes N 1-D sequences and returns N outputs with N
+    dimensions each, such that the shape is 1 in all but one dimension
+    and the dimension with the non-unit shape value cycles through all
+    N dimensions.
+
+    Using `ix_` one can quickly construct index arrays that will index
+    the cross product. ``a[np.ix_([1,3],[2,5])]`` returns the array
+    ``[[a[1,2] a[1,5]], [a[3,2] a[3,5]]]``.
+
+    Parameters
+    ----------
+    args : 1-D sequences
+        Each sequence should be of integer or boolean type.
+        Boolean sequences will be interpreted as boolean masks for the
+        corresponding dimension (equivalent to passing in
+        ``np.nonzero(boolean_sequence)``).
+
+    Returns
+    -------
+    out : tuple of ndarrays
+        N arrays with N dimensions each, with N the number of input
+        sequences. Together these arrays form an open mesh.
+
+    See Also
+    --------
+    ogrid, mgrid, meshgrid
+
+    Availability
+    --------
+    Multiple GPUs, Multiple CPUs
+
+    """
+    out = []
+    nd = len(args)
+
+    for k, new in enumerate(args):
+        if not isinstance(new, ndarray):
+            new = asarray(new)
+            if new.size == 0:
+                # Explicitly type empty arrays to avoid float default
+                new = new.astype(np.intp)
+
+        if new.ndim != 1:
+            raise ValueError("Cross index must be 1 dimensional")
+
+        if np.issubdtype(new.dtype, bool):
+            (new,) = new.nonzero()
+
+        new = new.reshape((1,) * k + (new.size,) + (1,) * (nd - k - 1))
+        out.append(new)
+
+    return tuple(out)
 
 
 def _fill_fancy_index_for_along_axis_routines(

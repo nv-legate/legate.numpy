@@ -13,7 +13,7 @@
 # limitations under the License.
 #
 
-from itertools import permutations
+from itertools import chain, combinations, permutations
 
 import numpy as np
 import pytest
@@ -665,6 +665,25 @@ class TestDiagErrors:
         a = mk_seq_array(num, shape)
         with pytest.raises(TypeError):
             num.diag(a, k=None)
+
+
+SEQS = (
+    [0, 1],  # zero
+    [0, 1, 1],  # repeated
+    [2, 4, 5],  # all postitive
+    [-2, 4, 5],  # negative
+)
+
+
+@pytest.mark.parametrize(
+    "seqs",
+    chain.from_iterable(combinations(SEQS, r) for r in range(len(SEQS) + 1)),
+)
+def test_ix_(seqs):
+    a = num.ix_([0, 1], [2, 4, 5])
+    an = np.ix_([0, 1], [2, 4, 5])
+    assert all(isinstance(elt, num.ndarray) for elt in a)
+    assert all(np.array_equal(*elts) for elts in zip(a, an))
 
 
 if __name__ == "__main__":
