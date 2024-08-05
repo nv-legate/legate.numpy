@@ -281,9 +281,7 @@ def _broadcast_arrays(
     return arrays
 
 
-def broadcast_arrays(
-    *args: Sequence[Any], subok: bool = False
-) -> list[ndarray]:
+def broadcast_arrays(*args: Any, subok: bool = False) -> list[ndarray]:
     """
 
     Broadcast any number of arrays against each other.
