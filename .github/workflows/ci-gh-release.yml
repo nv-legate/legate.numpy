@@ -25,6 +25,9 @@ jobs:
           - cpu
         upload-enabled:
           - false
+        exclude:
+          - platform: linux-aarch64
+            target-device: gpu
     uses:
       ./.github/workflows/gh-build-and-test.yml
     with:
