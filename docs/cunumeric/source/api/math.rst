@@ -64,6 +64,7 @@ Sums, products, differences
    nancumsum
    nanprod
    nansum
+   gradient
 
 
 Exponents and logarithms

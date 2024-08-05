@@ -14,6 +14,7 @@
 #
 from __future__ import annotations
 
+import collections.abc
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
@@ -29,7 +30,8 @@ from ..settings import settings as cunumeric_settings
 from ._unary_red_utils import get_non_nan_unary_red_code
 from .array_dimension import broadcast_to
 from .array_joining import concatenate
-from .creation_shape import empty
+from .creation_data import asarray
+from .creation_shape import empty, empty_like
 from .indexing import putmask
 from .logic_truth import all, any
 
@@ -1092,3 +1094,243 @@ def diff(
         a = op(a[slice1], a[slice2])
 
     return a
+
+
+@add_boilerplate("f")
+def gradient(
+    f: ndarray, *varargs: Any, axis: Any = None, edge_order: int = 1
+) -> Any:
+    """
+    Return the gradient of an N-dimensional array.
+
+    The gradient is computed using second order accurate central differences
+    in the interior points and either first or second order accurate one-sided
+    (forward or backwards) differences at the boundaries.
+    The returned gradient hence has the same shape as the input array.
+
+    Parameters
+    ----------
+    f : array_like
+        An N-dimensional array containing samples of a scalar function.
+    varargs : list of scalar or array, optional
+        Spacing between f values. Default unitary spacing for all dimensions.
+        Spacing can be specified using:
+
+        1. single scalar to specify a sample distance for all dimensions.
+        2. N scalars to specify a constant sample distance for each dimension.
+           i.e. `dx`, `dy`, `dz`, ...
+        3. N arrays to specify the coordinates of the values along each
+           dimension of F. The length of the array must match the size of
+           the corresponding dimension
+        4. Any combination of N scalars/arrays with the meaning of 2. and 3.
+
+        If `axis` is given, the number of varargs must equal the number of
+        axes. Default: 1.
+
+    edge_order : {1, 2}, optional
+        Gradient is calculated using N-th order accurate differences
+        at the boundaries. Default: 1.
+
+    axis : None or int or tuple of ints, optional
+        Gradient is calculated only along the given axis or axes
+        The default (axis = None) is to calculate the gradient for all the axes
+        of the input array. axis may be negative, in which case it counts from
+        the last to the first axis.
+
+    Returns
+    -------
+    gradient : ndarray or list of ndarray
+        A list of ndarrays (or a single ndarray if there is only one dimension)
+        corresponding to the derivatives of f with respect to each dimension.
+        Each derivative has the same shape as f.
+
+    See Also
+    --------
+    numpy.gradient
+
+    Availability
+    --------
+    Multiple GPUs, Multiple CPUs
+    """
+    N = f.ndim  # number of dimensions
+
+    if axis is None:
+        axes = tuple(range(N))
+    elif isinstance(axis, collections.abc.Sequence):
+        axes = tuple(normalize_axis_index(a, N) for a in axis)
+    else:
+        axis = normalize_axis_index(axis, N)
+        axes = (axis,)
+
+    len_axes = len(axes)
+    if not varargs:
+        n = 0
+    else:
+        n = len(varargs)
+
+    if n == 0:
+        # no spacing argument - use 1 in all axes
+        dx = [asarray(1.0)] * len_axes
+    elif n == 1 and np.ndim(varargs[0]) == 0:
+        # single scalar for all axes
+        dx = list(asarray(varargs)) * len_axes
+    elif n == len_axes:
+        # scalar or 1d array for each axis
+        dx = list(asarray(v) for v in varargs)
+        for i, distances in enumerate(dx):
+            if distances.ndim == 0:
+                continue
+            elif distances.ndim != 1:
+                raise ValueError("distances must be either scalars or 1d")
+            if len(distances) != f.shape[axes[i]]:
+                raise ValueError(
+                    "when 1d, distances must match "
+                    "the length of the corresponding dimension"
+                )
+            if np.issubdtype(distances.dtype, np.integer):
+                # Convert numpy integer types to float64 to avoid modular
+                # arithmetic in np.diff(distances).
+                distances = distances.astype(np.float64)
+            diffx = diff(distances)
+            dx[i] = diffx
+    else:
+        raise TypeError("invalid number of arguments")
+
+    if edge_order > 2:
+        raise ValueError("'edge_order' greater than 2 not supported")
+    if edge_order < 0:
+        raise ValueError("invalid 'edge_order'")
+
+    # use central differences on interior and one-sided differences on the
+    # endpoints. This preserves second order-accuracy over the full domain.
+
+    outvals = []
+
+    # create slice objects --- initially all are [:, :, ..., :]
+    slice1 = [slice(None)] * N
+    slice2 = [slice(None)] * N
+    slice3 = [slice(None)] * N
+    slice4 = [slice(None)] * N
+
+    otype = f.dtype
+    if not np.issubdtype(otype, np.inexact):
+        # All other types convert to floating point.
+        # First check if f is a numpy integer type; if so, convert f to float64
+        # to avoid modular arithmetic when computing the changes in f.
+        if np.issubdtype(otype, np.integer):
+            f = f.astype(np.float64)
+        otype = np.dtype(np.float64)
+
+    for axis, ax_dx in zip(axes, dx):
+        if f.shape[axis] < edge_order + 1:
+            raise ValueError(
+                "Shape of array too small to calculate a numerical gradient, "
+                "at least (edge_order + 1) elements are required."
+            )
+        # result allocation
+        out = empty_like(f, dtype=otype)
+
+        # spacing for the current axis
+        uniform_spacing = np.ndim(ax_dx) == 0
+
+        # Numerical differentiation: 2nd order interior
+        slice1[axis] = slice(1, -1)
+        slice2[axis] = slice(None, -2)
+        slice3[axis] = slice(1, -1)
+        slice4[axis] = slice(2, None)
+
+        if uniform_spacing:
+            out[tuple(slice1)] = (f[tuple(slice4)] - f[tuple(slice2)]) / (
+                2.0 * ax_dx
+            )
+        else:
+            dx1 = ax_dx[0:-1]
+            dx2 = ax_dx[1:]
+            a = -(dx2) / (dx1 * (dx1 + dx2))
+            b = (dx2 - dx1) / (dx1 * dx2)
+            c = dx1 / (dx2 * (dx1 + dx2))
+            # fix the shape for broadcasting
+            shape = list(1 for i in range(N))
+            shape[axis] = -1
+            a = a.reshape(shape)
+            b = b.reshape(shape)
+            c = c.reshape(shape)
+            # 1D equivalent -- out[1:-1] = a * f[:-2] + b * f[1:-1] + c * f[2:]
+            out[tuple(slice1)] = (
+                a * f[tuple(slice2)]
+                + b * f[tuple(slice3)]
+                + c * f[tuple(slice4)]
+            )
+
+        # Numerical differentiation: 1st order edges
+        if edge_order == 1:
+            slice1[axis] = 0  # type: ignore
+            slice2[axis] = 1  # type: ignore
+            slice3[axis] = 0  # type: ignore
+            dx_0 = ax_dx if uniform_spacing else ax_dx[0]
+            # 1D equivalent -- out[0] = (f[1] - f[0]) / (x[1] - x[0])
+            out[tuple(slice1)] = (f[tuple(slice2)] - f[tuple(slice3)]) / dx_0
+
+            slice1[axis] = -1  # type: ignore
+            slice2[axis] = -1  # type: ignore
+            slice3[axis] = -2  # type: ignore
+            dx_n = ax_dx if uniform_spacing else ax_dx[-1]
+            # 1D equivalent -- out[-1] = (f[-1] - f[-2]) / (x[-1] - x[-2])
+            out[tuple(slice1)] = (f[tuple(slice2)] - f[tuple(slice3)]) / dx_n
+
+        # Numerical differentiation: 2nd order edges
+        else:
+            slice1[axis] = 0  # type: ignore
+            slice2[axis] = 0  # type: ignore
+            slice3[axis] = 1  # type: ignore
+            slice4[axis] = 2  # type: ignore
+            if uniform_spacing:
+                a = -1.5 / ax_dx
+                b = 2.0 / ax_dx
+                c = -0.5 / ax_dx
+            else:
+                dx1 = ax_dx[0]
+                dx2 = ax_dx[1]
+                a = -(2.0 * dx1 + dx2) / (dx1 * (dx1 + dx2))
+                b = (dx1 + dx2) / (dx1 * dx2)
+                c = -dx1 / (dx2 * (dx1 + dx2))
+            # 1D equivalent -- out[0] = a * f[0] + b * f[1] + c * f[2]
+            out[tuple(slice1)] = (
+                a * f[tuple(slice2)]
+                + b * f[tuple(slice3)]
+                + c * f[tuple(slice4)]
+            )
+
+            slice1[axis] = -1  # type: ignore
+            slice2[axis] = -3  # type: ignore
+            slice3[axis] = -2  # type: ignore
+            slice4[axis] = -1  # type: ignore
+            if uniform_spacing:
+                a = 0.5 / ax_dx
+                b = -2.0 / ax_dx
+                c = 1.5 / ax_dx
+            else:
+                dx1 = ax_dx[-2]
+                dx2 = ax_dx[-1]
+                a = (dx2) / (dx1 * (dx1 + dx2))
+                b = -(dx2 + dx1) / (dx1 * dx2)
+                c = (2.0 * dx2 + dx1) / (dx2 * (dx1 + dx2))
+            # 1D equivalent -- out[-1] = a * f[-3] + b * f[-2] + c * f[-1]
+            out[tuple(slice1)] = (
+                a * f[tuple(slice2)]
+                + b * f[tuple(slice3)]
+                + c * f[tuple(slice4)]
+            )
+
+        outvals.append(out)
+
+        # reset the slice object in this dimension to ":"
+        slice1[axis] = slice(None)
+        slice2[axis] = slice(None)
+        slice3[axis] = slice(None)
+        slice4[axis] = slice(None)
+
+    if len_axes == 1:
+        return outvals[0]
+    else:
+        return outvals
