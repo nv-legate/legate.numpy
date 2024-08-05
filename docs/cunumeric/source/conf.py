@@ -21,9 +21,13 @@ SWITCHER_PROD = "https://docs.nvidia.com/cunumeric/switcher.json"
 SWITCHER_DEV = "http://localhost:8000/switcher.json"
 JSON_URL = SWITCHER_DEV if getenv("SWITCHER_DEV") == "1" else SWITCHER_PROD
 
+from cunumeric import __version__
+
 # -- Project information -----------------------------------------------------
 
 project = "NVIDIA cuNumeric"
+if "dev" in __version__:
+    project += f" ({__version__})"
 copyright = "2024, NVIDIA"
 author = "NVIDIA Corporation"
 
