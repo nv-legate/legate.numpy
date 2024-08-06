@@ -132,6 +132,7 @@ requirements:
     - libcusparse
     - opt_einsum >=3.3
     - scipy
+    - openblas =* =*openmp*
 {% if gpu_enabled_bool %}
     - cutensor >=2.0 =*_*
 {% endif %}
