@@ -23,16 +23,21 @@ import cunumeric as num
 
 
 def check_result(op, in_np, out_np, out_num):
-    rtol = 1e-02 if any(x.dtype == np.float16 for x in in_np) else 1e-05
-    result = (
-        allclose(out_np, out_num, rtol=rtol) and out_np.dtype == out_num.dtype
+    # Allow all scalars (just for parametrizing over Python scalars as well)
+    rtol = any(
+        1e-02 if getattr(a, "dtype", None) == np.float16 else 1e-05
+        for a in in_np
+    )
+    result = allclose(out_np, out_num, rtol=rtol) and (
+        getattr(out_np, "dtype", None) == getattr(out_num, "dtype", None)
     )
     if not result:
         print(f"cunumeric.{op} failed the test")
         print("Inputs:")
         for arr in in_np:
             print(arr)
-            print(f"dtype: {arr.dtype}")
+            if hasattr(arr, "dtype"):
+                print(f"dtype: {arr.dtype}")
         print("NumPy output:")
         print(out_np)
         print(f"dtype: {out_np.dtype}")
@@ -43,7 +48,9 @@ def check_result(op, in_np, out_np, out_num):
 
 
 def check_op(op, in_np, out_dtype="D"):
-    in_num = tuple(num.array(arr) for arr in in_np)
+    in_num = tuple(
+        num.array(op) if not isinstance(op, int) else op for op in in_np
+    )
 
     if op.isidentifier():
         op_np = getattr(np, op)
@@ -78,8 +85,9 @@ def check_op(op, in_np, out_dtype="D"):
 
         check_result(op, in_np, out_np, out_num)
 
-        out_np = np.ones_like(out_np)
-        out_num = num.ones_like(out_num)
+        # Call asarray here to ensure out_np/out_num is not a python scalar
+        out_np = np.ones_like(np.asarray(out_np))
+        out_num = num.ones_like(num.asarray(out_num))
         exec(f"out_np {op}= in_np[0]")
         exec(f"out_num {op}= in_num[0]")
 
@@ -135,6 +143,7 @@ arrs = (
 )
 
 scalars = (
+    2,
     np.uint64(2),
     np.int64(-3),
     np.random.randn(1)[0],
@@ -217,16 +226,20 @@ def test_power_ops_arr_arr(op, arr1, arr2) -> None:
 @pytest.mark.parametrize("op", power_ops)
 @pytest.mark.parametrize("arr", arrs[:-1])
 def test_power_ops_arr_scalar(op, arr) -> None:
+    # NOTE: As of NumPy 2.0.1, NumPy has special paths for the operators
+    # which means that **uint64(2) returns a wrong dtype (optimizing it to
+    # no modify the input).
+    # See https://github.com/numpy/numpy/issues/27082.
     check_op(op, (arr, scalars[0]))
     check_op(op, (scalars[0], arr))
-    check_op(op, (arr, scalars[3]))
-    check_op(op, (scalars[3], scalars[3]))
+    check_op(op, (arr, scalars[4]))
+    check_op(op, (scalars[4], scalars[4]))
 
 
 @pytest.mark.parametrize("op", power_ops)
 def test_power_ops_scalar_scalar(op) -> None:
-    check_op(op, (scalars[0], scalars[3]))
-    check_op(op, (scalars[3], scalars[0]))
+    check_op(op, (scalars[0], scalars[4]))
+    check_op(op, (scalars[4], scalars[0]))
 
 
 div_ops = [
@@ -282,13 +295,15 @@ def test_bit_ops_arr_arr(op) -> None:
 def test_bit_ops_arr_scalar(op) -> None:
     check_op(op, (arrs[0], scalars[0]))
     check_op(op, (arrs[0], scalars[1]))
+    check_op(op, (arrs[0], scalars[2]))
     check_op(op, (scalars[0], arrs[0]))
     check_op(op, (scalars[1], arrs[0]))
+    check_op(op, (scalars[2], arrs[0]))
 
 
 @pytest.mark.parametrize("op", math_ops)
 def test_bit_ops_scalar_scalar(op) -> None:
-    check_op(op, (scalars[0], scalars[0]))
+    check_op(op, (scalars[1], scalars[1]))
 
 
 def parse_inputs(in_str, dtype_str):

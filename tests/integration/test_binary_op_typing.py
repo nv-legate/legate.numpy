@@ -118,7 +118,13 @@ def generate_array_scalar_cases():
 def test_array_array(lhs_np, rhs_np, lhs_num, rhs_num):
     print(f"{value_type(lhs_np)} x {value_type(rhs_np)}")
 
-    out_np = np.add(lhs_np, rhs_np)
+    try:
+        out_np = np.add(lhs_np, rhs_np)
+    except Exception as e:
+        with pytest.raises(type(e)):
+            num.add(lhs_num, rhs_num)
+        return
+
     out_num = num.add(lhs_num, rhs_num)
 
     print(f"LHS {lhs_np}")

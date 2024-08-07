@@ -126,6 +126,11 @@ def test_floating(shape):
 
     assert allclose(ldexp_np, ldexp_num)
 
+    ldexp_np = np.ldexp(1.0, np.array([1, 2], dtype=np.int8))
+    ldexp_num = num.ldexp(1.0, num.array([1, 2], dtype=np.int8))
+
+    assert ldexp_np.dtype == ldexp_num.dtype == np.float64
+
 
 @pytest.mark.parametrize("fun", ("modf", "frexp"))
 @pytest.mark.parametrize("dtype", DTYPES)

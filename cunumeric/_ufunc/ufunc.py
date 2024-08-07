@@ -184,6 +184,36 @@ def to_dtypes(chars: str) -> tuple[np.dtype[Any], ...]:
     return tuple(np.dtype(char) for char in chars)
 
 
+def _get_kind_score(kind: type) -> int:
+    if issubclass(kind, np.bool_):
+        return 0
+    if issubclass(kind, (np.integer, int)):
+        return 1
+    if issubclass(kind, (np.inexact, float, complex)):
+        return 2
+    # unknown type, assume higher score
+    return 3
+
+
+def _check_should_use_weak_scalar(key: tuple[str | type, ...]) -> bool:
+    """Helper function for promotion, where we need to check whether we
+    should use weak promotion for python floats/integers (NEP 50/NumPy 2).
+    """
+    max_scalar_kind = -1
+    max_array_kind = -1
+
+    for in_t in key:
+        if isinstance(in_t, str):
+            kind = _get_kind_score(np.dtype(in_t).type)
+            max_array_kind = max(max_array_kind, kind)
+        else:
+            kind = _get_kind_score(in_t)
+            max_scalar_kind = max(max_scalar_kind, kind)
+
+    all_scalars_or_arrays = max_scalar_kind == -1 or max_array_kind == -1
+    return not all_scalars_or_arrays and max_array_kind >= max_scalar_kind
+
+
 class ufunc:
     _types: dict[Any, str]
     _nin: int
@@ -551,7 +581,7 @@ class binary_ufunc(ufunc):
 
         self._op_code = op_code
         self._resolution_cache: dict[
-            tuple[str, ...], tuple[np.dtype[Any], ...]
+            tuple[str | type, ...], tuple[np.dtype[Any], ...]
         ] = {}
         self._red_code = red_code
         self._use_common_type = use_common_type
@@ -572,8 +602,10 @@ class binary_ufunc(ufunc):
         scalar_types = []
         array_types = []
         for arr, orig_arg in zip(arrs, orig_args):
-            if arr.ndim == 0:
-                # Make sure all scalar arguments are NumPy arrays
+            if type(orig_arg) in (int, float, complex):
+                scalar_types.append(orig_arg)
+            elif arr.ndim == 0:
+                # NumPy 1.x needs a 0-D NumPy array for value-based promotion
                 scalar_types.append(np.asarray(orig_arg))
             else:
                 array_types.append(arr.dtype)
@@ -588,14 +620,24 @@ class binary_ufunc(ufunc):
         precision_fixed: bool,
     ) -> tuple[Sequence[ndarray], np.dtype[Any]]:
         to_dtypes: tuple[np.dtype[Any], ...]
-        key: tuple[str, ...]
+        key: tuple[str | type, ...]
         if self._use_common_type:
             common_dtype = self._find_common_type(arrs, orig_args)
             to_dtypes = (common_dtype, common_dtype)
             key = (common_dtype.char, common_dtype.char)
         else:
             to_dtypes = tuple(arr.dtype for arr in arrs)
-            key = tuple(arr.dtype.char for arr in arrs)
+            key = tuple(
+                arr.dtype.char
+                if type(orig) not in (int, float, complex)
+                else type(orig)
+                for orig, arr in zip(orig_args, arrs)
+            )
+            # When all inputs are scalars, cannot use weak logic below.
+            # (Using arr.dtype.char may be off for huge integers that map to
+            # an unsigned int.  But NumPy should mostly do the same currently.)
+            if not _check_should_use_weak_scalar(key):
+                key = tuple(arr.dtype.char for arr in arrs)
 
         if key in self._types:
             arrs = [
@@ -616,10 +658,18 @@ class binary_ufunc(ufunc):
         chosen = None
         if not precision_fixed:
             for in_dtypes in self._types.keys():
-                if all(
-                    np.can_cast(arr.dtype, to_dtype)
-                    for arr, to_dtype in zip(arrs, in_dtypes)
-                ):
+                for in_t, to_dtype in zip(key, in_dtypes):
+                    # Break if `to_dtype` doesn't work.
+                    if isinstance(in_t, str):
+                        if not np.can_cast(in_t, to_dtype):
+                            break
+                    else:
+                        # In NumPy 2, the value doesn't matter.  In NumPy 1.x
+                        # it could matter (but caching wouldn't work anyway).
+                        if np.result_type(in_t(0), to_dtype) != to_dtype:
+                            break
+                else:
+                    # dtypes OK (no break), choose them and break outer
                     chosen = in_dtypes
                     break
 
@@ -627,10 +677,23 @@ class binary_ufunc(ufunc):
             # try to find a match based on the leading operand
             if chosen is None and not self._use_common_type:
                 for in_dtypes in self._types.keys():
-                    if np.can_cast(arrs[0].dtype, in_dtypes[0]) and all(
-                        np.can_cast(arr, to_dtype, casting=casting)
-                        for arr, to_dtype in zip(arrs[1:], in_dtypes[1:])
-                    ):
+                    if not np.can_cast(arrs[0].dtype, in_dtypes[0]):
+                        # Check next in_dtypes
+                        continue
+
+                    for in_t, to_dtype in zip(key[1:], in_dtypes[1:]):
+                        # Break if `to_dtype` doesn't work.
+                        if isinstance(in_t, str):
+                            if not np.can_cast(
+                                in_t, to_dtype, casting=casting
+                            ):
+                                break
+                        elif casting != "unsafe":
+                            # Same-kind/safe can use result_type (see above)
+                            if np.result_type(in_t(0), to_dtype) != to_dtype:
+                                break
+                    else:
+                        # dtypes OK (no break), choose them and break outer
                         chosen = in_dtypes
                         break
 
@@ -683,6 +746,13 @@ class binary_ufunc(ufunc):
         )
 
         x1, x2 = arrs
+        if type(orig_args[0]) is int and x1.dtype.kind in "iu":
+            # Check if original Pythhon integer fits first operand.
+            x1.dtype.type(orig_args[0])
+        if type(orig_args[1]) is int and x2.dtype.kind in "iu":
+            # Check if original Pythhon integer fits second operand.
+            x2.dtype.type(orig_args[1])
+
         result = self._maybe_create_result(
             out, out_shape, res_dtype, casting, (x1, x2)
         )
