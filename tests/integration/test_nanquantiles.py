@@ -13,6 +13,7 @@
 # limitations under the License.
 #
 
+import warnings
 
 import numpy as np
 import pytest
@@ -46,12 +47,14 @@ ALL_METHODS = (
 @pytest.mark.parametrize("overwrite_input", (False,))
 def test_multi_axes(str_method, axes, qin_arr, keepdims, overwrite_input):
     eps = 1.0e-8
-    arr = np.ndarray(
-        shape=(3, 4),
-        buffer=np.array(
-            [1.0, 2, 2, 40, 1, np.nan, 2, 1, 0, 10, np.nan, np.nan]
-        ),
-        dtype=float,
+    arr = np.asarray(
+        [
+            [1.0, 2, 2, 40],
+            [1, np.nan, 2, 1],
+            [0, 10, np.nan, np.nan],
+            [np.nan, np.nan, 0, 10],
+            [np.nan, np.nan, np.nan, np.nan],
+        ]
     )
 
     if num.isscalar(qin_arr):
@@ -73,20 +76,24 @@ def test_multi_axes(str_method, axes, qin_arr, keepdims, overwrite_input):
 
     # np:
     # print("numpy axis = %d:"%(axis))
-    np_q_out = np.nanquantile(
-        arr,
-        qs_arr,
-        axis=axes,
-        method=str_method,
-        keepdims=keepdims,
-        overwrite_input=overwrite_input,
-    )
+    with warnings.catch_warnings():
+        # NumPy may warn about all-NaN slices, just ignore that.
+        warnings.simplefilter("ignore", RuntimeWarning)
+
+        np_q_out = np.nanquantile(
+            arr,
+            qs_arr,
+            axis=axes,
+            method=str_method,
+            keepdims=keepdims,
+            overwrite_input=overwrite_input,
+        )
     # print(np_q_out)
 
     assert q_out.shape == np_q_out.shape
     assert q_out.dtype == np_q_out.dtype
 
-    assert allclose(np_q_out, q_out, atol=eps)
+    assert allclose(np_q_out, q_out, atol=eps, equal_nan=True)
 
 
 if __name__ == "__main__":

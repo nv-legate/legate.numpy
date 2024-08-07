@@ -81,75 +81,67 @@ def _reshuffle_reshape(
     return (min_dim_index, arr_reshaped)
 
 
-# account for 0-based indexing
-# there's no negative numbers
-# arithmetic at this level,
-# (pos, k) are always positive!
+# Define the gamma and index position for each of the distributions based
+# on the paper/NumPy definition.
 #
-def _floor_i(k: int | float) -> int:
-    j = k - 1 if k > 0 else 0
-    return int(j)
-
-
-# Generic rule: if `q` input value falls onto a node, then return that node
+# `pos` is the "virtual index" at which we wish to sample, this is adjusted
+# based on the alpha and beta parameters of the methods (which adjust for
+# the fact that the distribution is sampled).
+#
+# `gamma` is weight for each the samples taken into account.  Some methods
+# are non-interpolating. `gamma` may be calculated to pick a side, but
+# we forward `None` to indicate the non-interpolating nature of the method
+# (the result dtype is for example identical to the input one).
+#
+# `pos` is (to keep with the paper) 1-based index, thus we always subtract 1
+# in the following step.
 
 # Discontinuous methods:
 
 
 # q = quantile input \in [0, 1]
 # n = sizeof(array)
+# pos = virtual index (often 1 based, to keep with paper)
 def _inverted_cdf(q: float, n: int) -> tuple[float, int]:
     pos = q * n
-    k = math.floor(pos)
+    left = int(pos)
 
-    g = pos - k
+    g = pos - left
     gamma = 1.0 if g > 0 else 0.0
 
-    j = int(k - 1)
-    if j < 0:
-        return (0.0, 0)
-    else:
-        return (gamma, j)
+    return (gamma, left - 1)
 
 
 def _averaged_inverted_cdf(q: float, n: int) -> tuple[float, int]:
     pos = q * n
-    k = math.floor(pos)
+    left = int(pos)
 
-    g = pos - k
+    g = pos - left
     gamma = 1.0 if g > 0 else 0.5
 
-    j = int(k - 1)
-    if j < 0:
-        return (0.0, 0)
-    elif j >= n - 1:
-        return (1.0, int(n - 2))
+    return (gamma, left - 1)
+
+
+_desired_mod_2: int = int(np.lib.NumpyVersion(np.__version__) < "2.0.1")
+
+
+def _closest_observation(q: float, n: int) -> tuple[None, int]:
+    pos = q * n - 0.5
+    left = int(pos)
+
+    # The calculation is done in a way that we should to take the next index
+    # (gamme = 1) except if we hit it exactly.
+    # If we do, we use round-to-even: The final index `left + gamma` should
+    # be an even number.  But on older versions of numpy this was an odd
+    # number (due to 0 based vs. 1 based indexing used in the rounding).
+    if left != pos:
+        gamma = 1
+    elif left % 2 != _desired_mod_2:
+        gamma = 1
     else:
-        return (gamma, j)
+        gamma = 0
 
-
-def _closest_observation(q: float, n: int) -> tuple[float, int]:
-    # p = q*n - 0.5
-    # pos = 0 if p < 0 else p
-
-    # weird departure from paper
-    # (bug?), but this fixes it:
-    # also, j even in original paper
-    # applied to 1-based indexing; we have 0-based!
-    # numpy impl. doesn't account that the original paper used
-    # 1-based indexing, 0-based j is still checked for evennes!
-    # (see proof in quantile_policies.py)
-    #
-    p0 = q * n - 0.5
-    p = p0 - 1.0
-
-    pos = 0 if p < 0 else p0
-    k = math.floor(pos)
-
-    j = _floor_i(k)
-    gamma = 1 if k < pos else (0 if j % 2 == 0 else 1)
-
-    return (gamma, j)
+    return (None, left - 1 + gamma)
 
 
 # Continuous methods:
@@ -158,88 +150,47 @@ def _closest_observation(q: float, n: int) -> tuple[float, int]:
 # Parzen method
 def _interpolated_inverted_cdf(q: float, n: int) -> tuple[float, int]:
     pos = q * n
-    k = math.floor(pos)
-    # gamma = pos-k
-    # this fixes it:
-    #
-    gamma = 0.0 if k == 0 else pos - k
-    j = _floor_i(k)
-    return (gamma, j)
+    left = int(pos)
+
+    gamma = pos - left
+    return (gamma, left - 1)
 
 
 # Hazen method
 def _hazen(q: float, n: int) -> tuple[float, int]:
     pos = q * n + 0.5
-    k = math.floor(pos)
-    # gamma = pos-k
-    #
-    # this fixes it:
-    # (when pos > n: this actually selects the right point,
-    #  which is the correct choice, because right = arr[n]
-    #  gets invalidated)
-    #
-    gamma = 0.0 if (pos < 1 or pos > n) else pos - k
+    left = int(pos)
 
-    j = _floor_i(k)
-    return (gamma, j)
+    gamma = pos - left
+    return (gamma, left - 1)
 
 
 # Weibull method
 def _weibull(q: float, n: int) -> tuple[float, int]:
     pos = q * (n + 1)
+    left = int(pos)
 
-    k = math.floor(pos)
-    # gamma = pos-k
-    #
-    # this fixes it:
-    # (when pos > n: this actually selects the right point,
-    #  which is the correct choice, because right = arr[n]
-    #  gets invalidated)
-    #
-    gamma = 0.0 if (pos < 1 or pos > n) else pos - k
-
-    j = _floor_i(k)
-
-    if j >= n:
-        j = int(n - 1)
-
-    return (gamma, j)
+    gamma = pos - left
+    return (gamma, left - 1)
 
 
 # Gumbel method
 def _linear(q: float, n: int) -> tuple[float, int]:
     pos = q * (n - 1) + 1
-    k = math.floor(pos)
-    # gamma = pos-k
-    #
-    # this fixes it:
-    # (when pos > n: this actually selects the right point,
-    #  which is the correct choice, because right = arr[n]
-    #  gets invalidated)
-    #
-    gamma = 0.0 if (pos < 1 or pos > n) else pos - k
+    left = int(pos)
 
-    j = _floor_i(k)
-    return (gamma, j)
+    gamma = pos - left
+    return (gamma, left - 1)
 
 
 # Johnson & Kotz method
 def _median_unbiased(q: float, n: int) -> tuple[float, int]:
     fract = 1.0 / 3.0
     pos = q * (n + fract) + fract
-    k = math.floor(pos)
+    left = int(pos)
 
-    # gamma = pos-k
-    #
-    # this fixes it:
-    # (when pos > n: this actually selects the right point,
-    #  which is the correct choice, because right = arr[n]
-    #  gets invalidated)
-    #
-    gamma = 0.0 if (pos < 1 or pos > n) else pos - k
-
-    j = _floor_i(k)
-    return (gamma, j)
+    gamma = pos - left
+    return (gamma, left - 1)
 
 
 # Blom method
@@ -247,63 +198,38 @@ def _normal_unbiased(q: float, n: int) -> tuple[float, int]:
     fract1 = 0.25
     fract2 = 3.0 / 8.0
     pos = q * (n + fract1) + fract2
-    k = math.floor(pos)
+    left = int(pos)
 
-    # gamma = pos-k
-    #
-    # this fixes it:
-    # (when pos > n: this actually selects the right point,
-    #  which is the correct choice, because right = arr[n]
-    #  gets invalidated)
-    #
-    gamma = 0.0 if (pos < 1 or pos > n) else pos - k
-
-    j = _floor_i(k)
-    return (gamma, j)
+    gamma = pos - left
+    return (gamma, left - 1)
 
 
-def _lower(q: float, n: int) -> tuple[float, int]:
-    gamma = 0.0
-    pos = q * (n - 1)
-    k = math.floor(pos)
-
-    j = int(k)
-    return (gamma, j)
+def _lower(q: float, n: int) -> tuple[None, int]:
+    pos = q * (n - 1)  # 0 based here
+    left = int(pos)
+    return (None, left)
 
 
-def _higher(q: float, n: int) -> tuple[float, int]:
-    pos = q * (n - 1)
-    k = math.floor(pos)
-
-    # Generic rule: (k == pos)
-    gamma = 0.0 if (pos == 0 or k == pos) else 1.0
-
-    j = int(k)
-    return (gamma, j)
+def _higher(q: float, n: int) -> tuple[None, int]:
+    pos = q * (n - 1)  # 0 based here
+    left = int(math.ceil(pos))
+    return (None, left)
 
 
 def _midpoint(q: float, n: int) -> tuple[float, int]:
-    pos = q * (n - 1)
-    k = math.floor(pos)
+    pos = q * (n - 1)  # 0 based here
+    left = int(pos)
+    # Mid-point, unless pos is exact then we use that point.
+    gamma = 0.5 if pos != left else 0.0
 
-    # Generic rule: (k == pos)
-    gamma = 0.0 if (pos == 0 or k == pos) else 0.5
-
-    j = int(k)
-    return (gamma, j)
+    return (gamma, left)
 
 
-def _nearest(q: float, n: int) -> tuple[float, int]:
-    pos = q * (n - 1)
+def _nearest(q: float, n: int) -> tuple[None, int]:
+    pos = np.round(q * (n - 1))  # 0 based here
+    left = int(pos)
 
-    # k = floor(pos)
-    # gamma = 1.0 if pos - k >= 0.5 else 0.0
-
-    k = np.round(pos)
-    gamma = 0.0
-
-    j = int(k)
-    return (gamma, j)
+    return (None, left)
 
 
 # args:
@@ -325,7 +251,7 @@ def _quantile_impl(
     axis: int | None,
     axes_set: Iterable[int],
     original_shape: tuple[int, ...],
-    method: Callable[[float, int], tuple[float, int]],
+    method: Callable[[float, int], tuple[float | None, int]],
     keepdims: bool,
     to_dtype: np.dtype[Any],
     qs_all: ndarray | None,
@@ -373,37 +299,38 @@ def _quantile_impl(
             raise ValueError("wrong shape on output array")
 
     for index, q in np.ndenumerate(q_arr):
-        (gamma, j) = method(q, n)
-        (left_pos, right_pos) = (j, j + 1)
+        gamma, left_pos = method(q, n)
+        # Note that gamma may be None, in which case `right_pos` has no
+        # meaning since use the exact index.
+        right_pos = left_pos + 1
 
-        # (N-1) dimensional ndarray of left, right
-        # neighbor values:
-        #
-        # non-flattening approach:
-        #
-        # extract values at index=left_pos;
-        arr_1D_lvals = arr.take(left_pos, axis)
-        arr_vals_shape = arr_1D_lvals.shape
+        # The virtual pos, which was used to calculate `left`, can be outside
+        # the range, so fix all indices to be in range here.
+        if left_pos >= n - 1:
+            left_pos = right_pos = n - 1
+        elif left_pos < 0:
+            left_pos = right_pos = 0
 
-        if right_pos >= n:
-            # some quantile methods may result in j==(n-1),
-            # hence (j+1) could surpass array boundary;
+        # If gamma is None, we only have to extract the correct values
+        if gamma is None:
+            qs_all[index] = arr.take(left_pos, axis).reshape(remaining_shape)
+        else:
+            # (N-1) dimensional ndarray of left, right
+            # neighbor values:
             #
-            arr_1D_rvals = zeros(arr_vals_shape, dtype=arr_1D_lvals.dtype)
-        else:
-            # extract values at index=right_pos;
-            arr_1D_rvals = arr.take(right_pos, axis)
+            # non-flattening approach:
+            #
+            # extract values at left and right position;
+            arr_1D_lvals = arr.take(left_pos, axis).reshape(remaining_shape)
+            arr_1D_rvals = arr.take(right_pos, axis).reshape(remaining_shape)
 
-        # vectorized for axis != None;
-        # (non-flattening approach)
-        #
-        if len(index) == 0:
-            left = (1.0 - gamma) * arr_1D_lvals.reshape(qs_all.shape)
-            right = gamma * arr_1D_rvals.reshape(qs_all.shape)
-            qs_all[...] = left + right
-        else:
-            left = (1.0 - gamma) * arr_1D_lvals.reshape(qs_all[index].shape)
-            right = gamma * arr_1D_rvals.reshape(qs_all[index].shape)
+            # TODO: We may want to use a more precise interpolation formula
+            # like NumPy here (or implement an `lerp` function to use).
+            #
+            # vectorized for axis != None;
+            # (non-flattening approach)
+            left = (1.0 - gamma) * arr_1D_lvals
+            right = gamma * arr_1D_rvals
             qs_all[index] = left + right
 
     return qs_all
@@ -726,7 +653,7 @@ def nanquantile_impl(
     axis: int | None,
     axes_set: Iterable[int],
     original_shape: tuple[int, ...],
-    method: Callable[[float, int], tuple[float, int]],
+    method: Callable[[float, int], tuple[float | None, int]],
     keepdims: bool,
     to_dtype: np.dtype[Any],
     qs_all: ndarray | None,
@@ -775,13 +702,31 @@ def nanquantile_impl(
     arr_lvals = zeros(remaining_shape, dtype=arr.dtype)
     arr_rvals = zeros(remaining_shape, dtype=arr.dtype)
 
+    # Similar to the non-nan implementation except that it needs to make
+    # `n` depend on the number of non-nan-counts.
     for qindex, q in np.ndenumerate(q_arr):
         assert qs_all[qindex].shape == remaining_shape
 
         # TODO(aschaffer): Vectorize this operation, see
         # github.com/nv-legate/cunumeric/pull/1121#discussion_r1484731763
         for aindex, n in np.ndenumerate(non_nan_counts):
-            (gamma, left_pos) = method(q, n)
+            # TODO (2024-08): `n` should be an integral type, but wasn't:
+            n = int(n)
+            if n == 0:
+                # Cannot define a quantile over an empty range, return NaN
+                # TODO(mpapadakis): mypy mysteriously complains that
+                # expression has type "float", target has type "ndarray"
+                arr_lvals[aindex] = np.nan  # type: ignore[assignment]
+                arr_rvals[aindex] = np.nan  # type: ignore[assignment]
+                continue
+
+            gamma, left_pos = method(q, n)
+
+            right_pos = left_pos + 1
+            if left_pos >= n - 1:
+                left_pos = right_pos = n - 1
+            elif left_pos < 0:
+                left_pos = right_pos = 0
 
             # assumption: since `non_nan_counts` has the same
             # shape as `remaining_shape` (checked above),
@@ -790,39 +735,19 @@ def nanquantile_impl(
             #
             full_l_index = (*aindex[:axis], left_pos, *aindex[axis:])
             arr_lvals[aindex] = arr[full_l_index]
-            # TODO(mpapadakis): mypy mysteriously complains that
-            # expression has type "float", target has type "ndarray"
-            arr_gammas[aindex] = gamma  # type: ignore[assignment]
+            if gamma is not None:
+                # TODO(mpapadakis): As above, mypy complains about assignment
+                arr_gammas[aindex] = gamma  # type: ignore[assignment]
 
-            right_pos = left_pos + 1
-            #
-            # this test _IS_ needed
-            # hence, cannot fill arr_rvals same as arr_lvals;
-            #
-            if right_pos < n:
-                # reconstruct full index from aindex entries everywhere except
-                # `right_pos` on `axis`:
-                #
                 full_r_index = (*aindex[:axis], right_pos, *aindex[axis:])
                 arr_rvals[aindex] = arr[full_r_index]
 
-        # vectorized for axis != None;
-        #
-        if len(qindex) == 0:
-            left = (1 - arr_gammas.reshape(qs_all.shape)) * arr_lvals.reshape(
-                qs_all.shape
-            )
-            right = arr_gammas.reshape(qs_all.shape) * arr_rvals.reshape(
-                qs_all.shape
-            )
-            qs_all[...] = left + right
+        if gamma is None:
+            # Note that gamma can only be always None or never
+            qs_all[qindex] = arr_lvals
         else:
-            left = (
-                1 - arr_gammas.reshape(qs_all[qindex].shape)
-            ) * arr_lvals.reshape(qs_all[qindex].shape)
-            right = arr_gammas.reshape(
-                qs_all[qindex].shape
-            ) * arr_rvals.reshape(qs_all[qindex].shape)
+            left = (1 - arr_gammas) * arr_lvals
+            right = arr_gammas * arr_rvals
             qs_all[qindex] = left + right
 
     return qs_all
