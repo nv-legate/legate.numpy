@@ -14,7 +14,6 @@
  *
  */
 
-#include "env_defaults.h"
 #include "cunumeric/mapper.h"
 
 using namespace legate;
@@ -22,17 +21,7 @@ using namespace legate::mapping;
 
 namespace cunumeric {
 
-CuNumericMapper::CuNumericMapper()
-  : min_gpu_chunk(legate::detail::EnvironmentVariable<std::int64_t>("CUNUMERIC_MIN_GPU_CHUNK")
-                    .get(MIN_GPU_CHUNK_DEFAULT, MIN_GPU_CHUNK_TEST)),
-    min_cpu_chunk(legate::detail::EnvironmentVariable<std::int64_t>("CUNUMERIC_MIN_CPU_CHUNK")
-                    .get(MIN_CPU_CHUNK_DEFAULT, MIN_CPU_CHUNK_TEST)),
-    min_omp_chunk(legate::detail::EnvironmentVariable<std::int64_t>("CUNUMERIC_MIN_OMP_CHUNK")
-                    .get(MIN_OMP_CHUNK_DEFAULT, MIN_OMP_CHUNK_TEST))
-{
-}
-
-void CuNumericMapper::set_machine(const legate::mapping::MachineQueryInterface* m) { machine = m; }
+void CuNumericMapper::set_machine(const legate::mapping::MachineQueryInterface* m) {}
 
 TaskTarget CuNumericMapper::task_target(const legate::mapping::Task& task,
                                         const std::vector<TaskTarget>& options)
@@ -42,37 +31,7 @@ TaskTarget CuNumericMapper::task_target(const legate::mapping::Task& task,
 
 Scalar CuNumericMapper::tunable_value(TunableID tunable_id)
 {
-  switch (tunable_id) {
-    case CUNUMERIC_TUNABLE_NUM_GPUS: {
-      int32_t num_gpus = machine->gpus().size() * machine->total_nodes();
-      return Scalar(num_gpus);
-    }
-    case CUNUMERIC_TUNABLE_NUM_PROCS: {
-      int32_t num_procs = 0;
-      if (!machine->gpus().empty()) {
-        num_procs = machine->gpus().size() * machine->total_nodes();
-      } else if (!machine->omps().empty()) {
-        num_procs = machine->omps().size() * machine->total_nodes();
-      } else {
-        num_procs = machine->cpus().size() * machine->total_nodes();
-      }
-      return Scalar(num_procs);
-    }
-    case CUNUMERIC_TUNABLE_MAX_EAGER_VOLUME: {
-      int32_t eager_volume = 0;
-      // TODO: make these profile guided
-      if (!machine->gpus().empty()) {
-        eager_volume = min_gpu_chunk;
-      } else if (!machine->omps().empty()) {
-        eager_volume = min_omp_chunk;
-      } else {
-        eager_volume = min_cpu_chunk;
-      }
-      return Scalar(eager_volume);
-    }
-    default: break;
-  }
-  LEGATE_ABORT("Unknown tunable " << tunable_id);  // unknown tunable value
+  LEGATE_ABORT("cuNumeric does not use any tunable values");
 }
 
 std::vector<StoreMapping> CuNumericMapper::store_mappings(

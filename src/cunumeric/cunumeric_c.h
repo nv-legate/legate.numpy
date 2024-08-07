@@ -213,13 +213,6 @@ enum CuNumericRedopID {
   CUNUMERIC_ARGMIN_REDOP = 2,
 };
 
-// Match these to CuNumericTunable in config.py
-enum CuNumericTunable {
-  CUNUMERIC_TUNABLE_NUM_GPUS         = 1,
-  CUNUMERIC_TUNABLE_NUM_PROCS        = 2,
-  CUNUMERIC_TUNABLE_MAX_EAGER_VOLUME = 3,
-};
-
 enum CuNumericBounds {
   CUNUMERIC_MAX_REDOPS = 1024,
   CUNUMERIC_MAX_TASKS  = 1048576,
@@ -343,6 +336,8 @@ typedef struct ReductionOpIds {
 void cunumeric_perform_registration();
 bool cunumeric_has_curand();
 bool cunumeric_has_cusolvermp();
+
+unsigned cunumeric_max_eager_volume();
 
 struct ReductionOpIds cunumeric_register_reduction_ops(int32_t code);
 

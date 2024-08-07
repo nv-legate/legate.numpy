@@ -14,10 +14,15 @@
  *
  */
 
+#include "env_defaults.h"
 #include "cunumeric/runtime.h"
 
 #include "cunumeric/ndarray.h"
 #include "cunumeric/unary/unary_red_util.h"
+
+#include <charconv>
+#include <cstdlib>
+#include <string_view>
 
 namespace cunumeric {
 
@@ -93,4 +98,60 @@ uint32_t CuNumericRuntime::get_next_random_epoch() { return next_epoch_++; }
   runtime_ = new CuNumericRuntime(legate_runtime, library);
 }
 
+namespace {
+
+std::uint32_t extract_env(const char* env_name,
+                          std::uint32_t default_value,
+                          std::uint32_t test_value)
+{
+  auto parse_value = [](const char* value_char) {
+    auto value_sv = std::string_view{value_char};
+
+    std::uint32_t result{};
+    if (auto&& [_, ec] = std::from_chars(value_sv.begin(), value_sv.end(), result);
+        ec != std::errc{}) {
+      throw std::runtime_error{std::make_error_code(ec).message()};
+    }
+
+    return result;
+  };
+
+  if (const auto* env_value = std::getenv(env_name); env_value) {
+    return parse_value(env_value);
+  }
+
+  if (const auto* is_in_test_mode = std::getenv("LEGATE_TEST");
+      is_in_test_mode && parse_value(is_in_test_mode)) {
+    return test_value;
+  }
+
+  return default_value;
+}
+
+}  // namespace
+
 }  // namespace cunumeric
+
+extern "C" {
+
+unsigned cunumeric_max_eager_volume()
+{
+  static const auto min_gpu_chunk =
+    cunumeric::extract_env("CUNUMERIC_MIN_GPU_CHUNK", MIN_GPU_CHUNK_DEFAULT, MIN_GPU_CHUNK_TEST);
+  static const auto min_cpu_chunk =
+    cunumeric::extract_env("CUNUMERIC_MIN_CPU_CHUNK", MIN_CPU_CHUNK_DEFAULT, MIN_CPU_CHUNK_TEST);
+  static const auto min_omp_chunk =
+    cunumeric::extract_env("CUNUMERIC_MIN_OMP_CHUNK", MIN_OMP_CHUNK_DEFAULT, MIN_OMP_CHUNK_TEST);
+
+  auto machine = legate::get_machine();
+
+  if (machine.count(legate::mapping::TaskTarget::GPU) > 0) {
+    return min_gpu_chunk;
+  }
+  if (machine.count(legate::mapping::TaskTarget::OMP) > 0) {
+    return min_omp_chunk;
+  }
+  return min_cpu_chunk;
+}
+
+}  // extern "C"

@@ -20,31 +20,17 @@
 
 namespace cunumeric {
 
-class CuNumericMapper : public legate::mapping::Mapper {
- public:
-  CuNumericMapper();
-  virtual ~CuNumericMapper(void) {}
-
- private:
-  CuNumericMapper(const CuNumericMapper& rhs)            = delete;
-  CuNumericMapper& operator=(const CuNumericMapper& rhs) = delete;
-
+class CuNumericMapper final : public legate::mapping::Mapper {
   // Legate mapping functions
  public:
-  virtual void set_machine(const legate::mapping::MachineQueryInterface* machine) override;
-  virtual legate::mapping::TaskTarget task_target(
+  void set_machine(const legate::mapping::MachineQueryInterface* machine) override;
+  [[nodiscard]] legate::mapping::TaskTarget task_target(
     const legate::mapping::Task& task,
     const std::vector<legate::mapping::TaskTarget>& options) override;
-  virtual std::vector<legate::mapping::StoreMapping> store_mappings(
+  [[nodiscard]] std::vector<legate::mapping::StoreMapping> store_mappings(
     const legate::mapping::Task& task,
     const std::vector<legate::mapping::StoreTarget>& options) override;
-  virtual legate::Scalar tunable_value(legate::TunableID tunable_id) override;
-
- private:
-  const legate::mapping::MachineQueryInterface* machine;
-  const int32_t min_gpu_chunk;
-  const int32_t min_cpu_chunk;
-  const int32_t min_omp_chunk;
+  [[nodiscard]] legate::Scalar tunable_value(legate::TunableID tunable_id) override;
 };
 
 }  // namespace cunumeric

@@ -214,9 +214,6 @@ class _CunumericSharedLib:
     CUNUMERIC_TRANSPOSE_COPY_2D: int
     CUNUMERIC_TRILU: int
     CUNUMERIC_TRSM: int
-    CUNUMERIC_TUNABLE_MAX_EAGER_VOLUME: int
-    CUNUMERIC_TUNABLE_NUM_GPUS: int
-    CUNUMERIC_TUNABLE_NUM_PROCS: int
     CUNUMERIC_UNARY_OP: int
     CUNUMERIC_UNARY_RED: int
     CUNUMERIC_UNIQUE: int
@@ -282,11 +279,15 @@ class _CunumericSharedLib:
     CUNUMERIC_ZIP: int
 
     @abstractmethod
-    def cunumeric_has_curand(self) -> int:
+    def cunumeric_has_curand(self) -> bool:
         ...
 
     @abstractmethod
-    def cunumeric_has_cusolvermp(self) -> int:
+    def cunumeric_has_cusolvermp(self) -> bool:
+        ...
+
+    @abstractmethod
+    def cunumeric_max_eager_volume(self) -> int:
         ...
 
     @abstractmethod
@@ -548,14 +549,6 @@ class RandGenCode(IntEnum):
     UNIFORM = 1
     NORMAL = 2
     INTEGER = 3
-
-
-# Match these to CuNumericTunable in cunumeric_c.h
-@unique
-class CuNumericTunable(IntEnum):
-    NUM_GPUS = _cunumeric.CUNUMERIC_TUNABLE_NUM_GPUS
-    NUM_PROCS = _cunumeric.CUNUMERIC_TUNABLE_NUM_PROCS
-    MAX_EAGER_VOLUME = _cunumeric.CUNUMERIC_TUNABLE_MAX_EAGER_VOLUME
 
 
 # Match these to CuNumericScanCode in cunumeric_c.h

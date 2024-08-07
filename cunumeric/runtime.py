@@ -28,7 +28,6 @@ from ._utils.stack import find_last_user_stacklevel
 from .config import (
     BitGeneratorOperation,
     CuNumericOpCode,
-    CuNumericTunable,
     TransferType,
     cunumeric_lib,
 )
@@ -82,9 +81,8 @@ class Runtime(object):
         self.destroyed = False
         self.api_calls: list[tuple[str, str, bool]] = []
 
-        max_eager_volume = self.library.get_tunable(
-            CuNumericTunable.MAX_EAGER_VOLUME,
-            ty.int32,
+        max_eager_volume = (
+            cunumeric_lib.shared_object.cunumeric_max_eager_volume()
         )
         self.max_eager_volume = int(np.asarray(max_eager_volume))
 

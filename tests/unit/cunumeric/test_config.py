@@ -170,14 +170,6 @@ def test_RandGenCode() -> None:
     assert (set(m.RandGenCode.__members__)) == {"UNIFORM", "NORMAL", "INTEGER"}
 
 
-def test_CuNumericTunable() -> None:
-    assert (set(m.CuNumericTunable.__members__)) == {
-        "NUM_GPUS",
-        "NUM_PROCS",
-        "MAX_EAGER_VOLUME",
-    }
-
-
 def test_ScanCode() -> None:
     assert (set(m.ScanCode.__members__)) == {"PROD", "SUM"}
 
