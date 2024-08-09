@@ -615,7 +615,7 @@ class binary_ufunc(ufunc):
     def _resolve_dtype(
         self,
         arrs: Sequence[ndarray],
-        orig_args: Sequence[np.dtype[Any]],
+        orig_args: Sequence[Any],
         casting: CastingKind,
         precision_fixed: bool,
     ) -> tuple[Sequence[ndarray], np.dtype[Any]]:
