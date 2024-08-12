@@ -8,3 +8,4 @@ User guide
   practices
   howtos/index
   advanced
+  differences
