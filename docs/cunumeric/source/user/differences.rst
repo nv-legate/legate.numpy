@@ -63,7 +63,6 @@ Additionally ``[]`` does not work for advanced indexing since ``[]`` is
 cuNumeric doesn't support non-unit steps on index expressions, e.g. `arr[::2]`.
 
 Duplicate indices on advanced indexing expressions produce undefined behavior.
-This is also the case in NumPy [^1], but the current NumPy implementation happens
-to produce a deterministic result.
+This is also the case in NumPy but the current NumPy implementation happens
+to produce a deterministic result. (See https://stackoverflow.com/questions/15973827/handling-of-duplicate-indices-in-numpy-assignments)
 
-[^1]: https://stackoverflow.com/questions/15973827/handling-of-duplicate-indices-in-numpy-assignments
