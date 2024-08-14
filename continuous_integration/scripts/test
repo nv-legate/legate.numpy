@@ -51,7 +51,7 @@ test_cunumeric() {
             echo "Executing tests..."
             shift;
             setup_test_env;
-            ./test.py -vv --timeout 600 "$@"
+            ./test.py -vv --timeout 300 "$@"
             ;;
         "mypy")
             echo "Installing and executing mypy..."

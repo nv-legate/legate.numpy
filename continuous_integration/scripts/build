@@ -13,7 +13,7 @@ build_release_product() {
     local conda_build_args=();
     conda_build_args+=(--override-channels);
 
-    # The channel sequence below needs to be preserved 
+    # The channel sequence below needs to be preserved
     conda_build_args+=(-c conda-forge);
     conda_build_args+=(--override-channels);
     conda_build_args+=(-c file:///tmp/conda-build/legate_core);
@@ -36,6 +36,8 @@ build_release_product() {
 
     conda_build_args+=(--variants "$variantOpts")
 
+    # https://github.com/nv-legate/cunumeric.internal/pull/351#issuecomment-2286922486
+    export CONDA_OVERRIDE_CUDA="${CUDA_VERSION}"
     conda mambabuild "${conda_build_args[@]}" "${REPO_DIR}/conda/conda-build";
 
     copy_release_artifacts
