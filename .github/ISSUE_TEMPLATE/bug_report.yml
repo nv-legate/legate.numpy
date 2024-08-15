@@ -79,7 +79,6 @@ body:
         Please provide detailed instructions to reproduce the issue. Ideally this includes a 
         [Complete, minimal, self-contained example code](https://stackoverflow.com/help/minimal-reproducible-example)
         given here or as a link to code in another repository. 
-      render: Python
     validations:
       required: true
   - type: markdown
