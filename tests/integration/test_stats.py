@@ -311,6 +311,157 @@ def test_cov_dtype_scaling(ddof, fweights, np_aweights):
     assert allclose(np_out, num_out, atol=1e-2)
 
 
+def test_cov_invalid_ddof() -> None:
+    np_in = get_op_input(astype="d")
+    num_in = num.array(np_in)
+    msg = "ddof must be integer"
+    with pytest.raises(ValueError, match=msg):
+        np.cov(np_in, ddof=2.5)
+    with pytest.raises(ValueError, match=msg):
+        num.cov(num_in, ddof=2.5)
+
+
+def test_cov_invalid_input() -> None:
+    np_in = np.random.randn(3, 3, 3)
+    num_in = num.array(np_in)
+
+    msg = "m has more than 2 dimensions"
+    with pytest.raises(ValueError, match=msg):
+        np.cov(np_in)
+    with pytest.raises(ValueError, match=msg):
+        num.cov(num_in)
+
+
+def test_cov_invalid_input2() -> None:
+    np_in = get_op_input(astype="d")
+    num_in = num.array(np_in)
+
+    np_in_y = np.random.randn(3, 3, 3)
+    num_in_y = num.array(np_in_y)
+    msg = "y has more than 2 dimensions"
+    with pytest.raises(ValueError, match=msg):
+        np.cov(np_in, np_in_y)
+    with pytest.raises(ValueError, match=msg):
+        num.cov(num_in, num_in_y)
+
+
+def test_cov_dtype() -> None:
+    np_in = get_op_input(astype="d")
+    num_in = num.array(np_in)
+
+    np_out = np.cov(np_in, dtype=np.float64)
+    num_out = num.cov(num_in, dtype=np.float64)
+
+    assert allclose(np_out, num_out, atol=1e-2)
+
+
+@pytest.mark.parametrize("dtype", dtypes)
+@pytest.mark.parametrize("bias", [True, False])
+@pytest.mark.parametrize("ddof", [None, 0, 1])
+def test_cov_input2(dtype: str, bias: bool, ddof: int) -> None:
+    np_in = get_op_input(astype=dtype, shape=(4, 5))
+    num_in = num.array(np_in)
+
+    np_in_y = get_op_input(astype=dtype, shape=(4, 5))
+    num_in_y = num.array(np_in_y)
+
+    np_out = np.cov(np_in, np_in_y, bias=bias, ddof=ddof)
+    num_out = num.cov(num_in, num_in_y, bias=bias, ddof=ddof)
+    assert allclose(np_out, num_out, atol=1e-2)
+
+
+def test_cov_shape0() -> None:
+    np_in = np.random.randn(0, 3)
+    num_in = num.array(np_in)
+
+    np_out = np.cov(np_in)
+    num_out = num.cov(num_in)
+    assert allclose(np_out, num_out)
+
+
+def test_cov_invalid_fweights() -> None:
+    np_in = get_op_input(astype="d", shape=(4, 5))
+    num_in = num.array(np_in)
+    fweights = [[1, 2], [2, 3]]
+    np_fweights = np.array(fweights)
+    num_fweights = num.array(fweights)
+
+    msg = "cannot handle multidimensional fweights"
+    with pytest.raises(RuntimeError, match=msg):
+        np.cov(np_in, fweights=np_fweights)
+    with pytest.raises(RuntimeError, match=msg):
+        num.cov(num_in, fweights=num_fweights)
+
+
+def test_cov_invalidshape_fweights() -> None:
+    np_in = get_op_input(astype="d", shape=(4, 5))
+    num_in = num.array(np_in)
+    fweights = [1, 2, 3]
+
+    np_fweights = np.array(fweights)
+    num_fweights = num.array(fweights)
+    msg = "incompatible numbers of samples and fweights"
+    with pytest.raises(RuntimeError, match=msg):
+        np.cov(np_in, fweights=np_fweights)
+    with pytest.raises(RuntimeError, match=msg):
+        num.cov(num_in, fweights=num_fweights)
+
+
+def test_cov_invalidsize_fweights() -> None:
+    np_in = get_op_input(astype="d", shape=(4, 5))
+    num_in = num.array(np_in)
+    fweights = [1, 2, 3, -1, 3]
+
+    np_fweights = np.array(fweights)
+    num_fweights = num.array(fweights)
+    msg = "fweights cannot be negative"
+    with pytest.raises(ValueError, match=msg):
+        np.cov(np_in, fweights=np_fweights)
+    with pytest.raises(ValueError, match=msg):
+        num.cov(num_in, fweights=num_fweights)
+
+
+def test_cov_invalid_aweights() -> None:
+    np_in = get_op_input(astype="d", shape=(4, 5))
+    num_in = num.array(np_in)
+    aweights = [[1, 2], [2, 3]]
+    np_aweights = np.array(aweights)
+    num_aweights = num.array(aweights)
+    msg = "cannot handle multidimensional aweights"
+    with pytest.raises(RuntimeError, match=msg):
+        np.cov(np_in, aweights=np_aweights)
+    with pytest.raises(RuntimeError, match=msg):
+        num.cov(num_in, aweights=num_aweights)
+
+
+def test_cov_invalidshape_aweights() -> None:
+    np_in = get_op_input(astype="d", shape=(4, 5))
+    num_in = num.array(np_in)
+    aweights = [1, 2, 3]
+
+    np_aweights = np.array(aweights)
+    num_aweights = num.array(aweights)
+    msg = "incompatible numbers of samples and aweights"
+    with pytest.raises(RuntimeError, match=msg):
+        np.cov(np_in, aweights=np_aweights)
+    with pytest.raises(RuntimeError, match=msg):
+        num.cov(num_in, aweights=num_aweights)
+
+
+def test_cov_invalidsize_aweights() -> None:
+    np_in = get_op_input(astype="d", shape=(4, 5))
+    num_in = num.array(np_in)
+    aweights = [1, 2, 3, -1, 3]
+
+    np_aweights = np.array(aweights)
+    num_aweights = num.array(aweights)
+    msg = "aweights cannot be negative"
+    with pytest.raises(ValueError, match=msg):
+        np.cov(np_in, aweights=np_aweights)
+    with pytest.raises(ValueError, match=msg):
+        num.cov(num_in, aweights=num_aweights)
+
+
 if __name__ == "__main__":
     import sys
 
