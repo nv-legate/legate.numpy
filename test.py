@@ -18,9 +18,26 @@ from __future__ import annotations
 
 import sys
 
+import legate.tester
+from legate.tester import CustomTest
 from legate.tester.config import Config
 from legate.tester.test_plan import TestPlan
 from legate.tester.test_system import TestSystem
+
+legate.tester.CUSTOM_FILES = [
+    CustomTest("examples/quantiles.py"),
+    CustomTest("examples/sort.py"),
+    CustomTest("tests/integration/test_argsort.py"),
+    CustomTest("tests/integration/test_msort.py"),
+    CustomTest("tests/integration/test_nanpercentiles.py"),
+    CustomTest("tests/integration/test_nanquantiles.py"),
+    CustomTest("tests/integration/test_partition.py"),
+    CustomTest("tests/integration/test_percentiles.py"),
+    CustomTest("tests/integration/test_quantiles.py"),
+    CustomTest("tests/integration/test_sort_complex.py"),
+    CustomTest("tests/integration/test_sort.py"),
+    CustomTest("tests/integration/test_unique.py"),
+]
 
 if __name__ == "__main__":
     config = Config(sys.argv)
