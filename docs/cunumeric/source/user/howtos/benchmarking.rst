@@ -9,13 +9,10 @@ Using Legate timing tools
 Use legate's timing API to measure elapsed time, rather than standard Python
 timers. cuNumeric executes work asynchronously when possible, and a standard
 Python timer will only measure the time taken to launch the work, not the time
-spent in actual computation. Make sure warm-up iterations, initialization, I/O,
-and other one-time computations are excluded while timing iterative
-computations.
+spent in actual computation.
 
-Finally, for consistency, you will want to also set the environment variable
-``LEGATE_TEST=1`` when benchmarking. This ensures that arrays will always be
-partitioned, regardless of their size.
+Make sure warm-up iterations, initialization, I/O, and other one-time
+computations are excluded while timing iterative computations.
 
 Here is an example of how to measure elapsed time in milliseconds:
 
@@ -44,10 +41,7 @@ Guidelines for performance benchmarks
 -------------------------------------
 
 Manual partitioning of data for use with message-passing from Python (say,
-using mpi4py package) is discouraged. Measure elapsed time using Legate's
-timing tool (as given in the example above) while making sure to skip
-initialization steps, warm-up iterations, I/O operations etc., while timing
-the application.
+using mpi4py package) is discouraged.
 
 Ensure that the problem size is large enough to offset runtime overheads
 associated with tasks. A rule of thumb is that the problem size is large

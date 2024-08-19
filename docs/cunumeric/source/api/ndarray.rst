@@ -238,6 +238,8 @@ Matrix Multiplication:
    :toctree: generated/
 
    ndarray.__matmul__
+   ndarray.__imatmul__
+   ndarray.__rmatmul__
 
 Special methods
 ---------------

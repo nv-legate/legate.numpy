@@ -41,6 +41,7 @@ Numerical ranges
 
    arange
    linspace
+   meshgrid
 
 
 Building matrices

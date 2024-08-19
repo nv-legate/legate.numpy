@@ -20,9 +20,11 @@ limitations under the License.
 cuNumeric is a [Legate](https://github.com/nv-legate/legate.core) library
 that aims to provide a distributed and accelerated drop-in replacement for the
 [NumPy API](https://numpy.org/doc/stable/reference/) on top of the
-[Legion](https://legion.stanford.edu) runtime. Using cuNumeric you do things like run
+[Legion](https://legion.stanford.edu) runtime. Using cuNumeric you can do things like run
 [the final example of the Python CFD course](https://github.com/barbagroup/CFDPython/blob/master/lessons/15_Step_12.ipynb)
-completely unmodified on 2048 A100 GPUs in a [DGX SuperPOD](https://www.nvidia.com/en-us/data-center/dgx-superpod/) and achieve good weak scaling.
+completely unmodified on 2048 A100 GPUs in a
+[DGX SuperPOD](https://www.nvidia.com/en-us/data-center/dgx-superpod/)
+and achieve good weak scaling.
 
 <img src="docs/figures/cfd-demo.png" alt="drawing" width="500"/>
 
@@ -32,8 +34,6 @@ to span multiple nodes and GPUs. While our implementation of the current
 NumPy API is still incomplete, programs that use unimplemented features
 will still work (assuming enough memory) by falling back to the
 canonical NumPy implementation.
-
-If you have questions, please contact us at legate(at)nvidia.com.
 
 ## Installation
 
@@ -50,4 +50,8 @@ The cuNumeric documentation can be found
 
 ## Contributing
 
-See the discussion of contributing in [CONTRIBUTING.md](CONTRIBUTING.md).
+See the discussion on contributing in [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## Contact
+
+If you have questions, please contact us at legate(at)nvidia.com.

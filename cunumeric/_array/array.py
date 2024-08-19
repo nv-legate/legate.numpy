@@ -293,21 +293,22 @@ class ndarray:
     @property
     def base(self) -> npt.NDArray[Any] | None:
         """
-        Returns dtype for the base element of the subarrays,
-        regardless of their dimension or shape.
-
-        See Also
-        --------
-        numpy.dtype.subdtype
-
+        Base object if memory is from some other object.
         """
-        return self.__array__().base
+        raise NotImplementedError(
+            "cunumeric.ndarray doesn't keep track of the array view hierarchy "
+            "yet"
+        )
 
     @property
     def data(self) -> memoryview:
         """
         Python buffer object pointing to the start of the array's data.
 
+        Notes
+        -----
+        This causes the entire (potentially distributed) array to be collected
+        into one memory.
         """
         return self.__array__().data
 

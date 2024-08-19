@@ -4,7 +4,7 @@ Installation
 Default conda install
 ---------------------
 
-Linux-64 packages for cuNumeric are available from
+cuNumeric is available from
 `conda <https://docs.conda.io/projects/conda/en/latest/index.html>`_
 on the `legate channel <https://anaconda.org/legate/cunumeric>`_.
 Please make sure you have at least conda version 24.1 installed, then create
@@ -12,7 +12,25 @@ a new environment containing cuNumeric:
 
 .. code-block:: sh
 
+    conda create -n myenv -c conda-forge -c legate cunumeric
+
+or install it into an existing environment:
+
+.. code-block:: sh
+
     conda install -c conda-forge -c legate cunumeric
+
+Packages with GPU support are available, and will be chosen automatically by
+``conda install`` on systems with GPUs.
+
+In an environment without GPUs available, ``conda install`` will by default
+choose a CPU-only package. To install a version with GPU support in such an
+environment, use environment variable ``CONDA_OVERRIDE_CUDA``:
+
+.. code-block:: sh
+
+    CONDA_OVERRIDE_CUDA="12.2" \
+      conda install -c conda-forge -c legate cunumeric
 
 Once installed, you can verify the installation by running one of the examples
 from the cuNumeric repository, for instance:
@@ -22,20 +40,6 @@ from the cuNumeric repository, for instance:
     $ legate examples/black_scholes.py
     Running black scholes on 10K options...
     Elapsed Time: 129.017 ms
-
-Manual CPU-only packages
-------------------------
-
-The default package contains GPU support, and is compatible with CUDA >= 11.8
-(CUDA driver version >= r520), and Volta or later GPU architectures. There are
-also CPU-only packages available, and will be automatically selected by conda
-when installing on a machine without GPUs.
-
-You can force installation of a CPU-only package by requesting it as follows:
-
-.. code-block:: sh
-
-    conda ... cunumeric=*=*_cpu
 
 Building from source
 ---------------------

@@ -17,6 +17,7 @@ Generating index arrays
    triu_indices
    triu_indices_from
    indices
+   ix_
    nonzero
    flatnonzero
    where
