@@ -1707,7 +1707,10 @@ class EagerArray(NumPyThunk):
             self.deferred.svd(u, s, vh)
         else:
             try:
-                result_u, result_s, result_vh = np.linalg.svd(self.array)
+                full_matrices = u.shape[0] == u.shape[1] and vh.shape[0] == vh.shape[1]
+                result_u, result_s, result_vh = np.linalg.svd(
+                    self.array, full_matrices
+                )
             except np.linalg.LinAlgError as e:
                 from ..linalg import LinAlgError
 

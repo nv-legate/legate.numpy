@@ -26,7 +26,14 @@ using namespace legate;
 
 template <VariantKind KIND>
 struct SvdImplBody<KIND, Type::Code::FLOAT32> {
-  void operator()(int32_t m, int32_t n, int32_t k, const float* a, float* u, float* s, float* vh)
+  void operator()(int32_t m,
+                  int32_t n,
+                  int32_t k,
+                  bool full_matrices,
+                  const float* a,
+                  float* u,
+                  float* s,
+                  float* vh)
   {
     auto a_copy = create_buffer<float>(m * n);
     std::copy(a, a + (n * m), a_copy.ptr(0));
@@ -34,12 +41,37 @@ struct SvdImplBody<KIND, Type::Code::FLOAT32> {
     int32_t info  = 0;
     float wkopt   = 0;
     int32_t lwork = -1;
-    LAPACK_sgesvd("A", "A", &m, &n, a_copy.ptr(0), &m, s, u, &m, vh, &n, &wkopt, &lwork, &info);
+    LAPACK_sgesvd(full_matrices ? "A" : "S",
+                  "A",
+                  &m,
+                  &n,
+                  a_copy.ptr(0),
+                  &m,
+                  s,
+                  u,
+                  &m,
+                  vh,
+                  &n,
+                  &wkopt,
+                  &lwork,
+                  &info);
     lwork = (int)wkopt;
 
     std::vector<float> work_tmp(lwork);
-    LAPACK_sgesvd(
-      "A", "A", &m, &n, a_copy.ptr(0), &m, s, u, &m, vh, &n, work_tmp.data(), &lwork, &info);
+    LAPACK_sgesvd(full_matrices ? "A" : "S",
+                  "A",
+                  &m,
+                  &n,
+                  a_copy.ptr(0),
+                  &m,
+                  s,
+                  u,
+                  &m,
+                  vh,
+                  &n,
+                  work_tmp.data(),
+                  &lwork,
+                  &info);
 
     if (info != 0) {
       throw legate::TaskException(SvdTask::ERROR_MESSAGE);
@@ -49,8 +81,14 @@ struct SvdImplBody<KIND, Type::Code::FLOAT32> {
 
 template <VariantKind KIND>
 struct SvdImplBody<KIND, Type::Code::FLOAT64> {
-  void operator()(
-    int32_t m, int32_t n, int32_t k, const double* a, double* u, double* s, double* vh)
+  void operator()(int32_t m,
+                  int32_t n,
+                  int32_t k,
+                  bool full_matrices,
+                  const double* a,
+                  double* u,
+                  double* s,
+                  double* vh)
   {
     auto a_copy = create_buffer<double>(m * n);
     std::copy(a, a + (n * m), a_copy.ptr(0));
@@ -59,12 +97,37 @@ struct SvdImplBody<KIND, Type::Code::FLOAT64> {
     double wkopt  = 0;
     int32_t lwork = -1;
 
-    LAPACK_dgesvd("A", "A", &m, &n, a_copy.ptr(0), &m, s, u, &m, vh, &n, &wkopt, &lwork, &info);
+    LAPACK_dgesvd(full_matrices ? "A" : "S",
+                  "A",
+                  &m,
+                  &n,
+                  a_copy.ptr(0),
+                  &m,
+                  s,
+                  u,
+                  &m,
+                  vh,
+                  &n,
+                  &wkopt,
+                  &lwork,
+                  &info);
     lwork = (int)wkopt;
 
     std::vector<double> work_tmp(lwork);
-    LAPACK_dgesvd(
-      "A", "A", &m, &n, a_copy.ptr(0), &m, s, u, &m, vh, &n, work_tmp.data(), &lwork, &info);
+    LAPACK_dgesvd(full_matrices ? "A" : "S",
+                  "A",
+                  &m,
+                  &n,
+                  a_copy.ptr(0),
+                  &m,
+                  s,
+                  u,
+                  &m,
+                  vh,
+                  &n,
+                  work_tmp.data(),
+                  &lwork,
+                  &info);
 
     if (info != 0) {
       throw legate::TaskException(SvdTask::ERROR_MESSAGE);
@@ -77,6 +140,7 @@ struct SvdImplBody<KIND, Type::Code::COMPLEX64> {
   void operator()(int32_t m,
                   int32_t n,
                   int32_t k,
+                  bool full_matrices,
                   const complex<float>* a,
                   complex<float>* u,
                   float* s,
@@ -90,7 +154,7 @@ struct SvdImplBody<KIND, Type::Code::COMPLEX64> {
     __complex__ float wkopt = 0;
     std::vector<float> rwork(5 * k);
 
-    LAPACK_cgesvd("A",
+    LAPACK_cgesvd(full_matrices ? "A" : "S",
                   "A",
                   &m,
                   &n,
@@ -109,7 +173,7 @@ struct SvdImplBody<KIND, Type::Code::COMPLEX64> {
     lwork = (int)(*((float*)&(wkopt)));
 
     std::vector<__complex__ float> work_tmp(lwork);
-    LAPACK_cgesvd("A",
+    LAPACK_cgesvd(full_matrices ? "A" : "S",
                   "A",
                   &m,
                   &n,
@@ -136,6 +200,7 @@ struct SvdImplBody<KIND, Type::Code::COMPLEX128> {
   void operator()(int32_t m,
                   int32_t n,
                   int32_t k,
+                  bool full_matrices,
                   const complex<double>* a,
                   complex<double>* u,
                   double* s,
@@ -148,7 +213,7 @@ struct SvdImplBody<KIND, Type::Code::COMPLEX128> {
     int32_t lwork            = -1;
     __complex__ double wkopt = 0;
     std::vector<double> rwork(5 * k);
-    LAPACK_zgesvd("A",
+    LAPACK_zgesvd(full_matrices ? "A" : "S",
                   "A",
                   &m,
                   &n,
@@ -167,7 +232,7 @@ struct SvdImplBody<KIND, Type::Code::COMPLEX128> {
     lwork = (int)(*((double*)&(wkopt)));
 
     std::vector<__complex__ double> work_tmp(lwork);
-    LAPACK_zgesvd("A",
+    LAPACK_zgesvd(full_matrices ? "A" : "S",
                   "A",
                   &m,
                   &n,

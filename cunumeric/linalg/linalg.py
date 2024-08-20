@@ -218,7 +218,7 @@ def solve(a: ndarray, b: ndarray, out: ndarray | None = None) -> ndarray:
 
 
 @add_boilerplate("a")
-def svd(a: ndarray) -> tuple[ndarray, ...]:
+def svd(a: ndarray, full_matrices: bool = True) -> tuple[ndarray, ...]:
     """
     Singular Value Decomposition.
 
@@ -226,6 +226,9 @@ def svd(a: ndarray) -> tuple[ndarray, ...]:
     ----------
     a : (M, N) array_like
         Array like, at least dimension 2.
+    full_matrices : bool, optional
+        If True (default), u and vh are of shape (M, M), (N, N).
+        If False, the shapes are (M, K) and (K, N), where K = min(M, N).
 
     Returns
     -------
@@ -268,7 +271,7 @@ def svd(a: ndarray) -> tuple[ndarray, ...]:
         raise NotImplementedError("cuNumeric only supports M >= N")
     if np.dtype("e") == a.dtype:
         raise TypeError("array type float16 is unsupported in linalg")
-    return _thunk_svd(a)
+    return _thunk_svd(a, full_matrices)
 
 
 # This implementation is adapted closely from NumPy
@@ -803,14 +806,14 @@ def _thunk_solve(
     return out
 
 
-def _thunk_svd(a: ndarray) -> tuple[ndarray, ...]:
+def _thunk_svd(a: ndarray, full_matrices: bool) -> tuple[ndarray, ...]:
     if a.dtype.kind not in ("f", "c"):
         a = a.astype("float64")
 
     k = min(a.shape[0], a.shape[1])
 
     out_u = ndarray(
-        shape=(a.shape[0], a.shape[0]),
+        shape=(a.shape[0], a.shape[0] if full_matrices else k),
         dtype=a.dtype,
         inputs=(a,),
     )
@@ -823,7 +826,7 @@ def _thunk_svd(a: ndarray) -> tuple[ndarray, ...]:
         inputs=(a,),
     )
     out_vh = ndarray(
-        shape=(a.shape[1], a.shape[1]),
+        shape=(a.shape[1] if full_matrices else k, a.shape[1]),
         dtype=a.dtype,
         inputs=(a,),
     )

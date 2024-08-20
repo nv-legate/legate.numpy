@@ -35,7 +35,7 @@ def check_result(a, u, s, vh):
     print("PASS!" if num.allclose(a, a2) else "FAIL!")
 
 
-def svd(m, n, dtype, perform_check, timing):
+def svd(m, n, full_matrices, dtype, perform_check, timing):
     if np.issubdtype(dtype, np.integer):
         a = num.random.randint(0, 1000, size=m * n).astype(dtype)
         a = a.reshape((m, n))
@@ -50,7 +50,7 @@ def svd(m, n, dtype, perform_check, timing):
         assert False
 
     timer.start()
-    u, s, vh = num.linalg.svd(a)
+    u, s, vh = num.linalg.svd(a, full_matrices)
     total = timer.stop()
 
     if perform_check:
@@ -88,6 +88,12 @@ if __name__ == "__main__":
         help="number of cols in the matrix",
     )
     parser.add_argument(
+        "--no-full-matrices",
+        dest="full_matrices",
+        action="store_false",
+        help="return u as (m,k)",
+    )
+    parser.add_argument(
         "-d",
         "--dtype",
         default="float64",
@@ -114,5 +120,12 @@ if __name__ == "__main__":
         svd,
         args.benchmark,
         "SVD",
-        (args.m, args.n, args.dtype, args.check, args.timing),
+        (
+            args.m,
+            args.n,
+            args.full_matrices,
+            args.dtype,
+            args.check,
+            args.timing,
+        ),
     )

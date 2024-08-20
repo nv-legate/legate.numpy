@@ -79,10 +79,15 @@ struct SvdImpl {
     const int64_t k = std::min(m, n);
 
     assert(m >= n);
+    bool full_matrices = (u_shape.hi[1] - u_shape.lo[1] + 1 == m);
 
 #ifdef DEBUG_CUNUMERIC
     assert(u_shape.hi[0] - u_shape.lo[0] + 1 == m);
-    assert(u_shape.hi[1] - u_shape.lo[1] + 1 == m);
+    if (full_matrices) {
+      assert(u_shape.hi[1] - u_shape.lo[1] + 1 == m);
+    } else {
+      assert(u_shape.hi[1] - u_shape.lo[1] + 1 == k);
+    }
     assert(s_shape.hi[0] - s_shape.lo[0] + 1 == k);
     assert(vh_shape.hi[0] - vh_shape.lo[0] + 1 == n);
     assert(vh_shape.hi[1] - vh_shape.lo[1] + 1 == n);
@@ -99,8 +104,14 @@ struct SvdImpl {
     assert(m > 0 && n > 0 && k > 0);
 #endif
 
-    SvdImplBody<KIND, CODE>()(
-      m, n, k, a_acc.ptr(a_shape), u_acc.ptr(u_shape), s_acc.ptr(s_shape), vh_acc.ptr(vh_shape));
+    SvdImplBody<KIND, CODE>()(m,
+                              n,
+                              k,
+                              full_matrices,
+                              a_acc.ptr(a_shape),
+                              u_acc.ptr(u_shape),
+                              s_acc.ptr(s_shape),
+                              vh_acc.ptr(vh_shape));
   }
 
   template <Type::Code CODE, std::enable_if_t<!support_svd<CODE>::value>* = nullptr>

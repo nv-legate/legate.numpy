@@ -29,6 +29,7 @@ static inline void svd_template(DataType valTypeC,
                                 int64_t m,
                                 int64_t n,
                                 int64_t k,
+                                bool full_matrices,
                                 const void* a,
                                 void* u,
                                 void* s,
@@ -47,7 +48,7 @@ static inline void svd_template(DataType valTypeC,
   size_t lwork_device, lwork_host;
   CHECK_CUSOLVER(cusolverDnXgesvd_bufferSize(handle,
                                              nullptr,
-                                             'A',
+                                             full_matrices ? 'A' : 'S',
                                              'A',
                                              m,
                                              n,
@@ -72,7 +73,7 @@ static inline void svd_template(DataType valTypeC,
 
   CHECK_CUSOLVER(cusolverDnXgesvd(handle,
                                   nullptr,
-                                  'A',
+                                  full_matrices ? 'A' : 'S',
                                   'A',
                                   m,
                                   n,
@@ -109,18 +110,31 @@ static inline void svd_template(DataType valTypeC,
 
 template <>
 struct SvdImplBody<VariantKind::GPU, Type::Code::FLOAT32> {
-  void operator()(int64_t m, int64_t n, int64_t k, const float* a, float* u, float* s, float* vh)
+  void operator()(int64_t m,
+                  int64_t n,
+                  int64_t k,
+                  bool full_matrices,
+                  const float* a,
+                  float* u,
+                  float* s,
+                  float* vh)
   {
-    svd_template<float>(CUDA_R_32F, CUDA_R_32F, m, n, k, a, u, s, vh);
+    svd_template<float>(CUDA_R_32F, CUDA_R_32F, m, n, k, full_matrices, a, u, s, vh);
   }
 };
 
 template <>
 struct SvdImplBody<VariantKind::GPU, Type::Code::FLOAT64> {
-  void operator()(
-    int64_t m, int64_t n, int64_t k, const double* a, double* u, double* s, double* vh)
+  void operator()(int64_t m,
+                  int64_t n,
+                  int64_t k,
+                  bool full_matrices,
+                  const double* a,
+                  double* u,
+                  double* s,
+                  double* vh)
   {
-    svd_template<double>(CUDA_R_64F, CUDA_R_64F, m, n, k, a, u, s, vh);
+    svd_template<double>(CUDA_R_64F, CUDA_R_64F, m, n, k, full_matrices, a, u, s, vh);
   }
 };
 
@@ -129,6 +143,7 @@ struct SvdImplBody<VariantKind::GPU, Type::Code::COMPLEX64> {
   void operator()(int64_t m,
                   int64_t n,
                   int64_t k,
+                  bool full_matrices,
                   const complex<float>* a,
                   complex<float>* u,
                   float* s,
@@ -139,6 +154,7 @@ struct SvdImplBody<VariantKind::GPU, Type::Code::COMPLEX64> {
                                  m,
                                  n,
                                  k,
+                                 full_matrices,
                                  reinterpret_cast<const cuComplex*>(a),
                                  reinterpret_cast<cuComplex*>(u),
                                  s,
@@ -151,6 +167,7 @@ struct SvdImplBody<VariantKind::GPU, Type::Code::COMPLEX128> {
   void operator()(int64_t m,
                   int64_t n,
                   int64_t k,
+                  bool full_matrices,
                   const complex<double>* a,
                   complex<double>* u,
                   double* s,
@@ -161,6 +178,7 @@ struct SvdImplBody<VariantKind::GPU, Type::Code::COMPLEX128> {
                                   m,
                                   n,
                                   k,
+                                  full_matrices,
                                   reinterpret_cast<const cuDoubleComplex*>(a),
                                   reinterpret_cast<cuDoubleComplex*>(u),
                                   s,

@@ -58,10 +58,11 @@ def assert_result(a, u, s, vh):
 
 @pytest.mark.parametrize("m", SIZES)
 @pytest.mark.parametrize("n", SIZES)
+@pytest.mark.parametrize("full_matrices", (False, True))
 @pytest.mark.parametrize(
     "a_dtype", (np.float32, np.float64, np.complex64, np.complex128)
 )
-def test_svd(m, n, a_dtype):
+def test_svd(m, n, full_matrices, a_dtype):
     if m < n:
         pytest.skip()
 
@@ -72,7 +73,7 @@ def test_svd(m, n, a_dtype):
 
     a = a.astype(a_dtype)
 
-    u, s, vh = num.linalg.svd(a)
+    u, s, vh = num.linalg.svd(a, full_matrices)
 
     assert_result(a, u, s, vh)
 
