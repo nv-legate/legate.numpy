@@ -46,6 +46,7 @@ Changing number of dimensions
    broadcast_arrays
    broadcast_shapes
    broadcast_to
+   expand_dims
    squeeze
 
 Changing kind of array

@@ -20,7 +20,13 @@ import numpy as np
 
 from .._array.array import ndarray
 from .._array.util import add_boilerplate, convert_to_cunumeric_ndarray
+from .._utils import is_np2
 from .creation_data import array
+
+if is_np2:
+    from numpy.lib.array_utils import normalize_axis_tuple  # type: ignore
+else:
+    from numpy.core.numeric import normalize_axis_tuple  # type: ignore
 
 if TYPE_CHECKING:
     from ..types import NdShape, NdShapeLike
@@ -386,3 +392,51 @@ class broadcast:
     def size(self) -> int:
         """Total size of broadcasted result."""
         return self._size
+
+
+@add_boilerplate("a")
+def expand_dims(
+    a: ndarray, axis: int | tuple[int, ...] | list[int]
+) -> ndarray:
+    """
+    Expand the shape of an array.
+
+    Insert a new axis that will appear at the `axis` position in the expanded
+    array shape.
+
+    Parameters
+    ----------
+    a : array_like
+        Input array.
+    axis : int or tuple of ints
+        Position in the expanded axes where the new axis (or axes) is placed.
+
+    Returns
+    -------
+    result : ndarray
+        View of `a` with the number of dimensions increased.
+
+    See Also
+    --------
+    squeeze : The inverse operation, removing singleton dimensions
+    reshape : Insert, remove, and combine dimensions, and resize existing ones
+    atleast_1d, atleast_2d, atleast_3d
+
+    Availability
+    --------
+    Multiple GPUs, Multiple CPUs
+    """
+
+    if isinstance(axis, int):
+        axis = (axis,)
+
+    out_ndim = len(axis) + a.ndim
+    normalized_axis = normalize_axis_tuple(axis, out_ndim)
+
+    shape_it = iter(a.shape)
+    shape = [
+        1 if ax in normalized_axis else next(shape_it)
+        for ax in range(out_ndim)
+    ]
+
+    return a.reshape(shape)
