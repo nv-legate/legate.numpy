@@ -154,6 +154,7 @@ def test_UnaryOpCode() -> None:
         "REAL",
         "RECIPROCAL",
         "RINT",
+        "ROUND",
         "SIGN",
         "SIGNBIT",
         "SIN",

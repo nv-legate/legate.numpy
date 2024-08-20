@@ -258,6 +258,7 @@ class _CunumericSharedLib:
     CUNUMERIC_UOP_REAL: int
     CUNUMERIC_UOP_RECIPROCAL: int
     CUNUMERIC_UOP_RINT: int
+    CUNUMERIC_UOP_ROUND: int
     CUNUMERIC_UOP_SIGN: int
     CUNUMERIC_UOP_SIGNBIT: int
     CUNUMERIC_UOP_SIN: int
@@ -460,6 +461,7 @@ class UnaryOpCode(IntEnum):
     REAL = _cunumeric.CUNUMERIC_UOP_REAL
     RECIPROCAL = _cunumeric.CUNUMERIC_UOP_RECIPROCAL
     RINT = _cunumeric.CUNUMERIC_UOP_RINT
+    ROUND = _cunumeric.CUNUMERIC_UOP_ROUND
     SIGN = _cunumeric.CUNUMERIC_UOP_SIGN
     SIGNBIT = _cunumeric.CUNUMERIC_UOP_SIGNBIT
     SIN = _cunumeric.CUNUMERIC_UOP_SIN

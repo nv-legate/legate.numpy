@@ -1478,6 +1478,12 @@ class EagerArray(NumPyThunk):
             self.array = np.imag(rhs.array)
         elif op == UnaryOpCode.REAL:
             self.array = np.real(rhs.array)
+        elif op == UnaryOpCode.ROUND:
+            np.round(
+                rhs.array,
+                out=self.array,
+                decimals=args[0].value(),
+            )
         else:
             raise RuntimeError("unsupported unary op " + str(op))
 

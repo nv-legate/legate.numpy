@@ -70,6 +70,7 @@ enum class UnaryOpCode : int {
   REAL        = CUNUMERIC_UOP_REAL,
   RECIPROCAL  = CUNUMERIC_UOP_RECIPROCAL,
   RINT        = CUNUMERIC_UOP_RINT,
+  ROUND       = CUNUMERIC_UOP_ROUND,
   SIGN        = CUNUMERIC_UOP_SIGN,
   SIGNBIT     = CUNUMERIC_UOP_SIGNBIT,
   SIN         = CUNUMERIC_UOP_SIN,
@@ -158,6 +159,8 @@ constexpr decltype(auto) op_dispatch(UnaryOpCode op_code, Functor f, Fnargs&&...
       return f.template operator()<UnaryOpCode::RECIPROCAL>(std::forward<Fnargs>(args)...);
     case UnaryOpCode::RINT:
       return f.template operator()<UnaryOpCode::RINT>(std::forward<Fnargs>(args)...);
+    case UnaryOpCode::ROUND:
+      return f.template operator()<UnaryOpCode::ROUND>(std::forward<Fnargs>(args)...);
     case UnaryOpCode::SIGN:
       return f.template operator()<UnaryOpCode::SIGN>(std::forward<Fnargs>(args)...);
     case UnaryOpCode::SIGNBIT:
@@ -980,6 +983,66 @@ struct UnaryOp<UnaryOpCode::RINT, legate::Type::Code::FLOAT16> {
     using std::rint;
     return __half{rint(static_cast<float>(x))};
   }
+};
+
+template <legate::Type::Code CODE>
+struct UnaryOp<UnaryOpCode::ROUND, CODE> {
+  static constexpr bool valid = true;
+  using T                     = legate::type_of<CODE>;
+
+  UnaryOp(const std::vector<legate::Scalar>& args)
+    // args[0] is original signed decimals, which is needed for sign comparison
+    // args[1] is pre-multiplied factor 10**abs(decimals) to avoid calling std::pow here
+    : decimals{args[0].value<int64_t>()}, factor{args[1].value<int64_t>()}
+  {
+    LEGATE_ASSERT(args.size() == 2);
+  }
+
+  constexpr T operator()(const T& x) const
+  {
+    if constexpr (legate::is_complex_type<T>::value) {
+      if (decimals < 0) {
+        return T{std::rint(x.real() / factor) * factor, std::rint(x.imag() / factor) * factor};
+      } else {
+        return T{std::rint(x.real() * factor) / factor, std::rint(x.imag() * factor) / factor};
+      }
+    } else {
+      if (decimals < 0) {
+        return T{std::rint(x / factor) * factor};
+      } else {
+        return T{std::rint(x * factor) / factor};
+      }
+    }
+  }
+
+  int64_t decimals;
+  int64_t factor;
+};
+
+template <>
+struct UnaryOp<UnaryOpCode::ROUND, legate::Type::Code::FLOAT16> {
+  static constexpr bool valid = true;
+  using T                     = __half;
+
+  UnaryOp(const std::vector<legate::Scalar>& args)
+    // args[0] is original signed decimals, which is needed for sign comparison
+    // args[1] is pre-multiplied factor 10**abs(decimals) to avoid calling std::pow here
+    : decimals{args[0].value<int64_t>()}, factor{args[1].value<int64_t>()}
+  {
+    LEGATE_ASSERT(args.size() == 2);
+  }
+
+  __CUDA_HD__ __half operator()(const __half& x) const
+  {
+    if (decimals < 0) {
+      return __half{std::rint(static_cast<float>(x) / factor) * factor};
+    } else {
+      return __half{std::rint(static_cast<float>(x) * factor) / factor};
+    }
+  }
+
+  int64_t decimals;
+  int64_t factor;
 };
 
 namespace detail {

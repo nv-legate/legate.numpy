@@ -14,7 +14,7 @@
 #
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from .._array.array import ndarray
 from .._array.util import add_boilerplate
@@ -100,7 +100,7 @@ def clip(
     a: ndarray,
     a_min: int | float | npt.ArrayLike | None,
     a_max: int | float | npt.ArrayLike | None,
-    out: npt.NDArray[Any] | ndarray | None = None,
+    out: ndarray | None = None,
 ) -> ndarray:
     """
 

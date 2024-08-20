@@ -96,12 +96,12 @@ from .logic_comparison import *  # Comparison
 #
 # from .math_trig import *  # Trigonometric functions
 # from .math_hyp import *  # Hyperbolic functions
-# from .math_round import *  # Rounding
 # from .math_exp_log import *  # Exponents and logarithms
 # from .math_other import *  # Other special funtions
 # from .math_floating import *  # Floating point routines
 # from .math_arithmetic import *  # Arithmetic opertations
 
+from .math_rounding import *  # Rounding
 from .math_sum_prod_diff import *  # Sums, products, differences
 from .math_complex import *  # Handling complex numbers
 from .math_extrema import *  # Extrema finding

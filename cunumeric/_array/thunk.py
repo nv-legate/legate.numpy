@@ -63,7 +63,7 @@ def get_where_thunk(
 def perform_unary_op(
     op: UnaryOpCode,
     src: ndarray,
-    out: Any | None = None,
+    out: ndarray | None = None,
     extra_args: Any = None,
 ) -> ndarray:
     from .array import ndarray
@@ -80,7 +80,7 @@ def perform_unary_op(
         # No output yet, so make one
         out_shape = src.shape
 
-        if src.dtype.kind != "c":
+        if op == UnaryOpCode.ROUND or src.dtype.kind != "c":
             dtype = src.dtype
         else:
             if src.dtype == np.dtype(np.complex64):

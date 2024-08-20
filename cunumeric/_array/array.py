@@ -19,6 +19,7 @@ import warnings
 from functools import reduce
 from typing import TYPE_CHECKING, Any, Sequence, cast
 
+import legate.core.types as ty
 import numpy as np
 from legate.core import Field, LogicalArray, Scalar
 from legate.core.utils import OrderedSet
@@ -1972,7 +1973,7 @@ class ndarray:
         self,
         min: int | float | npt.ArrayLike | None = None,
         max: int | float | npt.ArrayLike | None = None,
-        out: npt.NDArray[Any] | ndarray | None = None,
+        out: ndarray | None = None,
     ) -> ndarray:
         """a.clip(min=None, max=None, out=None)
 
@@ -2006,10 +2007,7 @@ class ndarray:
                 "function call.",
                 category=RuntimeWarning,
             )
-            if isinstance(out, np.ndarray):
-                self.__array__().clip(args[0], args[1], out=out)
-                return convert_to_cunumeric_ndarray(out, share=True)
-            elif isinstance(out, ndarray):
+            if out is not None:
                 self.__array__().clip(args[0], args[1], out=out.__array__())
                 return out
             else:
@@ -2020,6 +2018,31 @@ class ndarray:
         extra_args = (Scalar(min, core_dtype), Scalar(max, core_dtype))
         return perform_unary_op(
             UnaryOpCode.CLIP, self, out=out, extra_args=extra_args
+        )
+
+    @add_boilerplate()
+    def round(
+        self,
+        decimals: int = 0,
+        out: ndarray | None = None,
+    ) -> ndarray:
+        """a.round(decimals=0, out=None)
+
+        Return a with each element rounded to the given number of decimals.
+
+        Refer to :func:`cunumeric.round` for full documentation.
+
+        Availability
+        --------
+        Multiple GPUs, Multiple CPUs
+
+        """
+        extra_args = (
+            Scalar(decimals, ty.int64),
+            Scalar(10 ** abs(decimals), ty.int64),
+        )
+        return perform_unary_op(
+            UnaryOpCode.ROUND, self, out=out, extra_args=extra_args
         )
 
     def conj(self) -> ndarray:

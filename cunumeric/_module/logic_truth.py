@@ -49,8 +49,7 @@ def all(
         Alternate output array in which to place the result.
         It must have the same shape as the expected output and its
         type is preserved (e.g., if ``dtype(out)`` is float, the result
-        will consist of 0.0's and 1.0's). See `ufuncs-output-type` for more
-        details.
+        will consist of 0.0's and 1.0's).
 
     keepdims : bool, optional
         If this is set to True, the axes which are reduced are left
@@ -110,7 +109,6 @@ def any(
         the same shape as the expected output and its type is preserved
         (e.g., if it is of type float, then it will remain so, returning
         1.0 for True and 0.0 for False, regardless of the type of `a`).
-        See `ufuncs-output-type` for more details.
 
     keepdims : bool, optional
         If this is set to True, the axes which are reduced are left

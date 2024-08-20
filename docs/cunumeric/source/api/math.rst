@@ -43,6 +43,7 @@ Rounding
 .. autosummary::
    :toctree: generated/
 
+   round
    rint
    floor
    ceil
