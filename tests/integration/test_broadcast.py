@@ -187,6 +187,18 @@ def test_broadcast_to_mainpulation(dim):
     _broadcast_to_manipulation(arr, (arr.shape, shape))
 
 
+@pytest.mark.parametrize("dim", DIM_CASES, ids=str)
+def test_iteration(dim):
+    sizes = SHAPE_LISTS[dim]
+    arr_np = list(np.arange(np.prod(size)).reshape(size) for size in sizes)
+    arr_num = list(num.arange(np.prod(size)).reshape(size) for size in sizes)
+    b = np.broadcast(*arr_np)
+    c = num.broadcast(*arr_num)
+
+    for item in b:
+        assert item == next(c)
+
+
 if __name__ == "__main__":
     import sys
 

@@ -336,7 +336,7 @@ class broadcast:
 
     """
 
-    def __init__(self, *arrays: Sequence[Any]) -> None:
+    def __init__(self, *arrays: Any) -> None:
         arrs = [convert_to_cunumeric_ndarray(arr) for arr in arrays]
         broadcasted = _broadcast_arrays(arrs)
         self._iters = tuple(arr.flat for arr in broadcasted)
@@ -353,6 +353,7 @@ class broadcast:
             result = tuple(each[self._index] for each in self._iters)
             self._index += 1
             return result
+        raise StopIteration
 
     def reset(self) -> None:
         """Reset the broadcasted result's iterator(s)."""
@@ -365,7 +366,7 @@ class broadcast:
 
     @property
     def iters(self) -> tuple[Iterable[Any], ...]:
-        """tuple of iterators along self’s "components." """
+        """tuple of iterators along self's "components." """
         return self._iters
 
     @property

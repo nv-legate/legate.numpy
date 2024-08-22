@@ -14,9 +14,19 @@
 #
 from __future__ import annotations
 
+import itertools
 from typing import TYPE_CHECKING
 
 from .._array.util import add_boilerplate
+from .._utils import is_np2
+from .array_dimension import broadcast
+from .creation_data import asarray
+from .creation_shape import empty_like
+
+if is_np2:
+    from numpy.lib.array_utils import normalize_axis_tuple  # type: ignore
+else:
+    from numpy.core.numeric import normalize_axis_tuple  # type: ignore
 
 if TYPE_CHECKING:
     from .._array.array import ndarray
@@ -132,3 +142,77 @@ def fliplr(m: ndarray) -> ndarray:
     if m.ndim < 2:
         raise ValueError("Input must be >= 2-d.")
     return flip(m, axis=1)
+
+
+@add_boilerplate("a")
+def roll(
+    a: ndarray,
+    shift: int | tuple[int, ...],
+    axis: int | tuple[int, ...] | None = None,
+) -> ndarray:
+    """
+    Roll array elements along a given axis.
+
+    Elements that roll beyond the last position are re-introduced at
+    the first.
+
+    Parameters
+    ----------
+    a : array_like
+        Input array.
+    shift : int or tuple of ints
+        The number of places by which elements are shifted.  If a tuple,
+        then `axis` must be a tuple of the same size, and each of the
+        given axes is shifted by the corresponding number.  If an int
+        while `axis` is a tuple of ints, then the same value is used for
+        all given axes.
+    axis : int or tuple of ints, optional
+        Axis or axes along which elements are shifted.  By default, the
+        array is flattened before shifting, after which the original
+        shape is restored.
+
+    Returns
+    -------
+    res : ndarray
+        Output array, with the same shape as `a`.
+
+    Availability
+    --------
+    Multiple GPUs, Multiple CPUs
+
+    Notes
+    -----
+    Supports rolling over multiple dimensions simultaneously.
+    """
+    if axis is None:
+        return roll(a.ravel(), shift, 0).reshape(a.shape)
+
+    normalized_axis: tuple[int, ...] = normalize_axis_tuple(
+        axis, a.ndim, allow_duplicate=True
+    )
+    broadcasted = broadcast(shift, normalized_axis)
+    if broadcasted.ndim > 1:
+        raise ValueError(
+            "'shift' and 'axis' should be scalars or 1D sequences"
+        )
+    shifts = {ax: 0 for ax in range(a.ndim)}
+    for sh, ax in broadcasted:
+        shifts[ax] += sh
+
+    rolls: list[tuple[tuple[slice, ...], ...]]
+    rolls = [((slice(None), slice(None)),)] * a.ndim
+    for ax, offset in shifts.items():
+        offset %= a.shape[ax] or 1  # If `a` is empty, nothing matters.
+        if offset:
+            # (original, result), (original, result)
+            rolls[ax] = (
+                (slice(None, -offset), slice(offset, None)),
+                (slice(-offset, None), slice(None, offset)),
+            )
+
+    result = empty_like(a)
+    for indices in itertools.product(*rolls):
+        arr_index, res_index = zip(*indices)
+        result[res_index] = a[arr_index]
+
+    return result

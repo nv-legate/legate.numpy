@@ -36,6 +36,16 @@ Hermitian FFTs
 
 .. autosummary::
    :toctree: generated/
-   
+
    hfft
    ihfft
+
+
+Helper routines
+---------------
+
+.. autosummary::
+   :toctree: generated/
+
+   fftshift
+   ifftshift

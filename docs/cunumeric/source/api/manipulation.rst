@@ -106,3 +106,4 @@ Rearranging elements
    flip
    fliplr
    flipud
+   roll

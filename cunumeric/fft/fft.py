@@ -19,6 +19,8 @@ from typing import TYPE_CHECKING, Sequence
 import numpy as np
 
 from .._array.util import add_boilerplate
+from .._module.array_rearrange import roll
+from .._module.creation_data import asarray
 from ..config import FFT_C2C, FFT_Z2Z, FFTCode, FFTDirection, FFTNormalization
 
 if TYPE_CHECKING:
@@ -1012,3 +1014,80 @@ def ihfft(
     return rfftn(
         a=a, s=s, axes=computed_axis, norm=FFTNormalization.reverse(norm)
     ).conjugate()
+
+
+integer_types = (int, np.integer)
+
+
+@add_boilerplate("x")
+def fftshift(x: ndarray, axes: int | tuple[int, ...] | None = None) -> ndarray:
+    """
+    Shift the zero-frequency component to the center of the spectrum.
+
+    This function swaps half-spaces for all axes listed (defaults to all).
+    Note that ``y[0]`` is the Nyquist component only if ``len(x)`` is even.
+
+    Parameters
+    ----------
+    x : array_like
+        Input array.
+
+    axes : int or shape tuple, optional
+        Axes over which to shift.  Default is None, which shifts all axes.
+
+    Returns
+    -------
+    y : ndarray
+        The shifted array.
+
+    Availability
+    --------
+    Multiple GPUs, Multiple CPUs
+    """
+    shift: int | tuple[int, ...]
+    if axes is None:
+        axes = tuple(range(x.ndim))
+        shift = tuple(dim // 2 for dim in x.shape)
+    elif isinstance(axes, integer_types):
+        shift = x.shape[axes] // 2
+    else:
+        shift = tuple(x.shape[ax] // 2 for ax in axes)
+
+    return roll(x, shift, axes)
+
+
+@add_boilerplate("x")
+def ifftshift(
+    x: ndarray, axes: int | tuple[int, ...] | None = None
+) -> ndarray:
+    """
+    The inverse of `fftshift`. Although identical for even-length `x`, the
+    functions differ by one sample for odd-length `x`.
+
+    Parameters
+    ----------
+    x : array_like
+        Input array.
+
+    axes : int or shape tuple, optional
+        Axes over which to calculate.  Defaults to None, which shifts all axes.
+
+    Returns
+    -------
+    y : ndarray
+        The shifted array.
+
+    Availability
+    --------
+    Multiple GPUs, Multiple CPUs
+    """
+    shift: int | tuple[int, ...]
+    if axes is None:
+        axes = tuple(range(x.ndim))
+        shift = tuple(-(dim // 2) for dim in x.shape)
+    elif isinstance(axes, integer_types):
+        shift = -(x.shape[axes] // 2)
+    else:
+        shift = tuple(-(x.shape[ax] // 2) for ax in axes)
+
+    return roll(x, shift, axes)
