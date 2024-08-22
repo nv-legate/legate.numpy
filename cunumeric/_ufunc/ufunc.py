@@ -14,7 +14,7 @@
 #
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Sequence
+from typing import TYPE_CHECKING, Any, Callable, Sequence, TypeAlias
 
 import numpy as np
 from legate.core.utils import OrderedSet
@@ -33,6 +33,17 @@ if TYPE_CHECKING:
 
     from .._array.array import ndarray
     from ..types import CastingKind
+
+    PostResolutionCheckFunc: TypeAlias = Callable[
+        [
+            ndarray,
+            ndarray,
+            Any,
+            Any,
+            BinaryOpCode,
+        ],
+        tuple[ndarray, ndarray, BinaryOpCode],
+    ]
 
 
 _UNARY_DOCSTRING_TEMPLATE = """{}
@@ -212,6 +223,26 @@ def _check_should_use_weak_scalar(key: tuple[str | type, ...]) -> bool:
 
     all_scalars_or_arrays = max_scalar_kind == -1 or max_array_kind == -1
     return not all_scalars_or_arrays and max_array_kind >= max_scalar_kind
+
+
+def _default_post_resolution_check(
+    arr_x: ndarray,
+    arr_y: ndarray,
+    obj_x: Any,
+    obj_y: Any,
+    op_code: BinaryOpCode,
+) -> tuple[ndarray, ndarray, BinaryOpCode]:
+    """Check whether Python integers fit into integer operand dtypes.
+    This check is overloaded by comparisons to always succeed.
+    """
+    if type(obj_x) is int and arr_x.dtype.kind in "iu":
+        # Check if original Python integer fits first operand.
+        arr_x.dtype.type(obj_x)
+    if type(obj_y) is int and arr_y.dtype.kind in "iu":
+        # Check if original Python integer fits second operand.
+        arr_y.dtype.type(obj_y)
+
+    return arr_x, arr_y, op_code
 
 
 class ufunc:
@@ -562,6 +593,8 @@ class multiout_unary_ufunc(ufunc):
 
 
 class binary_ufunc(ufunc):
+    _post_resolution_check: PostResolutionCheckFunc
+
     def __init__(
         self,
         name: str,
@@ -570,6 +603,7 @@ class binary_ufunc(ufunc):
         types: dict[tuple[str, str], str],
         red_code: UnaryRedCode | None = None,
         use_common_type: bool = True,
+        post_resolution_check: PostResolutionCheckFunc | None = None,
     ) -> None:
         super().__init__(name, doc)
 
@@ -585,6 +619,10 @@ class binary_ufunc(ufunc):
         ] = {}
         self._red_code = red_code
         self._use_common_type = use_common_type
+        if post_resolution_check is None:
+            self._post_resolution_check = _default_post_resolution_check
+        else:
+            self._post_resolution_check = post_resolution_check
 
     @staticmethod
     def _find_common_type(
@@ -745,18 +783,17 @@ class binary_ufunc(ufunc):
             arrs, orig_args, casting, precision_fixed
         )
 
+        # Check python integers operands.  For comparisons, this may return
+        # new values and op_code when the integer is out-of-bounds.
         x1, x2 = arrs
-        if type(orig_args[0]) is int and x1.dtype.kind in "iu":
-            # Check if original Pythhon integer fits first operand.
-            x1.dtype.type(orig_args[0])
-        if type(orig_args[1]) is int and x2.dtype.kind in "iu":
-            # Check if original Pythhon integer fits second operand.
-            x2.dtype.type(orig_args[1])
+        x1, x2, op_code = self._post_resolution_check(
+            x1, x2, orig_args[0], orig_args[1], self._op_code
+        )
 
         result = self._maybe_create_result(
             out, out_shape, res_dtype, casting, (x1, x2)
         )
-        result._thunk.binary_op(self._op_code, x1._thunk, x2._thunk, where, ())
+        result._thunk.binary_op(op_code, x1._thunk, x2._thunk, where, ())
 
         return self._maybe_cast_output(out, result)
 
@@ -899,6 +936,7 @@ def create_binary_ufunc(
     types: Sequence[str],
     red_code: UnaryRedCode | None = None,
     use_common_type: bool = True,
+    post_resolution_check: PostResolutionCheckFunc | None = None,
 ) -> binary_ufunc:
     doc = _BINARY_DOCSTRING_TEMPLATE.format(summary, name)
     types_dict = dict(_parse_binary_ufunc_type(ty) for ty in types)
@@ -909,4 +947,5 @@ def create_binary_ufunc(
         types_dict,
         red_code=red_code,
         use_common_type=use_common_type,
+        post_resolution_check=post_resolution_check,
     )

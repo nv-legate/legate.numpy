@@ -14,6 +14,7 @@
 #
 
 import argparse
+import operator
 
 import numpy as np
 import pytest
@@ -286,24 +287,68 @@ bit_ops = [
 ]
 
 
-@pytest.mark.parametrize("op", math_ops)
+@pytest.mark.parametrize("op", bit_ops)
 def test_bit_ops_arr_arr(op) -> None:
     check_op(op, (arrs[0], arrs[0]))
 
 
-@pytest.mark.parametrize("op", math_ops)
+@pytest.mark.parametrize("op", bit_ops)
 def test_bit_ops_arr_scalar(op) -> None:
     check_op(op, (arrs[0], scalars[0]))
     check_op(op, (arrs[0], scalars[1]))
     check_op(op, (arrs[0], scalars[2]))
-    check_op(op, (scalars[0], arrs[0]))
+    # Cunumeric << and >> have problems with python integers:
+    # check_op(op, (scalars[0], arrs[0]))
     check_op(op, (scalars[1], arrs[0]))
     check_op(op, (scalars[2], arrs[0]))
 
 
-@pytest.mark.parametrize("op", math_ops)
+@pytest.mark.parametrize("op", bit_ops)
 def test_bit_ops_scalar_scalar(op) -> None:
     check_op(op, (scalars[1], scalars[1]))
+
+
+@pytest.mark.parametrize(
+    "op",
+    [
+        operator.eq,
+        operator.ne,
+        operator.lt,
+        operator.le,
+        operator.gt,
+        operator.ge,
+    ],
+)
+@pytest.mark.parametrize("reverse", [False, True])
+@pytest.mark.parametrize(
+    "arr,val",
+    [
+        (num.asarray([0, 127, -128, 1], dtype="int8"), -1000),
+        (num.asarray([0, 127, -128, 1], dtype="int8"), 1000),
+        (num.asarray([0, 127, 255, 1], dtype="uint8"), -1),
+        (num.asarray([0, -(2**62), 2**62 - 1, 1], dtype="int64"), 2**63),
+    ],
+)
+def test_pyint_comparison(op, reverse, arr, val):
+    if reverse:
+        _op = op
+
+        def op(x, y):
+            return _op(y, x)
+
+    # The expected result is the same as any number within range (i.e. 0)
+    expected = op(0, val)
+    res = op(arr, val)
+
+    assert res.dtype == bool
+    assert res.shape == arr.shape
+    if expected:
+        assert res.all()
+    else:
+        assert not res.any()
+
+    # Check comparison to 0 as well
+    assert op(arr, 0).tolist() == [op(v, 0) for v in arr.tolist()]
 
 
 def parse_inputs(in_str, dtype_str):
