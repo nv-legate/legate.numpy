@@ -107,3 +107,4 @@ Rearranging elements
    fliplr
    flipud
    roll
+   rot90

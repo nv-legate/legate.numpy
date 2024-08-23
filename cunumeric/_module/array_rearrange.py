@@ -15,12 +15,12 @@
 from __future__ import annotations
 
 import itertools
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Sequence
 
 from .._array.util import add_boilerplate
 from .._utils import is_np2
 from .array_dimension import broadcast
-from .creation_data import asarray
+from .array_transpose import transpose
 from .creation_shape import empty_like
 
 if is_np2:
@@ -142,6 +142,77 @@ def fliplr(m: ndarray) -> ndarray:
     if m.ndim < 2:
         raise ValueError("Input must be >= 2-d.")
     return flip(m, axis=1)
+
+
+@add_boilerplate("m")
+def rot90(m: ndarray, k: int = 1, axes: Sequence[int] = (0, 1)) -> ndarray:
+    """
+    Rotate an array by 90 degrees in the plane specified by axes.
+
+    Rotation direction is from the first towards the second axis.
+    This means for a 2D array with the default `k` and `axes`, the
+    rotation will be counterclockwise.
+
+    Parameters
+    ----------
+    m : array_like
+        Array of two or more dimensions.
+    k : integer
+        Number of times the array is rotated by 90 degrees.
+    axes : (2,) array_like
+        The array is rotated in the plane defined by the axes.
+        Axes must be different.
+
+    Returns
+    -------
+    y : ndarray
+        A rotated copy of `m`.
+
+    See Also
+    --------
+    flip : Reverse the order of elements in an array along the given axis.
+    fliplr : Flip an array horizontally.
+    flipud : Flip an array vertically.
+
+        Availability
+        --------
+        Single GPU, Single CPU
+    """
+    axes = tuple(axes)
+    if len(axes) != 2:
+        raise ValueError("len(axes) must be 2.")
+
+    if axes[0] == axes[1] or abs(axes[0] - axes[1]) == m.ndim:
+        raise ValueError("Axes must be different.")
+
+    if (
+        axes[0] >= m.ndim
+        or axes[0] < -m.ndim
+        or axes[1] >= m.ndim
+        or axes[1] < -m.ndim
+    ):
+        raise ValueError(
+            f"Axes={axes} out of range for array of ndim={m.ndim}."
+        )
+
+    k %= 4
+
+    if k == 0:
+        return m.copy()
+    if k == 2:
+        return flip(flip(m, axes[0]), axes[1])
+
+    axes_list = list(range(0, m.ndim))
+    (axes_list[axes[0]], axes_list[axes[1]]) = (
+        axes_list[axes[1]],
+        axes_list[axes[0]],
+    )
+
+    if k == 1:
+        return transpose(flip(m, axes[1]), axes_list)
+    else:
+        # k == 3
+        return flip(transpose(m, axes_list), axes[1])
 
 
 @add_boilerplate("a")
