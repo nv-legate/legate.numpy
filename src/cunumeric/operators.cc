@@ -261,8 +261,15 @@ NDArray dot(NDArray rhs1, NDArray rhs2)
   auto& rhs2_shape = rhs2.shape();
 
   if (rhs1_shape[1] != rhs2_shape[0]) {
-    LEGATE_ABORT("Incompatible matrices: (" << rhs1_shape[0] << ", " << rhs1_shape[1] << ") x ("
-                                            << rhs2_shape[0] << ", " << rhs2_shape[1] << ")");
+    LEGATE_ABORT("Incompatible matrices: (",
+                 rhs1_shape[0],
+                 ", ",
+                 rhs1_shape[1],
+                 ") x (",
+                 rhs2_shape[0],
+                 ", ",
+                 rhs2_shape[1],
+                 ")");
   }
 
   auto runtime = CuNumericRuntime::get_runtime();
