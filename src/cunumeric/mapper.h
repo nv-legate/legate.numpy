@@ -23,7 +23,6 @@ namespace cunumeric {
 class CuNumericMapper final : public legate::mapping::Mapper {
   // Legate mapping functions
  public:
-  void set_machine(const legate::mapping::MachineQueryInterface* machine) override;
   [[nodiscard]] legate::mapping::TaskTarget task_target(
     const legate::mapping::Task& task,
     const std::vector<legate::mapping::TaskTarget>& options) override;

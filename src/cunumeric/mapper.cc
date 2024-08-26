@@ -21,8 +21,6 @@ using namespace legate::mapping;
 
 namespace cunumeric {
 
-void CuNumericMapper::set_machine(const legate::mapping::MachineQueryInterface* m) {}
-
 TaskTarget CuNumericMapper::task_target(const legate::mapping::Task& task,
                                         const std::vector<TaskTarget>& options)
 {

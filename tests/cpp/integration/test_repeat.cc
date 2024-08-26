@@ -24,10 +24,10 @@ using namespace cunumeric;
 namespace {
 
 template <typename T>
-std::tuple<std::vector<T>, std::vector<size_t>> repeat_result(std::vector<T> const& a,
-                                                              std::vector<int64_t> repeats,
-                                                              int32_t axis              = 0,
-                                                              std::vector<size_t> shape = {})
+std::tuple<std::vector<T>, std::vector<uint64_t>> repeat_result(std::vector<T> const& a,
+                                                                std::vector<int64_t> repeats,
+                                                                int32_t axis                = 0,
+                                                                std::vector<uint64_t> shape = {})
 {
   if (shape.empty()) {
     shape.push_back(a.size());
@@ -53,7 +53,7 @@ std::tuple<std::vector<T>, std::vector<size_t>> repeat_result(std::vector<T> con
     new_extent = std::accumulate(repeats.begin(), repeats.end(), int64_t(0));
     new_size   = size / shape[axis] * new_extent;
   }
-  std::vector<size_t> new_shape{shape};
+  std::vector<uint64_t> new_shape{shape};
   new_shape[axis] = new_extent;
 
   std::vector<size_t> idx;
@@ -80,7 +80,7 @@ std::tuple<std::vector<T>, std::vector<size_t>> repeat_result(std::vector<T> con
 
 TEST(Repeat, test_basic)
 {
-  std::vector<size_t> shape{2, 2};
+  std::vector<uint64_t> shape{2, 2};
   auto x_in = mk_seq_vector<int32_t>(shape);
   std::vector<int64_t> repeats{1, 2};
   int32_t axis          = 0;
@@ -94,7 +94,7 @@ TEST(Repeat, test_basic)
 
 TEST(Repeat, test_repeats_none)
 {
-  std::vector<std::tuple<std::vector<int32_t>, std::vector<size_t>>> x_in_list{
+  std::vector<std::tuple<std::vector<int32_t>, std::vector<uint64_t>>> x_in_list{
     {{}, {0}}, {{4}, {}}, {{2, 3}, {}}, {mk_seq_vector<int32_t>({3, 4, 2}), {3, 4, 2}}};
   for (auto [x_in, shape] : x_in_list) {
     auto x   = mk_array(x_in, shape);
@@ -105,7 +105,7 @@ TEST(Repeat, test_repeats_none)
 
 TEST(Repeat, test_array_empty_repeats_valid)
 {
-  std::vector<std::tuple<std::vector<double>, std::vector<size_t>>> repeats_list{
+  std::vector<std::tuple<std::vector<double>, std::vector<uint64_t>>> repeats_list{
     {{0}, {}}, {{3}, {}}, {{4.7}, {}}, {{0}, {1}}, {{3}, {1}}, {{4.7}, {1}}};
   for (auto [repeats, shape] : repeats_list) {
     auto rep   = mk_array(repeats, shape);
@@ -118,7 +118,7 @@ TEST(Repeat, test_array_empty_repeats_valid)
 // numpy fail, cunumeric pass
 TEST(Repeat, test_array_empty_repeats_invalid_negative)
 {
-  std::vector<std::vector<size_t>> repeats_list{{3, 4}, {1, 2, 3}};
+  std::vector<std::vector<uint64_t>> repeats_list{{3, 4}, {1, 2, 3}};
   for (auto repeats : repeats_list) {
     auto rep   = mk_array(repeats);
     auto x     = mk_array<int32_t>({}, {0});
@@ -129,7 +129,7 @@ TEST(Repeat, test_array_empty_repeats_invalid_negative)
 
 TEST(Repeat, test_array_empty_axis_valid)
 {
-  std::vector<std::tuple<std::vector<double>, std::vector<size_t>>> repeats_list{
+  std::vector<std::tuple<std::vector<double>, std::vector<uint64_t>>> repeats_list{
     {{0}, {}}, {{3}, {}}, {{4.7}, {}}, {{0}, {1}}, {{3}, {1}}, {{4.7}, {1}}};
   for (auto [repeats, shape] : repeats_list) {
     auto rep   = mk_array(repeats, shape);
@@ -141,7 +141,7 @@ TEST(Repeat, test_array_empty_axis_valid)
 
 TEST(Repeat, test_array_empty_axis_invalid)
 {
-  std::vector<std::tuple<std::vector<double>, std::vector<size_t>>> repeats_list{
+  std::vector<std::tuple<std::vector<double>, std::vector<uint64_t>>> repeats_list{
     {{0}, {}}, {{3}, {}}, {{4.7}, {}}, {{0}, {1}}, {{3}, {1}}, {{4.7}, {1}}};
   for (auto [repeats, shape] : repeats_list) {
     auto rep = mk_array(repeats, shape);
@@ -162,8 +162,8 @@ TEST(Repeat, test_array_int_axis_negative)
 
 TEST(Repeat, test_array_int_repeats_negative)
 {
-  std::vector<std::tuple<std::vector<double>, std::vector<size_t>>> repeats_list{{{-3}, {}},
-                                                                                 {{-3}, {1}}};
+  std::vector<std::tuple<std::vector<double>, std::vector<uint64_t>>> repeats_list{{{-3}, {}},
+                                                                                   {{-3}, {1}}};
   for (auto [repeats, shape] : repeats_list) {
     auto x = mk_array<int32_t>({3});
     EXPECT_THROW(repeat(x, repeats[0]), std::invalid_argument);
@@ -172,7 +172,7 @@ TEST(Repeat, test_array_int_repeats_negative)
 
 TEST(Repeat, test_array_int_repeats_valid)
 {
-  std::vector<std::tuple<std::vector<double>, std::vector<size_t>>> repeats_list{
+  std::vector<std::tuple<std::vector<double>, std::vector<uint64_t>>> repeats_list{
     {{0}, {}}, {{3}, {}}, {{4.7}, {}}, {{0}, {1}}, {{3}, {1}}, {{4.7}, {1}}};
   for (auto [repeats, shape] : repeats_list) {
     auto x                = mk_array<int32_t>({3});
@@ -184,8 +184,8 @@ TEST(Repeat, test_array_int_repeats_valid)
 
 TEST(Repeat, test_array_int_repeats_invalid)
 {
-  std::vector<std::tuple<std::vector<double>, std::vector<size_t>>> repeats_list{{{}, {0}},
-                                                                                 {{1, 2}, {}}};
+  std::vector<std::tuple<std::vector<double>, std::vector<uint64_t>>> repeats_list{{{}, {0}},
+                                                                                   {{1, 2}, {}}};
   for (auto [repeats, shape] : repeats_list) {
     auto rep = mk_array(repeats, shape);
     auto x   = mk_array<int32_t>({3});
@@ -195,7 +195,7 @@ TEST(Repeat, test_array_int_repeats_invalid)
 
 TEST(Repeat, test_array_1d_repeats_valid)
 {
-  std::vector<std::tuple<std::vector<double>, std::vector<size_t>>> repeats_list{
+  std::vector<std::tuple<std::vector<double>, std::vector<uint64_t>>> repeats_list{
     {{0}, {}}, {{3}, {}}, {{4.7}, {}}, {{0}, {1}}, {{3}, {1}}, {{4.7}, {1}}, {{2, 3, 4}, {}}};
   std::vector<int32_t> x_in{1, 2, 3};
   auto x = mk_array(x_in);
@@ -209,8 +209,8 @@ TEST(Repeat, test_array_1d_repeats_valid)
 
 TEST(Repeat, test_array_1d_repeats_invalid)
 {
-  std::vector<std::tuple<std::vector<int32_t>, std::vector<size_t>>> repeats_list{{{}, {0}},
-                                                                                  {{2, 3}, {}}};
+  std::vector<std::tuple<std::vector<int32_t>, std::vector<uint64_t>>> repeats_list{{{}, {0}},
+                                                                                    {{2, 3}, {}}};
   auto x = mk_array<int32_t>({1, 2, 3});
   for (auto [repeats, shape] : repeats_list) {
     auto rep = mk_array(repeats, shape);
@@ -220,7 +220,7 @@ TEST(Repeat, test_array_1d_repeats_invalid)
 
 TEST(Repeat, test_array_2d_repeats_valid)
 {
-  std::vector<std::tuple<std::vector<double>, std::vector<size_t>>> repeats_list{
+  std::vector<std::tuple<std::vector<double>, std::vector<uint64_t>>> repeats_list{
     {{0}, {}}, {{0}, {1}}, {{3}, {}}, {{4.7}, {}}, {{3}, {1}}, {{4.7}, {1}}};
   std::vector<int32_t> x_in = {1, 3, 2, 4};
   auto x                    = mk_array(x_in, {2, 2});
@@ -234,8 +234,8 @@ TEST(Repeat, test_array_2d_repeats_valid)
 
 TEST(Repeat, test_array_2d_repeats_invalid)
 {
-  std::vector<std::tuple<std::vector<int32_t>, std::vector<size_t>>> repeats_list{{{}, {0}},
-                                                                                  {{2, 3}, {}}};
+  std::vector<std::tuple<std::vector<int32_t>, std::vector<uint64_t>>> repeats_list{{{}, {0}},
+                                                                                    {{2, 3}, {}}};
   auto x = mk_array<int32_t>({1, 3, 2, 4}, {2, 2});
   for (auto [repeats, shape] : repeats_list) {
     auto rep = mk_array(repeats, shape);
@@ -245,10 +245,10 @@ TEST(Repeat, test_array_2d_repeats_invalid)
 
 TEST(Repeat, test_array_1d_repeats_fatal_error)
 {
-  std::vector<std::tuple<std::vector<int32_t>, std::vector<size_t>>> arr_list{
+  std::vector<std::tuple<std::vector<int32_t>, std::vector<uint64_t>>> arr_list{
     {{1, 2, 3}, {}}, {{1, 3, 2, 4}, {2, 2}}};
-  std::vector<std::tuple<std::vector<int32_t>, std::vector<size_t>>> repeats_list{{{-3}, {}},
-                                                                                  {{-3}, {1}}};
+  std::vector<std::tuple<std::vector<int32_t>, std::vector<uint64_t>>> repeats_list{{{-3}, {}},
+                                                                                    {{-3}, {1}}};
   for (auto [repeats, rep_shape] : repeats_list) {
     auto rep = mk_array(repeats, rep_shape);
     for (auto [x_in, x_shape] : arr_list) {
@@ -262,9 +262,9 @@ TEST(Repeat, test_array_1d_repeats_fatal_error)
 
 TEST(Repeat, test_repeats_nd)
 {
-  std::vector<std::tuple<std::vector<int32_t>, std::vector<size_t>>> arr_list{
+  std::vector<std::tuple<std::vector<int32_t>, std::vector<uint64_t>>> arr_list{
     {{}, {0}}, {{3}, {}}, {{1, 2, 3}, {}}, {{1, 3, 2, 4}, {2, 2}}};
-  std::vector<std::tuple<std::vector<int32_t>, std::vector<size_t>>> repeats_list{
+  std::vector<std::tuple<std::vector<int32_t>, std::vector<uint64_t>>> repeats_list{
     {{2, 3, 3, 3}, {2, 2}}, {mk_seq_vector<int32_t>({3, 3, 3}), {3, 3, 3}}};
   for (auto [repeats, rep_shape] : repeats_list) {
     auto rep = mk_array(repeats, rep_shape);
@@ -297,7 +297,7 @@ TEST(Repeat, test_nd_basic)
 {
   srand(111);
   for (int32_t ndim = 1; ndim <= LEGATE_MAX_DIM; ++ndim) {
-    std::vector<size_t> shape;
+    std::vector<uint64_t> shape;
     for (int32_t i = 0; i < ndim; ++i) {
       shape.push_back(randint(1, 9));
     }
@@ -315,7 +315,7 @@ TEST(Repeat, test_nd_axis)
   srand(222);
   for (int32_t ndim = 1; ndim <= LEGATE_MAX_DIM; ++ndim) {
     for (int32_t axis = 0; axis < ndim; ++axis) {
-      std::vector<size_t> shape;
+      std::vector<uint64_t> shape;
       for (int32_t i = 0; i < ndim; ++i) {
         shape.push_back(randint(1, 9));
       }
@@ -333,7 +333,7 @@ TEST(Repeat, test_nd_repeats)
 {
   srand(333);
   for (int32_t ndim = 1; ndim <= LEGATE_MAX_DIM; ++ndim) {
-    std::vector<size_t> shape;
+    std::vector<uint64_t> shape;
     for (int32_t i = 0; i < ndim; ++i) {
       shape.push_back(randint(1, 9));
     }
