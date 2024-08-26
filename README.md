@@ -54,4 +54,7 @@ See the discussion on contributing in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Contact
 
-If you have questions, please contact us at legate(at)nvidia.com.
+For technical questions about Cunumeric and Legate-based tools, please visit
+the [community discussion forum](https://github.com/nv-legate/discussion).
+
+If you have other questions, please contact us at legate(at)nvidia.com.

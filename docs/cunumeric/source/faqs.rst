@@ -76,7 +76,7 @@ This warning is currently expected on MacOS.
 How to determine available memory?
 ----------------------------------
 
-On Linux, running the following command will display the amount of 
+On Linux, running the following command will display the amount of
 available system memory:
 
 .. code-block:: sh
@@ -89,8 +89,8 @@ Available GPU memory (for each GPU) can be displayed by running:
 
     nvidia-smi --query-gpu memory.free --format=csv
 
-Both of these represent the available amount of memory, which may be shared 
-with other processes or libraries. You may need to reduce these amounts to 
+Both of these represent the available amount of memory, which may be shared
+with other processes or libraries. You may need to reduce these amounts to
 account for these, or to reflect the actual size of your problem more closely.
 
 If you do not have access to run the commands above, then refer to published
@@ -193,6 +193,12 @@ Are there resources where I can read more about Legate?
 
 Check out this `blog post <https://developer.nvidia.com/blog/accelerating-python-applications-with-cunumeric-and-legate/>`_
 to learn more about cuNumeric.
+
+Technical questions?
+--------------------
+
+For technical questions about Cunumeric and Legate-based tools, please visit
+the `community discussion forum <https://github.com/nv-legate/discussion>`_.
 
 Other questions?
 ----------------
