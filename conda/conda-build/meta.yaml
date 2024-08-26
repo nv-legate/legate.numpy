@@ -58,14 +58,14 @@ build:
 {% if not gpu_enabled_bool %}
   string: "cuda{{ cuda_major }}_py{{ py_version }}_{{ GIT_DESCRIBE_HASH }}_{{ PKG_BUILDNUM }}_cpu"
 {% else %}
-  string: "cuda{{ cuda_major }}_py{{ py_version }}_{{ GIT_DESCRIBE_HASH }}_{{ PKG_BUILDNUM }}"
+  string: "cuda{{ cuda_major }}_py{{ py_version }}_{{ GIT_DESCRIBE_HASH }}_{{ PKG_BUILDNUM }}_gpu"
 {% endif %}
 {% else %}
 # do not use git hash
 {% if not gpu_enabled_bool %}
   string: "cuda{{ cuda_major }}_py{{ py_version }}_{{ PKG_BUILDNUM }}_cpu"
 {% else %}
-  string: "cuda{{ cuda_major }}_py{{ py_version }}_{{ PKG_BUILDNUM }}"
+  string: "cuda{{ cuda_major }}_py{{ py_version }}_{{ PKG_BUILDNUM }}_gpu"
 {% endif %}
 {% endif %}
   script_env:
@@ -112,7 +112,7 @@ requirements:
 {% if not gpu_enabled_bool %}
     - legate-core ={{ core_version }} =*_cpu
 {% else %}
-    - legate-core ={{ core_version }}
+    - legate-core ={{ core_version }} =*_gpu
     - cuda-nvcc ={{ cuda_version }}
     - cuda-cccl ={{ cuda_version }}
     - cuda-cudart ={{ cuda_version }}
@@ -134,7 +134,7 @@ requirements:
 {% if not gpu_enabled_bool %}
     - legate-core ={{ core_version }} =*_cpu
 {% else %}
-    - legate-core ={{ core_version }}
+    - legate-core ={{ core_version }} =*_gpu
     - cuda-cudart >={{ cuda_version }},<{{ cuda_major+1 }}
     - cuda-version >={{ cuda_version }},<{{ cuda_major+1 }}
     - cutensor >=1.3 =*_*
