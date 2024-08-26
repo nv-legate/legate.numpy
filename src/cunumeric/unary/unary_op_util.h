@@ -1002,15 +1002,17 @@ struct UnaryOp<UnaryOpCode::ROUND, CODE> {
   {
     if constexpr (legate::is_complex_type<T>::value) {
       if (decimals < 0) {
-        return T{std::rint(x.real() / factor) * factor, std::rint(x.imag() / factor) * factor};
+        return T{static_cast<typename T::value_type>(std::rint(x.real() / factor) * factor),
+                 static_cast<typename T::value_type>(std::rint(x.imag() / factor) * factor)};
       } else {
-        return T{std::rint(x.real() * factor) / factor, std::rint(x.imag() * factor) / factor};
+        return T{static_cast<typename T::value_type>(std::rint(x.real() * factor) / factor),
+                 static_cast<typename T::value_type>(std::rint(x.imag() * factor) / factor)};
       }
     } else {
       if (decimals < 0) {
-        return T{std::rint(x / factor) * factor};
+        return static_cast<T>(std::rint(x / factor) * factor);
       } else {
-        return T{std::rint(x * factor) / factor};
+        return static_cast<T>(std::rint(x * factor) / factor);
       }
     }
   }
@@ -1035,9 +1037,9 @@ struct UnaryOp<UnaryOpCode::ROUND, legate::Type::Code::FLOAT16> {
   __CUDA_HD__ __half operator()(const __half& x) const
   {
     if (decimals < 0) {
-      return __half{std::rint(static_cast<float>(x) / factor) * factor};
+      return static_cast<__half>(std::rint(static_cast<float>(x) / factor) * factor);
     } else {
-      return __half{std::rint(static_cast<float>(x) * factor) / factor};
+      return static_cast<__half>(std::rint(static_cast<float>(x) * factor) / factor);
     }
   }
 
