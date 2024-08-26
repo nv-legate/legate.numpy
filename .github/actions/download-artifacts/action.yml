@@ -24,7 +24,7 @@ runs:
         path: .artifacts-dl
         repo: nv-legate/legate.core
         commit: ${{ inputs.git_sha }}
-        workflow_conclusion: success
+        workflow_conclusion: ""
         workflow: "ci-gh.yml"
         name: "legate.core-${{ inputs.device }}-[0-9a-z]{40}"
         name_is_regexp: true
