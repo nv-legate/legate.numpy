@@ -189,6 +189,7 @@ list(APPEND cunumeric_SOURCES
   src/cunumeric/matrix/trilu.cc
   src/cunumeric/matrix/trsm.cc
   src/cunumeric/matrix/util.cc
+  src/cunumeric/random/rand.cc
   src/cunumeric/search/argwhere.cc
   src/cunumeric/search/nonzero.cc
   src/cunumeric/set/unique.cc
@@ -247,6 +248,7 @@ if(Legion_USE_OpenMP)
     src/cunumeric/matrix/transpose_omp.cc
     src/cunumeric/matrix/trilu_omp.cc
     src/cunumeric/matrix/trsm_omp.cc
+    src/cunumeric/random/rand_omp.cc
     src/cunumeric/search/argwhere_omp.cc
     src/cunumeric/search/nonzero_omp.cc
     src/cunumeric/set/unique_omp.cc
@@ -300,6 +302,7 @@ if(Legion_USE_CUDA)
     src/cunumeric/matrix/transpose.cu
     src/cunumeric/matrix/trilu.cu
     src/cunumeric/matrix/trsm.cu
+    src/cunumeric/random/rand.cu
     src/cunumeric/search/argwhere.cu
     src/cunumeric/search/nonzero.cu
     src/cunumeric/set/unique.cu
