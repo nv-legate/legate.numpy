@@ -17,8 +17,6 @@
 #ifndef __CUNUMERIC_C_H__
 #define __CUNUMERIC_C_H__
 
-#include <stdint.h>
-
 // Match these to CuNumericOpCode in config.py
 // Also, sort these alphabetically except the first one for easy lookup later
 enum CuNumericOpCode {
@@ -340,7 +338,7 @@ bool cunumeric_has_cusolvermp();
 
 unsigned cunumeric_max_eager_volume();
 
-struct ReductionOpIds cunumeric_register_reduction_ops(int32_t code);
+struct ReductionOpIds cunumeric_register_reduction_ops(int code);
 
 #ifdef __cplusplus
 }

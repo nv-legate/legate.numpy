@@ -63,7 +63,7 @@ register_reduction_op_fn::register_reduction_op_fn::next_reduction_operator_id()
 #if !LEGATE_DEFINED(LEGATE_USE_CUDA)
 extern "C" {
 
-ReductionOpIds cunumeric_register_reduction_ops(int32_t code)
+ReductionOpIds cunumeric_register_reduction_ops(int code)
 {
   return legate::type_dispatch(static_cast<legate::Type::Code>(code),
                                cunumeric::register_reduction_op_fn{});

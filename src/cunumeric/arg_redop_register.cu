@@ -18,7 +18,7 @@
 
 extern "C" {
 
-ReductionOpIds cunumeric_register_reduction_ops(int32_t code)
+ReductionOpIds cunumeric_register_reduction_ops(int code)
 {
   return legate::type_dispatch(static_cast<legate::Type::Code>(code),
                                cunumeric::register_reduction_op_fn{});
