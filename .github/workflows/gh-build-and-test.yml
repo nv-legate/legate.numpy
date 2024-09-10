@@ -59,6 +59,21 @@ jobs:
       upload-enabled: ${{ inputs.upload-enabled }}
     secrets: inherit
 
+  nightly-exists:
+    needs: setup-build
+    name: "Check if legate.internal nightly exists for SHA specified in versions.json (${{ inputs.platform }}, ${{ inputs.target-device }}, ${{ inputs.build-type }})"
+    uses:
+      nv-legate/legate-gh-ci/.github/workflows/gh-check-if-nightly-exists-for-all-dependencies.yml@check_nightlies
+    with:
+      client-repo: ${{ github.event.repository.name }}
+      target-device: ${{ inputs.target-device }}
+      runs-on: ${{ needs.setup-build.outputs.runner_type }}
+      platform: ${{ inputs.platform }}
+      build-type: ${{ inputs.build-type }}
+      dependencies-file: "cmake/versions.json"
+      legate-gh-ci-tag: "check_nightlies"
+      network: "ucx"
+    secrets: inherit
 
   upload:
     needs: build
