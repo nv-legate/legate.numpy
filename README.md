@@ -15,6 +15,8 @@ limitations under the License.
 
 -->
 
+[![Build Nightly release package](https://github.com/nv-legate/cunumeric.internal/actions/workflows/ci-gh-nightly-release.yml/badge.svg)](https://github.com/nv-legate/cunumeric.internal/actions/workflows/ci-gh-nightly-release.yml)
+
 # cuNumeric
 
 cuNumeric is a [Legate](https://github.com/nv-legate/legate.core) library
