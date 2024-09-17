@@ -17,7 +17,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
-from legate.core import Scalar
+from legate import Scalar
 
 from .._utils import is_np2
 from ..config import (

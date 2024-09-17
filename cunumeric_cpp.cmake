@@ -20,7 +20,7 @@
 option(BUILD_SHARED_LIBS "Build cuNumeric shared libraries" ON)
 option(cunumeric_EXCLUDE_TBLIS_FROM_ALL "Exclude tblis targets from cuNumeric's 'all' target" OFF)
 option(cunumeric_EXCLUDE_OPENBLAS_FROM_ALL "Exclude OpenBLAS targets from cuNumeric's 'all' target" OFF)
-option(cunumeric_EXCLUDE_LEGATE_CORE_FROM_ALL "Exclude legate.core targets from cuNumeric's 'all' target" OFF)
+option(cunumeric_EXCLUDE_LEGATE_FROM_ALL "Exclude legate targets from cuNumeric's 'all' target" OFF)
 
 ##############################################################################
 # - Project definition -------------------------------------------------------
@@ -62,7 +62,7 @@ option(Legion_USE_CUDA "Use CUDA" ON)
 option(Legion_USE_OpenMP "Use OpenMP" ${OpenMP_FOUND})
 option(Legion_BOUNDS_CHECKS "Build cuNumeric with bounds checks (expensive)" OFF)
 
-# If legate.core has CUDA support, then including it in a project will automatically call
+# If legate has CUDA support, then including it in a project will automatically call
 # enable_language(CUDA). However, this does not play nice with the rapids-cmake CUDA utils
 # which support a wider range of values for CMAKE_CUDA_ARCHITECTURES than cmake does. You
 # end up with the following error:
@@ -85,16 +85,16 @@ if(("${CMAKE_CUDA_ARCHITECTURES}" STREQUAL "RAPIDS") OR ("${CMAKE_CUDA_ARCHITECT
 endif()
 
 ###
-# If we find legate.core already configured on the system, it will report
+# If we find legate already configured on the system, it will report
 # whether it was compiled with bounds checking (Legion_BOUNDS_CHECKS),
 # CUDA (Legion_USE_CUDA), and OpenMP (Legion_USE_OpenMP).
 #
-# We use the same variables as legate.core because we want to enable/disable
-# each of these features based on how legate.core was configured (it doesn't
-# make sense to build cuNumeric's CUDA bindings if legate.core wasn't built
+# We use the same variables as legate because we want to enable/disable
+# each of these features based on how legate was configured (it doesn't
+# make sense to build cuNumeric's CUDA bindings if legate wasn't built
 # with CUDA support).
 ###
-include(cmake/thirdparty/get_legate_core.cmake)
+include(cmake/thirdparty/get_legate.cmake)
 
 set(CMAKE_CUDA_ARCHITECTURES "${cmake_cuda_arch_cache_backup}" CACHE STRING "" FORCE)
 set(CMAKE_CUDA_ARCHITECTURES "${cmake_cuda_arch_backup}")
@@ -433,7 +433,7 @@ set_target_properties(cunumeric
                       LIBRARY_OUTPUT_DIRECTORY            lib)
 
 target_link_libraries(cunumeric
-   PUBLIC legate::core
+   PUBLIC legate::legate
           $<TARGET_NAME_IF_EXISTS:NCCL::NCCL>
   PRIVATE BLAS::BLAS
           tblis::tblis

@@ -94,4 +94,6 @@ class BitGeneratorTask : public CuNumericTask<BitGeneratorTask> {
 #endif
 };
 
+void destroy_bitgenerator(const legate::Processor& proc);
+
 }  // namespace cunumeric

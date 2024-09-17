@@ -17,7 +17,7 @@ from __future__ import annotations
 from string import ascii_lowercase, ascii_uppercase
 from typing import Sequence
 
-from legate.core.utils import OrderedSet
+from legate.utils import OrderedSet
 
 Modes = tuple[list[str], list[str], list[str]]
 

@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "core/utilities/typedefs.h"
+#include "legate/utilities/typedefs.h"
 
 namespace cunumeric {
 

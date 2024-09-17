@@ -16,8 +16,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, cast
 
-import legate.core.types as ty
-from legate.core import broadcast, get_legate_runtime
+import legate.types as ty
+from legate import broadcast, get_legate_runtime
 
 from ..config import CuNumericOpCode
 from ..runtime import runtime
@@ -25,7 +25,7 @@ from ._cholesky import transpose_copy_single
 from ._exception import LinAlgError
 
 if TYPE_CHECKING:
-    from legate.core import Library, LogicalStore
+    from legate import Library, LogicalStore
 
     from .._thunk.deferred import DeferredArray
 

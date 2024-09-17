@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "core/data/buffer.h"
+#include "legate/data/buffer.h"
 
 #include <cub/device/device_radix_sort.cuh>
 #include <cub/device/device_segmented_radix_sort.cuh>

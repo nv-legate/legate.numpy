@@ -44,6 +44,9 @@ void unload_cudalibs() noexcept
   auto runtime = legate::Runtime::get_runtime();
   auto library = runtime->find_library(cunumeric_library_name);
 
+  // Issue an execution fence so all outstanding tasks are done before we start destroying handles
+  runtime->issue_execution_fence();
+
   runtime->submit(
     runtime->create_task(library,
                          legate::LocalTaskID{CuNumericOpCode::CUNUMERIC_UNLOAD_CUDALIBS},
@@ -74,19 +77,11 @@ void cunumeric_perform_registration(void) { cunumeric::registration_callback(); 
 
 bool cunumeric_has_curand()
 {
-#if LEGATE_DEFINED(LEGATE_USE_CUDA) || LEGATE_DEFINED(CUNUMERIC_CURAND_FOR_CPU_BUILD)
-  return true;
-#else
-  return false;
-#endif
+  return LEGATE_DEFINED(LEGATE_USE_CUDA) || LEGATE_DEFINED(CUNUMERIC_CURAND_FOR_CPU_BUILD);
 }
 
 bool cunumeric_has_cusolvermp()
 {
-#if LEGATE_DEFINED(LEGATE_USE_CUDA) && LEGATE_DEFINED(CUNUMERIC_USE_CUSOLVERMP)
-  return true;
-#else
-  return false;
-#endif
+  return LEGATE_DEFINED(LEGATE_USE_CUDA) && LEGATE_DEFINED(CUNUMERIC_USE_CUSOLVERMP);
 }
 }

@@ -6,17 +6,17 @@ Building from source
 Basic build
 -----------
 
-Users must have a working installation of the `Legate Core`_ library prior to
+Users must have a working installation of the `Legate`_ library prior to
 installing cuNumeric.
-**Installing cuNumeric by itself will not automatically install Legate Core.**
+**Installing cuNumeric by itself will not automatically install Legate.**
 
 As for other dependencies, the Dependencies section on the
-`Legate Core build instructions`_ also covers cuNumeric, so no additional
+`Legate build instructions`_ also covers cuNumeric, so no additional
 packages are required.
 
-Once Legate Core is installed, you can simply invoke ``./install.py`` from the
+Once Legate is installed, you can simply invoke ``./install.py`` from the
 cuNumeric top-level directory. The build will automatically pick up the
-configuration used when building Legate Core (e.g. the CUDA Toolkit directory).
+configuration used when building Legate (e.g. the CUDA Toolkit directory).
 
 Advanced topics
 ---------------
@@ -24,20 +24,20 @@ Advanced topics
 Building through pip & cmake
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-cuNumeric uses the same cmake/scikit-build-based build workflow as Legate Core.
-See the `Legate Core build instructions`_ for an overview.
+cuNumeric uses the same cmake/scikit-build-based build workflow as Legate.
+See the `Legate build instructions`_ for an overview.
 
 There are several examples in the ``scripts`` folder. We walk through the steps in
 ``build-with-legate-separately-no-install.sh`` here.
 
-We assume a pre-existing Legate Core build. For details on building Legate Core,
-consult the `Legate Core repository`_.
+We assume a pre-existing Legate build. For details on building Legate,
+consult the `Legate repository`_.
 
 First, the CMake build needs to be configured:
 
 .. code:: sh
 
-  $ cmake -S . -B build -GNinja -D legate_core_ROOT:STRING=path/to/legate/build
+  $ cmake -S . -B build -GNinja -D legate_ROOT:STRING=path/to/legate/build
 
 We point cuNumeric to the Legate *build* tree, not an installation.
 This generates all build-dependent headers and Python files.
@@ -60,12 +60,12 @@ Once the C++ libraries are available, we can do an editable (development) pip in
 
 The Python source tree and CMake build tree are now available with the environment Python
 for running cuNumeric programs. The diagram below illustrates the
-complete workflow for building both Legate core and cuNumeric.
+complete workflow for building both Legate and cuNumeric.
 
 .. image:: /_images/developer-build.png
   :width: 600
   :alt: "notional diagram of cunumeric build process"
 
-.. _Legate Core: https://github.com/nv-legate/legate.core
-.. _Legate Core build instructions: https://github.com/nv-legate/legate.core/blob/HEAD/BUILD.md
-.. _Legate Core repository: https://github.com/nv-legate/legate.core
+.. _Legate: https://github.com/nv-legate/legate.core
+.. _Legate build instructions: https://github.com/nv-legate/legate.core/blob/HEAD/BUILD.md
+.. _Legate repository: https://github.com/nv-legate/legate.core

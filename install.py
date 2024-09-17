@@ -238,7 +238,7 @@ def install_cunumeric(
     except ImportError:
         raise RuntimeError(
             "Cannot determine Legate install directory. Please make sure "
-            "legate.core is installed in the current Python environment."
+            "Legate is installed in the current Python environment."
         )
 
     legate_dir = dirname(lg_install_info.libpath)
@@ -380,7 +380,7 @@ def install_cunumeric(
     if cuda and curand_dir is not None:
         cmake_flags += ["-Dcunumeric_cuRAND_INCLUDE_DIR=%s" % curand_dir]
 
-    cmake_flags += ["-Dlegate_core_ROOT=%s" % legate_dir]
+    cmake_flags += ["-Dlegate_ROOT=%s" % legate_dir]
     cmake_flags += ["-DCMAKE_BUILD_PARALLEL_LEVEL=%s" % thread_count]
 
     cmake_flags += extra_flags
@@ -494,7 +494,7 @@ def driver():
         required=False,
         default=os.environ.get("CURAND_PATH"),
         help="Path to cuRAND installation directory. This flag is ignored "
-        "if Legate Core was built with CUDA support.",
+        "if Legate was built with CUDA support.",
     )
     # TODO(jfaibussowit) maybe split to --with-cusolvermp [bool]
     # and a --with-cusolvermp-dir [dir]

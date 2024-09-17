@@ -17,7 +17,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, Callable, Iterable, Sequence, cast
 
 import numpy as np
-from legate.core import Scalar
+from legate import Scalar
 
 from .._utils import is_np2
 from .._utils.array import is_advanced_indexing
@@ -1707,7 +1707,9 @@ class EagerArray(NumPyThunk):
             self.deferred.svd(u, s, vh)
         else:
             try:
-                full_matrices = u.shape[0] == u.shape[1] and vh.shape[0] == vh.shape[1]
+                full_matrices = (
+                    u.shape[0] == u.shape[1] and vh.shape[0] == vh.shape[1]
+                )
                 result_u, result_s, result_vh = np.linalg.svd(
                     self.array, full_matrices
                 )

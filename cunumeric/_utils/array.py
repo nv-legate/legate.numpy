@@ -17,7 +17,7 @@ from __future__ import annotations
 from functools import reduce
 from typing import Any
 
-import legate.core.types as ty
+import legate.types as ty
 import numpy as np
 
 from ..types import NdShape

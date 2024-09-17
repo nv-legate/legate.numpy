@@ -18,7 +18,7 @@ from math import prod
 
 import numpy as np
 import pytest
-from legate.core import LEGATE_MAX_DIM
+from legate import LEGATE_MAX_DIM
 
 import cunumeric as num
 from cunumeric.settings import settings

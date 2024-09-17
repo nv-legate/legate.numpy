@@ -18,7 +18,7 @@ from itertools import permutations, product
 
 import numpy as np
 import pytest
-from legate.core.utils import OrderedSet
+from legate.utils import OrderedSet
 from utils.comparisons import allclose
 from utils.generators import mk_0to1_array, permutes_to
 

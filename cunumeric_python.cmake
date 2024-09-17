@@ -53,7 +53,7 @@ add_custom_target("generate_install_info_py" ALL
 
 add_library(cunumeric_python INTERFACE)
 add_library(cunumeric::cunumeric_python ALIAS cunumeric_python)
-target_link_libraries(cunumeric_python INTERFACE legate::core)
+target_link_libraries(cunumeric_python INTERFACE legate::legate)
 
 # ############################################################################
 # - conda environment --------------------------------------------------------

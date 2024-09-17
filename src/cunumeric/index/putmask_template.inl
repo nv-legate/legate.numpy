@@ -17,7 +17,7 @@
 #pragma once
 
 // Useful for IDEs
-#include <core/utilities/typedefs.h>
+#include <legate/utilities/typedefs.h>
 #include "cunumeric/index/putmask.h"
 #include "cunumeric/pitches.h"
 #include "cunumeric/execution_policy/indexing/parallel_loop.h"

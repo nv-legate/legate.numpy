@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "core/data/buffer.h"
+#include "legate/data/buffer.h"
 #include "cunumeric/utilities/thrust_allocator.h"
 #include "cunumeric/utilities/thrust_util.h"
 

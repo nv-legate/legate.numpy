@@ -14,7 +14,7 @@
 #
 
 import pytest
-from legate.core import LEGATE_MAX_DIM
+from legate import LEGATE_MAX_DIM
 from utils.contractions import check_default
 from utils.generators import mk_0to1_array
 

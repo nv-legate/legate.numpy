@@ -29,7 +29,7 @@
 {% endif %}
 {% if package_version is defined %}
     {% set version = package_version %}
-    {% set core_version = version %}
+    {% set legate_version = version %}
 ## The tag must be in one of the two formats (where N is a digit):
 ## vNN.NN.NN
 ## vNN.NN.NN.dev
@@ -37,10 +37,10 @@
 ## Note: default values are only given to make conda build work. They should not be necessary in principle.
 {% elif 'dev' in environ.get('GIT_DESCRIBE_TAG', placeholder_version) %}
     {% set version = (environ.get('GIT_DESCRIBE_TAG', placeholder_version) ~ environ.get('GIT_DESCRIBE_NUMBER', '')).lstrip('v') %}
-    {% set core_version = (version.rsplit('.',1)[0] ~ ".dev" ~ "|>=" ~ version.rsplit('.',1)[0]) %}
+    {% set legate_version = (version.rsplit('.',1)[0] ~ ".dev" ~ "|>=" ~ version.rsplit('.',1)[0]) %}
 {% else %}
     {% set version = environ.get('GIT_DESCRIBE_TAG', placeholder_version).lstrip('v') %}
-    {% set core_version = version %}
+    {% set legate_version = version %}
 {% endif %}
 
 package:
@@ -118,14 +118,14 @@ requirements:
     - libcurand-dev
     - openblas =* =*openmp*
 {% if gpu_enabled_bool %}
-    - legate-core >={{ core_version }} =*_gpu*
+    - legate >={{ legate_version }} =*_gpu*
     - cuda-cccl
     - cutensor >=2.0 =*_*
     - libcublas-dev
     - libcusolver-dev
     - libcufft-dev
 {% else %}
-    - legate-core >={{ core_version }} =*_cpu*
+    - legate >={{ legate_version }} =*_cpu*
 {% endif %}
     - cuda-version ={{ cuda_version }}
 

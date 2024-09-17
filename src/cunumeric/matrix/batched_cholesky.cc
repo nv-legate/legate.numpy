@@ -19,7 +19,7 @@
 #include "cunumeric/matrix/batched_cholesky_template.inl"
 
 #include <cblas.h>
-#include <core/type/type_info.h>
+#include <legate/type/type_info.h>
 #include <lapack.h>
 
 namespace cunumeric {

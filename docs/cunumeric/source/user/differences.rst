@@ -4,7 +4,7 @@ Supported shapes and datatypes
 ------------------------------
 
 cuNumeric natively supports arrays of dimensionality only up to the maximum
-number of dimensions supported by the linked build of Legate-Core.
+number of dimensions supported by the linked build of Legate.
 
 cuNumeric natively supports only numerical datatypes, and doesn't support
 extended-precision floats (e.g. `np.float128`).
@@ -65,4 +65,3 @@ cuNumeric doesn't support non-unit steps on index expressions, e.g. `arr[::2]`.
 Duplicate indices on advanced indexing expressions produce undefined behavior.
 This is also the case in NumPy but the current NumPy implementation happens
 to produce a deterministic result. (See https://stackoverflow.com/questions/15973827/handling-of-duplicate-indices-in-numpy-assignments)
-

@@ -31,9 +31,9 @@ jobs:
       shell: bash --noprofile --norc -xeuo pipefail {0}
       run: |
         DEPENDENCIES_FILE="cunumeric.internal/cmake/versions.json"
-        GIT_REPO=$(jq -r '.packages.legate_core.repo' ${DEPENDENCIES_FILE})
-        GIT_ORG=$(jq -r '.packages.legate_core.org' ${DEPENDENCIES_FILE})
-        GIT_TAG=$(jq -r '.packages.legate_core.git_tag' ${DEPENDENCIES_FILE})
+        GIT_REPO=$(jq -r '.packages.legate.repo' ${DEPENDENCIES_FILE})
+        GIT_ORG=$(jq -r '.packages.legate.org' ${DEPENDENCIES_FILE})
+        GIT_TAG=$(jq -r '.packages.legate.git_tag' ${DEPENDENCIES_FILE})
 
         echo "GIT_REPO=${GIT_REPO}" >> $GITHUB_ENV
         echo "GIT_ORG=${GIT_ORG}" >> $GITHUB_ENV

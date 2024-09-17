@@ -11,7 +11,7 @@ setup_env() {
     apt-get update
     apt-get install -y numactl make
 
-    mamba create -yn legate -c "${ARTIFACTS_DIR}/conda-build/legate_core" -c "${ARTIFACTS_DIR}/conda-build/cunumeric" -c conda-forge legate-core cunumeric
+    mamba create -yn legate -c "${ARTIFACTS_DIR}/conda-build/legate" -c "${ARTIFACTS_DIR}/conda-build/cunumeric" -c conda-forge legate cunumeric
 }
 
 setup_test_env() {

@@ -23,6 +23,8 @@
 
 #include "cunumeric/random/bitgenerator_curand.inl"
 
+#include <mutex>
+
 namespace cunumeric {
 
 using namespace legate;
@@ -66,6 +68,11 @@ std::mutex BitGeneratorImplBody<VariantKind::GPU>::lock_generators = {};
 /*static*/ void BitGeneratorTask::gpu_variant(legate::TaskContext context)
 {
   bitgenerator_template<VariantKind::GPU>(context);
+}
+
+void destroy_bitgenerator(const legate::Processor& proc)
+{
+  BitGeneratorImplBody<VariantKind::GPU>::destroy_bitgenerator(proc);
 }
 
 }  // namespace cunumeric

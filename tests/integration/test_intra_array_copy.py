@@ -15,7 +15,7 @@
 
 import numpy as np
 import pytest
-from legate.core import LEGATE_MAX_DIM
+from legate import LEGATE_MAX_DIM
 from utils.generators import mk_0to1_array
 
 import cunumeric as num
@@ -129,7 +129,7 @@ def array_gen(lib, ndim):
     # no overlap between source and destination slice
     yield from no_overlap(lib, ndim, random_array)
     # no overlap at view level, but possible overlap on underlying array
-    # TODO: disable until legate.core#40 is fixed
+    # TODO: disable until legate#40 is fixed
     # yield from no_overlap(lib, ndim, nd_view_of_1d)
     # partial overlap between source and destination slice
     yield from partial_overlap(lib, ndim)

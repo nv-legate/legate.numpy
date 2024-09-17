@@ -17,7 +17,7 @@
 #pragma once
 
 // Useful for IDEs
-#include <core/task/exception.h>
+#include <legate/task/exception.h>
 #include "cunumeric/cunumeric_task.h"
 #include "cunumeric/matrix/batched_cholesky.h"
 #include "cunumeric/matrix/potrf_template.inl"

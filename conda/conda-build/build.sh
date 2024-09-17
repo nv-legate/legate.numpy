@@ -59,7 +59,3 @@ $PYTHON -m pip install             \
   . -vv
 
 echo "Build ending on $(date)"
-
-# Legion leaves an egg-info file which will confuse conda trying to pick up the information
-# Remove it so the legate-core is the only egg-info file added
-rm -rf $SP_DIR/legion*egg-info

@@ -18,7 +18,7 @@
 
 #include <vector>
 
-#include "core/comm/coll.h"
+#include "legate/comm/coll.h"
 
 // Useful for IDEs
 #include "cunumeric/matrix/mp_solve.h"

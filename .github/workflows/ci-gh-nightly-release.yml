@@ -26,9 +26,10 @@ jobs:
     uses:
       ./.github/workflows/gh-build-and-test.yml
     with:
-      target-device: ${{ matrix.target-device }}
-      platform: ${{ matrix.platform }}
       build-type: release
+      platform: ${{ matrix.platform }}
+      python-version: "3.10"
+      target-device: ${{ matrix.target-device }}
       upload-enabled: ${{ matrix.upload-enabled }}
       waive-gpu-tests: ${{ github.workflow == 'Build Release package' && matrix.platform == 'linux-aarch64' }}
     secrets: inherit

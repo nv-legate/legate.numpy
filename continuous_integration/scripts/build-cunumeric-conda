@@ -10,14 +10,14 @@ build_cunumeric_conda_package() {
     fi
 
     mkdir -p /tmp/conda-build /tmp/out
-    cp -r "${ARTIFACTS_DIR}/conda-build/legate_core" /tmp/conda-build/
+    cp -r "${ARTIFACTS_DIR}/conda-build/legate" /tmp/conda-build/
 
     local conda_build_args=();
     conda_build_args+=(--override-channels);
     conda_build_args+=(-c conda-forge);
     # the ucx channel is only necessary as a WAR until the real ucx 1.17 package is available on conda-forge
     conda_build_args+=(-c https://github.com/nv-legate/ucx-package/raw/main);
-    conda_build_args+=(-c file:///tmp/conda-build/legate_core);
+    conda_build_args+=(-c file:///tmp/conda-build/legate);
     conda_build_args+=(--croot /tmp/conda-build/cunumeric);
     conda_build_args+=(--numpy 1.22);
     conda_build_args+=(--python ${python_version});

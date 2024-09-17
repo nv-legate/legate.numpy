@@ -19,7 +19,7 @@
 // Useful for IDEs
 #include "cunumeric/sort/sort.h"
 #include "cunumeric/pitches.h"
-#include "core/comm/coll.h"
+#include "legate/comm/coll.h"
 
 #include <thrust/detail/config.h>
 #include <thrust/execution_policy.h>

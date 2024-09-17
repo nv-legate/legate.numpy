@@ -26,8 +26,8 @@ from types import (
 )
 from typing import Any, Callable, Container, Iterable, Mapping, Protocol, cast
 
-from legate.core import track_provenance
-from legate.core.utils import OrderedSet
+from legate import track_provenance
+from legate.utils import OrderedSet
 
 from ..runtime import runtime
 from ..settings import settings

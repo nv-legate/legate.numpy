@@ -325,6 +325,11 @@ class CuNumericLib:
         self.shared_object = cast(_CunumericSharedLib, shared_lib)
 
     def register(self) -> None:
+        from legate import get_legate_runtime
+
+        # We need to make sure that the runtime is started
+        get_legate_runtime()
+
         callback = getattr(
             self.shared_object, "cunumeric_perform_registration"
         )

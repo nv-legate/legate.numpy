@@ -54,7 +54,7 @@ example, to use 2 GPUs instead, run the following
 
     LEGATE_CONFIG="--gpus 2" python main.py
 
-For execution with multiple nodes (assuming Legate Core is installed
+For execution with multiple nodes (assuming Legate is installed
 with networking support) users can supply the `--nodes` option.
 
 

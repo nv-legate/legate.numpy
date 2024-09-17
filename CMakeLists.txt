@@ -104,7 +104,7 @@ if(CMAKE_GENERATOR STREQUAL "Ninja")
       VERBATIM
     )
     foreach(_dep IN ITEMS cunumeric cunumeric_python
-                          legion_core legion_core_python
+                          legate legate_python
                           Legion LegionRuntime
                           Realm RealmRuntime
                           Regent)

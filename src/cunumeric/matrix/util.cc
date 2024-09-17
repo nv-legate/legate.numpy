@@ -14,9 +14,9 @@
  *
  */
 
-#include "core/data/buffer.h"
+#include "legate/data/buffer.h"
 #include "cunumeric/matrix/util.h"
-#include "core/utilities/macros.h"
+#include "legate/utilities/macros.h"
 #include "legate_defines.h"
 
 #if LEGATE_DEFINED(LEGATE_USE_OPENMP)

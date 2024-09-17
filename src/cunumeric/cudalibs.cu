@@ -15,6 +15,7 @@
  */
 
 #include "cunumeric/cunumeric_task.h"
+#include "cunumeric/random/bitgenerator.h"
 
 #include "cudalibs.h"
 
@@ -507,6 +508,7 @@ class UnloadCUDALibsTask : public CuNumericTask<UnloadCUDALibsTask> {
     const auto proc = legate::Processor::get_executing_processor();
     auto& lib       = get_cuda_libraries(proc);
     lib.finalize();
+    destroy_bitgenerator(proc);
   }
 };
 

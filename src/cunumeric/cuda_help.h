@@ -22,7 +22,7 @@
 #error "This header can only be included from .cu files"
 #endif
 
-#include "core/cuda/stream_pool.h"
+#include "legate/cuda/stream_pool.h"
 #include "cunumeric/arg.h"
 #include <cublas_v2.h>
 #include <cusolverDn.h>

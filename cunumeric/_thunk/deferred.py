@@ -31,9 +31,9 @@ from typing import (
     cast,
 )
 
-import legate.core.types as ty
+import legate.types as ty
 import numpy as np
-from legate.core import (
+from legate import (
     Annotation,
     LogicalStore,
     ReductionOpKind,
@@ -44,7 +44,7 @@ from legate.core import (
     get_legate_runtime,
     scale,
 )
-from legate.core.utils import OrderedSet
+from legate.utils import OrderedSet
 
 from .._utils import is_np2
 from .._utils.array import (

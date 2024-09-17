@@ -1351,6 +1351,12 @@ struct BitGeneratorImplBody {
   }
 
  public:
+  static void destroy_bitgenerator(const legate::Processor& proc)
+  {
+    std::lock_guard<std::mutex> guard{lock_generators};
+    m_generators.erase(proc);
+  }
+
   void operator()(BitGeneratorOperation op,
                   int32_t generatorID,
                   BitGeneratorType generatorType,  // to allow for lazy initialization,
