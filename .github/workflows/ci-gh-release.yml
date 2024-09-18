@@ -1,7 +1,7 @@
 name: Build Release package
 
 concurrency:
-  group: ci-nightly-release-on-${{ github.event_name }}-from-${{ github.ref_name }}
+  group: ci-release-on-${{ github.event_name }}-from-${{ github.ref_name }}
   cancel-in-progress: true
 
 on:
@@ -25,6 +25,8 @@ jobs:
           - cpu
         upload-enabled:
           - false
+        python-version:
+          - "3.12"
         exclude:
           - platform: linux-aarch64
             target-device: gpu
