@@ -64,7 +64,24 @@ std::vector<StoreMapping> CuNumericMapper::store_mappings(
       mappings.back().policy().exact = true;
       return std::move(mappings);
     }
-    case CUNUMERIC_MATMUL:
+    case CUNUMERIC_MATMUL: {
+      std::vector<StoreMapping> mappings;
+      auto inputA = task.input(1);
+      auto inputB = task.input(2);
+
+      mappings.push_back(
+        StoreMapping::default_mapping(inputA.data(), options.front(), true /*exact*/));
+      mappings.back().policy().redundant = true;
+      mappings.push_back(
+        StoreMapping::default_mapping(inputB.data(), options.front(), true /*exact*/));
+      mappings.back().policy().redundant = true;
+
+      auto outputC = task.output(0);
+      mappings.push_back(
+        StoreMapping::default_mapping(outputC.data(), options.front(), true /*exact*/));
+
+      return mappings;
+    }
     case CUNUMERIC_MATVECMUL:
     case CUNUMERIC_UNIQUE_REDUCE: {
       // TODO: Our actual requirements are a little less strict than this; we require each array or

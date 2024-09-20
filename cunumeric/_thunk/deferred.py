@@ -41,9 +41,12 @@ from legate import (
     align,
     bloat,
     broadcast,
+    constant,
+    dimension,
     get_legate_runtime,
     scale,
 )
+from legate.settings import settings as legate_settings
 from legate.utils import OrderedSet
 
 from .._utils import is_np2
@@ -79,6 +82,7 @@ else:
 
 if TYPE_CHECKING:
     import numpy.typing as npt
+    from legate import LogicalStorePartition
 
     from ..config import BitGeneratorType, FFTDirection, FFTType, WindowOpCode
     from ..types import (
@@ -1560,19 +1564,97 @@ class DeferredArray(NumPyThunk):
                 assert m == rhs1.shape[0]
                 assert n == rhs2.shape[1]
                 assert k == rhs2.shape[0]
-                lhs = lhs.promote(1, k)
-                rhs1 = rhs1.promote(2, n)
-                rhs2 = rhs2.promote(0, m)
 
-                task = legate_runtime.create_auto_task(
-                    self.library, CuNumericOpCode.MATMUL
+                def rounding_divide(
+                    lhs: tuple[int, ...], rhs: tuple[int, ...]
+                ) -> tuple[int, ...]:
+                    return tuple(
+                        (lh + rh - 1) // rh for (lh, rh) in zip(lhs, rhs)
+                    )
+
+                # TODO: better heuristics
+                def choose_2d_color_shape(
+                    shape: tuple[int, int]
+                ) -> tuple[int, int]:
+                    # 1M elements, we should probably even go larger
+                    MIN_MATRIX_SIZE = 1 << 20
+                    # If the matrix is too small don't partition it at all
+                    if (not legate_settings.test()) and shape[0] * shape[
+                        1
+                    ] <= MIN_MATRIX_SIZE:
+                        return (1, 1)
+
+                    # start with 1D and re-balance by powers of 2
+                    # (don't worry about other primes)
+                    color_shape = (runtime.num_procs, 1)
+                    while (
+                        shape[0] / color_shape[0]
+                        < 2 * shape[1] / color_shape[1]
+                        and color_shape[0] % 2 == 0
+                    ):
+                        color_shape = (color_shape[0] // 2, color_shape[1] * 2)
+
+                    return color_shape
+
+                # TODO: better heuristics?
+                def choose_batchsize(
+                    tilesize: tuple[int, int], k: int, itemsize: int
+                ) -> int:
+                    # default corresponds to 128MB (to store A and B tile)
+                    from ..settings import settings
+
+                    max_elements_per_tile = (
+                        settings.matmul_cache_size() // itemsize
+                    )
+                    total_elements_rhs = (tilesize[0] + tilesize[1]) * k
+                    num_batches = rounding_divide(
+                        (total_elements_rhs,), (max_elements_per_tile,)
+                    )[0]
+                    batch_size = rounding_divide((k,), (num_batches,))[0]
+
+                    return batch_size
+
+                # choose color-shape/k_batch_size
+                initial_color_shape = choose_2d_color_shape((m, n))
+                tile_shape = rounding_divide((m, n), initial_color_shape)
+                color_shape = rounding_divide((m, n), tile_shape)
+                k_batch_size = choose_batchsize(
+                    tile_shape, k, rhs1_thunk.dtype.itemsize  # type: ignore
                 )
-                p_lhs = task.add_reduction(lhs, ReductionOpKind.ADD)
-                p_rhs1 = task.add_input(rhs1)
-                p_rhs2 = task.add_input(rhs2)
-                task.add_constraint(align(p_lhs, p_rhs1))
-                task.add_constraint(align(p_lhs, p_rhs2))
-                task.execute()
+                k_color = rounding_divide((k,), (k_batch_size,))
+
+                # initial partition of lhs defined py tile-shape
+                tiled_lhs = lhs.partition_by_tiling(tile_shape)
+                tiled_rhs1 = rhs1.partition_by_tiling(
+                    (tile_shape[0], k_batch_size)
+                )
+                tiled_rhs2 = rhs2.partition_by_tiling(
+                    (k_batch_size, tile_shape[1])
+                )
+
+                def run_matmul_for_batch(
+                    tiled_lhs: LogicalStorePartition,
+                    tiled_rhs1: LogicalStorePartition,
+                    tiled_rhs2: LogicalStorePartition,
+                    i: int,
+                ) -> None:
+                    manual_task = legate_runtime.create_manual_task(
+                        self.library, CuNumericOpCode.MATMUL, color_shape
+                    )
+
+                    manual_task.add_output(tiled_lhs)
+                    manual_task.add_input(tiled_lhs)
+                    manual_task.add_input(
+                        tiled_rhs1, (dimension(0), constant(i))
+                    )
+                    manual_task.add_input(
+                        tiled_rhs2, (constant(i), dimension(1))
+                    )
+
+                    manual_task.execute()
+
+                for i in range(0, k_color[0]):
+                    run_matmul_for_batch(tiled_lhs, tiled_rhs1, tiled_rhs2, i)
 
             else:
                 assert False

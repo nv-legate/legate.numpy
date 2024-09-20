@@ -45,7 +45,10 @@ class CuNumericRuntime {
 
  public:
   legate::AutoTask create_task(CuNumericOpCode op_code);
+  legate::ManualTask create_task(CuNumericOpCode op_code,
+                                 const legate::tuple<std::uint64_t>& launch_shape);
   void submit(legate::AutoTask&& task);
+  void submit(legate::ManualTask&& task);
 
  public:
   uint32_t get_next_random_epoch();

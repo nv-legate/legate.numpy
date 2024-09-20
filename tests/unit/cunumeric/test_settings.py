@@ -34,6 +34,7 @@ _expected_settings = (
     "min_cpu_chunk",
     "min_omp_chunk",
     "force_thunk",
+    "matmul_cache_size",
 )
 
 _settings_with_test_defaults = (
@@ -42,6 +43,7 @@ _settings_with_test_defaults = (
     "min_gpu_chunk",
     "min_cpu_chunk",
     "min_omp_chunk",
+    "matmul_cache_size",
 )
 
 ENV_HEADER = Path(__file__).parents[3] / "src" / "env_defaults.h"

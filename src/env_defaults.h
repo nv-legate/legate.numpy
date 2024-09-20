@@ -30,3 +30,7 @@
 // 1 << 13 (need actual number for python to parse)
 #define MIN_OMP_CHUNK_DEFAULT 8192
 #define MIN_OMP_CHUNK_TEST 2
+
+// 1 << 27 (need actual number for python to parse)
+#define MATMUL_CACHE_SIZE_DEFAULT 134217728
+#define MATMUL_CACHE_SIZE_TEST 4096

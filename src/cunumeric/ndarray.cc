@@ -16,6 +16,7 @@
 
 #include "cunumeric/ndarray.h"
 #include <stdexcept>
+#include <sys/types.h>
 
 #include "cunumeric/binary/binary_op_util.h"
 #include "cunumeric/operators.h"
@@ -54,6 +55,15 @@ struct check_nonzero_scalar_fn {
     } else {
       return true;
     }
+  }
+};
+
+struct get_typesize_fn {
+  template <legate::Type::Code CODE>
+  uint64_t operator()()
+  {
+    using VAL = legate::type_of<CODE>;
+    return uint64_t(sizeof(VAL));
   }
 };
 
@@ -542,6 +552,8 @@ void NDArray::unary_reduction(int32_t op_code_, NDArray input)
   runtime->submit(std::move(task));
 }
 
+uint64_t ceildiv(uint64_t a, uint64_t b) { return (a + b - 1) / b; }
+
 void NDArray::dot(NDArray rhs1, NDArray rhs2)
 {
   if (size() == 0) {
@@ -558,20 +570,41 @@ void NDArray::dot(NDArray rhs1, NDArray rhs2)
   auto n = rhs2.shape()[1];
   auto k = rhs1.shape()[1];
 
-  auto lhs_s  = store_.promote(1, k);
-  auto rhs1_s = rhs1.store_.promote(2, n);
-  auto rhs2_s = rhs2.store_.promote(0, m);
+  // compute tilesize for lhs and batch_size for k
+  // TODO make generic
+  std::vector<std::uint64_t> initial_tile_shape = {512, 512};
 
-  auto task = runtime->create_task(CuNumericOpCode::CUNUMERIC_MATMUL);
+  legate::tuple<std::uint64_t> color_shape = {ceildiv(m, initial_tile_shape[0]),
+                                              ceildiv(n, initial_tile_shape[1])};
+  std::vector<std::uint64_t> tile_shape = {ceildiv(m, color_shape[0]), ceildiv(n, color_shape[1])};
 
-  auto p_lhs  = task.add_reduction(lhs_s, get_reduction_op(UnaryRedCode::SUM));
-  auto p_rhs1 = task.add_input(rhs1_s);
-  auto p_rhs2 = task.add_input(rhs2_s);
+  auto get_batchsize = [&](const std::vector<std::uint64_t>& tilesize, std::uint64_t k) {
+    uint64_t typesize = legate::type_dispatch(type().code(), get_typesize_fn{});
+    // default corresponds to 128MB (to store A and B tile)
+    uint64_t max_elements_per_tile = cunumeric_matmul_cache_size() / typesize;
+    uint64_t total_elements_rhs    = (tilesize[0] + tilesize[1]) * k;
+    uint64_t num_batches           = ceildiv(total_elements_rhs, max_elements_per_tile);
+    uint64_t batch_size            = ceildiv(k, num_batches);
+    return batch_size;
+  };
+  std::uint64_t k_batch_size = get_batchsize(tile_shape, k);
 
-  task.add_constraint(align(p_lhs, p_rhs1));
-  task.add_constraint(align(p_rhs1, p_rhs2));
+  std::vector<std::uint64_t> tile_shape_rhs1 = {tile_shape[0], k_batch_size};
+  std::vector<std::uint64_t> tile_shape_rhs2 = {k_batch_size, tile_shape[1]};
+  auto color_k                               = ceildiv(k, k_batch_size);
 
-  runtime->submit(std::move(task));
+  auto p_lhs  = store_.partition_by_tiling(tile_shape);
+  auto p_rhs1 = rhs1.store_.partition_by_tiling(tile_shape_rhs1);
+  auto p_rhs2 = rhs2.store_.partition_by_tiling(tile_shape_rhs2);
+
+  for (std::uint64_t i = 0; i < color_k; ++i) {
+    auto task = runtime->create_task(CuNumericOpCode::CUNUMERIC_MATMUL, color_shape);
+    task.add_output(p_lhs);
+    task.add_input(p_lhs);
+    task.add_input(p_rhs1, legate::SymbolicPoint{legate::dimension(0), legate::constant(i)});
+    task.add_input(p_rhs2, legate::SymbolicPoint{legate::constant(i), legate::dimension(1)});
+    runtime->submit(std::move(task));
+  }
 }
 
 void NDArray::arange(Scalar start, Scalar stop, Scalar step)

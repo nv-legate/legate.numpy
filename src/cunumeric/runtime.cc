@@ -86,7 +86,18 @@ legate::AutoTask CuNumericRuntime::create_task(CuNumericOpCode op_code)
   return legate_runtime_->create_task(library_, legate::LocalTaskID{op_code});
 }
 
+legate::ManualTask CuNumericRuntime::create_task(CuNumericOpCode op_code,
+                                                 const legate::tuple<std::uint64_t>& launch_shape)
+{
+  return legate_runtime_->create_task(library_, legate::LocalTaskID{op_code}, launch_shape);
+}
+
 void CuNumericRuntime::submit(legate::AutoTask&& task) { legate_runtime_->submit(std::move(task)); }
+
+void CuNumericRuntime::submit(legate::ManualTask&& task)
+{
+  legate_runtime_->submit(std::move(task));
+}
 
 uint32_t CuNumericRuntime::get_next_random_epoch() { return next_epoch_++; }
 
@@ -152,6 +163,13 @@ unsigned cunumeric_max_eager_volume()
     return min_omp_chunk;
   }
   return min_cpu_chunk;
+}
+
+unsigned cunumeric_matmul_cache_size()
+{
+  static const auto max_cache_size = cunumeric::extract_env(
+    "CUNUMERIC_MATMUL_CACHE_SIZE", MATMUL_CACHE_SIZE_DEFAULT, MATMUL_CACHE_SIZE_TEST);
+  return max_cache_size;
 }
 
 }  // extern "C"

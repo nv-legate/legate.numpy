@@ -338,6 +338,8 @@ bool cunumeric_has_cusolvermp();
 
 unsigned cunumeric_max_eager_volume();
 
+unsigned cunumeric_matmul_cache_size();
+
 struct ReductionOpIds cunumeric_register_reduction_ops(int code);
 
 #ifdef __cplusplus

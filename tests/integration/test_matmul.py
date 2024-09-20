@@ -95,6 +95,35 @@ def test_inplace_operator(a_shape, b_shape):
     assert allclose(np_a, num_a)
 
 
+@pytest.mark.parametrize(
+    "mnk",
+    (
+        (134, 5, 45),
+        (134, 66, 7),
+        (26, 154, 45),
+        (46, 154, 5),
+        (13, 5, 45),
+        (4, 15, 45),
+        (1, 5, 45),
+        (34, 5, 1),
+        (1, 5, 45),
+        (1, 1, 5),
+        (1, 5, 1),
+        (1, 1, 1),
+        (5, 1, 1),
+    ),
+)
+def test_2d_matmul(mnk):
+    assert len(mnk) == 3
+    a_shape = (mnk[0], mnk[2])
+    b_shape = (mnk[2], mnk[1])
+    np_a = np.random.random(a_shape)
+    np_b = np.random.random(b_shape)
+    num_a = num.array(np_a)
+    num_b = num.array(np_b)
+    assert allclose(np_a @ np_b, num_a @ num_b)
+
+
 class TestMatmulErrors:
     @pytest.mark.parametrize(
         "shapesAB",

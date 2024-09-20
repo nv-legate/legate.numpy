@@ -169,5 +169,21 @@ class CunumericRuntimeSettings(Settings):
         """,
     )
 
+    matmul_cache_size: EnvOnlySetting[int] = EnvOnlySetting(
+        "matmul_cache_size",
+        "CUNUMERIC_MATMUL_CACHE_SIZE",
+        default=134217728,  # 128MB
+        test_default=4096,  # 4KB
+        convert=convert_int,
+        help="""
+        Force cuNumeric to keep temporary task slices during matmul
+        computations smaller than this threshold. Whenever the temporary
+        space needed during computation would exceed this value the task
+        will be batched over 'k' to fulfill the requirement.
+
+        This is a read-only environment variable setting used by the runtime.
+        """,
+    )
+
 
 settings = CunumericRuntimeSettings()
