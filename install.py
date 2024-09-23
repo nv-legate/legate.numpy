@@ -14,6 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+from __future__ import annotations
 
 import argparse
 import multiprocessing
@@ -22,6 +23,7 @@ import platform
 import shutil
 import subprocess
 import sys
+from pathlib import Path
 
 # Flush output on newlines
 sys.stdout.reconfigure(line_buffering=True)
@@ -123,6 +125,46 @@ def was_previously_built_with_different_build_isolation(
         except Exception:
             pass
     return False
+
+
+def find_legate_cmake_dir() -> Path:
+    r"""Try to determine the location of legate cmake files.
+
+    Returns
+    -------
+    Path
+        The directory containing the legate cmake files.
+
+    Raises
+    ------
+    RuntimeError
+        If legate cmake directory could not be found.
+    """
+    try:
+        import legate.install_info as lg_install_info
+    except (ImportError, ModuleNotFoundError) as e:
+        raise RuntimeError(
+            "Cannot determine Legate install directory. Please make sure "
+            "Legate is installed in the current Python environment."
+        ) from e
+
+    path = Path(lg_install_info.libpath).resolve()
+    if (path / "cmake" / "legate").exists():
+        # If this exists, then we were installed normally into a python or
+        # conda env.
+        return path
+
+    # Possibly installed in an editable installation, in which case legate-config.cmake
+    # and friends will live in the root binary directory.
+    root_path = path.root
+    assert isinstance(root_path, str)
+    while not any(p.name == "legate-config.cmake" for p in path.iterdir()):
+        path = path.parent
+        if str(path) == root_path:
+            raise RuntimeError(
+                "Could not determine directory containing legate CMake files"
+            )
+    return path
 
 
 def install_cunumeric(
@@ -233,15 +275,7 @@ def install_cunumeric(
     cutensor_dir = validate_path(cutensor_dir)
     openblas_dir = validate_path(openblas_dir)
 
-    try:
-        import legate.install_info as lg_install_info
-    except ImportError:
-        raise RuntimeError(
-            "Cannot determine Legate install directory. Please make sure "
-            "Legate is installed in the current Python environment."
-        )
-
-    legate_dir = dirname(lg_install_info.libpath)
+    legate_dir = find_legate_cmake_dir()
 
     if verbose:
         print("cuda_dir: ", cuda_dir)
@@ -380,7 +414,7 @@ def install_cunumeric(
     if cuda and curand_dir is not None:
         cmake_flags += ["-Dcunumeric_cuRAND_INCLUDE_DIR=%s" % curand_dir]
 
-    cmake_flags += ["-Dlegate_ROOT=%s" % legate_dir]
+    cmake_flags += ["-Dlegate_ROOT=%s" % str(legate_dir)]
     cmake_flags += ["-DCMAKE_BUILD_PARALLEL_LEVEL=%s" % thread_count]
 
     cmake_flags += extra_flags
