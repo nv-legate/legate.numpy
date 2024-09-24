@@ -943,8 +943,12 @@ class DeferredArray(NumPyThunk):
     @auto_convert("rhs")
     def set_item(self, key: Any, rhs: Any) -> None:
         assert self.dtype == rhs.dtype
+
         # Check to see if this is advanced indexing or not
         if is_advanced_indexing(key):
+            # copy if a self-copy might overlap
+            rhs = rhs._copy_if_overlapping(self)
+
             # Create the indexing array
             (
                 copy_needed,
@@ -1017,7 +1021,6 @@ class DeferredArray(NumPyThunk):
                 # done, the effect of inplace update is already reflected
                 # to the arr. Therefore, we skip the copy to avoid redundant
                 # copies if we know that we hit such a scenario.
-                # TODO: We should make this work for the advanced indexing case
                 # NOTE: Neither Store nor Storage have an __eq__, so we can
                 # only check that the underlying RegionField/Future corresponds
                 # to the same Legion handle.
