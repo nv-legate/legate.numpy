@@ -14,9 +14,17 @@
  *
  */
 
+// MacOS host variant:
+//
+#if defined(__APPLE__) && defined(__MACH__)
+#define CUNUMERIC_USE_STL_RANDOM_ENGINE
+#endif
+
 #include "cunumeric/random/bitgenerator.h"
 #include "cunumeric/random/bitgenerator_template.inl"
 #include "cunumeric/random/bitgenerator_util.h"
+
+#include "cunumeric/random/rnd_types.h"
 
 #include "cunumeric/random/curand_help.h"
 #include "cunumeric/random/randutil/randutil.h"
@@ -31,7 +39,17 @@ static Logger log_curand("cunumeric.random");
 
 Logger& randutil_log() { return log_curand; }
 
-void randutil_check_curand(curandStatus_t error, const char* file, int line)
+#ifdef CUNUMERIC_USE_STL_RANDOM_ENGINE
+void randutil_check_status(rnd_status_t error, std::string_view file, int line)
+{
+  if (error) {
+    randutil_log().fatal() << "Internal random engine failure with error " << (int)error
+                           << " in file " << file << " at line " << line;
+    assert(false);
+  }
+}
+#else
+void randutil_check_curand(curandStatus_t error, std::string_view file, int line)
 {
   if (error != CURAND_STATUS_SUCCESS) {
     randutil_log().fatal() << "Internal CURAND failure with error " << (int)error << " in file "
@@ -39,6 +57,7 @@ void randutil_check_curand(curandStatus_t error, const char* file, int line)
     assert(false);
   }
 }
+#endif
 
 struct CPUGenerator : public CURANDGenerator {
   CPUGenerator(BitGeneratorType gentype, uint64_t seed, uint64_t generatorId, uint32_t flags)

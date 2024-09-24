@@ -16,6 +16,8 @@
 
 #include "generator.h"
 
+#include "randomizer.h"
+
 template <typename field_t>
 struct cauchy_t;
 
@@ -28,7 +30,12 @@ struct cauchy_t<float> {
   template <typename gen_t>
   RANDUTIL_QUALIFIERS float operator()(gen_t& gen)
   {
-    float y = curand_uniform(&gen);  // y cannot be 0
+    using value_t = float;
+    value_t y     = randutilimpl::engine_uniform<value_t>(gen);  // y \in (0, 1]
+
+    // must avoid tan(pi/2), hence scale the interval by (1-eps):
+    //
+    y = y * (value_t{1} - cuda::std::numeric_limits<value_t>::epsilon());
     return x0 + gamma * ::tanf(pi * (y - 0.5f));
   }
 };
@@ -42,7 +49,12 @@ struct cauchy_t<double> {
   template <typename gen_t>
   RANDUTIL_QUALIFIERS double operator()(gen_t& gen)
   {
-    double y = curand_uniform_double(&gen);  // y cannot be 0
+    using value_t = double;
+    value_t y     = randutilimpl::engine_uniform<value_t>(gen);  // y \in (0, 1]
+
+    // must avoid tan(pi/2), hence scale the interval by (1-eps):
+    //
+    y = y * (value_t{1} - cuda::std::numeric_limits<value_t>::epsilon());
     return x0 + gamma * ::tan(pi * (y - 0.5));
   }
 };

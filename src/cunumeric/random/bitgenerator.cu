@@ -23,11 +23,23 @@
 
 #include "cunumeric/random/bitgenerator_curand.inl"
 
+#include <string_view>
 #include <mutex>
 
 namespace cunumeric {
 
 using namespace legate;
+
+// required by CHECK_CURAND_DEVICE:
+//
+void randutil_check_curand_device(curandStatus_t error, std::string_view file, int line)
+{
+  if (error != CURAND_STATUS_SUCCESS) {
+    randutil_log().fatal() << "Internal CURAND failure with error " << (int)error << " in file "
+                           << file << " at line " << line;
+    assert(false);
+  }
+}
 
 struct GPUGenerator : public CURANDGenerator {
   cudaStream_t stream_;

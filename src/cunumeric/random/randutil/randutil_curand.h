@@ -30,6 +30,10 @@
 // host generators are not compiled with nvcc
 #define QUALIFIERS static
 #define RANDUTIL_QUALIFIERS
+#ifdef CUNUMERIC_USE_STL_RANDOM_ENGINE
+#include <random>
+#else
 #include <curand_kernel.h>
+#endif
 
 #endif

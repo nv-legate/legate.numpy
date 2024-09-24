@@ -272,7 +272,7 @@ class TestBitGeneratorErrors:
             num.random.BitGenerator()
 
     @pytest.mark.xfail
-    @pytest.mark.parametrize("dtype", (np.int32, np.float128, str))
+    @pytest.mark.parametrize("dtype", (np.int32, str))
     def test_random_invalid_dtype(self, dtype):
         expected_exc = TypeError
         seed = 42
