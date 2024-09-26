@@ -25,6 +25,7 @@ from .._array.util import (
     convert_to_cunumeric_ndarray,
 )
 from .._utils import is_np2
+from .._utils.array import calculate_volume
 from .._utils.coverage import is_implemented
 from ..runtime import runtime
 from ..types import NdShape
@@ -48,7 +49,7 @@ if TYPE_CHECKING:
 
     import numpy.typing as npt
 
-    from ..types import BoundsMode
+    from ..types import BoundsMode, OrderType
 
 _builtin_min = min
 
@@ -242,6 +243,77 @@ def mask_indices(
             category=UserWarning,
         )
     return mask_func(a, k).nonzero()
+
+
+@add_boilerplate("indices")
+def unravel_index(
+    indices: ndarray,
+    shape: NdShape,
+    order: OrderType = "C",
+) -> tuple[ndarray, ...] | ndarray:
+    """
+    Converts a flat index or array of flat indices into a tuple
+    of coordinate arrays.
+
+    Parameters
+    ----------
+    indices : array_like
+        An integer array whose elements are indices into the flattened
+        version of an array of dimensions ``shape``.
+    shape : tuple of ints
+        The shape of the array to use for unraveling ``indices``.
+
+    order : {'C', 'F'}, optional
+        Determines whether the indices should be viewed as indexing in
+        row-major (C-style) or column-major (Fortran-style) order.
+
+    Returns
+    -------
+    unraveled_coords : tuple of ndarray
+        Each array in the tuple has the same shape as the ``indices``
+        array.
+
+    See Also
+    --------
+    numpy.unravel_index
+
+    Availability
+    --------
+    Multiple GPUs, Multiple CPUs
+    """
+
+    if order not in (
+        "F",
+        "C",
+    ):
+        raise ValueError("order is not understood")
+
+    if indices is None or not np.can_cast(
+        indices.dtype, np.int64, "same_kind"
+    ):
+        raise TypeError("only int indices permitted")
+
+    size = calculate_volume(shape)
+
+    if (indices < 0).any() or (indices > size).any():
+        raise ValueError("indices have out-of-bounds value(s)")
+
+    if indices.size == 0:
+        unraveled_coords = tuple(
+            empty(indices.shape, dtype=indices.dtype)
+            for dim in range(len(shape))
+        )
+        return unraveled_coords
+
+    unraveled_coords = tuple()
+    for dim in shape[::-1] if order == "C" else shape:
+        unraveled_coords = (
+            (indices % dim,) + unraveled_coords
+            if order == "C"
+            else unraveled_coords + (indices % dim,)
+        )
+        indices = indices // dim
+    return unraveled_coords
 
 
 def diag_indices(n: int, ndim: int = 2) -> tuple[ndarray, ...]:

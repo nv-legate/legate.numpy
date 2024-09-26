@@ -9,6 +9,7 @@ Generating index arrays
 .. autosummary::
    :toctree: generated/
 
+   unravel_index
    diag_indices
    diag_indices_from
    mask_indices
