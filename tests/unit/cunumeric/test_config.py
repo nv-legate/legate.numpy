@@ -117,6 +117,7 @@ def test_CuNumericOpCode() -> None:
 def test_UnaryOpCode() -> None:
     assert (set(m.UnaryOpCode.__members__)) == {
         "ABSOLUTE",
+        "ANGLE",
         "ARCCOS",
         "ARCCOSH",
         "ARCSIN",

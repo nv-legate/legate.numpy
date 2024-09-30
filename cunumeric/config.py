@@ -221,6 +221,7 @@ class _CunumericSharedLib:
     CUNUMERIC_UNLOAD_CUDALIBS: int
     CUNUMERIC_UNPACKBITS: int
     CUNUMERIC_UOP_ABSOLUTE: int
+    CUNUMERIC_UOP_ANGLE: int
     CUNUMERIC_UOP_ARCCOS: int
     CUNUMERIC_UOP_ARCCOSH: int
     CUNUMERIC_UOP_ARCSIN: int
@@ -429,6 +430,7 @@ class CuNumericOpCode(IntEnum):
 @unique
 class UnaryOpCode(IntEnum):
     ABSOLUTE = _cunumeric.CUNUMERIC_UOP_ABSOLUTE
+    ANGLE = _cunumeric.CUNUMERIC_UOP_ANGLE
     ARCCOS = _cunumeric.CUNUMERIC_UOP_ARCCOS
     ARCCOSH = _cunumeric.CUNUMERIC_UOP_ARCCOSH
     ARCSIN = _cunumeric.CUNUMERIC_UOP_ARCSIN

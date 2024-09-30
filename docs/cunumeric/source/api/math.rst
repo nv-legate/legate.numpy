@@ -139,6 +139,7 @@ Handling complex numbers
 
    real
    imag
+   angle
    conj
    conjugate
 

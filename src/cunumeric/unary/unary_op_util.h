@@ -33,6 +33,7 @@ namespace cunumeric {
 
 enum class UnaryOpCode : int {
   ABSOLUTE    = CUNUMERIC_UOP_ABSOLUTE,
+  ANGLE       = CUNUMERIC_UOP_ANGLE,
   ARCCOS      = CUNUMERIC_UOP_ARCCOS,
   ARCCOSH     = CUNUMERIC_UOP_ARCCOSH,
   ARCSIN      = CUNUMERIC_UOP_ARCSIN,
@@ -88,6 +89,8 @@ constexpr decltype(auto) op_dispatch(UnaryOpCode op_code, Functor f, Fnargs&&...
   switch (op_code) {
     case UnaryOpCode::ABSOLUTE:
       return f.template operator()<UnaryOpCode::ABSOLUTE>(std::forward<Fnargs>(args)...);
+    case UnaryOpCode::ANGLE:
+      return f.template operator()<UnaryOpCode::ANGLE>(std::forward<Fnargs>(args)...);
     case UnaryOpCode::ARCCOS:
       return f.template operator()<UnaryOpCode::ARCCOS>(std::forward<Fnargs>(args)...);
     case UnaryOpCode::ARCCOSH:
@@ -240,6 +243,33 @@ struct UnaryOp<UnaryOpCode::ABSOLUTE, CODE> {
     using std::fabs;
     return static_cast<_T>(fabs(x));
   }
+};
+
+template <legate::Type::Code CODE>
+struct UnaryOp<UnaryOpCode::ANGLE, CODE> {
+  using T                     = legate::type_of_t<CODE>;
+  static constexpr bool valid = true;
+
+  UnaryOp(const std::vector<legate::Scalar>& args) : deg{args.size() == 1 && args[0].value<bool>()}
+  {
+    assert(args.size() == 1);
+  }
+
+  template <typename U = T, std::enable_if_t<legate::is_complex_type<U>::value>* = nullptr>
+  constexpr decltype(auto) operator()(const T& x) const
+  {
+    double res = atan2(x.imag(), x.real());
+    return deg ? res * 180.0 / M_PI : res;
+  }
+
+  template <typename U = T, std::enable_if_t<!legate::is_complex_type<U>::value>* = nullptr>
+  constexpr decltype(auto) operator()(const T& x) const
+  {
+    double res = atan2(0.0, static_cast<double>(x));
+    return res >= 0 ? 0.0 : (deg ? 180.0 : M_PI);
+  }
+
+  bool deg;
 };
 
 template <legate::Type::Code CODE>

@@ -71,7 +71,7 @@ class NDArray {
   void fill(const Scalar& value);
   void binary_op(int32_t op_code, NDArray rhs1, NDArray rhs2);
   void binary_reduction(int32_t op_code, NDArray rhs1, NDArray rhs2);
-  void unary_op(int32_t op_code, NDArray input);
+  void unary_op(int32_t op_code, NDArray input, const std::vector<legate::Scalar>& extra_args = {});
   void unary_reduction(int32_t op_code, NDArray input);
   void eye(int32_t k);
   void trilu(NDArray rhs, int32_t k, bool lower);

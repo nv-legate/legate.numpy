@@ -1484,6 +1484,8 @@ class EagerArray(NumPyThunk):
                 out=self.array,
                 decimals=args[0].value(),
             )
+        elif op == UnaryOpCode.ANGLE:
+            self.array = np.angle(rhs.array, args[0].value())
         else:
             raise RuntimeError("unsupported unary op " + str(op))
 

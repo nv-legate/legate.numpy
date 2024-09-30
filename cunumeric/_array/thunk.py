@@ -80,11 +80,13 @@ def perform_unary_op(
         # No output yet, so make one
         out_shape = src.shape
 
-        if op == UnaryOpCode.ROUND or src.dtype.kind != "c":
+        if op == UnaryOpCode.ANGLE:
+            dtype = np.dtype(np.float64)
+        elif op == UnaryOpCode.ROUND or src.dtype.kind != "c":
             dtype = src.dtype
         else:
             if src.dtype == np.dtype(np.complex64):
-                dtype = np.dtype(np.float32)
+                dtype = np.dtype(np.float32)  # type: ignore
             else:
                 dtype = np.dtype(np.float64)
 
@@ -95,14 +97,15 @@ def perform_unary_op(
         )
 
     if out.dtype != src.dtype:
-        if op == UnaryOpCode.ABSOLUTE and src.dtype.kind == "c":
+        if (
+            op == UnaryOpCode.ABSOLUTE and src.dtype.kind == "c"
+        ) or op == UnaryOpCode.ANGLE:
             out._thunk.unary_op(
                 op,
                 src._thunk,
                 True,
                 extra_args,
             )
-
         else:
             temp = ndarray(
                 out.shape,

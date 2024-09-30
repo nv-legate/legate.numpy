@@ -508,7 +508,9 @@ void NDArray::binary_reduction(int32_t op_code, NDArray rhs1, NDArray rhs2)
   runtime->submit(std::move(task));
 }
 
-void NDArray::unary_op(int32_t op_code, NDArray input)
+void NDArray::unary_op(int32_t op_code,
+                       NDArray input,
+                       const std::vector<legate::Scalar>& extra_args /*= {}*/)
 {
   if (size() == 0) {
     return;
@@ -523,6 +525,10 @@ void NDArray::unary_op(int32_t op_code, NDArray input)
   auto p_out = task.add_output(store_);
   auto p_in  = task.add_input(rhs);
   task.add_scalar_arg(legate::Scalar(op_code));
+
+  for (auto&& arg : extra_args) {
+    task.add_scalar_arg(arg);
+  }
 
   task.add_constraint(align(p_out, p_in));
 

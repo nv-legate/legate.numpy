@@ -84,6 +84,7 @@ enum CuNumericOpCode {
 // Also, sort these alphabetically for easy lookup later
 enum CuNumericUnaryOpCode {
   CUNUMERIC_UOP_ABSOLUTE = 1,
+  CUNUMERIC_UOP_ANGLE,
   CUNUMERIC_UOP_ARCCOS,
   CUNUMERIC_UOP_ARCCOSH,
   CUNUMERIC_UOP_ARCSIN,

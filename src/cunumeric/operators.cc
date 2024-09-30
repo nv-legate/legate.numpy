@@ -34,11 +34,13 @@ NDArray array(std::vector<uint64_t> shape, const legate::Type& type)
   return CuNumericRuntime::get_runtime()->create_array(std::move(shape), type);
 }
 
-NDArray unary_op(UnaryOpCode op_code, NDArray input)
+NDArray unary_op(UnaryOpCode op_code,
+                 NDArray input,
+                 const std::vector<legate::Scalar>& extra_args = {})
 {
   auto runtime = CuNumericRuntime::get_runtime();
   auto out     = runtime->create_array(input.shape(), input.type());
-  out.unary_op(static_cast<int32_t>(op_code), std::move(input));
+  out.unary_op(static_cast<int32_t>(op_code), std::move(input), extra_args);
   return out;
 }
 
@@ -66,6 +68,13 @@ NDArray abs(NDArray input) { return unary_op(UnaryOpCode::ABSOLUTE, std::move(in
 NDArray add(NDArray rhs1, NDArray rhs2, std::optional<NDArray> out)
 {
   return binary_op(BinaryOpCode::ADD, std::move(rhs1), std::move(rhs2), std::move(out));
+}
+
+NDArray angle(NDArray input, bool deg)
+{
+  const std::vector<Scalar> extra_args = {Scalar(deg)};
+
+  return unary_op(UnaryOpCode::ANGLE, std::move(input), extra_args);
 }
 
 NDArray multiply(NDArray rhs1, NDArray rhs2, std::optional<NDArray> out)
