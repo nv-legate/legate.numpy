@@ -74,28 +74,60 @@ NDArray mk_array(std::vector<T> const& values, std::vector<uint64_t> shape = {})
 }
 
 template <typename T>
-void check_array(NDArray a, std::vector<T> values, std::vector<uint64_t> shape = {})
+void check_and_wrap(NDArray& a, const std::vector<T>& values, std::vector<size_t>& shape)
 {
   if (shape.empty() && values.size() > 1) {
     shape.push_back(values.size());
   }
   ASSERT_EQ(a.size(), values.size());
   ASSERT_EQ(a.shape(), shape);
-  ASSERT_EQ(a.type().code(), legate::type_code_of_v<T>);
-  if (a.size() == 0) {
-    return;
-  }
+  ASSERT_EQ(a.type().code(), legate::type_code_of<T>);
+
   if (a.dim() > 1) {
     a = a._wrap(a.size());
   }
+}
+
+template <typename T>
+void check_array(NDArray a, const std::vector<T>& values, std::vector<size_t> shape = {})
+{
+  check_and_wrap<T>(a, values, shape);
+  if (a.size() == 0) {
+    return;
+  }
+
   auto err_msg = [](auto i) {
     std::stringstream ss;
     ss << "check_array failed at [i = " << i << "]";
     return ss.str();
   };
+
   auto acc = a.get_read_accessor<T, 1>();
   for (size_t i = 0; i < values.size(); ++i) {
     ASSERT_EQ(acc[i], values[i]) << err_msg(i);
+  }
+}
+
+template <typename T>
+void check_array_near(NDArray a,
+                      const std::vector<T>& values,
+                      std::vector<size_t> shape = {},
+                      double abs_error          = 1.e-8)
+{
+  check_and_wrap<T>(a, values, shape);
+  if (a.size() == 0) {
+    return;
+  }
+
+  auto err_msg = [](auto i) {
+    std::stringstream ss;
+    ss << "check_array_near failed at [i = " << i << "]";
+    return ss.str();
+  };
+
+  auto acc = a.get_read_accessor<T, 1>();
+  for (size_t i = 0; i < values.size(); ++i) {
+    EXPECT_NEAR(acc[i], values[i], abs_error) << err_msg(i);
   }
 }
 
