@@ -26,14 +26,9 @@ def test_basic_num() -> None:
     L2 = num.random.randn(3, 3)
     assert np.array_equal(L1, L2)
 
-    num.random.seed(10)
-    L1 = num.random.randn(3, 3)
-    L2 = num.random.randn(3, 3)
-    assert np.array_equal(L1, L2)
-
 
 @pytest.mark.xfail(
-    reason = "numpy failures"
+    reason = "numpy failures in random.mtrand.RandomState.standard_normal"
 )
 def test_basic_np() -> None:
     np.random.seed(10)
@@ -65,7 +60,7 @@ def test_none_num() -> None:
 
 
 @pytest.mark.xfail(
-    reason = "numpy failures"
+    reason = "numpy failures in random.mtrand.RandomState.standard_normal"
 )
 def test_none_np() -> None:
     np.random.seed()
@@ -81,7 +76,7 @@ def test_none_np() -> None:
 
 
 @pytest.mark.xfail(
-    reason = "numpy failures"
+    reason = "numpy failures in random.mtrand.RandomState.standard_normal"
 )
 def test_basic_num_np() -> None:
     np.random.seed(10)

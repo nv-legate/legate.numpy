@@ -15,9 +15,18 @@
 from __future__ import annotations
 
 import math
-from typing import TYPE_CHECKING, Any, Iterable
+from typing import TYPE_CHECKING, Any, Iterable, Sequence
 
 import numpy as np
+
+from .._utils import is_np2
+
+if is_np2:
+    from numpy.lib.array_utils import normalize_axis_tuple  # type: ignore
+else:
+    from numpy.core.numeric import (  # type: ignore
+        normalize_axis_tuple,
+    )
 
 from .._array.util import add_boilerplate
 from .._ufunc.comparison import logical_not
@@ -48,7 +57,7 @@ if TYPE_CHECKING:
 #
 # return: pair: (minimal_index, reshuffled_and_collapsed source array)
 def _reshuffle_reshape(
-    arr: ndarray, axes_set: Iterable[int]
+    arr: ndarray, axes_set: Sequence[int]
 ) -> tuple[int, ndarray]:
     ndim = len(arr.shape)
 
@@ -249,7 +258,7 @@ def _quantile_impl(
     arr: ndarray,
     q_arr: npt.NDArray[Any],
     axis: int | None,
-    axes_set: Iterable[int],
+    axes_set: Sequence[int],
     original_shape: tuple[int, ...],
     method: Callable[[float, int], tuple[float | None, int]],
     keepdims: bool,
@@ -441,24 +450,27 @@ def quantile(
     """
 
     real_axis: int | None
-    axes_set: Iterable[int] = []
+    axes_set: Sequence[int] = ()
     original_shape = a.shape
 
     if axis is not None and isinstance(axis, Iterable):
+        nrm_axis = normalize_axis_tuple(axis, a.ndim)
         if len(axis) == 1:
-            real_axis = axis[0]
+            real_axis = nrm_axis[0]
             a_rr = a
         else:
-            (real_axis, a_rr) = _reshuffle_reshape(a, axis)
+            # reshuffling requires non-negative axes:
+            (real_axis, a_rr) = _reshuffle_reshape(a, nrm_axis)
             # What happens with multiple axes and overwrite_input = True ?
             # It seems overwrite_input is reset to False;
             overwrite_input = False
-        axes_set = axis
+        axes_set = nrm_axis
     else:
         real_axis = axis
         a_rr = a
         if real_axis is not None:
-            axes_set = [real_axis]
+            axes_set = normalize_axis_tuple(real_axis, a.ndim)
+            real_axis = axes_set[0]
 
     # covers both array-like and scalar cases:
     #
