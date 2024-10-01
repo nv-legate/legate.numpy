@@ -533,4 +533,11 @@ NDArray repeat(NDArray a, int64_t repeats, std::optional<int32_t> axis)
   return a.repeat(repeats, axis);
 }
 
+NDArray reshape(NDArray a, std::vector<int64_t> newshape, std::string order)
+{
+  return a.reshape(newshape, order);
+}
+
+NDArray ravel(NDArray a, std::string order) { return a.ravel(order); }
+
 }  // namespace cunumeric

@@ -108,6 +108,9 @@ class NDArray {
                 std::optional<NDArray> out       = std::nullopt);
   NDArray repeat(NDArray repeats, std::optional<int32_t> axis = std::nullopt);
   NDArray repeat(int64_t repeats, std::optional<int32_t> axis = std::nullopt);
+  NDArray reshape(std::vector<int64_t> newshape, std::string order);
+  NDArray reshape(std::vector<int64_t> newshape);
+  NDArray ravel(std::string order = "C");
 
  public:
   NDArray as_type(const legate::Type& type);

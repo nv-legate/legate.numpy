@@ -1643,6 +1643,128 @@ NDArray NDArray::trace(int32_t offset,
   return diag_helper(offset, {axis1, axis2}, true, true, type, out);
 }
 
+NDArray NDArray::ravel(std::string order) { return reshape({-1}, order); }
+
+NDArray NDArray::reshape(std::vector<int64_t> newshape, std::string order)
+{
+  if (order == "A") {
+    order = "C";
+  }
+  if (order == "F") {
+    throw std::invalid_argument(
+      "cuNumeric has not implemented reshape using Fortran-like index order.");
+  }
+  if (order != "C") {
+    throw std::invalid_argument("order must be one of 'C', 'F', 'A'");
+  }
+  return reshape(newshape);
+}
+
+NDArray NDArray::reshape(std::vector<int64_t> newshape)
+{
+  auto runtime     = cunumeric::CuNumericRuntime::get_runtime();
+  int num_unknowns = std::count_if(newshape.begin(), newshape.end(), [](auto x) { return x < 0; });
+  if (num_unknowns > 1) {
+    throw std::invalid_argument("can only specify one unknown dimension");
+  }
+
+  // case 1: zero size
+  if (size() == 0) {
+    if (1 == num_unknowns) {
+      std::replace_if(newshape.begin(), newshape.end(), [](auto x) { return x < 0; }, 0);
+    }
+    auto out_size = vec_prod(newshape);
+    if (out_size != 0) {
+      throw std::invalid_argument("new shape is not the same size as the original");
+    }
+    return runtime->create_array(vec_convert<int64_t, size_t>(newshape), type());
+  }
+
+  int64_t known_volume = 1;
+  for (auto x : newshape) {
+    if (x >= 0) {
+      known_volume *= x;
+    }
+  }
+  if (num_unknowns > 0 && 0 == known_volume) {
+    throw std::invalid_argument("cannot reshape, size mismatch");
+  }
+  int64_t unknown_extent = (0 == num_unknowns) ? 1 : size() / known_volume;
+  if (unknown_extent * known_volume != size()) {
+    throw std::invalid_argument("cannot reshape, size mismatch");
+  }
+  std::replace_if(newshape.begin(), newshape.end(), [](auto x) { return x < 0; }, unknown_extent);
+
+  auto in_shape  = shape();
+  auto out_shape = vec_convert<int64_t, size_t>(newshape);
+
+  // case 2: same shape
+  if (vec_is_equal(in_shape, out_shape)) {
+    return *this;
+  }
+
+  bool need_copy = false;
+  auto out_iter  = out_shape.rbegin();
+  std::for_each(
+    in_shape.rbegin(), in_shape.rend(), [&out_shape, &out_iter, &need_copy](size_t elem_in) {
+      size_t prod = 1;
+      for (; prod < elem_in && out_iter != out_shape.rend(); ++out_iter) {
+        prod *= *out_iter;
+      }
+      if (prod != elem_in) {
+        need_copy = true;
+      }
+    });
+
+  // case 3: need copy
+  if (need_copy) {
+    auto flat_arr       = array({size()}, type());
+    auto in_shape_store = flat_arr.get_store().delinearize(0, in_shape);
+    NDArray in_shape_arr(std::move(in_shape_store));
+    in_shape_arr.assign(*this);
+    auto out_shape_store = flat_arr.get_store().delinearize(0, out_shape);
+    NDArray out_shape_arr(std::move(out_shape_store));
+    return out_shape_arr;
+  }
+
+  // case 4: No need to copy, provides a view to the input store
+  out_iter       = out_shape.rbegin();
+  auto out_store = get_store();
+
+  std::for_each(
+    in_shape.rbegin(),
+    in_shape.rend(),
+    [&out_shape, &out_iter, &out_store, dim_in = int32_t(in_shape.size())](size_t elem_in) mutable {
+      --dim_in;
+      if (out_iter != out_shape.rend() && elem_in == *out_iter) {
+        ++out_iter;
+        // NOOP
+        return;
+      }
+      if (elem_in == 1) {
+        // "project" operation
+        out_store = out_store.project(dim_in, 0);
+        return;
+      }
+      // "delinearize" operation
+      std::vector<size_t> new_sizes;
+      new_sizes.reserve(8);
+      for (size_t prod = 1; prod < elem_in && out_iter != out_shape.rend(); ++out_iter) {
+        prod *= *out_iter;
+        new_sizes.push_back(*out_iter);
+      }
+      std::reverse(new_sizes.begin(), new_sizes.end());
+      out_store = out_store.delinearize(dim_in, new_sizes);
+    });
+
+  for (; out_iter != out_shape.rend(); ++out_iter) {
+    // "promote" operation
+    out_store = out_store.promote(0, 1);
+  }
+
+  return NDArray(std::move(out_store));
+}
+
 legate::LogicalStore NDArray::get_store() { return store_; }
 
 legate::LogicalStore NDArray::broadcast(const std::vector<uint64_t>& shape,

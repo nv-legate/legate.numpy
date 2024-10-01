@@ -142,5 +142,37 @@ NDArray trace(NDArray a,
               int32_t axis2                    = 1,
               std::optional<legate::Type> type = std::nullopt,
               std::optional<NDArray> out       = std::nullopt);
+
+NDArray reshape(NDArray a, std::vector<int64_t> newshape, std::string order = "C");
+
+NDArray ravel(NDArray a, std::string order = "C");
+
+template <typename T>
+bool vec_is_equal(const std::vector<T>& vec1, const std::vector<T>& vec2)
+{
+  return vec1.size() == vec2.size() && std::equal(vec1.begin(), vec1.end(), vec2.begin());
+}
+
+template <typename T>
+T vec_prod(const std::vector<T>& vec)
+{
+  T result = 1;
+  for (const auto& elem : vec) {
+    result *= elem;
+  }
+  return result;
+}
+
+template <typename T, typename U>
+std::vector<U> vec_convert(const std::vector<T>& input)
+{
+  std::vector<U> output;
+  output.reserve(input.size());
+  for (const auto& elem : input) {
+    output.push_back(static_cast<U>(elem));
+  }
+  return output;
+}
+
 }  // namespace cunumeric
 #include "cunumeric/operators.inl"
