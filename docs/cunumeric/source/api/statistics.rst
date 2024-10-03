@@ -24,6 +24,8 @@ Averages and variances
    mean
    nanmean
    var
+   median
+   nanmedian
 
 Correlating
 -----------

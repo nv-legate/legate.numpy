@@ -24,6 +24,7 @@ from .._array.util import add_boilerplate
 from .._utils import is_np2
 from .creation_shape import full
 from .logic_truth import any
+from .stats_order import nanquantile, quantile
 
 if is_np2:
     from numpy.lib.array_utils import normalize_axis_tuple  # type: ignore
@@ -370,4 +371,148 @@ def var(
         ddof=ddof,
         keepdims=keepdims,
         where=where,
+    )
+
+
+@add_boilerplate("a")
+def median(
+    a: ndarray,
+    axis: int | tuple[int, ...] | None = None,
+    out: ndarray | None = None,
+    overwrite_input: bool = False,
+    keepdims: bool = False,
+) -> ndarray:
+    """
+    Compute the median along the specified axis.
+
+    Returns the median of the array elements.
+
+    Parameters
+    ----------
+    a : array_like
+        Input array or object that can be converted to an array.
+    axis : {int, sequence of int, None}, optional
+        Axis or axes along which the medians are computed. The default,
+        axis=None, will compute the median along a flattened version of
+        the array.
+        If a sequence of axes, the array is first flattened along the
+        given axes, then the median is computed along the resulting
+        flattened axis.
+    out : ndarray, optional
+        Alternative output array in which to place the result. It must
+        have the same shape and buffer length as the expected output,
+        but the type (of the output) will be cast if necessary.
+    overwrite_input : bool, optional
+       If True, then allow use of memory of input array `a` for
+       calculations. The input array will be modified by the call to
+       `median`. This will save memory when you do not need to preserve
+       the contents of the input array. Treat the input as undefined,
+       but it will probably be fully or partially sorted. Default is
+       False. If `overwrite_input` is ``True`` and `a` is not already an
+       `ndarray`, an error will be raised.
+    keepdims : bool, optional
+        If this is set to True, the axes which are reduced are left
+        in the result as dimensions with size one. With this option,
+        the result will broadcast correctly against the original `arr`.
+
+    Returns
+    -------
+    median : ndarray
+        A new array holding the result. If the input contains integers
+        or floats smaller than ``float64``, then the output data-type is
+        ``np.float64``.  Otherwise, the data-type of the output is the
+        same as that of the input. If `out` is specified, that array is
+        returned instead.
+
+    See Also
+    --------
+    numpy median
+
+    Availability
+    --------
+    Multiple GPUs, Multiple CPUs
+
+    """
+    if a is None:
+        raise TypeError("'None' is not suported input to 'median'")
+    return quantile(
+        a,
+        0.5,
+        axis=axis,
+        out=out,
+        overwrite_input=overwrite_input,
+        keepdims=keepdims,
+        method="midpoint",
+    )
+
+
+@add_boilerplate("a")
+def nanmedian(
+    a: ndarray,
+    axis: int | tuple[int, ...] | None = None,
+    out: ndarray | None = None,
+    overwrite_input: bool = False,
+    keepdims: bool = False,
+) -> ndarray:
+    """
+    Compute the median along the specified axis, while ignoring NaNs
+
+    Returns the median of the array elements.
+
+    Parameters
+    ----------
+    a : array_like
+        Input array or object that can be converted to an array.
+    axis : {int, sequence of int, None}, optional
+        Axis or axes along which the medians are computed. The default,
+        axis=None, will compute the median along a flattened version of
+        the array.
+        If a sequence of axes, the array is first flattened along the
+        given axes, then the median is computed along the resulting
+        flattened axis.
+    out : ndarray, optional
+        Alternative output array in which to place the result. It must
+        have the same shape and buffer length as the expected output,
+        but the type (of the output) will be cast if necessary.
+    overwrite_input : bool, optional
+       If True, then allow use of memory of input array `a` for
+       calculations. The input array will be modified by the call to
+       `median`. This will save memory when you do not need to preserve
+       the contents of the input array. Treat the input as undefined,
+       but it will probably be fully or partially sorted. Default is
+       False. If `overwrite_input` is ``True`` and `a` is not already an
+       `ndarray`, an error will be raised.
+    keepdims : bool, optional
+        If this is set to True, the axes which are reduced are left
+        in the result as dimensions with size one. With this option,
+        the result will broadcast correctly against the original `arr`.
+
+    Returns
+    -------
+    median : ndarray
+        A new array holding the result. If the input contains integers
+        or floats smaller than ``float64``, then the output data-type is
+        ``np.float64``.  Otherwise, the data-type of the output is the
+        same as that of the input. If `out` is specified, that array is
+        returned instead.
+
+    See Also
+    --------
+    numpy median
+
+    Availability
+    --------
+    Multiple GPUs, Multiple CPUs
+
+    """
+    if a is None:
+        raise TypeError("'None' is not suported input to 'nanmedian'")
+    return nanquantile(
+        a,
+        0.5,
+        axis=axis,
+        out=out,
+        overwrite_input=overwrite_input,
+        keepdims=keepdims,
+        method="midpoint",
     )
