@@ -109,13 +109,11 @@ requirements:
     # cudart needed for CPU and GPU builds because of curand
     - cuda-cudart-dev
     - cuda-version ={{ cuda_version }}
-
+    - libcurand-dev
 
   host:
     - python
     - scikit-build
-    # libcurand is used both in CPU and GPU builds
-    - libcurand-dev
     - openblas =* =*openmp*
 {% if gpu_enabled_bool %}
     - legate >={{ legate_version }} =*_gpu*
@@ -124,25 +122,24 @@ requirements:
     - libcublas-dev
     - libcusolver-dev
     - libcufft-dev
+    - libcurand-dev
+    - cuda-version ={{ cuda_version }}
 {% else %}
     - legate >={{ legate_version }} =*_cpu*
 {% endif %}
-    - cuda-version ={{ cuda_version }}
 
   run:
     - numpy {{ numpy_version }}
-    - libnvjitlink
-    - libcusparse
     - opt_einsum >=3.3
     - scipy
     - openblas =* =*openmp*
 {% if gpu_enabled_bool %}
+    - libnvjitlink
+    - libcusparse
     - cutensor >=2.0 =*_*
-{% endif %}
     # Pin to all minor versions of CUDA newer than the one built against, within the same major version.
     # cuda-version constrains the CUDA runtime version and ensures a compatible driver is available
     - {{ pin_compatible('cuda-version', min_pin='x.x', max_pin='x') }}
-{% if gpu_enabled_bool %}
     - __cuda >={{ cuda_version }}
 {% endif %}
 
