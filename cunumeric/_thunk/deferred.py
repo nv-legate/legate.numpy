@@ -2120,7 +2120,8 @@ class DeferredArray(NumPyThunk):
         for result in results:
             task.add_output(result.base)
 
-        task.add_constraint(broadcast(p_self, range(1, self.ndim)))
+        if self.ndim > 1:
+            task.add_constraint(broadcast(p_self, range(1, self.ndim)))
 
         task.execute()
         return results

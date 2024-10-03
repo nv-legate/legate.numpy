@@ -27,7 +27,7 @@ struct lower_bound_op_t {
     : p_bins_(p_bins), n_intervs_(n_intervs)  // CTAD
   {
   }
-  __host__ __device__ bool operator()(elem_t left, bin_t right) const
+  __CUDA_HD__ bool operator()(elem_t left, bin_t right) const
   {
     // sentinel logic accounts for comparison
     // against last bin's upper bound, when
@@ -67,7 +67,7 @@ struct lower_bound_op_t {
 
 template <typename weight_t>
 struct reduction_op_t {
-  __host__ __device__ weight_t operator()(weight_t local_value, weight_t global_value)
+  __CUDA_HD__ weight_t operator()(weight_t local_value, weight_t global_value)
   {
     return local_value + global_value;
   }

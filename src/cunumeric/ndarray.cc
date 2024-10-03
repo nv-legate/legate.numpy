@@ -1671,13 +1671,14 @@ NDArray NDArray::reshape(std::vector<int64_t> newshape)
   // case 1: zero size
   if (size() == 0) {
     if (1 == num_unknowns) {
-      std::replace_if(newshape.begin(), newshape.end(), [](auto x) { return x < 0; }, 0);
+      std::replace_if(
+        newshape.begin(), newshape.end(), [](auto x) { return x < 0; }, 0);
     }
     auto out_size = vec_prod(newshape);
     if (out_size != 0) {
       throw std::invalid_argument("new shape is not the same size as the original");
     }
-    return runtime->create_array(vec_convert<int64_t, size_t>(newshape), type());
+    return runtime->create_array(vec_convert<int64_t, uint64_t>(newshape), type());
   }
 
   int64_t known_volume = 1;
@@ -1693,10 +1694,11 @@ NDArray NDArray::reshape(std::vector<int64_t> newshape)
   if (unknown_extent * known_volume != size()) {
     throw std::invalid_argument("cannot reshape, size mismatch");
   }
-  std::replace_if(newshape.begin(), newshape.end(), [](auto x) { return x < 0; }, unknown_extent);
+  std::replace_if(
+    newshape.begin(), newshape.end(), [](auto x) { return x < 0; }, unknown_extent);
 
   auto in_shape  = shape();
-  auto out_shape = vec_convert<int64_t, size_t>(newshape);
+  auto out_shape = vec_convert<int64_t, uint64_t>(newshape);
 
   // case 2: same shape
   if (vec_is_equal(in_shape, out_shape)) {
@@ -1706,8 +1708,8 @@ NDArray NDArray::reshape(std::vector<int64_t> newshape)
   bool need_copy = false;
   auto out_iter  = out_shape.rbegin();
   std::for_each(
-    in_shape.rbegin(), in_shape.rend(), [&out_shape, &out_iter, &need_copy](size_t elem_in) {
-      size_t prod = 1;
+    in_shape.rbegin(), in_shape.rend(), [&out_shape, &out_iter, &need_copy](uint64_t elem_in) {
+      uint64_t prod = 1;
       for (; prod < elem_in && out_iter != out_shape.rend(); ++out_iter) {
         prod *= *out_iter;
       }
@@ -1731,31 +1733,32 @@ NDArray NDArray::reshape(std::vector<int64_t> newshape)
   out_iter       = out_shape.rbegin();
   auto out_store = get_store();
 
-  std::for_each(
-    in_shape.rbegin(),
-    in_shape.rend(),
-    [&out_shape, &out_iter, &out_store, dim_in = int32_t(in_shape.size())](size_t elem_in) mutable {
-      --dim_in;
-      if (out_iter != out_shape.rend() && elem_in == *out_iter) {
-        ++out_iter;
-        // NOOP
-        return;
-      }
-      if (elem_in == 1) {
-        // "project" operation
-        out_store = out_store.project(dim_in, 0);
-        return;
-      }
-      // "delinearize" operation
-      std::vector<size_t> new_sizes;
-      new_sizes.reserve(8);
-      for (size_t prod = 1; prod < elem_in && out_iter != out_shape.rend(); ++out_iter) {
-        prod *= *out_iter;
-        new_sizes.push_back(*out_iter);
-      }
-      std::reverse(new_sizes.begin(), new_sizes.end());
-      out_store = out_store.delinearize(dim_in, new_sizes);
-    });
+  std::for_each(in_shape.rbegin(),
+                in_shape.rend(),
+                [&out_shape, &out_iter, &out_store, dim_in = int32_t(in_shape.size())](
+                  uint64_t elem_in) mutable {
+                  --dim_in;
+                  if (out_iter != out_shape.rend() && elem_in == *out_iter) {
+                    ++out_iter;
+                    // NOOP
+                    return;
+                  }
+                  if (elem_in == 1) {
+                    // "project" operation
+                    out_store = out_store.project(dim_in, 0);
+                    return;
+                  }
+                  // "delinearize" operation
+                  std::vector<uint64_t> new_sizes;
+                  new_sizes.reserve(8);
+                  for (uint64_t prod = 1; prod < elem_in && out_iter != out_shape.rend();
+                       ++out_iter) {
+                    prod *= *out_iter;
+                    new_sizes.push_back(*out_iter);
+                  }
+                  std::reverse(new_sizes.begin(), new_sizes.end());
+                  out_store = out_store.delinearize(dim_in, new_sizes);
+                });
 
   for (; out_iter != out_shape.rend(); ++out_iter) {
     // "promote" operation
