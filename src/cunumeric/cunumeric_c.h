@@ -334,7 +334,6 @@ typedef struct ReductionOpIds {
 } ReductionOpIds;
 
 void cunumeric_perform_registration();
-bool cunumeric_has_curand();
 bool cunumeric_has_cusolvermp();
 
 unsigned cunumeric_max_eager_volume();

@@ -14,9 +14,11 @@
  *
  */
 
-// MacOS host variant:
+#include "legate.h"
+
+// CPU Builds:
 //
-#if defined(__APPLE__) && defined(__MACH__)
+#if !LEGATE_DEFINED(LEGATE_USE_CUDA) && !LEGATE_DEFINED(CUNUMERIC_CURAND_FOR_CPU_BUILD)
 #define CUNUMERIC_USE_STL_RANDOM_ENGINE
 #endif
 

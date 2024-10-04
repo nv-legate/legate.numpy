@@ -88,7 +88,6 @@ class Runtime(object):
 
         assert cunumeric_lib.shared_object is not None
         self.cunumeric_lib = cunumeric_lib.shared_object
-        self.has_curand = cunumeric_lib.shared_object.cunumeric_has_curand()
         self.has_cusolvermp = (
             cunumeric_lib.shared_object.cunumeric_has_cusolvermp()
         )

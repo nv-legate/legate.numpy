@@ -70,16 +70,7 @@ def gen_random_from_both(
             # cuNumeric: keeps generating different arrays.
             # seed is respected in Eager mode.
         ),
-        pytest.param(
-            None,
-            marks=pytest.mark.xfail(
-                not num.runtime.has_curand,
-                reason="legacy RNG fallback treats seed(None) as seed(0)",
-            ),
-            # https://github.com/nv-legate/cunumeric/issues/1018
-            # NumPy: seed(None) is equivalent to seed(<get_system_random>())
-            # cuNumeric non-cuRAND fallback: seed(None) equivalent to seed(0)
-        ),
+        pytest.param(None),
         pytest.param(
             (4, 6, 8),
             marks=pytest.mark.xfail(
@@ -131,10 +122,6 @@ def test_default_rng_seed(seed):
 @pytest.mark.xfail(
     EAGER_TEST,
     reason="cuNumeric does not respect seed in Eager mode",
-)
-@pytest.mark.xfail(
-    not num.runtime.has_curand,
-    reason="XORWOW not available without cuRAND",
 )
 def test_default_rng_bitgenerator():
     seed = 12345
@@ -246,7 +233,7 @@ def test_randint_float_range(low, high):
 
 
 @pytest.mark.xfail(
-    not num.runtime.has_curand or not EAGER_TEST,
+    not EAGER_TEST,
     reason="cuNumeric raises NotImplementedError",
 )
 @pytest.mark.parametrize("size", ALL_RNG_SIZES, ids=str)
@@ -290,7 +277,7 @@ def test_randint_distribution(low, high, size, dtype):
 
 
 @pytest.mark.xfail(
-    not num.runtime.has_curand or not EAGER_TEST,
+    not EAGER_TEST,
     reason="cuNumeric raises NotImplementedError",
 )
 @pytest.mark.parametrize("size", (1024, 1025))
@@ -300,13 +287,6 @@ def test_randint_bool(size):
     assert_distribution(
         arr_num, np.mean(arr_np), np.std(arr_np), mean_tol=0.05
     )
-    # NumPy pass
-    # cuNumeric not num.runtime.has_curand:
-    # NotImplementedError: cunumeric.random.randint must be given an integer
-    # dtype
-    # cuNumeric LEGATE_TEST=1 or size > 1024:
-    # NotImplementedError: type for random.integers has to be int64 or int32
-    # or int16
 
 
 @pytest.mark.parametrize("low, high", LOW_HIGH, ids=str)

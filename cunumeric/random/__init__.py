@@ -20,12 +20,9 @@ from .._array.util import maybe_convert_to_np_ndarray
 from .._utils.coverage import clone_module
 from ..runtime import runtime
 
-if runtime.has_curand:
-    from ._random import *
-    from ._bitgenerator import *
-    from ._generator import *
-else:
-    from ._legacy import *
+from ._random import *
+from ._bitgenerator import *
+from ._generator import *
 
 clone_module(
     _nprandom,

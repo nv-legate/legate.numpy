@@ -75,11 +75,6 @@ extern "C" {
 
 void cunumeric_perform_registration(void) { cunumeric::registration_callback(); }
 
-bool cunumeric_has_curand()
-{
-  return LEGATE_DEFINED(LEGATE_USE_CUDA) || LEGATE_DEFINED(CUNUMERIC_CURAND_FOR_CPU_BUILD);
-}
-
 bool cunumeric_has_cusolvermp()
 {
   return LEGATE_DEFINED(LEGATE_USE_CUDA) && LEGATE_DEFINED(CUNUMERIC_USE_CUSOLVERMP);

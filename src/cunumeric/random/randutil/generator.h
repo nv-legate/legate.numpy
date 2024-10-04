@@ -85,12 +85,12 @@ struct inner_generator<gen_t, randutilimpl::execlocation::HOST> : basegenerator 
   virtual ~inner_generator() {}
 
   template <typename func_t, typename out_t>
-  curandStatus_t draw(func_t func, size_t N, out_t* out)
+  rnd_status_t draw(func_t func, size_t N, out_t* out)
   {
     for (size_t k = 0; k < N; ++k) {
       out[k] = func(generator);
     }
-    return CURAND_STATUS_SUCCESS;
+    return RND_STATUS_SUCCESS;
   }
 };
 

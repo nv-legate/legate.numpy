@@ -189,6 +189,10 @@ list(APPEND cunumeric_SOURCES
   src/cunumeric/matrix/trilu.cc
   src/cunumeric/matrix/trsm.cc
   src/cunumeric/matrix/util.cc
+  src/cunumeric/random/bitgenerator.cc
+  src/cunumeric/random/randutil/generator_host.cc
+  src/cunumeric/random/randutil/generator_host_straightforward.cc
+  src/cunumeric/random/randutil/generator_host_advanced.cc
   src/cunumeric/random/rand.cc
   src/cunumeric/search/argwhere.cc
   src/cunumeric/search/nonzero.cc
@@ -364,21 +368,13 @@ if(Legion_USE_CUDA)
 endif()
 
 # Add `src/cunumeric/random/random.mk` sources
-if(Legion_USE_CUDA OR cunumeric_cuRAND_INCLUDE_DIR)
+if(Legion_USE_CUDA)
   list(APPEND cunumeric_SOURCES
-    src/cunumeric/random/bitgenerator.cc
-    src/cunumeric/random/randutil/generator_host.cc
-    src/cunumeric/random/randutil/generator_host_straightforward.cc
-    src/cunumeric/random/randutil/generator_host_advanced.cc
-  )
-  if(Legion_USE_CUDA)
-    list(APPEND cunumeric_SOURCES
       src/cunumeric/random/bitgenerator.cu
       src/cunumeric/random/randutil/generator_device.cu
       src/cunumeric/random/randutil/generator_device_straightforward.cu
       src/cunumeric/random/randutil/generator_device_advanced.cu
-    )
-  endif()
+)
 endif()
 
 # add sources for cusolverMp

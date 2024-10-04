@@ -43,7 +43,7 @@ struct CURANDGenerator {
 
  protected:
   CURANDGenerator(BitGeneratorType gentype, uint64_t seed, uint64_t generatorId)
-    : seed_(seed), generatorId_(generatorId), type_(get_curandRngType(gentype))
+    : seed_(seed), generatorId_(generatorId), type_(get_rndRngType(gentype))
   {
     randutil_log().debug() << "CURANDGenerator::create";
   }

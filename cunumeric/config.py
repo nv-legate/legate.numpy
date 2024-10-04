@@ -281,10 +281,6 @@ class _CunumericSharedLib:
     CUNUMERIC_ZIP: int
 
     @abstractmethod
-    def cunumeric_has_curand(self) -> bool:
-        ...
-
-    @abstractmethod
     def cunumeric_has_cusolvermp(self) -> bool:
         ...
 

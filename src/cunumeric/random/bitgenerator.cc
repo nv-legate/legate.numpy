@@ -14,9 +14,11 @@
  *
  */
 
-// MacOS host variant:
+#include "legate.h"
+
+// CPU Builds:
 //
-#if defined(__APPLE__) && defined(__MACH__)
+#if !LEGATE_DEFINED(LEGATE_USE_CUDA) && !LEGATE_DEFINED(CUNUMERIC_CURAND_FOR_CPU_BUILD)
 #define CUNUMERIC_USE_STL_RANDOM_ENGINE
 #endif
 
@@ -48,6 +50,12 @@ void randutil_check_status(rnd_status_t error, std::string_view file, int line)
     assert(false);
   }
 }
+// for the STL path: delegate to randutil_check_status(...):
+//
+void randutil_check_curand(curandStatus_t error, std::string_view file, int line)
+{
+  randutil_check_status(error, file, line);
+}
 #else
 void randutil_check_curand(curandStatus_t error, std::string_view file, int line)
 {
@@ -57,16 +65,22 @@ void randutil_check_curand(curandStatus_t error, std::string_view file, int line
     assert(false);
   }
 }
+// for the curand path: delegate to randutil_check_curand(...):
+//
+void randutil_check_status(rnd_status_t error, std::string_view file, int line)
+{
+  randutil_check_curand(error, file, line);
+}
 #endif
 
 struct CPUGenerator : public CURANDGenerator {
   CPUGenerator(BitGeneratorType gentype, uint64_t seed, uint64_t generatorId, uint32_t flags)
     : CURANDGenerator(gentype, seed, generatorId)
   {
-    CHECK_CURAND(::randutilCreateGeneratorHost(&gen_, type_, seed, generatorId, flags));
+    CHECK_RND_ENGINE(::randutilCreateGeneratorHost(&gen_, type_, seed, generatorId, flags));
   }
 
-  virtual ~CPUGenerator() { CHECK_CURAND(::randutilDestroyGenerator(gen_)); }
+  virtual ~CPUGenerator() { CHECK_RND_ENGINE(::randutilDestroyGenerator(gen_)); }
 };
 
 template <>

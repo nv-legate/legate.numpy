@@ -21,16 +21,13 @@ from utils.random import ModuleGenerator, assert_distribution
 import cunumeric as num
 
 LEGATE_TEST = os.environ.get("LEGATE_TEST", None) == "1"
-if not num.runtime.has_curand:
-    pytestmark = pytest.mark.skip()
-    BITGENERATOR_ARGS = []
-else:
-    BITGENERATOR_ARGS = [
-        ModuleGenerator,
-        num.random.XORWOW,
-        num.random.MRG32k3a,
-        num.random.PHILOX4_32_10,
-    ]
+
+BITGENERATOR_ARGS = [
+    ModuleGenerator,
+    num.random.XORWOW,
+    num.random.MRG32k3a,
+    num.random.PHILOX4_32_10,
+]
 
 
 @pytest.mark.parametrize("t", BITGENERATOR_ARGS, ids=str)
