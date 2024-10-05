@@ -15,6 +15,8 @@
 
 import numpy as np
 import pytest
+from legate import LEGATE_MAX_DIM
+from utils.generators import mk_seq_array
 
 import cunumeric as num
 
@@ -31,6 +33,25 @@ def test_logical_reductions(axis):
 
     out_num = num.logical_or.reduce(in_num, axis=axis)
     out_np = np.logical_or.reduce(in_np, axis=axis)
+    assert num.array_equal(out_num, out_np)
+
+
+@pytest.mark.parametrize("ndim", range(1, LEGATE_MAX_DIM))
+@pytest.mark.parametrize(
+    "axis",
+    [
+        None,
+        0,
+        -1,
+    ],
+)
+def test_logical_reductions_over_cunumeric_arrays(ndim, axis):
+    shape = (5,) * ndim
+    np_arr = mk_seq_array(np, shape)
+    in_np = tuple(np_arr % 2 for dim in range(ndim))
+    in_num = tuple(num.array(np_arr % 2) for dim in range(ndim))
+    out_num = num.logical_and.reduce(in_num, axis=axis)
+    out_np = np.logical_and.reduce(in_np, axis=axis)
     assert num.array_equal(out_num, out_np)
 
 

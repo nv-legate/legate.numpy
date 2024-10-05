@@ -14,6 +14,7 @@
 #
 from __future__ import annotations
 
+import math
 import warnings
 from functools import lru_cache, reduce
 from typing import TYPE_CHECKING, Any, Sequence, TypeGuard
@@ -282,6 +283,25 @@ class Runtime(object):
             if share:
                 obj = np.asarray(obj, dtype=dtype)
             else:
+                from ._array.array import ndarray
+                from ._module.array_joining import stack
+
+                if (
+                    any(
+                        (
+                            isinstance(obj, tuple),
+                            isinstance(obj, list),
+                        )
+                    )
+                    and len(obj) > 1
+                    and all(
+                        (isinstance(o, ndarray) or isinstance(o, np.ndarray))
+                        for o in obj
+                    )
+                    and math.prod(obj[0].shape) != 0
+                ):
+                    obj = stack(obj)  # type: ignore
+                    return obj._thunk
                 obj = np.array(obj, dtype=dtype)
         elif dtype is not None and dtype != obj.dtype:
             obj = obj.astype(dtype)
