@@ -118,9 +118,11 @@ def auto_convert(
             # Convert relevant arguments to DeferredArrays
             self = args[0]
             args = tuple(
-                self.runtime.to_deferred_array(arg)
-                if idx in indices and arg is not None
-                else arg
+                (
+                    self.runtime.to_deferred_array(arg)
+                    if idx in indices and arg is not None
+                    else arg
+                )
                 for (idx, arg) in enumerate(args)
             )
             for k, v in kwargs.items():
