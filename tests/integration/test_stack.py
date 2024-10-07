@@ -40,7 +40,7 @@ def test_get_line_number_from_frame() -> None:
 
 
 class Test_find_last_user_frames:
-    def check_default_top_only(self) -> None:
+    def test_default_top_only(self) -> None:
         result = m.find_last_user_frames(top_only=True)
         assert isinstance(result, str)
         assert "|" not in result
