@@ -127,9 +127,11 @@ def add_boilerplate(
 
             # Convert relevant arguments to cuNumeric ndarrays
             args = tuple(
-                convert_to_cunumeric_ndarray(arg)
-                if idx in indices and arg is not None
-                else arg
+                (
+                    convert_to_cunumeric_ndarray(arg)
+                    if idx in indices and arg is not None
+                    else arg
+                )
                 for (idx, arg) in enumerate(args)
             )
             for k, v in kwargs.items():
@@ -2290,16 +2292,14 @@ class ndarray:
         min = (
             min
             if min is not None
-            else np.iinfo(self.dtype).min
-            if self.dtype.kind == "i"
-            else -np.inf
+            else (
+                np.iinfo(self.dtype).min if self.dtype.kind == "i" else -np.inf
+            )
         )
         max = (
             max
             if max is not None
-            else np.iinfo(self.dtype).max
-            if self.dtype.kind == "i"
-            else np.inf
+            else np.iinfo(self.dtype).max if self.dtype.kind == "i" else np.inf
         )
         args = (
             np.array(min, dtype=self.dtype),
@@ -2552,9 +2552,7 @@ class ndarray:
             res_dtype = (
                 dtype
                 if dtype is not None
-                else out.dtype
-                if out is not None
-                else a.dtype
+                else out.dtype if out is not None else a.dtype
             )
             a = a._maybe_convert(res_dtype, (a,))
             if out is not None and out.shape != out_shape:
@@ -4294,11 +4292,15 @@ class ndarray:
             else:
                 out = ndarray(
                     shape=out_shape,
-                    dtype=src.dtype
-                    if src.dtype.kind != "c"
-                    else np.dtype(np.float32)
-                    if src.dtype == np.dtype(np.complex64)
-                    else np.dtype(np.float64),
+                    dtype=(
+                        src.dtype
+                        if src.dtype.kind != "c"
+                        else (
+                            np.dtype(np.float32)
+                            if src.dtype == np.dtype(np.complex64)
+                            else np.dtype(np.float64)
+                        )
+                    ),
                     inputs=(src,),
                 )
 

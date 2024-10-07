@@ -273,14 +273,12 @@ class _CunumericSharedLib:
     CUNUMERIC_ZIP: int
 
     @abstractmethod
-    def cunumeric_has_curand(self) -> int:
-        ...
+    def cunumeric_has_curand(self) -> int: ...
 
     @abstractmethod
     def cunumeric_register_reduction_op(
         self, type_uid: int, elem_type_code: int
-    ) -> None:
-        ...
+    ) -> None: ...
 
 
 # Load the cuNumeric library first so we have a shard object that

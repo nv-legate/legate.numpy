@@ -22,8 +22,7 @@ from typing_extensions import Protocol
 
 
 class Timer(Protocol):
-    def start(self):
-        ...
+    def start(self): ...
 
     def stop(self):
         """
