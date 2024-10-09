@@ -141,7 +141,8 @@ struct ConvolveImplBody<VariantKind::OMP, CODE, DIM> {
         Rect<DIM> l2_output_rect(l2_output, l2_output + l2_output_tile - one);
         unsigned local_l1_outputs = total_l1_outputs;
         if (!subrect.contains(l2_output_rect)) {
-          l2_output_rect = subrect.intersection(l2_output_rect);
+          l2_output_rect   = subrect.intersection(l2_output_rect);
+          local_l1_outputs = 1;
           for (int d = 0; d < DIM; d++) {
             local_l1_outputs *= ((l2_output_rect.hi[d] - l2_output_rect.lo[d] + l1_output_tile[d]) /
                                  l1_output_tile[d]);
