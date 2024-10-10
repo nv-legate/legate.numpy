@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+import inspect
 
 import numpy as np
 import pytest
@@ -122,6 +123,13 @@ def test_complex_negative(src_dtype):
     # Numpy and cuNumeric have different performance.
     # For complex data 0.+1.j, Numpy set as True, cuNumeric set as False.
     assert np.array_equal(out_num, out_np)
+
+
+def test_default_copy_value():
+    # it was decided to explicitly diverge from the numpy default value in
+    # https://github.com/nv-legate/cunumeric.internal/issues/421
+    a = num.array([])
+    assert inspect.signature(a.astype).parameters["copy"].default is False
 
 
 if __name__ == "__main__":

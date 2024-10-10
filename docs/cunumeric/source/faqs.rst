@@ -121,9 +121,12 @@ Why are the results different from NumPy?
 While a majority of the APIs will give the same result as NumPy, some APIs
 might be implemented differently from that of NumPy which might lead to
 differences in results. One such example is, :ref:`reshape`, which returns a
-copy of the array in cuNumeric but returns a view in NumPy. Such differences
-in implementation are noted in the documentation of the cuNumeric APIs, please
-review them before opening an issue on `cuNumeric issue tracker <https://github.com/nv-legate/cunumeric/issues>`_.
+copy of the array in cuNumeric but returns a view in NumPy. Another example
+is :ref:`astype` which does *not* return a copy by default, where NumPy does.
+
+Such differences in implementation are noted in the documentation of the
+cuNumeric APIs, please review them before opening an issue on the
+`cuNumeric issue tracker <https://github.com/nv-legate/cunumeric/issues>`_.
 
 Why doesn’t Legate use my GPU?
 ------------------------------

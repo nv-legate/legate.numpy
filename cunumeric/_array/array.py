@@ -1638,7 +1638,7 @@ class ndarray:
         order: OrderType = "C",
         casting: CastingKind = "unsafe",
         subok: bool = True,
-        copy: bool = True,
+        copy: bool = False,
     ) -> ndarray:
         """a.astype(dtype, order='C', casting='unsafe', subok=True, copy=True)
 
@@ -1674,10 +1674,14 @@ class ndarray:
             array.
 
         copy : bool, optional
-            By default, astype always returns a newly allocated array. If this
-            is set to false, and the `dtype`, `order`, and `subok`
-            requirements are satisfied, the input array is returned instead
-            of a copy.
+            By default, astype does not returns a newly allocated array. If
+            this is set to True, a copy is made and returned, instead of the
+            input array.
+
+        Notes
+        -----
+        The default value for the ``copy`` argument is the opposite of Numpy.
+        Avoiding copies reduces memory pressure.
 
         Returns
         -------
