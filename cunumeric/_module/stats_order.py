@@ -663,7 +663,7 @@ def nanquantile_impl(
     q_arr: npt.NDArray[Any],
     non_nan_counts: ndarray,
     axis: int | None,
-    axes_set: Iterable[int],
+    axes_set: Sequence[int],
     original_shape: tuple[int, ...],
     method: Callable[[float, int], tuple[float | None, int]],
     keepdims: bool,
@@ -721,6 +721,7 @@ def nanquantile_impl(
 
         # TODO(aschaffer): Vectorize this operation, see
         # github.com/nv-legate/cunumeric/pull/1121#discussion_r1484731763
+        gamma = None
         for aindex, n in np.ndenumerate(non_nan_counts):
             # TODO (2024-08): `n` should be an integral type, but wasn't:
             n = int(n)
@@ -855,26 +856,28 @@ def nanquantile(
     """
 
     real_axis: int | None
-    axes_set: Iterable[int] = []
+    axes_set: Sequence[int] = ()
     original_shape = a.shape
 
     if axis is not None and isinstance(axis, Iterable):
+        nrm_axis = normalize_axis_tuple(axis, a.ndim)
         if len(axis) == 1:
-            real_axis = axis[0]
+            real_axis = nrm_axis[0]
             a_rr = a
         else:
-            (real_axis, a_rr) = _reshuffle_reshape(a, axis)
+            (real_axis, a_rr) = _reshuffle_reshape(a, nrm_axis)
             # What happens with multiple axes and overwrite_input = True ?
             # It seems overwrite_input is reset to False;
             # But `overwrite_input` doesn't matter for the NaN version of this
             # function
             # overwrite_input = False
-        axes_set = axis
+        axes_set = nrm_axis
     else:
         real_axis = axis
         a_rr = a
         if real_axis is not None:
-            axes_set = [real_axis]
+            axes_set = normalize_axis_tuple(real_axis, a.ndim)
+            real_axis = axes_set[0]
 
     # ndarray of non-NaNs:
     #

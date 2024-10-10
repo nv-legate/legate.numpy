@@ -155,24 +155,6 @@ class TestNanMedianErrors:
         with pytest.raises(expected_exc, match=msg):
             num.nanmedian(array, out=out_a)
 
-    def test_nanmedian_empty_array(self):
-        expected_exc = UnboundLocalError
-        # Numpy returns Warning instead of the Error
-        # msg="invalid value encountered in scalar divide"
-        # with pytest.raises(expected_exc, match=msg):
-        #    np.median([])
-        msg = "local variable 'gamma' referenced before assignment"
-        with pytest.raises(expected_exc, match=msg):
-            num.nanmedian([])
-
-    def test_nanmedian_all_nan_values(self):
-        # Numpy returns Warning instead of the Error and doesn't produce
-        # any output
-        expected_exc = UnboundLocalError
-        msg = "local variable 'gamma' referenced before assignment"
-        with pytest.raises(expected_exc, match=msg):
-            num.nanmedian([np.nan, np.nan, np.nan])
-
     def test_median_overwrite_input(self):
         arr = num.array([7, 1, 5, 3])
         median = num.median(arr, overwrite_input=True)
