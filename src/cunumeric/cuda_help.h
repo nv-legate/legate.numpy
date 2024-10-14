@@ -211,7 +211,10 @@ __host__ inline void check_nccl(ncclResult_t error, const char* file, int line)
     CUNUMERIC_CHECK_CUDA(cudaPeekAtLastError());         \
   } while (false)
 #else
-#define CUNUMERIC_CHECK_CUDA_STREAM(stream) static_cast<void>(stream)
+#define CUNUMERIC_CHECK_CUDA_STREAM(stream)              \
+  do {                                                   \
+    CUNUMERIC_CHECK_CUDA(cudaPeekAtLastError());         \
+  } while (false)
 #endif
 
 #ifndef MAX

@@ -14,6 +14,8 @@
  *
  */
 
+#include <iomanip>
+
 namespace {
 
 template <typename T, typename U = void>
