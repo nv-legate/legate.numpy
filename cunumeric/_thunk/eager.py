@@ -17,7 +17,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, Callable, Iterable, Sequence, cast
 
 import numpy as np
-from legate import Scalar
+from legate.core import Scalar
 
 from .._utils import is_np2
 from .._utils.array import is_advanced_indexing

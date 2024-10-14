@@ -16,7 +16,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, cast
 
-from legate import get_legate_runtime, types as ty
+from legate.core import get_legate_runtime, types as ty
 
 from .._utils import is_np2
 from ..config import CuNumericOpCode

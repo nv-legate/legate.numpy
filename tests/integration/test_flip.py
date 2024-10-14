@@ -16,7 +16,7 @@ from itertools import product
 
 import numpy as np
 import pytest
-from legate import LEGATE_MAX_DIM
+from legate.core import LEGATE_MAX_DIM
 from utils.utils import AxisError
 
 import cunumeric as num

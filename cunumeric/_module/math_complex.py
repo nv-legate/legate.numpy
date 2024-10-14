@@ -16,13 +16,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from legate import Scalar
+from legate.core import Scalar
 
 from .._array.thunk import perform_unary_op
 from .._array.util import add_boilerplate
-from ..config import UnaryOpCode
-
 from .._utils.array import to_core_type
+from ..config import UnaryOpCode
 
 if TYPE_CHECKING:
     from .._array.array import ndarray
@@ -119,6 +118,6 @@ def angle(z: ndarray, deg: bool = False) -> ndarray:
     """
 
     if z is None:
-        raise TypeError ("can't compute 'angle' for None")
+        raise TypeError("can't compute 'angle' for None")
     extra_args = (Scalar(deg),)
     return perform_unary_op(UnaryOpCode.ANGLE, z, extra_args=extra_args)

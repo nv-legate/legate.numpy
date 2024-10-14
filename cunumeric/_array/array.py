@@ -19,10 +19,10 @@ import warnings
 from functools import reduce
 from typing import TYPE_CHECKING, Any, Sequence, cast
 
-import legate.types as ty
+import legate.core.types as ty
 import numpy as np
-from legate import Field, LogicalArray, Scalar
-from legate.utils import OrderedSet
+from legate.core import Field, LogicalArray, Scalar
+from legate.core.utils import OrderedSet
 
 from .. import _ufunc
 from .._utils import is_np2

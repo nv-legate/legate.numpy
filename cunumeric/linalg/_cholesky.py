@@ -16,7 +16,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from legate import (
+from legate.core import (
     broadcast,
     constant,
     dimension,
@@ -32,7 +32,7 @@ from ._exception import LinAlgError
 legate_runtime = get_legate_runtime()
 
 if TYPE_CHECKING:
-    from legate import Library, LogicalStore, LogicalStorePartition
+    from legate.core import Library, LogicalStore, LogicalStorePartition
 
     from .._thunk.deferred import DeferredArray
     from ..runtime import Runtime

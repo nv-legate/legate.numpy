@@ -16,14 +16,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from legate import get_legate_runtime
+from legate.core import get_legate_runtime
 
 from cunumeric.config import CuNumericOpCode
 
 from ._exception import LinAlgError
 
 if TYPE_CHECKING:
-    from legate import Library, LogicalStore
+    from legate.core import Library, LogicalStore
 
     from .._thunk.deferred import DeferredArray
 

@@ -17,7 +17,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, Callable, Sequence, TypeAlias
 
 import numpy as np
-from legate.utils import OrderedSet
+from legate.core.utils import OrderedSet
 
 from .._array.thunk import perform_unary_reduction
 from .._array.util import (

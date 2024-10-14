@@ -23,7 +23,7 @@ from ..runtime import runtime
 if TYPE_CHECKING:
     import numpy as np
     import numpy.typing as npt
-    from legate import Scalar
+    from legate.core import Scalar
 
     from ..config import (
         BinaryOpCode,

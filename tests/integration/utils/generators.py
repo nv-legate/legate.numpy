@@ -16,7 +16,7 @@
 from itertools import permutations, product
 
 import numpy as np
-from legate import LEGATE_MAX_DIM
+from legate.core import LEGATE_MAX_DIM
 
 
 def scalar_gen(lib, val):

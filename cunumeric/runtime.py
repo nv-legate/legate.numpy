@@ -19,9 +19,9 @@ import warnings
 from functools import lru_cache, reduce
 from typing import TYPE_CHECKING, Any, Sequence, TypeGuard
 
-import legate.types as ty
+import legate.core.types as ty
 import numpy as np
-from legate import LEGATE_MAX_DIM, Scalar, TaskTarget, get_legate_runtime
+from legate.core import LEGATE_MAX_DIM, Scalar, TaskTarget, get_legate_runtime
 from legate.settings import settings as legate_settings
 
 from ._utils.array import calculate_volume, is_supported_dtype, to_core_type
@@ -41,7 +41,7 @@ from .config import (
 
 if TYPE_CHECKING:
     import numpy.typing as npt
-    from legate import AutoTask, ManualTask
+    from legate.core import AutoTask, ManualTask
 
     from ._array.array import ndarray
     from ._thunk.deferred import DeferredArray

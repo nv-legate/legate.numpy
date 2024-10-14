@@ -17,7 +17,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import numpy as np
-from legate import Scalar, types as ty
+from legate.core import Scalar, types as ty
 
 from .._array.thunk import perform_binary_reduction
 from .._array.util import add_boilerplate, find_common_type

@@ -31,9 +31,9 @@ from typing import (
     cast,
 )
 
-import legate.types as ty
+import legate.core.types as ty
 import numpy as np
-from legate import (
+from legate.core import (
     Annotation,
     LogicalStore,
     ReductionOpKind,
@@ -47,7 +47,7 @@ from legate import (
     scale,
 )
 from legate.settings import settings as legate_settings
-from legate.utils import OrderedSet
+from legate.core.utils import OrderedSet
 
 from .._utils import is_np2
 from .._utils.array import (
@@ -82,7 +82,7 @@ else:
 
 if TYPE_CHECKING:
     import numpy.typing as npt
-    from legate import LogicalStorePartition
+    from legate.core import LogicalStorePartition
 
     from ..config import BitGeneratorType, FFTDirection, FFTType, WindowOpCode
     from ..types import (
