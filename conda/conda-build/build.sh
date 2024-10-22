@@ -14,6 +14,7 @@ CMAKE_ARGS+="
 -DBUILD_SHARED_LIBS=ON
 -DBUILD_MARCH=${BUILD_MARCH}
 -DCMAKE_BUILD_TYPE=Release
+-DCMAKE_VERBOSE_MAKEFILE=ON
 -DCMAKE_BUILD_PARALLEL_LEVEL=${JOBS:-$(nproc --ignore=1)}"
 
 # We rely on an environment variable to determine if we need to build cpu-only bits
@@ -21,7 +22,7 @@ if [ -z "$CPU_ONLY" ]; then
   # cutensor, relying on the conda cutensor package
   CMAKE_ARGS+="
 -Dcutensor_DIR=$PREFIX
--DCMAKE_CUDA_ARCHITECTURES=RAPIDS"
+-DCMAKE_CUDA_ARCHITECTURES=all-major"
 else
   # When we build without cuda, we need to provide the location of curand
   CMAKE_ARGS+="
@@ -40,7 +41,7 @@ CUDAFLAGS="-isystem ${PREFIX}/include -L${PREFIX}/lib"
 export CUDAFLAGS
 
 cmake -S . -B build ${CMAKE_ARGS} -DCMAKE_BUILD_PARALLEL_LEVEL=$CPU_COUNT
-cmake --build build -j$CPU_COUNT
+cmake --build build -j$CPU_COUNT --verbose
 cmake --install build
 
 CMAKE_ARGS="
