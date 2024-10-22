@@ -46,8 +46,8 @@ from legate.core import (
     get_legate_runtime,
     scale,
 )
-from legate.settings import settings as legate_settings
 from legate.core.utils import OrderedSet
+from legate.settings import settings as legate_settings
 
 from .._utils import is_np2
 from .._utils.array import (
@@ -3722,3 +3722,12 @@ class DeferredArray(NumPyThunk):
         task.add_constraint(align(p_src, p_weight))
 
         task.execute()
+
+    def stencil_hint(
+        self,
+        low_offsets: tuple[int, ...],
+        high_offsets: tuple[int, ...],
+    ) -> None:
+        legate_runtime.prefetch_bloated_instances(
+            self.base, low_offsets, high_offsets, False
+        )

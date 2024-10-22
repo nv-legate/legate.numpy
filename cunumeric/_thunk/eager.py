@@ -1807,3 +1807,11 @@ class EagerArray(NumPyThunk):
                 cast(EagerArray, bins).array,
                 weights=cast(EagerArray, weights).array,
             )
+
+    def stencil_hint(
+        self,
+        low_offsets: tuple[int, ...],
+        high_offsets: tuple[int, ...],
+    ) -> None:
+        if self.deferred is not None:
+            self.deferred.stencil_hint(low_offsets, high_offsets)

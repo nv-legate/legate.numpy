@@ -748,3 +748,11 @@ class NumPyThunk(ABC):
     @abstractmethod
     def histogram(self, src: Any, bins: Any, weights: Any) -> None:
         ...
+
+    @abstractmethod
+    def stencil_hint(
+        self,
+        low_offsets: tuple[int, ...],
+        high_offsets: tuple[int, ...],
+    ) -> None:
+        ...

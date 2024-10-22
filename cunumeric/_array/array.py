@@ -3952,3 +3952,46 @@ class ndarray:
         )
         out._thunk._wrap(src=self._thunk, new_len=new_len)
         return out
+
+    def stencil_hint(
+        self,
+        low_offsets: tuple[int, ...],
+        high_offsets: tuple[int, ...],
+    ) -> None:
+        """
+        Inform cuNumeric that this array will be used in a stencil computation
+        in the following code.
+
+        This allows cuNumeric to allocate space for the "ghost" elements ahead
+        of time, rather than discover the full extent of accesses incrementally,
+        and thus avoid intermediate copies.
+
+        For example, let's say we have a 1-D array A of size 10 and we want to
+        partition A across two GPUs. By default, A would be partitioned equally
+        and each GPU gets an instance of size 5 (GPU0 gets elements 0-4, and
+        GPU1 gets 5-9 inclusive). Suppose we use A in the stencil computation
+        `B = A[:9] + A[1:]`. The runtime would now need to adjust the
+        partitioning such that GPU0 has elements 0-5 and GPU1 has elements 4-9
+        inclusive. Since the original instance on GPU0 does not cover index 5,
+        cuNumeric needs to allocate a full new instance that covers 0-5, leading
+        to an extra copy. In this case, if the code calls
+        `A.stencil_hint([1], [1])` to pre-allocate instances that contain the
+        extra elements before it uses A, the extra copies can be avoided.
+
+        Parameters
+        ----------
+        low_offsets: tuple[int]
+            Stencil offsets towards the negative direction.
+        high_offsets: tuple[int]
+            Stencil offsets towards the positive direction.
+
+        Notes
+        -----
+        This function currently does not behave as expected in the case where
+        multiple CPU/OpenMP processors use the same system memory.
+
+        Availability
+        --------
+        Multiple CPUs, Multiple GPUs
+        """
+        self._thunk.stencil_hint(low_offsets, high_offsets)
