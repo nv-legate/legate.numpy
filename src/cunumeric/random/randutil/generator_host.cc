@@ -26,7 +26,7 @@
 #include "generator_create.inl"
 #include "cunumeric/random/rnd_aliases.h"
 
-#if !LEGATE_DEFINED(LEGATE_USE_CUDA)
+#if LEGATE_DEFINED(CUNUMERIC_CURAND_FOR_CPU_BUILD)
 // the host code of cuRAND try to extern these variables out of nowhere,
 // so we need to define them somewhere.
 const dim3 blockDim{};

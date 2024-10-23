@@ -741,7 +741,7 @@ struct UnaryOp<UnaryOpCode::ISINF, CODE> {
     return std::isinf(x.imag()) || std::isinf(x.real());
   }
 
-  __CUDA_HD__ bool operator()(const __half& x) const { return isinf(x); }
+  __CUDA_HD__ bool operator()(const __half& x) const { return isinf(static_cast<float>(x)); }
 };
 
 template <legate::Type::Code CODE>

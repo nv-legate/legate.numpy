@@ -28,7 +28,10 @@
 
 #include "cunumeric/random/rnd_types.h"
 
+#if !LEGATE_DEFINED(CUNUMERIC_USE_STL_RANDOM_ENGINE)
 #include "cunumeric/random/curand_help.h"
+#endif
+
 #include "cunumeric/random/randutil/randutil.h"
 
 #include "cunumeric/random/bitgenerator_curand.inl"
@@ -49,12 +52,6 @@ void randutil_check_status(rnd_status_t error, std::string_view file, int line)
                            << " in file " << file << " at line " << line;
     assert(false);
   }
-}
-// for the STL path: delegate to randutil_check_status(...):
-//
-void randutil_check_curand(curandStatus_t error, std::string_view file, int line)
-{
-  randutil_check_status(error, file, line);
 }
 #else
 void randutil_check_curand(curandStatus_t error, std::string_view file, int line)

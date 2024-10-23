@@ -123,6 +123,7 @@ requirements:
     - libcusolver-dev
     - libcufft-dev
     - libcurand-dev
+    - libcufile-dev
     - cuda-version ={{ cuda_version }}
 {% else %}
     - legate >={{ legate_version }} =*_cpu*
