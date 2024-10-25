@@ -1225,6 +1225,7 @@ void rebalance_data(SegmentMergePiece<VAL>& merge_buffer,
 
 template <Type::Code CODE>
 void sample_sort_nccl_nd(
+  TaskContext& context,
   SortPiece<type_of<CODE>> local_sorted,
   legate::PhysicalStore& output_array_unbound,  // only for unbound usage when !rebalance
   void* output_ptr,
@@ -1261,8 +1262,10 @@ void sample_sort_nccl_nd(
     size_t worker_count = (segment_size_l > 0 ? 1 : 0);
     CUNUMERIC_CHECK_CUDA(cudaMemcpyAsync(
       worker_count_d.ptr(0), &worker_count, sizeof(int32_t), cudaMemcpyHostToDevice, stream));
+    context.concurrent_task_barrier();
     CHECK_NCCL(ncclAllReduce(
       worker_count_d.ptr(0), worker_count_d.ptr(0), 1, ncclInt32, ncclSum, *comm, stream));
+    context.concurrent_task_barrier();
     CUNUMERIC_CHECK_CUDA(cudaMemcpyAsync(
       &worker_count, worker_count_d.ptr(0), sizeof(int32_t), cudaMemcpyDeviceToHost, stream));
     CUNUMERIC_CHECK_CUDA(cudaStreamSynchronize(stream));
@@ -1707,7 +1710,8 @@ template <Type::Code CODE, int32_t DIM>
 struct SortImplBody<VariantKind::GPU, CODE, DIM> {
   using VAL = type_of<CODE>;
 
-  void operator()(const legate::PhysicalStore& input_array,
+  void operator()(TaskContext& context,
+                  const legate::PhysicalStore& input_array,
                   legate::PhysicalStore& output_array,
                   const Pitches<DIM - 1>& pitches,
                   const Rect<DIM>& rect,
@@ -1821,7 +1825,8 @@ struct SortImplBody<VariantKind::GPU, CODE, DIM> {
           }
         }
 
-        sample_sort_nccl_nd<CODE>(local_sorted,
+        sample_sort_nccl_nd<CODE>(context,
+                                  local_sorted,
                                   output_array,
                                   output_ptr,
                                   local_rank,

@@ -41,7 +41,7 @@ clean:
 
 html:
 	@start=$$(date +%s) \
-	; $(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) -j $(PARALLEL_BUILD) \
+	; LEGATE_AUTO_CONFIG=0 $(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) -j $(PARALLEL_BUILD) \
 	&& mkdir -p build/html/docs \
 	&& cp -r ../figures build/html/docs/ \
 	&& cp switcher.json build/html/ \

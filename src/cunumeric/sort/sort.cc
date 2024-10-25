@@ -32,7 +32,8 @@ template <Type::Code CODE, int32_t DIM>
 struct SortImplBody<VariantKind::CPU, CODE, DIM> {
   using VAL = type_of<CODE>;
 
-  void operator()(const legate::PhysicalStore& input_array,
+  void operator()(TaskContext& context,
+                  const legate::PhysicalStore& input_array,
                   legate::PhysicalStore& output_array,
                   const Pitches<DIM - 1>& pitches,
                   const Rect<DIM>& rect,

@@ -44,7 +44,7 @@ static int get_rank(Domain domain, DomainPoint index_point)
 template <VariantKind KIND>
 struct SortImpl {
   template <Type::Code CODE, int32_t DIM>
-  void operator()(SortArgs& args, std::vector<comm::Communicator> comms) const
+  void operator()(SortArgs& args, TaskContext& context, std::vector<comm::Communicator> comms) const
   {
     auto rect = args.input.shape<DIM>();
 
@@ -71,7 +71,8 @@ struct SortImpl {
       return;
     }
 
-    SortImplBody<KIND, CODE, DIM>()(args.input,
+    SortImplBody<KIND, CODE, DIM>()(context,
+                                    args.input,
                                     args.output,
                                     pitches,
                                     rect,
@@ -108,7 +109,7 @@ static void sort_template(TaskContext& context)
                 num_ranks,
                 num_sort_ranks};
   double_dispatch(
-    args.input.dim(), args.input.code(), SortImpl<KIND>{}, args, context.communicators());
+    args.input.dim(), args.input.code(), SortImpl<KIND>{}, args, context, context.communicators());
 }
 
 }  // namespace cunumeric

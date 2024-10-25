@@ -70,7 +70,7 @@ test_cunumeric() {
             echo "Running Unit tests..."
             shift;
             setup_unit_env;
-            pytest tests/unit
+            LEGATE_AUTO_CONFIG=0 pytest tests/unit
             ;;
         *)
             echo "Invalid command: $1"
