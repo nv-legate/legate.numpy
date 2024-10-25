@@ -3197,19 +3197,9 @@ class ndarray:
         Multiple GPUs, Multiple CPUs
 
         """
-        if self.dtype.type == bool:
-            temp = ndarray(
-                shape=self.shape,
-                dtype=np.dtype(np.int32),
-                inputs=(self,),
-            )
-            temp._thunk.convert(self._thunk)
-            self_array = temp
-        else:
-            self_array = self
         return perform_unary_reduction(
             UnaryRedCode.PROD,
-            self_array,
+            self,
             axis=axis,
             dtype=dtype,
             out=out,
@@ -3567,19 +3557,9 @@ class ndarray:
         Multiple GPUs, Multiple CPUs
 
         """
-        if self.dtype.type == bool:
-            temp = ndarray(
-                shape=self.shape,
-                dtype=np.dtype(np.int32),
-                inputs=(self,),
-            )
-            temp._thunk.convert(self._thunk)
-            self_array = temp
-        else:
-            self_array = self
         return perform_unary_reduction(
             UnaryRedCode.SUM,
-            self_array,
+            self,
             axis=axis,
             dtype=dtype,
             out=out,

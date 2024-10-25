@@ -60,8 +60,9 @@ NO_EMPTY_SIZE = [
 ARR = ([], [[]], [[], []], np.inf, -10.3, 0, 200, 5 + 8j)
 
 DTYPE = ["l", "L", "f", "d"]
+BOOL_INT_DTYPE = ["h", "i", "H", "I", "?", "b", "B"]
 COMPLEX_TYPE = ["F", "D"]
-NEGATIVE_DTYPE = ["h", "i", "H", "I", "e", "?", "b", "B"]
+NEGATIVE_DTYPE = ["e"]
 
 
 def to_dtype(s):
@@ -189,6 +190,19 @@ class TestSumPositive(object):
         arr_num = num.array(arr_np)
         out_np = np.sum(arr_np)
         out_num = num.sum(arr_num)
+        assert allclose(out_np, out_num)
+
+    @pytest.mark.parametrize("dtype", BOOL_INT_DTYPE, ids=to_dtype)
+    @pytest.mark.parametrize("op", ["sum", "prod", "max"])
+    def test_bool_int_dtype(self, dtype, op):
+        size = (5, 5, 5)
+        arr = np.random.randint(10, size=size)
+        if dtype == bool:
+            arr %= 2
+        arr_np = np.array(arr, dtype=dtype)
+        arr_num = num.array(arr_np)
+        out_np = getattr(np, op)(arr_np)
+        out_num = getattr(num, op)(arr_num)
         assert allclose(out_np, out_num)
 
     @pytest.mark.parametrize("dtype", COMPLEX_TYPE, ids=to_dtype)

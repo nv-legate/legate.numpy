@@ -129,6 +129,14 @@ def perform_unary_op(
     return out
 
 
+def _need_upcast_for_reduction(op: UnaryRedCode, dtype: np.dtype[Any]) -> bool:
+    return op in (UnaryRedCode.SUM, UnaryRedCode.PROD) and dtype.kind in (
+        "b",
+        "i",
+        "u",
+    )
+
+
 def perform_unary_reduction(
     op: UnaryRedCode,
     src: ndarray,
@@ -150,16 +158,18 @@ def perform_unary_reduction(
         assert dtype is None
         dtype = src.dtype
     else:
-        # If 'dtype' exists, that determines both the accumulation dtype
-        # and the output dtype
         if dtype is not None:
-            res_dtype = dtype
+            # If 'dtype' exists, that determines both the accumulation dtype
+            # and the output dtype
+            pass
         elif out is not None:
             dtype = out.dtype
-            res_dtype = out.dtype
+        elif _need_upcast_for_reduction(op, src.dtype):
+            # upcast to conserve precision
+            dtype = np.dtype(np.uint64 if src.dtype.kind == "u" else np.int64)
         else:
             dtype = src.dtype
-            res_dtype = src.dtype
+        res_dtype = dtype
 
     # TODO: Need to require initial to be given when the array is empty
     #       or a where mask is given.
