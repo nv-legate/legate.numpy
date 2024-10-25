@@ -594,7 +594,7 @@ def driver():
         dest="arch",
         action="store",
         required=False,
-        default="native",
+        default="all-major",
         help="Specify the target GPU architecture.",
     )
     parser.add_argument(
