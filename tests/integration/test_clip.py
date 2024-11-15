@@ -74,6 +74,24 @@ def test_empty_array():
     assert np.array_equal(res_np, res_num)
 
 
+def test_bool() -> None:
+    np.clip(True, a_min=1, a_max=1)
+    # Numpy returns 1
+    # See https://github.com/nv-legate/cunumeric.internal/issues/491
+    msg = r"Expected bytes or NumPy ndarray, but got <class 'int'>"
+    with pytest.raises(ValueError, match=msg):
+        num.clip(True, a_min=1, a_max=1)
+
+
+def test_bool_None() -> None:
+    msg = r"One of max or min must be given"
+    with pytest.raises(ValueError, match=msg):
+        np.clip(True, a_min=None, a_max=None)
+    # See https://github.com/nv-legate/cunumeric.internal/issues/492
+    num.clip(True, a_min=None, a_max=None)
+    # cuNumeric returns True, it returns False if array is False
+
+
 @pytest.mark.xfail
 def test_amin_amax():
     array = np.arange(0, 10)
