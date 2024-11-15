@@ -1,6 +1,0 @@
-﻿cunumeric.isclose
-=================
-
-.. currentmodule:: cunumeric
-
-.. autofunction:: isclose

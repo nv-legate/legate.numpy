@@ -1,6 +1,0 @@
-﻿cunumeric.nanargmax
-===================
-
-.. currentmodule:: cunumeric
-
-.. autofunction:: nanargmax

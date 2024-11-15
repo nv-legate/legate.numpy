@@ -1,6 +1,0 @@
-﻿cunumeric.nansum
-================
-
-.. currentmodule:: cunumeric
-
-.. autofunction:: nansum

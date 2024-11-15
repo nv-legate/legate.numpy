@@ -1,6 +1,0 @@
-﻿cunumeric.moveaxis
-==================
-
-.. currentmodule:: cunumeric
-
-.. autofunction:: moveaxis

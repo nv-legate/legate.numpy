@@ -1,6 +1,0 @@
-﻿cunumeric.random.random\_integers
-=================================
-
-.. currentmodule:: cunumeric.random
-
-.. autofunction:: random_integers

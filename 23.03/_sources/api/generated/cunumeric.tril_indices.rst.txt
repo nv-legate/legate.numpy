@@ -1,6 +1,0 @@
-﻿cunumeric.tril\_indices
-=======================
-
-.. currentmodule:: cunumeric
-
-.. autofunction:: tril_indices

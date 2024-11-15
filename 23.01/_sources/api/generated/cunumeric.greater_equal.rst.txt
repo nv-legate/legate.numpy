@@ -1,6 +1,0 @@
-﻿cunumeric.greater\_equal
-========================
-
-.. currentmodule:: cunumeric
-
-.. autoufunc:: greater_equal

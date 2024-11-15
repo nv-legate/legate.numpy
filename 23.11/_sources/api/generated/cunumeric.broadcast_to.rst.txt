@@ -1,6 +1,0 @@
-﻿cunumeric.broadcast\_to
-=======================
-
-.. currentmodule:: cunumeric
-
-.. autofunction:: broadcast_to

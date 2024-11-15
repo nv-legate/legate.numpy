@@ -1,6 +1,0 @@
-﻿cunumeric.random.exponential
-============================
-
-.. currentmodule:: cunumeric.random
-
-.. autofunction:: exponential

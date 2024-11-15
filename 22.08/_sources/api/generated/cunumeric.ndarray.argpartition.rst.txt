@@ -1,6 +1,0 @@
-﻿cunumeric.ndarray.argpartition
-==============================
-
-.. currentmodule:: cunumeric
-
-.. automethod:: ndarray.argpartition

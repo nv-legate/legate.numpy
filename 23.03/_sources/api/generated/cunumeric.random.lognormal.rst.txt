@@ -1,6 +1,0 @@
-﻿cunumeric.random.lognormal
-==========================
-
-.. currentmodule:: cunumeric.random
-
-.. autofunction:: lognormal

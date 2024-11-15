@@ -1,6 +1,0 @@
-﻿cunumeric.random.hypergeometric
-===============================
-
-.. currentmodule:: cunumeric.random
-
-.. autofunction:: hypergeometric

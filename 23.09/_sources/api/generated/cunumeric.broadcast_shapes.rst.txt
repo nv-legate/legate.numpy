@@ -1,6 +1,0 @@
-﻿cunumeric.broadcast\_shapes
-===========================
-
-.. currentmodule:: cunumeric
-
-.. autofunction:: broadcast_shapes

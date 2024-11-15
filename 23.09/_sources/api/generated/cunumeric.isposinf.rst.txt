@@ -1,6 +1,0 @@
-﻿cunumeric.isposinf
-==================
-
-.. currentmodule:: cunumeric
-
-.. autofunction:: isposinf

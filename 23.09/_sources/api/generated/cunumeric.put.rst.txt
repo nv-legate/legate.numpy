@@ -1,6 +1,0 @@
-﻿cunumeric.put
-=============
-
-.. currentmodule:: cunumeric
-
-.. autofunction:: put

@@ -1,6 +1,0 @@
-﻿cunumeric.random.negative\_binomial
-===================================
-
-.. currentmodule:: cunumeric.random
-
-.. autofunction:: negative_binomial

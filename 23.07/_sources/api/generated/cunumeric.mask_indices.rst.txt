@@ -1,6 +1,0 @@
-﻿cunumeric.mask\_indices
-=======================
-
-.. currentmodule:: cunumeric
-
-.. autofunction:: mask_indices

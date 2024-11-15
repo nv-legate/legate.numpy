@@ -1,6 +1,0 @@
-﻿cunumeric.tri
-=============
-
-.. currentmodule:: cunumeric
-
-.. autofunction:: tri

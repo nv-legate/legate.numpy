@@ -1,6 +1,0 @@
-﻿cunumeric.random.logseries
-==========================
-
-.. currentmodule:: cunumeric.random
-
-.. autofunction:: logseries

@@ -1,6 +1,0 @@
-﻿cunumeric.cumsum
-================
-
-.. currentmodule:: cunumeric
-
-.. autofunction:: cumsum

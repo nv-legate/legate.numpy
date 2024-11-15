@@ -1,6 +1,0 @@
-﻿cunumeric.random.standard\_gamma
-================================
-
-.. currentmodule:: cunumeric.random
-
-.. autofunction:: standard_gamma
