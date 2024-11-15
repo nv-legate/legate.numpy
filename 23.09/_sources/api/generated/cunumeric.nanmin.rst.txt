@@ -1,6 +1,0 @@
-﻿cunumeric.nanmin
-================
-
-.. currentmodule:: cunumeric
-
-.. autofunction:: nanmin

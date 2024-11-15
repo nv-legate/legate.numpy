@@ -1,6 +1,0 @@
-﻿cunumeric.left\_shift
-=====================
-
-.. currentmodule:: cunumeric
-
-.. autoufunc:: left_shift

@@ -1,6 +1,0 @@
-﻿cunumeric.ndarray.trace
-=======================
-
-.. currentmodule:: cunumeric
-
-.. automethod:: ndarray.trace

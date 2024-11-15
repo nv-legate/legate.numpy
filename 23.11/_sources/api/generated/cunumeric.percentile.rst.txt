@@ -1,6 +1,0 @@
-﻿cunumeric.percentile
-====================
-
-.. currentmodule:: cunumeric
-
-.. autofunction:: percentile

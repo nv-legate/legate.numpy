@@ -1,6 +1,0 @@
-﻿cunumeric.random.noncentral\_chisquare
-======================================
-
-.. currentmodule:: cunumeric.random
-
-.. autofunction:: noncentral_chisquare

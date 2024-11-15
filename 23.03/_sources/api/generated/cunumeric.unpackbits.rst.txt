@@ -1,6 +1,0 @@
-﻿cunumeric.unpackbits
-====================
-
-.. currentmodule:: cunumeric
-
-.. autofunction:: unpackbits

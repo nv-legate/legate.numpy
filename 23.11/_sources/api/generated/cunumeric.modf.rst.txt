@@ -1,6 +1,0 @@
-﻿cunumeric.modf
-==============
-
-.. currentmodule:: cunumeric
-
-.. autoufunc:: modf

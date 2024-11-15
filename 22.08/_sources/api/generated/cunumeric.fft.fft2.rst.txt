@@ -1,6 +1,0 @@
-﻿cunumeric.fft.fft2
-==================
-
-.. currentmodule:: cunumeric.fft
-
-.. autofunction:: fft2

@@ -1,6 +1,0 @@
-﻿cunumeric.random.default\_rng
-=============================
-
-.. currentmodule:: cunumeric.random
-
-.. autofunction:: default_rng

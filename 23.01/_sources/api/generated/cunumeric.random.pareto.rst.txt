@@ -1,6 +1,0 @@
-﻿cunumeric.random.pareto
-=======================
-
-.. currentmodule:: cunumeric.random
-
-.. autofunction:: pareto

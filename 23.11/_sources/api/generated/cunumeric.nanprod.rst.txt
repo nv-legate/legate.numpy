@@ -1,6 +1,0 @@
-﻿cunumeric.nanprod
-=================
-
-.. currentmodule:: cunumeric
-
-.. autofunction:: nanprod

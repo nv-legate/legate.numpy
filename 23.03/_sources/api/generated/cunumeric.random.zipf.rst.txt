@@ -1,6 +1,0 @@
-﻿cunumeric.random.zipf
-=====================
-
-.. currentmodule:: cunumeric.random
-
-.. autofunction:: zipf

@@ -1,6 +1,0 @@
-﻿cunumeric.linalg.matrix\_power
-==============================
-
-.. currentmodule:: cunumeric.linalg
-
-.. autofunction:: matrix_power

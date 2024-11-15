@@ -1,6 +1,0 @@
-﻿cunumeric.random.geometric
-==========================
-
-.. currentmodule:: cunumeric.random
-
-.. autofunction:: geometric

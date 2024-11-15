@@ -1,6 +1,0 @@
-﻿cunumeric.fft.ihfft
-===================
-
-.. currentmodule:: cunumeric.fft
-
-.. autofunction:: ihfft

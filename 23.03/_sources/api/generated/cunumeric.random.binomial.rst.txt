@@ -1,6 +1,0 @@
-﻿cunumeric.random.binomial
-=========================
-
-.. currentmodule:: cunumeric.random
-
-.. autofunction:: binomial
