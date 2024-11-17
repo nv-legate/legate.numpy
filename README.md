@@ -22,7 +22,7 @@ that aims to provide a distributed and accelerated drop-in replacement for the
 [NumPy API](https://numpy.org/doc/stable/reference/) on top of the
 [Legion](https://legion.stanford.edu) runtime. 
 
-With cuPyNumeric you can write code productively in Python, using the familiar API, and have your program scale with no code changes from single-CPU computers to multi-node-multi-GPU clusters.
+With cuPyNumeric you can write programs productively in NumPy APIs and have your programs scale with no code changes from single-CPU computers to multi-node-multi-GPU clusters.
 
 For example, you can run
 [the final example of the Python CFD course](https://github.com/barbagroup/CFDPython/blob/master/lessons/15_Step_12.ipynb)
