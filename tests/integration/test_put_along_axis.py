@@ -1,4 +1,4 @@
-# Copyright 2022 NVIDIA Corporation
+# Copyright 2024 NVIDIA Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ from utils.generators import (
     mk_seq_array,
 )
 
-import cunumeric as num
+import cupynumeric as num
 
 
 def equivalent_shapes_gen(shape):
@@ -127,7 +127,7 @@ def test_empty_indice():
         pytest.param(
             np.array((0,)),
             marks=pytest.mark.xfail(
-                reason="NumPy: IndexError, cuNumeric: return None"
+                reason="NumPy: IndexError, cuPyNumeric: return None"
             ),
         ),
     ],

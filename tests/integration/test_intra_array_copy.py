@@ -1,4 +1,4 @@
-# Copyright 2021-2022 NVIDIA Corporation
+# Copyright 2024 NVIDIA Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ import pytest
 from legate.core import LEGATE_MAX_DIM
 from utils.generators import mk_0to1_array
 
-import cunumeric as num
+import cupynumeric as num
 
 
 def random_array(lib, ndim):
@@ -129,7 +129,7 @@ def array_gen(lib, ndim):
     # no overlap between source and destination slice
     yield from no_overlap(lib, ndim, random_array)
     # no overlap at view level, but possible overlap on underlying array
-    # TODO: disable until legate.core#40 is fixed
+    # TODO: disable until legate#40 is fixed
     # yield from no_overlap(lib, ndim, nd_view_of_1d)
     # partial overlap between source and destination slice
     yield from partial_overlap(lib, ndim)

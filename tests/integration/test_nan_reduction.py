@@ -1,4 +1,4 @@
-# Copyright 2022-2023 NVIDIA Corporation
+# Copyright 2024 NVIDIA Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,15 +19,22 @@ from math import prod
 import numpy as np
 import pytest
 from legate.core import LEGATE_MAX_DIM
+from utils.comparisons import allclose
 
-import cunumeric as num
-from cunumeric.settings import settings
+import cupynumeric as num
+from cupynumeric.settings import settings
 
 NAN_FUNCS = ("nanmax", "nanmin", "nanprod", "nansum")
 
-EAGER_TEST = os.environ.get("CUNUMERIC_FORCE_THUNK", None) == "eager"
+EAGER_TEST = os.environ.get("CUPYNUMERIC_FORCE_THUNK", None) == "eager"
 
 NDIMS = range(LEGATE_MAX_DIM + 1)
+
+DTYPE = ["l", "L", "f", "d", "h", "i", "H", "I", "?", "b", "B"]
+
+
+def to_dtype(s):
+    return str(np.dtype(s))
 
 
 class TestNanReductions:
@@ -40,7 +47,7 @@ class TestNanReductions:
     @pytest.mark.parametrize("keepdims", [True, False])
     def test_basic_nan_sum_prod(self, func_name, ndim, keepdims):
         """This test sets an element to NaN and checks if the output
-        from cuNumeric and numpy match."""
+        from cuPyNumeric and numpy match."""
         shape = (5,) * ndim
         size = prod(shape)
         in_np = np.random.random(shape)
@@ -58,14 +65,14 @@ class TestNanReductions:
         out_np = func_np(in_np, keepdims=keepdims)
         out_num = func_num(in_num, keepdims=keepdims)
 
-        assert np.allclose(out_num, out_np, rtol=1e-4)
+        assert allclose(out_num, out_np, rtol=1e-4)
 
     @pytest.mark.parametrize("func_name", ("nanmin", "nanmax"))
     @pytest.mark.parametrize("ndim", range(1, LEGATE_MAX_DIM + 1))
     @pytest.mark.parametrize("keepdims", [True, False])
     def test_basic_nan_min_max(self, func_name, ndim, keepdims):
         """This test sets an element to NaN and checks if the output
-        from cuNumeric and numpy match."""
+        from cuPyNumeric and numpy match."""
         shape = (5,) * ndim
         size = prod(shape)
         in_np = np.random.random(shape)
@@ -109,7 +116,7 @@ class TestNanReductions:
             out_np = np.empty(_shape)
             func_np(in_np, out=out_np, axis=axis, keepdims=True)
 
-            assert np.allclose(out_num, out_np, rtol=1e-4)
+            assert allclose(out_num, out_np, rtol=1e-4)
 
     @pytest.mark.parametrize("ndim", range(1, LEGATE_MAX_DIM + 1))
     @pytest.mark.parametrize("dtype", (np.float32, np.float64))
@@ -142,7 +149,7 @@ class TestNanReductions:
         out_num = num.nansum(in_num, keepdims=keepdims)
         out_np = np.nansum(in_np, keepdims=keepdims)
 
-        assert np.allclose(out_num, out_np, rtol=1e-4)
+        assert allclose(out_num, out_np, rtol=1e-4)
 
     @pytest.mark.parametrize("ndim", range(1, LEGATE_MAX_DIM + 1))
     @pytest.mark.parametrize("keepdims", [True, False])
@@ -174,7 +181,7 @@ class TestNanReductions:
         out_num = num.nanprod(in_num, keepdims=keepdims)
         out_np = np.nanprod(in_np, keepdims=keepdims)
 
-        assert np.allclose(out_num, out_np, rtol=1e-4)
+        assert allclose(out_num, out_np, rtol=1e-4)
 
     @pytest.mark.parametrize("func_name", ("nanmin", "nanmax"))
     def test_slice_nan_numpy_compat(self, func_name):
@@ -281,6 +288,28 @@ class TestNanReductions:
 
         assert out_num == 1.0
 
+    @pytest.mark.parametrize("dtype", DTYPE, ids=to_dtype)
+    def test_dtype_nanprod(self, dtype) -> None:
+        in_np = np.arange(1, 10)
+        if dtype == bool:
+            in_np %= 2
+        in_np = in_np.astype(dtype)
+        out_np = np.nanprod(in_np)
+        in_num = num.asarray(in_np)
+        out_num = num.nanprod(in_num)
+        assert allclose(out_np, out_num)
+
+    @pytest.mark.parametrize("dtype", DTYPE, ids=to_dtype)
+    def test_dtype_nansum(self, dtype) -> None:
+        in_np = np.arange(1, 10)
+        if dtype == bool:
+            in_np %= 2
+        in_np = in_np.astype(dtype)
+        out_np = np.nansum(in_np)
+        in_num = num.asarray(in_np)
+        out_num = num.nansum(in_num)
+        assert allclose(out_np, out_num)
+
     @pytest.mark.parametrize("ndim", range(1, LEGATE_MAX_DIM + 1))
     def test_all_nans_nansum(self, ndim):
         shape = (3,) * ndim
@@ -295,11 +324,11 @@ class TestNanReductions:
         arr = [[1, np.nan, 3], [2, np.nan, 4]]
         out_np = np.nansum(arr, where=[False, True, True])
         out_num = num.nansum(arr, where=[False, True, True])
-        assert np.allclose(out_np, out_num)
+        assert allclose(out_np, out_num)
 
         out_np = np.nanprod(arr, where=[False, True, True])
         out_num = num.nanprod(arr, where=[False, True, True])
-        assert np.allclose(out_np, out_num)
+        assert allclose(out_np, out_num)
 
         out_np = np.nanmax(
             arr, where=[[False, True, True], [False, False, True]], initial=-1
@@ -307,7 +336,7 @@ class TestNanReductions:
         out_num = num.nanmax(
             arr, where=[[False, True, True], [False, False, True]], initial=-1
         )
-        assert np.allclose(out_np, out_num)
+        assert allclose(out_np, out_num)
 
         out_np = np.nanmin(
             arr, where=[[False, True, True], [False, True, True]], initial=10
@@ -315,24 +344,24 @@ class TestNanReductions:
         out_num = num.nanmin(
             arr, where=[[False, True, True], [False, True, True]], initial=10
         )
-        assert np.allclose(out_np, out_num)
+        assert allclose(out_np, out_num)
 
         # where is a boolean
         out_np = np.nansum(arr, where=True)
         out_num = num.nansum(arr, where=True)
-        assert np.allclose(out_np, out_num)
+        assert allclose(out_np, out_num)
 
         out_np = np.nanprod(arr, where=False)
         out_num = num.nanprod(arr, where=False)
-        assert np.allclose(out_np, out_num)
+        assert allclose(out_np, out_num)
 
         out_np = np.nanmax(arr, where=True, initial=-1)
         out_num = num.nanmax(arr, where=True, initial=-1)
-        assert np.allclose(out_np, out_num)
+        assert allclose(out_np, out_num)
 
         out_np = np.nanmin(arr, where=True, initial=10)
         out_num = num.nanmin(arr, where=True, initial=10)
-        assert np.allclose(out_np, out_num)
+        assert allclose(out_np, out_num)
 
 
 class TestCornerCases:

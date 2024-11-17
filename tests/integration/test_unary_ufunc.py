@@ -1,4 +1,4 @@
-# Copyright 2022 NVIDIA Corporation
+# Copyright 2024 NVIDIA Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ import numpy as np
 import pytest
 from utils.comparisons import allclose
 
-import cunumeric as num
+import cupynumeric as num
 
 
 def deterministic_op_test(func):
@@ -47,14 +47,14 @@ def check_result(op, in_np, out_np, out_num, **isclose_kwargs):
         and out_np.dtype == out_num.dtype
     )
     if not result:
-        print(f"cunumeric.{op} failed the test")
+        print(f"cupynumeric.{op} failed the test")
         print("Input:")
         print(in_np)
         print(f"dtype: {in_np.dtype}")
         print("NumPy output:")
         print(out_np)
         print(f"dtype: {out_np.dtype}")
-        print("cuNumeric output:")
+        print("cuPyNumeric output:")
         print(out_num)
         print(f"dtype: {out_num.dtype}")
     return result
@@ -90,7 +90,7 @@ def check_op(op, in_np, out_dtype="d", **check_kwargs):
 
         assert check_result(op, in_np, out_np, out_num, **check_kwargs)
 
-        # Ask cuNumeric to produce outputs to NumPy ndarrays
+        # Ask cuPyNumeric to produce outputs to NumPy ndarrays
         out_num = np.ones(out_np.shape, dtype=out_dtype)
         op_num(in_num, out_num)
 

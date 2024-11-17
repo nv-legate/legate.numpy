@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# Copyright 2021-2022 NVIDIA Corporation
+# Copyright 2024 NVIDIA Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,26 +18,26 @@ from __future__ import annotations
 
 import sys
 
-from legate.tester import PER_FILE_ARGS, SKIPPED_EXAMPLES
+import legate.tester
+from legate.tester import CustomTest
 from legate.tester.config import Config
 from legate.tester.test_plan import TestPlan
 from legate.tester.test_system import TestSystem
 
-SKIPPED_EXAMPLES.update(
-    {
-        "examples/ingest.py",
-        "examples/kmeans_sort.py",
-        "examples/lstm_full.py",
-        "examples/wgrad.py",
-    }
-)
-
-PER_FILE_ARGS.update(
-    {
-        "examples/lstm_full.py": ["--file", "resources/lstm_input.txt"],
-    }
-)
-
+legate.tester.CUSTOM_FILES = [
+    CustomTest("examples/quantiles.py"),
+    CustomTest("examples/sort.py"),
+    CustomTest("tests/integration/test_argsort.py"),
+    CustomTest("tests/integration/test_msort.py"),
+    CustomTest("tests/integration/test_nanpercentiles.py"),
+    CustomTest("tests/integration/test_nanquantiles.py"),
+    CustomTest("tests/integration/test_partition.py"),
+    CustomTest("tests/integration/test_percentiles.py"),
+    CustomTest("tests/integration/test_quantiles.py"),
+    CustomTest("tests/integration/test_sort_complex.py"),
+    CustomTest("tests/integration/test_sort.py"),
+    CustomTest("tests/integration/test_unique.py"),
+]
 
 if __name__ == "__main__":
     config = Config(sys.argv)

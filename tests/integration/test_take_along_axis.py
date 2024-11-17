@@ -1,4 +1,4 @@
-# Copyright 2022 NVIDIA Corporation
+# Copyright 2024 NVIDIA Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ import pytest
 from legate.core import LEGATE_MAX_DIM
 from utils.generators import broadcasts_to_along_axis, mk_seq_array
 
-import cunumeric as num
+import cupynumeric as num
 
 N = 10
 
@@ -89,7 +89,7 @@ class TestTakeAlongAxisErrors:
     )
     def test_indices_bad_shape(self, shape):
         # In Numpy, it raises IndexError.
-        # In cuNumeric, it raises ValueError.
+        # In cuPyNumeric, it raises ValueError.
         ai = num.ones(shape, dtype=int)
         msg = "shape mismatch: indexing arrays could not be broadcast"
         with pytest.raises(IndexError, match=msg):

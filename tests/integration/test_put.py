@@ -1,4 +1,4 @@
-# Copyright 2022 NVIDIA Corporation
+# Copyright 2024 NVIDIA Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ import pytest
 from legate.core import LEGATE_MAX_DIM
 from utils.generators import mk_seq_array
 
-import cunumeric as num
+import cupynumeric as num
 
 INDICES_VALUES = (
     (0, 10),
@@ -154,7 +154,7 @@ def test_ndim_default_mode(ndim):
     assert np.array_equal(np_arr, num_arr)
 
 
-INDICES = ([1, 2, 3.2, 100], [[2, 2], [3, 100]], [1], [100])
+INDICES = ([1, 2, 3.2, 100], [[2, 1], [3, 100]], [1], [100])
 
 
 @pytest.mark.parametrize("ndim", range(1, LEGATE_MAX_DIM + 1))

@@ -1,4 +1,4 @@
-# Copyright 2022 NVIDIA Corporation
+# Copyright 2024 NVIDIA Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ import numpy as np
 import pytest
 from legate.core import LEGATE_MAX_DIM
 
-import cunumeric as num
+import cupynumeric as num
 
 DIM_CASES = [5, 40]
 
@@ -29,11 +29,11 @@ def _check_result(print_msg, err_arrs):
             print_output += (
                 f"Attr, {err_arr[0]}\n"
                 f"numpy result: {err_arr[1]}\n"
-                f"cunumeric_result: {err_arr[2]}\n"
+                f"cupynumeric_result: {err_arr[2]}\n"
             )
         assert False, (
             f"{print_output}"
-            f"cunumeric and numpy shows"
+            f"cupynumeric and numpy shows"
             f" different result\n"
         )
     else:
@@ -185,6 +185,18 @@ def test_broadcast_to_mainpulation(dim):
     shape = SHAPE_LISTS[dim][-1]
     arr = np.arange(np.prod((dim,))).reshape((dim,))
     _broadcast_to_manipulation(arr, (arr.shape, shape))
+
+
+@pytest.mark.parametrize("dim", DIM_CASES, ids=str)
+def test_iteration(dim):
+    sizes = SHAPE_LISTS[dim]
+    arr_np = list(np.arange(np.prod(size)).reshape(size) for size in sizes)
+    arr_num = list(num.arange(np.prod(size)).reshape(size) for size in sizes)
+    b = np.broadcast(*arr_np)
+    c = num.broadcast(*arr_num)
+
+    for item in b:
+        assert item == next(c)
 
 
 if __name__ == "__main__":

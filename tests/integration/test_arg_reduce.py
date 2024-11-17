@@ -1,4 +1,4 @@
-# Copyright 2021-2022 NVIDIA Corporation
+# Copyright 2024 NVIDIA Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,8 +16,9 @@
 import numpy as np
 import pytest
 from legate.core import LEGATE_MAX_DIM
+from utils.utils import AxisError
 
-import cunumeric as num
+import cupynumeric as num
 
 ARG_FUNCS = ("argmax", "argmin")
 
@@ -57,7 +58,7 @@ class TestArgReduceErrors:
         func = getattr(num, func_name)
 
         msg = r"out of bounds"
-        with pytest.raises(np.AxisError, match=msg):
+        with pytest.raises(AxisError, match=msg):
             func(in_num, axis=ndim + 1)
 
     @pytest.mark.parametrize("func_name", ARG_FUNCS)
@@ -68,7 +69,7 @@ class TestArgReduceErrors:
         func = getattr(num, func_name)
 
         msg = r"out of bounds"
-        with pytest.raises(np.AxisError, match=msg):
+        with pytest.raises(AxisError, match=msg):
             func(in_num, axis=-(ndim + 1))
 
     @pytest.mark.parametrize("func_name", ARG_FUNCS)

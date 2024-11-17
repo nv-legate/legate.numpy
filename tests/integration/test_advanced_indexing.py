@@ -1,4 +1,4 @@
-# Copyright 2022 NVIDIA Corporation
+# Copyright 2024 NVIDIA Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,10 +16,9 @@
 import numpy as np
 import pytest
 from legate.core import LEGATE_MAX_DIM
-from pytest_lazyfixture import lazy_fixture
 from utils.generators import mk_seq_array
 
-import cunumeric as num
+import cupynumeric as num
 
 
 @pytest.fixture
@@ -49,60 +48,63 @@ val_region_0d = num.full((3,), -1)[2:3].reshape(())
 val_future_0d = num.full((3,), -1).max()
 
 
-# We use fixtures for `arr` because the `set_item` tests modify
-# their input.
-ARRS = (lazy_fixture("arr_region"), lazy_fixture("arr_future"))
+# We need fixtures for `arr` because the `set_item` tests modify their inputs.
+# However, pytest_lazy_fixture is no longer supported, so we pass the fixture
+# names and rely on request.getfixturevalue to retrieve the computed values
+ARRS_FIXTURES = ("arr_region", "arr_future")
+ARRS_EMPTY_1D_FIXTURES = ("arr_empty1d", "arr_region", "arr_future")
 IDXS_0D = (idx_future_0d,)  # TODO: idx_region_0d fails
 VALS_0D = (val_future_0d,)  # TODO: val_region_0d fails
 IDXS_1D = (idx_region_1d, idx_future_1d)
 VALS_1D = (val_region_1d, val_future_1d)
-ARRS_EMPTY_1D = (
-    lazy_fixture("arr_empty1d"),
-    lazy_fixture("arr_region"),
-    lazy_fixture("arr_future"),
-)
 IDXS_EMPTY_1D = (idx_empty_1d,)
 VALS_EMPTY_1D = (num.array([]),)
 
 
 @pytest.mark.parametrize("idx", IDXS_0D)  # idx = 0
-@pytest.mark.parametrize("arr", ARRS)  # arr = [42]
-def test_getitem_scalar_0d(arr, idx):
+@pytest.mark.parametrize("arr", ARRS_FIXTURES)  # arr = [42]
+def test_getitem_scalar_0d(arr, idx, request):
+    arr = request.getfixturevalue(arr)
     assert np.array_equal(arr[idx], 42)
 
 
 @pytest.mark.parametrize("val", VALS_0D)  # val = -1
 @pytest.mark.parametrize("idx", IDXS_0D)  # idx = 0
-@pytest.mark.parametrize("arr", ARRS)  # arr = [42]
-def test_setitem_scalar_0d(arr, idx, val):
+@pytest.mark.parametrize("arr", ARRS_FIXTURES)  # arr = [42]
+def test_setitem_scalar_0d(arr, idx, val, request):
+    arr = request.getfixturevalue(arr)
     arr[idx] = val
     assert np.array_equal(arr, [-1])
 
 
 @pytest.mark.parametrize("idx", IDXS_1D)  # idx = [0]
-@pytest.mark.parametrize("arr", ARRS)  # arr = [42]
-def test_getitem_scalar_1d(arr, idx):
+@pytest.mark.parametrize("arr", ARRS_FIXTURES)  # arr = [42]
+def test_getitem_scalar_1d(arr, idx, request):
+    arr = request.getfixturevalue(arr)
     assert np.array_equal(arr[idx], [42])
 
 
 @pytest.mark.parametrize("val", VALS_1D)  # val = [-1]
 @pytest.mark.parametrize("idx", IDXS_1D)  # idx = [0]
-@pytest.mark.parametrize("arr", ARRS)  # arr = [42]
-def test_setitem_scalar_1d(arr, idx, val):
+@pytest.mark.parametrize("arr", ARRS_FIXTURES)  # arr = [42]
+def test_setitem_scalar_1d(arr, idx, val, request):
+    arr = request.getfixturevalue(arr)
     arr[idx] = val
     assert np.array_equal(arr, [-1])
 
 
 @pytest.mark.parametrize("idx", IDXS_EMPTY_1D)  # idx = []
-@pytest.mark.parametrize("arr", ARRS_EMPTY_1D)  # arr = [42], [5], []
-def test_getitem_empty_1d(arr, idx):
+@pytest.mark.parametrize("arr", ARRS_EMPTY_1D_FIXTURES)  # arr = [42], [5], []
+def test_getitem_empty_1d(arr, idx, request):
+    arr = request.getfixturevalue(arr)
     assert np.array_equal(arr[idx], [])
 
 
 @pytest.mark.parametrize("idx", IDXS_EMPTY_1D)  # idx = []
-@pytest.mark.parametrize("arr", ARRS_EMPTY_1D)  # arr = []
+@pytest.mark.parametrize("arr", ARRS_EMPTY_1D_FIXTURES)  # arr = []
 @pytest.mark.parametrize("val", VALS_EMPTY_1D)  # val = []
-def test_setitem_empty_1d(arr, idx, val):
+def test_setitem_empty_1d(arr, idx, val, request):
+    arr = request.getfixturevalue(arr)
     arr[idx] = val
     assert np.array_equal(arr[idx], [])
 

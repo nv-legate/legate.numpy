@@ -1,4 +1,4 @@
-# Copyright 2021-2022 NVIDIA Corporation
+# Copyright 2024 NVIDIA Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,8 +15,9 @@
 
 import numpy as np
 import pytest
+from utils.utils import AxisError
 
-import cunumeric as num
+import cupynumeric as num
 
 DIM = 5
 SIZES = [
@@ -74,7 +75,7 @@ def test_num_axis_out_bound():
     size = (1, 2, 1)
     a = num.random.randint(low=-10, high=10, size=size)
     msg = r"bounds"
-    with pytest.raises(np.AxisError, match=msg):
+    with pytest.raises(AxisError, match=msg):
         num.squeeze(a, axis=3)
 
 
@@ -82,7 +83,7 @@ def test_array_axis_out_bound():
     size = (1, 2, 1)
     a = num.random.randint(-10, 10, size=size)
     msg = r"bounds"
-    with pytest.raises(np.AxisError, match=msg):
+    with pytest.raises(AxisError, match=msg):
         a.squeeze(axis=3)
 
 
