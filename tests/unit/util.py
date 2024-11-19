@@ -16,10 +16,9 @@
 from __future__ import annotations
 
 from itertools import chain, combinations
-from typing import Any, Iterable, Iterator
+from typing import Any, Iterable, Iterator, TypeAlias
 
 import pytest
-from typing_extensions import TypeAlias
 
 Capsys: TypeAlias = pytest.CaptureFixture[str]
 

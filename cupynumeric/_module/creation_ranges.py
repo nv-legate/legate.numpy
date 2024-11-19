@@ -15,7 +15,8 @@
 from __future__ import annotations
 
 import math
-from typing import TYPE_CHECKING, Any
+from types import EllipsisType
+from typing import TYPE_CHECKING
 
 import numpy as np
 
@@ -180,7 +181,7 @@ def linspace(
     delta = stop - start
     y = arange(0, num, dtype=dt)
 
-    out: tuple[Any, ...]  # EllipsisType not even in typing_extensions yet
+    out: tuple[int | EllipsisType | slice, ...]
 
     # Reshape these arrays into dimensions that allow them to broadcast
     if delta.ndim > 0:
