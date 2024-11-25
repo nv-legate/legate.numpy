@@ -18,29 +18,46 @@ from __future__ import annotations
 
 import sys
 
-import legate.tester
-from legate.tester import CustomTest
+from legate.tester import CustomTest, FeatureType
 from legate.tester.config import Config
+from legate.tester.project import Project
 from legate.tester.test_plan import TestPlan
 from legate.tester.test_system import TestSystem
+from legate.util.types import EnvDict
 
-legate.tester.CUSTOM_FILES = [
-    CustomTest("examples/quantiles.py"),
-    CustomTest("examples/sort.py"),
-    CustomTest("tests/integration/test_argsort.py"),
-    CustomTest("tests/integration/test_msort.py"),
-    CustomTest("tests/integration/test_nanpercentiles.py"),
-    CustomTest("tests/integration/test_nanquantiles.py"),
-    CustomTest("tests/integration/test_partition.py"),
-    CustomTest("tests/integration/test_percentiles.py"),
-    CustomTest("tests/integration/test_quantiles.py"),
-    CustomTest("tests/integration/test_sort_complex.py"),
-    CustomTest("tests/integration/test_sort.py"),
-    CustomTest("tests/integration/test_unique.py"),
-]
+
+class CPNProject(Project):
+    def custom_files(self) -> list[CustomTest]:
+        return [
+            CustomTest("examples/quantiles.py"),
+            CustomTest("examples/sort.py"),
+            CustomTest("tests/integration/test_argsort.py"),
+            CustomTest("tests/integration/test_msort.py"),
+            CustomTest("tests/integration/test_nanpercentiles.py"),
+            CustomTest("tests/integration/test_nanquantiles.py"),
+            CustomTest("tests/integration/test_partition.py"),
+            CustomTest("tests/integration/test_percentiles.py"),
+            CustomTest("tests/integration/test_quantiles.py"),
+            CustomTest("tests/integration/test_sort_complex.py"),
+            CustomTest("tests/integration/test_sort.py"),
+            CustomTest("tests/integration/test_unique.py"),
+        ]
+
+    def stage_env(self, feature: FeatureType) -> EnvDict:
+        match feature:
+            case "eager":
+                return {
+                    "CUPYNUMERIC_FORCE_THUNK": "eager",
+                    "CUPYNUMERIC_MIN_CPU_CHUNK": "2000000000",
+                    "CUPYNUMERIC_MIN_OMP_CHUNK": "2000000000",
+                    "CUPYNUMERIC_MIN_GPU_CHUNK": "2000000000",
+                }
+            case _:
+                return {}
+
 
 if __name__ == "__main__":
-    config = Config(sys.argv)
+    config = Config(sys.argv, project=CPNProject())
 
     system = TestSystem(dry_run=config.dry_run)
 
