@@ -14,17 +14,61 @@
 # limitations under the License.
 #=============================================================================
 
+# This is based on the similar function for Legion in the Legate code
+function(cupynumeric_maybe_override_legate user_repository user_branch user_version)
+  # CPM_ARGS GIT_TAG and GIT_REPOSITORY don't do anything if you have already overridden
+  # those options via a rapids_cpm_package_override() call. So we have to conditionally
+  # override the defaults (by creating a temporary json file in build dir) only if the
+  # user sets them.
+
+  # See https://github.com/rapidsai/rapids-cmake/issues/575. Specifically, this function
+  # is pretty much identical to
+  # https://github.com/rapidsai/rapids-cmake/issues/575#issuecomment-2045374410.
+  cmake_path(SET legate_overrides_json NORMALIZE
+             "${CUPYNUMERIC_CMAKE_DIR}/versions.json")
+  if(user_repository OR user_branch OR user_version)
+    # The user has set either one of these, time to create our cludge.
+    file(READ "${legate_overrides_json}" default_legate_json)
+    set(new_legate_json "${default_legate_json}")
+
+    if(user_repository)
+      string(JSON new_legate_json SET "${new_legate_json}" "packages" "Legate" "git_url"
+             "\"${user_repository}\"")
+    endif()
+
+    if(user_branch)
+      string(JSON new_legate_json SET "${new_legate_json}" "packages" "Legate" "git_tag"
+             "\"${user_branch}\"")
+    endif()
+
+    if(user_version)
+      string(JSON new_legate_json SET "${new_legate_json}" "packages" "Legate" "version"
+             "\"${user_version}\"")
+    endif()
+
+    string(JSON eq_json EQUAL "${default_legate_json}" "${new_legate_json}")
+    if(NOT eq_json)
+      cmake_path(SET legate_overrides_json NORMALIZE
+                 "${CMAKE_CURRENT_BINARY_DIR}/versions.json")
+      file(WRITE "${legate_overrides_json}" "${new_legate_json}")
+    endif()
+  endif()
+  rapids_cpm_package_override("${legate_overrides_json}")
+endfunction()
+
 function(find_or_configure_legate)
+  set(options)
   set(oneValueArgs VERSION REPOSITORY BRANCH EXCLUDE_FROM_ALL)
+  set(multiValueArgs)
   cmake_parse_arguments(PKG "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
-  include("${rapids-cmake-dir}/export/detail/parse_version.cmake")
-  rapids_export_parse_version(${PKG_VERSION} legate PKG_VERSION)
+  cupynumeric_maybe_override_legate("${PKG_REPOSITORY}" "${PKG_BRANCH}" "${PKG_VERSION}")
 
   include("${rapids-cmake-dir}/cpm/detail/package_details.cmake")
   rapids_cpm_package_details(legate version git_repo git_branch shallow exclude_from_all)
 
-  set(version ${PKG_VERSION})
+  string(REPLACE "00" "0" version "${version}")
+
   set(exclude_from_all ${PKG_EXCLUDE_FROM_ALL})
   if(PKG_BRANCH)
     set(git_branch "${PKG_BRANCH}")
@@ -92,10 +136,6 @@ foreach(_var IN ITEMS "cupynumeric_LEGATE_VERSION"
     unset(${_var} CACHE)
   endif()
 endforeach()
-
-if(NOT DEFINED cupynumeric_LEGATE_VERSION)
-  set(cupynumeric_LEGATE_VERSION "${cupynumeric_VERSION}")
-endif()
 
 find_or_configure_legate(VERSION          ${cupynumeric_LEGATE_VERSION}
                          REPOSITORY       ${cupynumeric_LEGATE_REPOSITORY}
