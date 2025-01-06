@@ -2285,9 +2285,7 @@ class ndarray:
             res_dtype = (
                 dtype
                 if dtype is not None
-                else out.dtype
-                if out is not None
-                else a.dtype
+                else out.dtype if out is not None else a.dtype
             )
             a = a._maybe_convert(res_dtype, (a,))
             if out is not None and out.shape != out_shape:
